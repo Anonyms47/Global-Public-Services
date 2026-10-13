@@ -218,4 +218,25 @@ create table if not exists services (
   is_demo boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- Supabase expose le schéma public via son API : on y ferme l'accès en activant
+-- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
+-- des tables, n'est pas concernée.
+alter table settings enable row level security;
+alter table users enable row level security;
+alter table sessions enable row level security;
+alter table categories enable row level security;
+alter table products enable row level security;
+alter table media enable row level security;
+alter table product_images enable row level security;
+alter table variants enable row level security;
+alter table promotions enable row level security;
+alter table customers enable row level security;
+alter table orders enable row level security;
+alter table order_lines enable row level security;
+alter table payments enable row level security;
+alter table stock_batches enable row level security;
+alter table stock_movements enable row level security;
+alter table order_events enable row level security;
+alter table services enable row level security;
 `;
