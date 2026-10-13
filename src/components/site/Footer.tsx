@@ -26,7 +26,7 @@ export function Footer({
     <footer className="bg-gps-blue-deep relative mt-24 overflow-hidden text-white">
       <Ribbon
         tone="white"
-        className="pointer-events-none absolute -top-6 right-0 h-40 w-[70%] opacity-25"
+        className="pointer-events-none absolute -top-20 right-0 h-32 w-[70%] opacity-25"
       />
       <div className="container-site relative grid gap-12 py-16 md:grid-cols-12">
         <div className="md:col-span-4">

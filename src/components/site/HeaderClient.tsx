@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { cartCount, useCart } from "../cart/cart-store";
 import {
   IconBag,
@@ -49,7 +49,11 @@ function SearchForm({
   const pathname = usePathname();
   const current = pathname === "/boutique" ? (params.get("q") ?? "") : "";
   const [q, setQ] = useState(current);
-  useEffect(() => setQ(current), [current]);
+  const [seen, setSeen] = useState(current);
+  if (seen !== current) {
+    setSeen(current);
+    setQ(current);
+  }
   return (
     <form
       role="search"
@@ -164,7 +168,11 @@ export function MobileMenu({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  useEffect(() => setOpen(false), [pathname]);
+  const [seenPath, setSeenPath] = useState(pathname);
+  if (seenPath !== pathname) {
+    setSeenPath(pathname);
+    setOpen(false);
+  }
   return (
     <>
       <button
