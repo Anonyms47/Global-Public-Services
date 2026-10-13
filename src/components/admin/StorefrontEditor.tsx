@@ -6,6 +6,7 @@ import { deleteServiceAction, saveServiceAction, saveStorefrontAction } from "@/
 import { uploadImageAction } from "@/app/comptoir/(app)/catalogue/actions";
 import type { Service } from "@/server/domain/services";
 import { ActionFeedback, useAction } from "./useAction";
+import { proposals } from "@/lib/content-proposals";
 import { Badge } from "./ui";
 import { IconDown, IconPlus, IconTrash, IconUp, IconUpload } from "../ui/icons";
 
@@ -93,6 +94,7 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
             value={s.focusText}
             onChange={(e) => setS({ ...s, focusText: e.target.value })}
           />
+          <UseProposal value={s.focusText} proposal={proposals.focusText} onUse={(v) => setS({ ...s, focusText: v })} />
         </div>
         <p className="hint">Le prix affiché vient toujours du catalogue (promotion comprise).</p>
       </section>
@@ -232,6 +234,11 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
               onChange={(e) => setS({ ...s, storeText: e.target.value })}
               placeholder="Texte validé par GPS (histoire, équipe, ce qu'on trouve au comptoir…)"
             />
+            <UseProposal
+              value={s.storeText}
+              proposal={proposals.storeText}
+              onUse={(v) => setS({ ...s, storeText: v })}
+            />
           </div>
         </div>
       </section>
@@ -331,6 +338,13 @@ export function ServicesEditor({ services }: { services: Service[] }) {
                 value={editing[k]}
                 onChange={(e) => setEditing({ ...editing, [k]: e.target.value })}
               />
+              {k === "summary" || k === "operations" ? (
+                <UseProposal
+                  value={editing[k]}
+                  proposal={k === "summary" ? proposals.serviceSummary : proposals.serviceOperations}
+                  onUse={(v) => setEditing({ ...editing, [k]: v })}
+                />
+              ) : null}
             </div>
           ))}
           <label className="flex min-h-11 items-center gap-2 font-semibold">
@@ -353,5 +367,20 @@ export function ServicesEditor({ services }: { services: Service[] }) {
         </form>
       ) : null}
     </section>
+  );
+}
+
+function UseProposal({ value, proposal, onUse }: { value: string; proposal: string; onUse: (v: string) => void }) {
+  if (value.trim() === proposal) return null;
+  return (
+    <button
+      type="button"
+      className="mt-1 text-[13px] font-bold text-gps-blue underline underline-offset-2"
+      onClick={() => {
+        if (!value.trim() || confirm("Remplacer le texte actuel par la proposition GPS ?")) onUse(proposal);
+      }}
+    >
+      Utiliser la proposition GPS
+    </button>
   );
 }

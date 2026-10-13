@@ -24,7 +24,6 @@ export default async function CustomersPage({ searchParams }: PageProps<"/compto
           <>
             {can(user.role, "customers.export") ? (
               // Téléchargement de fichier : un lien simple, pas une navigation applicative.
-              // eslint-disable-next-line @next/next/no-html-link-for-pages
               <a href="/comptoir/clients/export" download className="btn btn-outline">
                 <IconDownload size={18} /> Exporter (CSV)
               </a>

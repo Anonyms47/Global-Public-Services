@@ -48,6 +48,9 @@ const settingsSchema = z.object({
       .trim()
       .max(500)
       .refine((s) => s === "" || /^https:\/\//.test(s), "Le lien d'itinéraire doit commencer par https://"),
+    aboutText: text(3000),
+    legalName: text(160),
+    legalId: text(120),
   }),
   reception: z.object({
     pickupEnabled: z.boolean(),

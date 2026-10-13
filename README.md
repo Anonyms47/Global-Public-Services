@@ -103,6 +103,10 @@ Si une base de démonstration a servi de base réelle : **Paramètres → Donné
 - **Notifications** : aucun envoi automatique (WhatsApp, SMS, e-mail) ; les messages sont préparés pour être envoyés par GPS.
 - **Paiement en ligne** : volontairement absent de cette version.
 
+## Contenus proposés
+
+Tous les textes du site ont une proposition rédigée (présentation, histoire, retrait, livraison, garantie, retours, paiement, reçus, transfert d'argent) : bouton **« Utiliser la proposition GPS »** dans Paramètres et Vitrine & services. Le fichier [`docs/kit-contenu-gps.md`](docs/kit-contenu-gps.md) les regroupe, avec les textes WhatsApp Business (profil, accueil, absence, réponses rapides), Google Business, réseaux sociaux, un modèle de fiche produit et un guide photo. Aucun fait n'y est inventé : les éléments à compléter sont entre crochets.
+
 ## Informations GPS à fournir ou valider
 
 Logo original (fourni ; version vectorielle souhaitable) · numéro WhatsApp · téléphone · e-mail · adresse et lien d'itinéraire · horaires · photo de la boutique et du point de service · texte de présentation · services de transfert réellement proposés (opérateurs, opérations, horaires) · modes de réception, zones et frais de livraison · garantie · retours · moyens de paiement · mentions légales et raison sociale (reçus, conditions de vente, confidentialité) · catalogue réel : produits, marques, photos, variantes, prix, coûts d'achat, stocks, seuils · comptes de l'équipe et rôles.

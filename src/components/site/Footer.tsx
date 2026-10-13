@@ -70,7 +70,11 @@ export function Footer({ settings, categories }: { settings: Settings; categorie
       </div>
       <div className="border-t border-white/15">
         <p className="container-site flex flex-wrap justify-between gap-2 py-5 text-[13px] text-white/70">
-          <span>© {new Date().getFullYear()} GPS — Global Public Services</span>
+          <span>
+            © {new Date().getFullYear()} GPS — Global Public Services
+            {c.legalName ? ` · ${c.legalName}` : ""}
+            {c.legalId ? ` · ${c.legalId}` : ""}
+          </span>
           <span>Commandes préparées sur WhatsApp · aucun paiement en ligne</span>
         </p>
       </div>

@@ -34,9 +34,13 @@ export default async function AboutPage() {
               disponibilité et vous confirme le total et la réception. Aucun paiement n&apos;est demandé en ligne.
             </p>
             <h2>Notre histoire</h2>
-            <p>
-              <ToConfirm label="Texte de présentation à fournir par GPS" />
-            </p>
+            {c.aboutText ? (
+              c.aboutText.split(/\n{2,}/).map((para, i) => <p key={i}>{para}</p>)
+            ) : (
+              <p>
+                <ToConfirm label="Texte de présentation à fournir par GPS" />
+              </p>
+            )}
           </Prose>
           <Link href="/boutique" className="btn btn-primary mt-8">
             Voir la boutique

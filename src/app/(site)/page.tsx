@@ -4,18 +4,11 @@ import { siteContext } from "@/server/context";
 import { listCategories, publishedProducts, type PublicProduct } from "@/server/domain/catalog";
 import { listServices } from "@/server/domain/services";
 import { Ribbon } from "@/components/brand/Ribbon";
+import { BrandPanel } from "@/components/brand/BrandPanel";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductImage } from "@/components/shop/ProductImage";
 import { Price } from "@/components/shop/Price";
-import {
-  IconArrowRight,
-  IconClock,
-  IconPhone,
-  IconPin,
-  IconWhatsApp,
-  IconSwap,
-  IconStore,
-} from "@/components/ui/icons";
+import { IconArrowRight, IconClock, IconPhone, IconPin, IconWhatsApp, IconSwap } from "@/components/ui/icons";
 import { whatsappLink } from "@/lib/whatsapp";
 
 function SectionHead({
@@ -376,11 +369,7 @@ export default async function HomePage() {
                 className="aspect-[7/5] w-full rounded-[6px] object-cover"
               />
             ) : (
-              <div className="relative flex aspect-[16/7] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[6px] border-2 border-dashed border-line bg-paper-deep text-center">
-                <IconStore size={40} className="text-ink-mute" />
-                <p className="max-w-xs px-4 text-ink-mute">Photo de la boutique GPS à fournir</p>
-                <Ribbon className="absolute bottom-6 left-0 h-24 w-full opacity-40" />
-              </div>
+              <BrandPanel caption="Photo de la boutique à venir" className="aspect-[16/9] w-full lg:aspect-[7/5]" />
             )}
           </div>
           <div className="lg:col-span-5">
