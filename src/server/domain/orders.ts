@@ -7,11 +7,9 @@ import { optionsLabel } from "@/lib/format";
 
 export type Channel = "whatsapp" | "boutique" | "telephone" | "autre";
 export type OrderStatus = "confirmed" | "completed" | "cancelled";
-export type Fulfillment =
-  "to_prepare" | "ready" | "out_for_delivery" | "handed_over";
+export type Fulfillment = "to_prepare" | "ready" | "out_for_delivery" | "handed_over";
 export type Reception = "pickup" | "delivery" | "immediate";
-export type PaymentMethod =
-  "cash" | "mobile_money" | "card" | "bank_transfer" | "other";
+export type PaymentMethod = "cash" | "mobile_money" | "card" | "bank_transfer" | "other";
 
 export const channelLabels: Record<Channel, string> = {
   whatsapp: "WhatsApp",
@@ -73,23 +71,18 @@ interface Actor {
 }
 
 async function nextReference(tx: Db, at: Date) {
-  const r = await tx.one<{ n: number }>(
-    "select nextval('order_number_seq')::int as n",
-  );
+  const r = await tx.one<{ n: number }>("select nextval('order_number_seq')::int as n");
   return `GPS-${at.getFullYear()}-${String(r!.n).padStart(5, "0")}`;
 }
 
-async function event(
-  tx: Db,
-  orderId: string,
-  kind: string,
-  message: string,
-  userId: string | null,
-) {
-  await tx.query(
-    "insert into order_events (id, order_id, kind, message, user_id) values ($1,$2,$3,$4,$5)",
-    [newId(), orderId, kind, message, userId],
-  );
+async function event(tx: Db, orderId: string, kind: string, message: string, userId: string | null) {
+  await tx.query("insert into order_events (id, order_id, kind, message, user_id) values ($1,$2,$3,$4,$5)", [
+    newId(),
+    orderId,
+    kind,
+    message,
+    userId,
+  ]);
 }
 
 async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
@@ -99,10 +92,7 @@ async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
     if (!Number.isInteger(l.quantity) || l.quantity < 1)
       fail("validation", "Les quantités doivent être des entiers positifs.");
     const prev = merged.get(l.variantId);
-    merged.set(
-      l.variantId,
-      prev ? { ...prev, quantity: prev.quantity + l.quantity } : { ...l },
-    );
+    merged.set(l.variantId, prev ? { ...prev, quantity: prev.quantity + l.quantity } : { ...l });
   }
   const ids = [...merged.keys()];
   const variants = await tx.query<{
@@ -121,17 +111,13 @@ async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
        from variants v join products p on p.id = v.product_id where v.id = any($1)`,
     [ids],
   );
-  const promos = await tx.query<Promotion>(
-    "select * from promotions where product_id = any($1) and active",
-    [variants.map((v) => v.product_id)],
-  );
+  const promos = await tx.query<Promotion>("select * from promotions where product_id = any($1) and active", [
+    variants.map((v) => v.product_id),
+  ]);
   return ids.map((id, position) => {
     const v = variants.find((x) => x.id === id);
     if (!v || !v.active || v.status === "archived")
-      return fail(
-        "validation",
-        "Un article n'est plus disponible au catalogue.",
-      );
+      return fail("validation", "Un article n'est plus disponible au catalogue.");
     const l = merged.get(id)!;
     const promo = bestPromo(
       promos.filter((p) => p.product_id === v.product_id),
@@ -140,8 +126,7 @@ async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
     );
     const catalogPrice = promo ? discounted(v.price, promo) : v.price;
     const unitPrice = l.unitPrice ?? catalogPrice;
-    if (!Number.isInteger(unitPrice) || unitPrice < 0)
-      fail("validation", `Prix invalide pour ${v.sku}.`);
+    if (!Number.isInteger(unitPrice) || unitPrice < 0) fail("validation", `Prix invalide pour ${v.sku}.`);
     return {
       variantId: id,
       productId: v.product_id,
@@ -161,12 +146,7 @@ async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
  * ou une vente immédiate en boutique. Commande, lignes, réservation ou sortie
  * de stock, paiement et chronologie sont écrits dans une seule transaction.
  */
-export async function createOrder(
-  db: Db,
-  actor: Actor,
-  input: OrderInput,
-  now = new Date(),
-) {
+export async function createOrder(db: Db, actor: Actor, input: OrderInput, now = new Date()) {
   const immediate = input.reception === "immediate";
   return db.tx(async (tx) => {
     const dup = await tx.one<{ id: string; reference: string }>(
@@ -187,32 +167,25 @@ export async function createOrder(
       });
     }
     if (customerId) {
-      const c = await tx.one<{ name: string; phone: string }>(
-        "select name, phone from customers where id = $1",
-        [customerId],
-      );
+      const c = await tx.one<{ name: string; phone: string }>("select name, phone from customers where id = $1", [
+        customerId,
+      ]);
       if (!c) fail("validation", "Client introuvable.");
       customerName = c!.name;
       customerPhone = c!.phone;
     }
     if (!immediate && !customerName) {
-      fail(
-        "validation",
-        "Indiquez le client : ses coordonnées sont nécessaires pour une commande à préparer.",
-        { customer: "Obligatoire." },
-      );
+      fail("validation", "Indiquez le client : ses coordonnées sont nécessaires pour une commande à préparer.", {
+        customer: "Obligatoire.",
+      });
     }
     if (input.reception === "delivery" && !input.deliveryAddress?.trim()) {
       fail("validation", "Indiquez l'adresse de livraison.", {
         deliveryAddress: "Obligatoire pour une livraison.",
       });
     }
-    const deliveryFee =
-      input.reception === "delivery" ? (input.deliveryFee ?? null) : 0;
-    if (
-      deliveryFee !== null &&
-      (!Number.isInteger(deliveryFee) || deliveryFee < 0)
-    )
+    const deliveryFee = input.reception === "delivery" ? (input.deliveryFee ?? null) : 0;
+    if (deliveryFee !== null && (!Number.isInteger(deliveryFee) || deliveryFee < 0))
       fail("validation", "Frais de livraison invalides.");
     const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
 
@@ -328,11 +301,7 @@ async function insertPayment(
     [newId(), orderId, kind, method, amount, note, reversesId, actor.id],
   );
   const verb =
-    kind === "payment"
-      ? "Encaissement"
-      : kind === "refund"
-        ? "Remboursement"
-        : "Annulation d'un encaissement";
+    kind === "payment" ? "Encaissement" : kind === "refund" ? "Remboursement" : "Annulation d'un encaissement";
   await event(
     tx,
     orderId,
@@ -364,20 +333,9 @@ export interface OrderSummary {
 }
 
 export function money(
-  o: Pick<
-    OrderSummary,
-    | "subtotal"
-    | "delivery_fee"
-    | "returned_value"
-    | "paid"
-    | "refunded"
-    | "status"
-  >,
+  o: Pick<OrderSummary, "subtotal" | "delivery_fee" | "returned_value" | "paid" | "refunded" | "status">,
 ) {
-  const due =
-    o.status === "cancelled"
-      ? 0
-      : o.subtotal - o.returned_value + (o.delivery_fee ?? 0);
+  const due = o.status === "cancelled" ? 0 : o.subtotal - o.returned_value + (o.delivery_fee ?? 0);
   const net = o.paid - o.refunded;
   const balance = due - net;
   let payment: "unpaid" | "partial" | "paid" | "to_refund" | "none";
@@ -408,15 +366,7 @@ const summarySelect = `
     from orders o`;
 
 export type OrderView =
-  | "a-preparer"
-  | "pretes"
-  | "en-livraison"
-  | "remises"
-  | "annulees"
-  | "toutes"
-  | "retraits"
-  | "livraisons"
-  | "solde";
+  "a-preparer" | "pretes" | "en-livraison" | "remises" | "annulees" | "toutes" | "retraits" | "livraisons" | "solde";
 
 export async function listOrders(
   db: Db,
@@ -432,9 +382,7 @@ export async function listOrders(
       where.push("o.status = 'confirmed' and o.fulfillment = 'ready'");
       break;
     case "retraits":
-      where.push(
-        "o.status = 'confirmed' and o.fulfillment = 'ready' and o.reception = 'pickup'",
-      );
+      where.push("o.status = 'confirmed' and o.fulfillment = 'ready' and o.reception = 'pickup'");
       break;
     case "livraisons":
       where.push(
@@ -442,9 +390,7 @@ export async function listOrders(
       );
       break;
     case "en-livraison":
-      where.push(
-        "o.status = 'confirmed' and o.fulfillment = 'out_for_delivery'",
-      );
+      where.push("o.status = 'confirmed' and o.fulfillment = 'out_for_delivery'");
       break;
     case "remises":
       where.push("o.status = 'completed'");
@@ -472,9 +418,7 @@ export async function listOrders(
     params,
   );
   const out = rows.map((r) => ({ ...r, ...money(r) }));
-  return opts.view === "solde"
-    ? out.filter((o) => o.balance > 0 && o.status !== "cancelled")
-    : out;
+  return opts.view === "solde" ? out.filter((o) => o.balance > 0 && o.status !== "cancelled") : out;
 }
 
 export async function getOrder(db: Db, id: string) {
@@ -545,10 +489,7 @@ export function nextStep(
   if (o.fulfillment === "to_prepare")
     return {
       to: "ready",
-      label:
-        o.reception === "delivery"
-          ? "Marquer prête à livrer"
-          : "Marquer prête au retrait",
+      label: o.reception === "delivery" ? "Marquer prête à livrer" : "Marquer prête au retrait",
     };
   if (o.fulfillment === "ready" && o.reception === "delivery")
     return { to: "out_for_delivery", label: "Marquer en livraison" };
@@ -564,20 +505,12 @@ async function lockOrder(tx: Db, id: string) {
     status: OrderStatus;
     fulfillment: Fulfillment;
     reception: Reception;
-  }>(
-    "select id, reference, status, fulfillment, reception from orders where id = $1 for update",
-    [id],
-  );
+  }>("select id, reference, status, fulfillment, reception from orders where id = $1 for update", [id]);
   if (!o) return fail("not_found", "Commande introuvable.");
   return o;
 }
 
-export async function advanceOrder(
-  db: Db,
-  actor: Actor,
-  id: string,
-  to: Fulfillment,
-) {
+export async function advanceOrder(db: Db, actor: Actor, id: string, to: Fulfillment) {
   return db.tx(async (tx) => {
     const o = await lockOrder(tx, id);
     const step = nextStep(o);
@@ -615,27 +548,13 @@ export async function advanceOrder(
         actor.id,
       );
     } else {
-      await tx.query(
-        "update orders set fulfillment = $2, updated_at = now() where id = $1",
-        [id, to],
-      );
-      await event(
-        tx,
-        id,
-        to,
-        `Étape : ${fulfillmentLabels[to]} (${actor.name}).`,
-        actor.id,
-      );
+      await tx.query("update orders set fulfillment = $2, updated_at = now() where id = $1", [id, to]);
+      await event(tx, id, to, `Étape : ${fulfillmentLabels[to]} (${actor.name}).`, actor.id);
     }
   });
 }
 
-export async function cancelOrder(
-  db: Db,
-  actor: Actor,
-  id: string,
-  reason: string,
-) {
+export async function cancelOrder(db: Db, actor: Actor, id: string, reason: string) {
   if (!reason.trim())
     fail("validation", "Indiquez le motif d'annulation.", {
       reason: "Obligatoire.",
@@ -661,10 +580,9 @@ export async function cancelOrder(
         userId: actor.id,
       });
     }
-    await tx.query(
-      "update orders set status = 'cancelled', cancelled_at = now(), updated_at = now() where id = $1",
-      [id],
-    );
+    await tx.query("update orders set status = 'cancelled', cancelled_at = now(), updated_at = now() where id = $1", [
+      id,
+    ]);
     await event(
       tx,
       id,
@@ -683,25 +601,14 @@ export async function recordPayment(
 ) {
   return db.tx(async (tx) => {
     const o = await lockOrder(tx, orderId);
-    if (o.status === "cancelled")
-      fail("conflict", "Commande annulée : aucun encaissement possible.");
+    if (o.status === "cancelled") fail("conflict", "Commande annulée : aucun encaissement possible.");
     const full = await getOrder(tx, orderId);
     if (full && input.amount > full.balance && !full.feeUnknown) {
-      fail(
-        "validation",
-        `Le montant dépasse le solde restant (${full.balance.toLocaleString("fr-FR")} FCFA).`,
-        { amount: "Supérieur au solde." },
-      );
+      fail("validation", `Le montant dépasse le solde restant (${full.balance.toLocaleString("fr-FR")} FCFA).`, {
+        amount: "Supérieur au solde.",
+      });
     }
-    await insertPayment(
-      tx,
-      actor,
-      orderId,
-      "payment",
-      input.method,
-      input.amount,
-      input.note ?? "",
-    );
+    await insertPayment(tx, actor, orderId, "payment", input.method, input.amount, input.note ?? "");
   });
 }
 
@@ -720,30 +627,15 @@ export async function refund(
     const full = await getOrder(tx, orderId);
     if (!full) return fail("not_found", "Commande introuvable.");
     if (input.amount > full.net)
-      fail(
-        "validation",
-        `Le remboursement dépasse les sommes encaissées (${full.net.toLocaleString("fr-FR")} FCFA).`,
-        { amount: "Trop élevé." },
-      );
-    await insertPayment(
-      tx,
-      actor,
-      orderId,
-      "refund",
-      input.method,
-      input.amount,
-      input.note.trim(),
-    );
+      fail("validation", `Le remboursement dépasse les sommes encaissées (${full.net.toLocaleString("fr-FR")} FCFA).`, {
+        amount: "Trop élevé.",
+      });
+    await insertPayment(tx, actor, orderId, "refund", input.method, input.amount, input.note.trim());
   });
 }
 
 /** Corrige un encaissement saisi par erreur : contre-passation, l'original reste visible. */
-export async function reversePayment(
-  db: Db,
-  actor: Actor,
-  paymentId: string,
-  reason: string,
-) {
+export async function reversePayment(db: Db, actor: Actor, paymentId: string, reason: string) {
   if (!reason.trim())
     fail("validation", "Indiquez le motif de la correction.", {
       reason: "Obligatoire.",
@@ -756,33 +648,14 @@ export async function reversePayment(
       method: PaymentMethod;
       amount: number;
     }>("select * from payments where id = $1 for update", [paymentId]);
-    if (!p || p.kind !== "payment")
-      return fail("not_found", "Encaissement introuvable.");
-    const already = await tx.one(
-      "select 1 from payments where reverses_id = $1",
-      [paymentId],
-    );
+    if (!p || p.kind !== "payment") return fail("not_found", "Encaissement introuvable.");
+    const already = await tx.one("select 1 from payments where reverses_id = $1", [paymentId]);
     if (already) fail("conflict", "Cet encaissement a déjà été corrigé.");
-    await insertPayment(
-      tx,
-      actor,
-      p.order_id,
-      "reversal",
-      p.method,
-      p.amount,
-      `Correction : ${reason.trim()}`,
-      p.id,
-    );
+    await insertPayment(tx, actor, p.order_id, "reversal", p.method, p.amount, `Correction : ${reason.trim()}`, p.id);
   });
 }
 
-export async function correctDeliveryFee(
-  db: Db,
-  actor: Actor,
-  orderId: string,
-  fee: number | null,
-  reason: string,
-) {
+export async function correctDeliveryFee(db: Db, actor: Actor, orderId: string, fee: number | null, reason: string) {
   if (!reason.trim())
     fail("validation", "Indiquez le motif de la correction.", {
       reason: "Obligatoire.",
@@ -793,18 +666,11 @@ export async function correctDeliveryFee(
     const o = await tx.one<{
       delivery_fee: number | null;
       reception: Reception;
-    }>("select delivery_fee, reception from orders where id = $1 for update", [
-      orderId,
-    ]);
+    }>("select delivery_fee, reception from orders where id = $1 for update", [orderId]);
     if (!o) return fail("not_found", "Commande introuvable.");
-    if (o.reception !== "delivery")
-      fail("validation", "Cette commande n'est pas en livraison.");
-    await tx.query(
-      "update orders set delivery_fee = $2, updated_at = now() where id = $1",
-      [orderId, fee],
-    );
-    const fmt = (v: number | null) =>
-      v === null ? "à confirmer" : `${v.toLocaleString("fr-FR")} FCFA`;
+    if (o.reception !== "delivery") fail("validation", "Cette commande n'est pas en livraison.");
+    await tx.query("update orders set delivery_fee = $2, updated_at = now() where id = $1", [orderId, fee]);
+    const fmt = (v: number | null) => (v === null ? "à confirmer" : `${v.toLocaleString("fr-FR")} FCFA`);
     await event(
       tx,
       orderId,
@@ -815,14 +681,8 @@ export async function correctDeliveryFee(
   });
 }
 
-export async function addOrderNote(
-  db: Db,
-  actor: Actor,
-  orderId: string,
-  note: string,
-) {
-  if (!note.trim())
-    fail("validation", "La note est vide.", { note: "Obligatoire." });
+export async function addOrderNote(db: Db, actor: Actor, orderId: string, note: string) {
+  if (!note.trim()) fail("validation", "La note est vide.", { note: "Obligatoire." });
   await event(db, orderId, "note", note.trim(), actor.id);
 }
 
@@ -846,15 +706,10 @@ export async function processReturn(
       reason: "Obligatoire.",
     });
   const chosen = input.lines.filter((l) => l.quantity > 0);
-  if (!chosen.length)
-    fail("validation", "Sélectionnez au moins un article retourné.");
+  if (!chosen.length) fail("validation", "Sélectionnez au moins un article retourné.");
   return db.tx(async (tx) => {
     const o = await lockOrder(tx, orderId);
-    if (o.status !== "completed")
-      fail(
-        "conflict",
-        "Un retour ne concerne que des articles déjà remis au client.",
-      );
+    if (o.status !== "completed") fail("conflict", "Un retour ne concerne que des articles déjà remis au client.");
     for (const c of chosen) {
       const l = await tx.one<{
         id: string;
@@ -862,24 +717,18 @@ export async function processReturn(
         quantity: number;
         returned_quantity: number;
         sku: string;
-      }>(
-        "select * from order_lines where id = $1 and order_id = $2 for update",
-        [c.lineId, orderId],
-      );
+      }>("select * from order_lines where id = $1 and order_id = $2 for update", [c.lineId, orderId]);
       if (!l) return fail("not_found", "Ligne introuvable.");
-      if (
-        !Number.isInteger(c.quantity) ||
-        c.quantity > l.quantity - l.returned_quantity
-      ) {
+      if (!Number.isInteger(c.quantity) || c.quantity > l.quantity - l.returned_quantity) {
         fail(
           "validation",
           `Réf. ${l.sku} : au plus ${l.quantity - l.returned_quantity} article(s) peuvent être retournés.`,
         );
       }
-      await tx.query(
-        "update order_lines set returned_quantity = returned_quantity + $2 where id = $1",
-        [l.id, c.quantity],
-      );
+      await tx.query("update order_lines set returned_quantity = returned_quantity + $2 where id = $1", [
+        l.id,
+        c.quantity,
+      ]);
       await applyMovement(
         tx,
         input.resellable
@@ -910,8 +759,7 @@ export async function processReturn(
     );
     if (input.refund && input.refund.amount > 0) {
       const full = await getOrder(tx, orderId);
-      if (full && input.refund.amount > full.net)
-        fail("validation", "Le remboursement dépasse les sommes encaissées.");
+      if (full && input.refund.amount > full.net) fail("validation", "Le remboursement dépasse les sommes encaissées.");
       await insertPayment(
         tx,
         actor,
@@ -922,9 +770,7 @@ export async function processReturn(
         `Retour : ${input.reason.trim()}`,
       );
     }
-    await tx.query("update orders set updated_at = now() where id = $1", [
-      orderId,
-    ]);
+    await tx.query("update orders set updated_at = now() where id = $1", [orderId]);
   });
 }
 

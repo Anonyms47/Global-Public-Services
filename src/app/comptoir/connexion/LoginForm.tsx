@@ -9,10 +9,7 @@ export function LoginForm({ suite }: { suite: string }) {
     <form action={action} className="mt-6 grid gap-5">
       <input type="hidden" name="suite" value={suite} />
       {state?.error ? (
-        <p
-          role="alert"
-          className="bg-gps-red-soft text-gps-red-ink rounded-[6px] p-3 text-[15px] font-semibold"
-        >
+        <p role="alert" className="rounded-[6px] bg-gps-red-soft p-3 text-[15px] font-semibold text-gps-red-ink">
           {state.error}
         </p>
       ) : null}

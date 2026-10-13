@@ -12,9 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
   const { db, settings, demo } = await siteContext();
-  const categories = (await listCategories(db)).filter(
-    (c) => c.product_count > 0,
-  );
+  const categories = (await listCategories(db)).filter((c) => c.product_count > 0);
   return (
     <>
       {demo ? <DemoBanner /> : null}

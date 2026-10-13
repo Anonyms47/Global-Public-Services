@@ -27,11 +27,7 @@ function read(): CartItem[] {
   try {
     const raw = window.localStorage.getItem(KEY);
     const parsed = raw ? (JSON.parse(raw) as CartItem[]) : [];
-    cache = Array.isArray(parsed)
-      ? parsed.filter(
-          (i) => i && typeof i.variantId === "string" && i.quantity > 0,
-        )
-      : [];
+    cache = Array.isArray(parsed) ? parsed.filter((i) => i && typeof i.variantId === "string" && i.quantity > 0) : [];
   } catch {
     cache = [];
   }
@@ -82,21 +78,13 @@ export const cart = {
     const existing = items.find((i) => i.variantId === item.variantId);
     const quantity = Math.min(max, (existing?.quantity ?? 0) + item.quantity);
     const next = existing
-      ? items.map((i) =>
-          i.variantId === item.variantId ? { ...i, ...item, quantity } : i,
-        )
+      ? items.map((i) => (i.variantId === item.variantId ? { ...i, ...item, quantity } : i))
       : [...items, { ...item, quantity, addedAt: Date.now() }];
     write(next);
     return quantity;
   },
   setQuantity(variantId: string, quantity: number) {
-    write(
-      read().map((i) =>
-        i.variantId === variantId
-          ? { ...i, quantity: Math.max(1, Math.min(99, quantity)) }
-          : i,
-      ),
-    );
+    write(read().map((i) => (i.variantId === variantId ? { ...i, quantity: Math.max(1, Math.min(99, quantity)) } : i)));
   },
   remove(variantId: string) {
     const items = read();

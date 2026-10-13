@@ -1,11 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { siteContext } from "@/server/context";
-import {
-  listCategories,
-  publishedProducts,
-  type PublicProduct,
-} from "@/server/domain/catalog";
+import { listCategories, publishedProducts, type PublicProduct } from "@/server/domain/catalog";
 import { listServices } from "@/server/domain/services";
 import { Ribbon } from "@/components/brand/Ribbon";
 import { ProductCard } from "@/components/shop/ProductCard";
@@ -36,14 +32,12 @@ function SectionHead({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <p className="eyebrow text-gps-red-ink flex items-center gap-3">
-          <span className="tabular text-ink">{index}</span>
-          <span className="bg-gps-red h-px w-8" aria-hidden="true" />
+        <p className="eyebrow flex items-center gap-3 text-gps-red-ink">
+          <span className="text-ink tabular">{index}</span>
+          <span className="h-px w-8 bg-gps-red" aria-hidden="true" />
           {eyebrow}
         </p>
-        <h2 className="font-display mt-3 text-[44px] leading-[0.95] font-bold uppercase md:text-[64px]">
-          {title}
-        </h2>
+        <h2 className="mt-3 font-display text-[44px] leading-[0.95] font-bold uppercase md:text-[64px]">{title}</h2>
       </div>
       {children}
     </div>
@@ -53,14 +47,9 @@ function SectionHead({
 function optionSummary(p: PublicProduct) {
   return p.axes
     .map((axis) => {
-      const values = [
-        ...new Set(p.variants.map((v) => v.options[axis]).filter(Boolean)),
-      ];
-      if (axis === "Pointure" && values.length > 2)
-        return `Pointures ${values[0]} à ${values[values.length - 1]}`;
-      return values.length > 1
-        ? `${values.length} ${axis.toLowerCase()}s`
-        : `${axis} : ${values[0]}`;
+      const values = [...new Set(p.variants.map((v) => v.options[axis]).filter(Boolean))];
+      if (axis === "Pointure" && values.length > 2) return `Pointures ${values[0]} à ${values[values.length - 1]}`;
+      return values.length > 1 ? `${values.length} ${axis.toLowerCase()}s` : `${axis} : ${values[0]}`;
     })
     .join(" · ");
 }
@@ -75,16 +64,12 @@ export default async function HomePage() {
   const c = settings.company;
 
   const hero =
-    products.find((p) => p.id === settings.storefront.heroProductId) ??
-    products.find((p) => p.featured) ??
-    products[0];
+    products.find((p) => p.id === settings.storefront.heroProductId) ?? products.find((p) => p.featured) ?? products[0];
   const selection = products
     .filter((p) => p.featured && p.id !== hero?.id)
     .sort((a, b) => a.featuredPosition - b.featuredPosition)
     .slice(0, 5);
-  const focus =
-    products.find((p) => p.id === settings.storefront.focusProductId) ??
-    selection[selection.length - 1];
+  const focus = products.find((p) => p.id === settings.storefront.focusProductId) ?? selection[selection.length - 1];
   const univers = categories.filter((cat) => cat.product_count > 0);
   const waGeneral = whatsappLink(c.whatsapp, "Bonjour GPS, j'ai une question.");
   const heroImage = hero?.images[0];
@@ -92,26 +77,20 @@ export default async function HomePage() {
   return (
     <>
       {/* ——— Vitrine ——— */}
-      <section
-        aria-labelledby="titre-vitrine"
-        className="relative overflow-hidden"
-      >
+      <section aria-labelledby="titre-vitrine" className="relative overflow-hidden">
         <div className="container-site grid gap-6 pt-6 pb-12 md:pt-12 lg:grid-cols-12 lg:gap-10 lg:pb-20">
           <div className="order-1 flex flex-col justify-center lg:col-span-5">
-            <p className="eyebrow text-gps-blue">
-              GPS — Global Public Services
-            </p>
+            <p className="eyebrow text-gps-blue">GPS — Global Public Services</p>
             <h1
               id="titre-vitrine"
-              className="font-display mt-4 text-[56px] leading-[0.88] font-extrabold uppercase sm:text-[72px] xl:text-[96px]"
+              className="mt-4 font-display text-[56px] leading-[0.88] font-extrabold uppercase sm:text-[72px] xl:text-[96px]"
             >
               La bonne adresse.
-              <span className="text-gps-red block">Le bon produit.</span>
+              <span className="block text-gps-red">Le bon produit.</span>
             </h1>
-            <p className="text-ink-soft mt-6 max-w-[46ch] text-[17px] leading-relaxed">
-              Téléphones, écouteurs, casques, chargeurs, accessoires, lunettes,
-              chaussures et services de transfert d&apos;argent. Choisissez en
-              ligne, envoyez votre commande sur WhatsApp, GPS vous confirme.
+            <p className="mt-6 max-w-[46ch] text-[17px] leading-relaxed text-ink-soft">
+              Téléphones, écouteurs, casques, chargeurs, accessoires, lunettes, chaussures et services de transfert
+              d&apos;argent. Choisissez en ligne, envoyez votre commande sur WhatsApp, GPS vous confirme.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/boutique" className="btn btn-primary">
@@ -131,7 +110,7 @@ export default async function HomePage() {
               />
               <Link
                 href={`/produits/${hero.slug}`}
-                className="group bg-paper-deep relative block overflow-hidden rounded-[6px]"
+                className="group relative block overflow-hidden rounded-[6px] bg-paper-deep"
                 aria-label={`${hero.name}, ${hero.brand} — voir l'article`}
               >
                 {heroImage ? (
@@ -146,12 +125,10 @@ export default async function HomePage() {
                     className="aspect-[4/3] w-full object-cover object-[50%_40%] sm:aspect-[16/11] lg:aspect-[4/4.2]"
                   />
                 ) : null}
-                <div className="bg-card md:bg-paper/95 flex flex-wrap items-end justify-between gap-3 p-4 md:absolute md:bottom-6 md:left-6 md:max-w-sm md:rounded-[6px]">
+                <div className="flex flex-wrap items-end justify-between gap-3 bg-card p-4 md:absolute md:bottom-6 md:left-6 md:max-w-sm md:rounded-[6px] md:bg-paper/95">
                   <div>
                     <p className="eyebrow text-gps-red-ink">En vitrine</p>
-                    <p className="font-display mt-1 text-[28px] leading-none font-bold uppercase">
-                      {hero.name}
-                    </p>
+                    <p className="mt-1 font-display text-[28px] leading-none font-bold uppercase">{hero.name}</p>
                     <Price
                       price={hero.minPrice}
                       basePrice={hero.promo ? hero.minBasePrice : undefined}
@@ -164,15 +141,15 @@ export default async function HomePage() {
                   </span>
                 </div>
                 {hero.isDemo ? (
-                  <span className="bg-ink/70 absolute top-3 right-3 rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
+                  <span className="absolute top-3 right-3 rounded-[4px] bg-ink/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
                     Illustration
                   </span>
                 ) : null}
               </Link>
             </div>
           ) : (
-            <div className="border-line order-2 flex aspect-[4/3] items-center justify-center rounded-[6px] border border-dashed lg:col-span-7">
-              <p className="text-ink-mute max-w-xs text-center">
+            <div className="order-2 flex aspect-[4/3] items-center justify-center rounded-[6px] border border-dashed border-line lg:col-span-7">
+              <p className="max-w-xs text-center text-ink-mute">
                 La vedette apparaîtra ici dès qu&apos;un produit sera publié.
               </p>
             </div>
@@ -182,20 +159,12 @@ export default async function HomePage() {
 
       {/* ——— 01 Univers ——— */}
       {univers.length ? (
-        <section
-          aria-labelledby="titre-univers"
-          className="border-line border-t"
-        >
+        <section aria-labelledby="titre-univers" className="border-t border-line">
           <div className="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
             <div className="lg:col-span-4">
-              <SectionHead
-                index="01"
-                eyebrow="Univers"
-                title="Tout sous un même toit"
-              />
-              <p className="text-ink-soft mt-4 max-w-sm">
-                Du téléphone à la paire de baskets : choisissez un univers pour
-                voir les articles disponibles.
+              <SectionHead index="01" eyebrow="Univers" title="Tout sous un même toit" />
+              <p className="mt-4 max-w-sm text-ink-soft">
+                Du téléphone à la paire de baskets : choisissez un univers pour voir les articles disponibles.
               </p>
             </div>
             <ol className="lg:col-span-8" id="titre-univers-liste">
@@ -203,26 +172,21 @@ export default async function HomePage() {
                 Univers produits
               </span>
               {univers.map((cat, i) => {
-                const sample = products.find(
-                  (p) => p.categorySlug === cat.slug,
-                );
+                const sample = products.find((p) => p.categorySlug === cat.slug);
                 return (
-                  <li
-                    key={cat.id}
-                    className="border-line border-b first:border-t"
-                  >
+                  <li key={cat.id} className="border-b border-line first:border-t">
                     <Link
                       href={`/categories/${cat.slug}`}
                       className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3 md:gap-8 md:py-4"
                     >
-                      <span className="tabular text-ink-mute w-8 text-[13px] font-bold">
+                      <span className="w-8 text-[13px] font-bold text-ink-mute tabular">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <span>
-                        <span className="font-display group-hover:text-gps-blue block text-[30px] leading-none font-bold uppercase transition-colors md:text-[44px]">
+                        <span className="block font-display text-[30px] leading-none font-bold uppercase transition-colors group-hover:text-gps-blue md:text-[44px]">
                           {cat.name}
                         </span>
-                        <span className="text-ink-mute mt-1 block text-[13px]">
+                        <span className="mt-1 block text-[13px] text-ink-mute">
                           {cat.product_count} article
                           {cat.product_count > 1 ? "s" : ""}
                         </span>
@@ -238,7 +202,7 @@ export default async function HomePage() {
                             className="h-[60px] w-12 rounded-[4px] object-cover md:h-[90px] md:w-[72px]"
                           />
                         ) : null}
-                        <IconArrowRight className="text-gps-red hidden transition-transform group-hover:translate-x-1 md:block" />
+                        <IconArrowRight className="hidden text-gps-red transition-transform group-hover:translate-x-1 md:block" />
                       </span>
                     </Link>
                   </li>
@@ -253,11 +217,7 @@ export default async function HomePage() {
       {selection.length ? (
         <section aria-labelledby="titre-selection" className="bg-card">
           <div className="container-site py-16 md:py-24">
-            <SectionHead
-              index="02"
-              eyebrow="Sélection GPS"
-              title="Choisis au comptoir"
-            >
+            <SectionHead index="02" eyebrow="Sélection GPS" title="Choisis au comptoir">
               <Link href="/boutique" className="btn btn-outline btn-sm">
                 Toute la boutique <IconArrowRight size={16} />
               </Link>
@@ -275,10 +235,7 @@ export default async function HomePage() {
               </div>
               {selection.slice(1, 5).map((p) => (
                 <div key={p.id} className="lg:col-span-3">
-                  <ProductCard
-                    product={p}
-                    sizes="(max-width: 1024px) 50vw, 25vw"
-                  />
+                  <ProductCard product={p} sizes="(max-width: 1024px) 50vw, 25vw" />
                 </div>
               ))}
             </div>
@@ -288,7 +245,7 @@ export default async function HomePage() {
 
       {/* ——— 03 Focus ——— */}
       {focus ? (
-        <section aria-labelledby="titre-focus" className="border-line border-t">
+        <section aria-labelledby="titre-focus" className="border-t border-line">
           <div className="container-site grid gap-8 py-16 md:py-24 lg:grid-cols-12 lg:items-center lg:gap-16">
             <div className="relative lg:order-2 lg:col-span-7">
               <div className="grid grid-cols-5 gap-3">
@@ -302,9 +259,7 @@ export default async function HomePage() {
                 <div className="col-span-2 mt-16 overflow-hidden rounded-[6px]">
                   <ProductImage
                     src={(focus.images[1] ?? focus.images[0])?.url}
-                    alt={
-                      (focus.images[1] ?? focus.images[0])?.alt ?? focus.name
-                    }
+                    alt={(focus.images[1] ?? focus.images[0])?.alt ?? focus.name}
                     sizes="(max-width: 1024px) 40vw, 25vw"
                   />
                 </div>
@@ -315,15 +270,12 @@ export default async function HomePage() {
               <h2 id="titre-focus" className="sr-only">
                 Focus sur {focus.name}
               </h2>
-              <p className="text-ink-soft mt-5 text-[17px] leading-relaxed">
+              <p className="mt-5 text-[17px] leading-relaxed text-ink-soft">
                 {settings.storefront.focusText || focus.description}
               </p>
-              <dl className="divide-line border-line mt-6 divide-y border-y">
+              <dl className="mt-6 divide-y divide-line border-y border-line">
                 {focus.specs.slice(0, 3).map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex justify-between gap-4 py-3 text-[15px]"
-                  >
+                  <div key={s.label} className="flex justify-between gap-4 py-3 text-[15px]">
                     <dt className="text-ink-mute">{s.label}</dt>
                     <dd className="text-right font-semibold">{s.value}</dd>
                   </div>
@@ -331,9 +283,7 @@ export default async function HomePage() {
                 {optionSummary(focus) ? (
                   <div className="flex justify-between gap-4 py-3 text-[15px]">
                     <dt className="text-ink-mute">Choix</dt>
-                    <dd className="text-right font-semibold">
-                      {optionSummary(focus)}
-                    </dd>
+                    <dd className="text-right font-semibold">{optionSummary(focus)}</dd>
                   </div>
                 ) : null}
               </dl>
@@ -344,15 +294,8 @@ export default async function HomePage() {
                   from={new Set(focus.variants.map((v) => v.price)).size > 1}
                   size="lg"
                 />
-                <Link
-                  href={`/produits/${focus.slug}`}
-                  className="btn btn-primary"
-                >
-                  Choisir{" "}
-                  {focus.axes.includes("Pointure")
-                    ? "ma pointure"
-                    : "mon modèle"}{" "}
-                  <IconArrowRight size={18} />
+                <Link href={`/produits/${focus.slug}`} className="btn btn-primary">
+                  Choisir {focus.axes.includes("Pointure") ? "ma pointure" : "mon modèle"} <IconArrowRight size={18} />
                 </Link>
               </div>
             </div>
@@ -361,46 +304,37 @@ export default async function HomePage() {
       ) : null}
 
       {/* ——— 04 Comptoir services ——— */}
-      <section
-        aria-labelledby="titre-services"
-        className="bg-gps-blue relative overflow-hidden text-white"
-      >
+      <section aria-labelledby="titre-services" className="relative overflow-hidden bg-gps-blue text-white">
         <Ribbon
           tone="white"
           className="pointer-events-none absolute -right-10 bottom-0 h-[70%] w-[80%] opacity-30"
           width={5}
         />
-        <div className="container-site relative grid gap-10 py-16 md:py-24 lg:grid-cols-12">
+        <div className="relative container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <p className="eyebrow flex items-center gap-3 text-white/80">
-              <span className="tabular text-white">04</span>
-              <span className="bg-gps-red h-px w-8" aria-hidden="true" />
+              <span className="text-white tabular">04</span>
+              <span className="h-px w-8 bg-gps-red" aria-hidden="true" />
               Comptoir services
             </p>
             <h2
               id="titre-services"
-              className="font-display mt-3 text-[44px] leading-[0.95] font-bold uppercase md:text-[64px]"
+              className="mt-3 font-display text-[44px] leading-[0.95] font-bold uppercase md:text-[64px]"
             >
               Transfert d&apos;argent,
               <br />
               au comptoir GPS.
             </h2>
             <p className="mt-5 max-w-[48ch] text-[17px] leading-relaxed text-white/85">
-              Envoyer ou recevoir de l&apos;argent se fait en personne, au
-              comptoir. Le site présente le service ; aucune opération
-              n&apos;est réalisée en ligne.
+              Envoyer ou recevoir de l&apos;argent se fait en personne, au comptoir. Le site présente le service ;
+              aucune opération n&apos;est réalisée en ligne.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/services" className="btn btn-light">
                 Voir le service <IconArrowRight size={18} />
               </Link>
               {waGeneral ? (
-                <a
-                  href={waGeneral}
-                  className="btn btn-wa"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={waGeneral} className="btn btn-wa" target="_blank" rel="noopener noreferrer">
                   <IconWhatsApp /> Poser une question
                 </a>
               ) : null}
@@ -408,25 +342,18 @@ export default async function HomePage() {
           </div>
           <ul className="grid gap-3 self-end lg:col-span-5 lg:col-start-8">
             {(services.length ? services : [null]).map((s, i) => (
-              <li
-                key={s?.id ?? i}
-                className="rounded-[6px] border border-white/20 bg-white/5 p-5"
-              >
-                <p className="font-display flex items-center gap-3 text-2xl font-bold uppercase">
+              <li key={s?.id ?? i} className="rounded-[6px] border border-white/20 bg-white/5 p-5">
+                <p className="flex items-center gap-3 font-display text-2xl font-bold uppercase">
                   <IconSwap /> {s?.title ?? "Transfert d'argent"}
                 </p>
                 <dl className="mt-3 grid gap-2 text-[15px]">
                   <div className="flex justify-between gap-4">
                     <dt className="text-white/70">Opérateurs</dt>
-                    <dd className="text-right font-semibold">
-                      {s?.operators || "À confirmer avec GPS"}
-                    </dd>
+                    <dd className="text-right font-semibold">{s?.operators || "À confirmer avec GPS"}</dd>
                   </div>
                   <div className="flex justify-between gap-4">
                     <dt className="text-white/70">Horaires</dt>
-                    <dd className="text-right font-semibold">
-                      {s?.hours || c.hours || "À confirmer avec GPS"}
-                    </dd>
+                    <dd className="text-right font-semibold">{s?.hours || c.hours || "À confirmer avec GPS"}</dd>
                   </div>
                 </dl>
               </li>
@@ -449,25 +376,19 @@ export default async function HomePage() {
                 className="aspect-[7/5] w-full rounded-[6px] object-cover"
               />
             ) : (
-              <div className="border-line bg-paper-deep relative flex aspect-[16/7] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[6px] border-2 border-dashed text-center">
+              <div className="relative flex aspect-[16/7] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[6px] border-2 border-dashed border-line bg-paper-deep text-center">
                 <IconStore size={40} className="text-ink-mute" />
-                <p className="text-ink-mute max-w-xs px-4">
-                  Photo de la boutique GPS à fournir
-                </p>
+                <p className="max-w-xs px-4 text-ink-mute">Photo de la boutique GPS à fournir</p>
                 <Ribbon className="absolute bottom-6 left-0 h-24 w-full opacity-40" />
               </div>
             )}
           </div>
           <div className="lg:col-span-5">
-            <SectionHead
-              index="05"
-              eyebrow="La boutique"
-              title="Passez au comptoir"
-            />
+            <SectionHead index="05" eyebrow="La boutique" title="Passez au comptoir" />
             <h2 id="titre-boutique" className="sr-only">
               La boutique physique
             </h2>
-            <p className="text-ink-soft mt-5 text-[17px] leading-relaxed">
+            <p className="mt-5 text-[17px] leading-relaxed text-ink-soft">
               {c.storeText ||
                 "Un lieu pour voir les produits, poser vos questions, retirer une commande confirmée et utiliser les services de transfert d'argent."}
             </p>
@@ -479,16 +400,9 @@ export default async function HomePage() {
       </section>
 
       {/* ——— 06 Infos pratiques ——— */}
-      <section
-        aria-labelledby="titre-infos"
-        className="border-line bg-card border-t"
-      >
+      <section aria-labelledby="titre-infos" className="border-t border-line bg-card">
         <div className="container-site py-16 md:py-20">
-          <SectionHead
-            index="06"
-            eyebrow="Pratique"
-            title="Commander chez GPS"
-          />
+          <SectionHead index="06" eyebrow="Pratique" title="Commander chez GPS" />
           <h2 id="titre-infos" className="sr-only">
             Informations pratiques
           </h2>
@@ -499,49 +413,31 @@ export default async function HomePage() {
                   "Choisissez",
                   "Variante, quantité : constituez votre panier sur le site. Rien n'est réservé à ce stade.",
                 ],
-                [
-                  "Envoyez",
-                  "Le site prépare un récapitulatif. Vous l'envoyez vous-même sur WhatsApp.",
-                ],
-                [
-                  "GPS confirme",
-                  "GPS vérifie la disponibilité, confirme le total et les modalités de réception.",
-                ],
+                ["Envoyez", "Le site prépare un récapitulatif. Vous l'envoyez vous-même sur WhatsApp."],
+                ["GPS confirme", "GPS vérifie la disponibilité, confirme le total et les modalités de réception."],
               ].map(([t, d], i) => (
-                <li key={t} className="border-gps-red border-t-[3px] pt-4">
-                  <p className="tabular font-display text-gps-blue text-[40px] leading-none font-bold">
-                    {i + 1}
-                  </p>
+                <li key={t} className="border-t-[3px] border-gps-red pt-4">
+                  <p className="font-display text-[40px] leading-none font-bold text-gps-blue tabular">{i + 1}</p>
                   <p className="mt-2 text-lg font-extrabold">{t}</p>
-                  <p className="text-ink-soft mt-1 text-[15px] leading-relaxed">
-                    {d}
-                  </p>
+                  <p className="mt-1 text-[15px] leading-relaxed text-ink-soft">{d}</p>
                 </li>
               ))}
             </ol>
             <dl className="grid gap-5 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
               {[
-                [
-                  IconPin,
-                  "Adresse",
-                  [c.address, c.city].filter(Boolean).join(", "),
-                ],
+                [IconPin, "Adresse", [c.address, c.city].filter(Boolean).join(", ")],
                 [IconClock, "Horaires", c.hours],
                 [IconPhone, "Téléphone", c.phone],
               ].map(([Icon, label, value]) => {
                 const I = Icon as typeof IconPin;
                 return (
                   <div key={label as string} className="flex gap-3">
-                    <I className="text-gps-blue mt-0.5 shrink-0" />
+                    <I className="mt-0.5 shrink-0 text-gps-blue" />
                     <div>
-                      <dt className="text-ink-mute text-[13px] font-bold tracking-wide uppercase">
-                        {label as string}
-                      </dt>
+                      <dt className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">{label as string}</dt>
                       <dd className="mt-0.5 font-semibold">
                         {(value as string) || (
-                          <span className="text-ink-mute font-normal italic">
-                            À confirmer avec GPS
-                          </span>
+                          <span className="font-normal text-ink-mute italic">À confirmer avec GPS</span>
                         )}
                       </dd>
                     </div>

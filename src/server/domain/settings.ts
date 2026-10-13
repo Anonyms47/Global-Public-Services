@@ -75,21 +75,16 @@ type Section = keyof Settings;
 
 export async function ensureBaseSettings(db: Db) {
   for (const key of Object.keys(defaultSettings) as Section[]) {
-    await db.query(
-      "insert into settings (key, value) values ($1, $2) on conflict (key) do nothing",
-      [key, JSON.stringify(defaultSettings[key])],
-    );
+    await db.query("insert into settings (key, value) values ($1, $2) on conflict (key) do nothing", [
+      key,
+      JSON.stringify(defaultSettings[key]),
+    ]);
   }
 }
 
 export async function getSettings(db: Db): Promise<Settings> {
-  const rows = await db.query<{ key: Section; value: unknown }>(
-    "select key, value from settings",
-  );
-  const s = structuredClone(defaultSettings) as unknown as Record<
-    string,
-    unknown
-  >;
+  const rows = await db.query<{ key: Section; value: unknown }>("select key, value from settings");
+  const s = structuredClone(defaultSettings) as unknown as Record<string, unknown>;
   for (const row of rows) {
     if (row.key in s) {
       s[row.key] = { ...(s[row.key] as object), ...(row.value as object) };
@@ -98,11 +93,7 @@ export async function getSettings(db: Db): Promise<Settings> {
   return s as unknown as Settings;
 }
 
-export async function saveSettingsSection<K extends Section>(
-  db: Db,
-  key: K,
-  value: Settings[K],
-) {
+export async function saveSettingsSection<K extends Section>(db: Db, key: K, value: Settings[K]) {
   await db.query(
     `insert into settings (key, value, updated_at) values ($1, $2, now())
      on conflict (key) do update set value = excluded.value, updated_at = now()`,

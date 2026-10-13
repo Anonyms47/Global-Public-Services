@@ -1,10 +1,6 @@
 export default function Loading() {
   return (
-    <div
-      className="container-site py-12"
-      aria-busy="true"
-      aria-label="Chargement"
-    >
+    <div className="container-site py-12" aria-busy="true" aria-label="Chargement">
       <div className="skeleton h-14 w-72" />
       <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (

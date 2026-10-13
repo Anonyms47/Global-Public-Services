@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function ComptoirRoot({ children }: LayoutProps<"/comptoir">) {
-  return <div className="bg-paper min-h-dvh">{children}</div>;
+  return <div className="min-h-dvh bg-paper">{children}</div>;
 }

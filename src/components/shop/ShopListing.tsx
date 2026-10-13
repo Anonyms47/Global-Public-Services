@@ -19,9 +19,7 @@ export function ShopListing({
   categories: { slug: string; name: string; product_count: number }[];
   fixedCategory?: string;
 }) {
-  const scope = fixedCategory
-    ? all.filter((p) => p.categorySlug === fixedCategory)
-    : all;
+  const scope = fixedCategory ? all.filter((p) => p.categorySlug === fixedCategory) : all;
   const results = filterProducts(scope, {
     ...query,
     categorie: fixedCategory ?? query.categorie,
@@ -40,9 +38,7 @@ export function ShopListing({
         categories={
           fixedCategory
             ? []
-            : categories
-                .filter((c) => c.product_count > 0)
-                .map((c) => ({ slug: c.slug, name: c.name }))
+            : categories.filter((c) => c.product_count > 0).map((c) => ({ slug: c.slug, name: c.name }))
         }
         count={results.length}
       />
@@ -55,16 +51,13 @@ export function ShopListing({
           ))}
         </ul>
       ) : (
-        <div className="border-line bg-card mt-8 rounded-[6px] border px-6 py-12 text-center md:py-16">
-          <p className="font-display text-4xl font-bold uppercase">
-            Aucun article ne correspond
-          </p>
-          <p className="text-ink-soft mx-auto mt-3 max-w-md">
+        <div className="mt-8 rounded-[6px] border border-line bg-card px-6 py-12 text-center md:py-16">
+          <p className="font-display text-4xl font-bold uppercase">Aucun article ne correspond</p>
+          <p className="mx-auto mt-3 max-w-md text-ink-soft">
             {query.q ? (
               <>
-                Rien pour « <strong>{query.q}</strong> » avec ces critères.
-                Vérifiez l&apos;orthographe, essayez une marque ou une
-                référence, ou retirez un filtre.
+                Rien pour « <strong>{query.q}</strong> » avec ces critères. Vérifiez l&apos;orthographe, essayez une
+                marque ou une référence, ou retirez un filtre.
               </>
             ) : (
               "Retirez un filtre ou élargissez la fourchette de prix."
@@ -79,10 +72,7 @@ export function ShopListing({
             </Link>
           </div>
           {!fixedCategory && categories.length ? (
-            <ul
-              className="mt-8 flex flex-wrap justify-center gap-2"
-              aria-label="Univers"
-            >
+            <ul className="mt-8 flex flex-wrap justify-center gap-2" aria-label="Univers">
               {categories
                 .filter((c) => c.product_count > 0)
                 .map((c) => (

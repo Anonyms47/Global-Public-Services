@@ -66,28 +66,17 @@ export interface Category {
 
 // ——— Prix ———
 
-export function isPromoRunning(
-  p: Pick<Promotion, "active" | "starts_at" | "ends_at">,
-  now: Date,
-) {
+export function isPromoRunning(p: Pick<Promotion, "active" | "starts_at" | "ends_at">, now: Date) {
   return p.active && new Date(p.starts_at) <= now && now < new Date(p.ends_at);
 }
 
-export function discounted(
-  price: number,
-  promo: Pick<Promotion, "kind" | "value">,
-) {
-  const off =
-    promo.kind === "percent"
-      ? Math.round((price * promo.value) / 100)
-      : promo.value;
+export function discounted(price: number, promo: Pick<Promotion, "kind" | "value">) {
+  const off = promo.kind === "percent" ? Math.round((price * promo.value) / 100) : promo.value;
   return Math.max(0, price - off);
 }
 
 export function promoLabel(p: Pick<Promotion, "kind" | "value">) {
-  return p.kind === "percent"
-    ? `−${p.value} %`
-    : `−${new Intl.NumberFormat("fr-FR").format(p.value)} FCFA`;
+  return p.kind === "percent" ? `−${p.value} %` : `−${new Intl.NumberFormat("fr-FR").format(p.value)} FCFA`;
 }
 
 /** Meilleure promotion en cours pour un produit. */
@@ -95,8 +84,7 @@ export function bestPromo(promos: Promotion[], basePrice: number, now: Date) {
   let best: Promotion | null = null;
   for (const p of promos) {
     if (!isPromoRunning(p, now)) continue;
-    if (!best || discounted(basePrice, p) < discounted(basePrice, best))
-      best = p;
+    if (!best || discounted(basePrice, p) < discounted(basePrice, best)) best = p;
   }
   return best;
 }
@@ -130,11 +118,7 @@ interface VariantRow {
   reserved: number;
 }
 
-async function hydrate(
-  db: Db,
-  rows: ProductRow[],
-  now: Date,
-): Promise<PublicProduct[]> {
+async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicProduct[]> {
   if (!rows.length) return [];
   const ids = rows.map((r) => r.id);
   const [variants, images, promos] = await Promise.all([
@@ -148,14 +132,8 @@ async function hydrate(
       url: string;
       alt: string;
       color: string | null;
-    }>(
-      "select product_id, url, alt, color from product_images where product_id = any($1) order by position",
-      [ids],
-    ),
-    db.query<Promotion>(
-      "select * from promotions where product_id = any($1) and active",
-      [ids],
-    ),
+    }>("select product_id, url, alt, color from product_images where product_id = any($1) order by position", [ids]),
+    db.query<Promotion>("select * from promotions where product_id = any($1) and active", [ids]),
   ]);
   return rows
     .map((r) => {
@@ -186,9 +164,7 @@ async function hydrate(
         featuredPosition: r.featured_position,
         createdAt: new Date(r.created_at),
         isDemo: r.is_demo,
-        images: images
-          .filter((i) => i.product_id === r.id)
-          .map(({ url, alt, color }) => ({ url, alt, color })),
+        images: images.filter((i) => i.product_id === r.id).map(({ url, alt, color }) => ({ url, alt, color })),
         variants: pv,
         promo: promo
           ? {
@@ -212,41 +188,23 @@ const productSelect = `
     from products p left join categories c on c.id = p.category_id`;
 
 export async function publishedProducts(db: Db, now = new Date()) {
-  const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status = 'published' order by p.created_at desc`,
-  );
+  const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' order by p.created_at desc`);
   return hydrate(db, rows, now);
 }
 
 /** Articles vendables au comptoir : publiés ou en brouillon (hors archives). */
 export async function sellableProducts(db: Db, now = new Date()) {
-  const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status <> 'archived' order by p.name`,
-  );
+  const rows = await db.query<ProductRow>(`${productSelect} where p.status <> 'archived' order by p.name`);
   return hydrate(db, rows, now);
 }
 
-export async function publishedProductBySlug(
-  db: Db,
-  slug: string,
-  now = new Date(),
-) {
-  const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status = 'published' and p.slug = $1`,
-    [slug],
-  );
+export async function publishedProductBySlug(db: Db, slug: string, now = new Date()) {
+  const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' and p.slug = $1`, [slug]);
   return (await hydrate(db, rows, now))[0] ?? null;
 }
 
-export async function publishedProductById(
-  db: Db,
-  id: string,
-  now = new Date(),
-) {
-  const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status = 'published' and p.id = $1`,
-    [id],
-  );
+export async function publishedProductById(db: Db, id: string, now = new Date()) {
+  const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' and p.id = $1`, [id]);
   return (await hydrate(db, rows, now))[0] ?? null;
 }
 
@@ -277,22 +235,14 @@ export interface ShopQuery {
   tri?: SortKey;
 }
 
-export const normalize = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+export const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 export function filterProducts(all: PublicProduct[], q: ShopQuery) {
   let list = all;
   if (q.q) {
     const terms = normalize(q.q).split(/\s+/).filter(Boolean);
     list = list.filter((p) => {
-      const hay = normalize(
-        [
-          p.name,
-          p.brand,
-          p.categoryName ?? "",
-          ...p.variants.map((v) => v.sku),
-        ].join(" "),
-      );
+      const hay = normalize([p.name, p.brand, p.categoryName ?? "", ...p.variants.map((v) => v.sku)].join(" "));
       return terms.every((t) => hay.includes(t));
     });
   }
@@ -305,8 +255,7 @@ export function filterProducts(all: PublicProduct[], q: ShopQuery) {
   if (q.promo) list = list.filter((p) => p.promo);
   const sorted = [...list];
   if (q.tri === "prix-asc") sorted.sort((a, b) => a.minPrice - b.minPrice);
-  else if (q.tri === "prix-desc")
-    sorted.sort((a, b) => b.minPrice - a.minPrice);
+  else if (q.tri === "prix-desc") sorted.sort((a, b) => b.minPrice - a.minPrice);
   else sorted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   return sorted;
 }
@@ -314,9 +263,7 @@ export function filterProducts(all: PublicProduct[], q: ShopQuery) {
 /** Facettes calculées sur les données disponibles. */
 export function facets(all: PublicProduct[]) {
   const brands = [...new Set(all.map((p) => p.brand).filter(Boolean))].sort();
-  const conditions = [
-    ...new Set(all.map((p) => p.condition).filter(Boolean) as string[]),
-  ].sort();
+  const conditions = [...new Set(all.map((p) => p.condition).filter(Boolean) as string[])].sort();
   const prices = all.map((p) => p.minPrice);
   return {
     brands,
@@ -327,11 +274,7 @@ export function facets(all: PublicProduct[]) {
   };
 }
 
-export function relatedProducts(
-  all: PublicProduct[],
-  product: PublicProduct,
-  limit = 4,
-) {
+export function relatedProducts(all: PublicProduct[], product: PublicProduct, limit = 4) {
   const others = all.filter((p) => p.id !== product.id);
   const score = (p: PublicProduct) =>
     (p.categorySlug === product.categorySlug ? 2 : 0) +
@@ -367,10 +310,7 @@ export interface AdminProductRow {
   has_sales: boolean;
 }
 
-export async function adminProducts(
-  db: Db,
-  opts: { q?: string; status?: string; category?: string } = {},
-) {
+export async function adminProducts(db: Db, opts: { q?: string; status?: string; category?: string } = {}) {
   const params: unknown[] = [];
   const where: string[] = [];
   if (opts.status && opts.status !== "all") {
@@ -450,10 +390,7 @@ export async function productForEdit(
   id: string,
   opts: { withCosts: boolean },
 ): Promise<EditableProduct | null> {
-  const p = await db.one<Record<string, unknown>>(
-    "select * from products where id = $1",
-    [id],
-  );
+  const p = await db.one<Record<string, unknown>>("select * from products where id = $1", [id]);
   if (!p) return null;
   const [images, variants, sales] = await Promise.all([
     db.query<{ url: string; alt: string; color: string | null }>(
@@ -465,10 +402,7 @@ export async function productForEdit(
          from variants v where product_id = $1 and active order by position`,
       [id],
     ),
-    db.one<{ n: number }>(
-      "select count(*)::int as n from order_lines where product_id = $1",
-      [id],
-    ),
+    db.one<{ n: number }>("select count(*)::int as n from order_lines where product_id = $1", [id]),
   ]);
   return {
     id,
@@ -491,9 +425,7 @@ export async function productForEdit(
       sku: v.sku as string,
       options: v.options as Record<string, string>,
       price: v.price as number,
-      costPrice: opts.withCosts
-        ? ((v.cost_price as number) ?? null)
-        : undefined,
+      costPrice: opts.withCosts ? ((v.cost_price as number) ?? null) : undefined,
       lowStockThreshold: (v.low_stock_threshold as number) ?? null,
       onHand: v.on_hand as number,
       reserved: v.reserved as number,
@@ -520,14 +452,11 @@ export async function saveProduct(
     });
   if (input.status === "published") {
     const issues = publicationIssues(input);
-    if (issues.length)
-      fail("validation", `Publication impossible : ${issues.join(" ")}`);
+    if (issues.length) fail("validation", `Publication impossible : ${issues.join(" ")}`);
   }
   for (const v of input.variants) {
-    if (!v.sku.trim())
-      fail("validation", "Chaque variante doit avoir une référence.");
-    if (!Number.isInteger(v.price) || v.price < 0)
-      fail("validation", `Prix invalide pour ${v.sku}.`);
+    if (!v.sku.trim()) fail("validation", "Chaque variante doit avoir une référence.");
+    if (!Number.isInteger(v.price) || v.price < 0) fail("validation", `Prix invalide pour ${v.sku}.`);
   }
   return db.tx(async (tx) => {
     const id = input.id ?? newId();
@@ -537,17 +466,10 @@ export async function saveProduct(
           slug: string;
           published_at: Date | null;
           is_demo: boolean;
-        }>(
-          "select updated_at, slug, published_at, is_demo from products where id = $1 for update",
-          [input.id],
-        )
+        }>("select updated_at, slug, published_at, is_demo from products where id = $1 for update", [input.id])
       : null;
     if (input.id && !existing) fail("not_found", "Ce produit n'existe plus.");
-    if (
-      existing &&
-      ctx.expectedUpdatedAt &&
-      new Date(existing.updated_at).toISOString() !== ctx.expectedUpdatedAt
-    ) {
+    if (existing && ctx.expectedUpdatedAt && new Date(existing.updated_at).toISOString() !== ctx.expectedUpdatedAt) {
       fail(
         "conflict",
         "Ce produit a été modifié par ailleurs entre-temps. Rechargez la page pour récupérer la dernière version ; votre saisie reste affichée.",
@@ -555,16 +477,11 @@ export async function saveProduct(
     }
     let slug = slugify(input.slug?.trim() || input.name) || id.slice(0, 8);
     if (existing && !input.slug) slug = existing.slug;
-    const clash = await tx.one(
-      "select 1 from products where slug = $1 and id <> $2",
-      [slug, id],
-    );
+    const clash = await tx.one("select 1 from products where slug = $1 and id <> $2", [slug, id]);
     if (clash) slug = `${slug}-${id.slice(0, 4)}`;
 
     const publishedAt =
-      input.status === "published"
-        ? (existing?.published_at ?? new Date())
-        : (existing?.published_at ?? null);
+      input.status === "published" ? (existing?.published_at ?? new Date()) : (existing?.published_at ?? null);
     if (existing) {
       await tx.query(
         `update products set name=$2, slug=$3, brand=$4, category_id=$5, description=$6, specs=$7, condition=$8,
@@ -623,23 +540,13 @@ export async function saveProduct(
     for (const v of current) {
       if (keep.has(v.id)) continue;
       // Une variante déjà vendue est désactivée, jamais supprimée : l'historique reste intact.
-      if (v.has_sales)
-        await tx.query("update variants set active = false where id = $1", [
-          v.id,
-        ]);
+      if (v.has_sales) await tx.query("update variants set active = false where id = $1", [v.id]);
       else await tx.query("delete from variants where id = $1", [v.id]);
     }
     for (const [i, v] of input.variants.entries()) {
       const sku = v.sku.trim().toUpperCase();
-      const skuClash = await tx.one(
-        "select 1 from variants where upper(sku) = $1 and id <> $2",
-        [sku, v.id ?? ""],
-      );
-      if (skuClash)
-        fail(
-          "conflict",
-          `La référence ${sku} est déjà utilisée par un autre article.`,
-        );
+      const skuClash = await tx.one("select 1 from variants where upper(sku) = $1 and id <> $2", [sku, v.id ?? ""]);
+      if (skuClash) fail("conflict", `La référence ${sku} est déjà utilisée par un autre article.`);
       if (v.id && current.some((c) => c.id === v.id)) {
         await tx.query(
           `update variants set sku=$2, options=$3, price=$4, low_stock_threshold=$5, position=$6
@@ -693,11 +600,7 @@ export async function saveProduct(
   });
 }
 
-export async function duplicateProduct(
-  db: Db,
-  id: string,
-  userId: string | null,
-) {
+export async function duplicateProduct(db: Db, id: string, userId: string | null) {
   const src = await productForEdit(db, id, { withCosts: true });
   if (!src) return fail("not_found", "Produit introuvable.");
   const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -724,26 +627,16 @@ export async function duplicateProduct(
 
 /** Supprime un brouillon jamais vendu ; sinon impose l'archivage. */
 export async function deleteOrArchiveProduct(db: Db, id: string) {
-  const sales = await db.one<{ n: number }>(
-    "select count(*)::int as n from order_lines where product_id = $1",
-    [id],
-  );
+  const sales = await db.one<{ n: number }>("select count(*)::int as n from order_lines where product_id = $1", [id]);
   if (sales?.n) {
-    await db.query(
-      "update products set status = 'archived', featured = false, updated_at = now() where id = $1",
-      [id],
-    );
+    await db.query("update products set status = 'archived', featured = false, updated_at = now() where id = $1", [id]);
     return "archived" as const;
   }
   await db.query("delete from products where id = $1", [id]);
   return "deleted" as const;
 }
 
-export async function setProductsStatus(
-  db: Db,
-  ids: string[],
-  status: ProductStatus,
-) {
+export async function setProductsStatus(db: Db, ids: string[], status: ProductStatus) {
   const blocked: string[] = [];
   for (const id of ids) {
     if (status === "published") {
@@ -767,11 +660,7 @@ export async function setProductsStatus(
 }
 
 /** Aperçu d'un changement de prix groupé (pourcentage), avant application. */
-export async function previewPriceChange(
-  db: Db,
-  productIds: string[],
-  percent: number,
-) {
+export async function previewPriceChange(db: Db, productIds: string[], percent: number) {
   const rows = await db.query<{
     id: string;
     sku: string;
@@ -784,101 +673,66 @@ export async function previewPriceChange(
   );
   return rows.map((r) => ({
     ...r,
-    newPrice: Math.max(
-      0,
-      Math.round((r.price * (100 + percent)) / 100 / 50) * 50,
-    ),
+    newPrice: Math.max(0, Math.round((r.price * (100 + percent)) / 100 / 50) * 50),
   }));
 }
 
-export async function applyPriceChange(
-  db: Db,
-  productIds: string[],
-  percent: number,
-) {
-  if (
-    !Number.isFinite(percent) ||
-    percent < -90 ||
-    percent > 200 ||
-    percent === 0
-  ) {
+export async function applyPriceChange(db: Db, productIds: string[], percent: number) {
+  if (!Number.isFinite(percent) || percent < -90 || percent > 200 || percent === 0) {
     fail("validation", "Indiquez une variation entre −90 % et +200 %.");
   }
   const preview = await previewPriceChange(db, productIds, percent);
   await db.tx(async (tx) => {
-    for (const r of preview)
-      await tx.query("update variants set price = $2 where id = $1", [
-        r.id,
-        r.newPrice,
-      ]);
-    await tx.query(
-      "update products set updated_at = now() where id = any($1)",
-      [productIds],
-    );
+    for (const r of preview) await tx.query("update variants set price = $2 where id = $1", [r.id, r.newPrice]);
+    await tx.query("update products set updated_at = now() where id = any($1)", [productIds]);
   });
   return preview.length;
 }
 
-export async function setCategoryForProducts(
-  db: Db,
-  ids: string[],
-  categoryId: string,
-) {
-  await db.query(
-    "update products set category_id = $2, updated_at = now() where id = any($1)",
-    [ids, categoryId],
-  );
+export async function setCategoryForProducts(db: Db, ids: string[], categoryId: string) {
+  await db.query("update products set category_id = $2, updated_at = now() where id = any($1)", [ids, categoryId]);
 }
 
 // ——— Catégories ———
 
-export async function saveCategory(
-  db: Db,
-  input: { id?: string; name: string; description: string; slug?: string },
-) {
-  if (!input.name.trim())
-    fail("validation", "Le nom est obligatoire.", { name: "Obligatoire." });
+export async function saveCategory(db: Db, input: { id?: string; name: string; description: string; slug?: string }) {
+  if (!input.name.trim()) fail("validation", "Le nom est obligatoire.", { name: "Obligatoire." });
   const slug = slugify(input.slug || input.name);
-  const clash = await db.one(
-    "select 1 from categories where slug = $1 and id <> $2",
-    [slug, input.id ?? ""],
-  );
+  const clash = await db.one("select 1 from categories where slug = $1 and id <> $2", [slug, input.id ?? ""]);
   if (clash)
     fail("conflict", "Une catégorie porte déjà ce nom.", {
       name: "Déjà utilisé.",
     });
   if (input.id) {
-    await db.query(
-      "update categories set name = $2, description = $3, slug = $4 where id = $1",
-      [input.id, input.name.trim(), input.description, slug],
-    );
+    await db.query("update categories set name = $2, description = $3, slug = $4 where id = $1", [
+      input.id,
+      input.name.trim(),
+      input.description,
+      slug,
+    ]);
     return input.id;
   }
   const id = newId();
-  const pos = await db.one<{ n: number }>(
-    "select coalesce(max(position), 0)::int + 1 as n from categories",
-  );
-  await db.query(
-    "insert into categories (id, slug, name, description, position) values ($1,$2,$3,$4,$5)",
-    [id, slug, input.name.trim(), input.description, pos!.n],
-  );
+  const pos = await db.one<{ n: number }>("select coalesce(max(position), 0)::int + 1 as n from categories");
+  await db.query("insert into categories (id, slug, name, description, position) values ($1,$2,$3,$4,$5)", [
+    id,
+    slug,
+    input.name.trim(),
+    input.description,
+    pos!.n,
+  ]);
   return id;
 }
 
 export async function moveCategory(db: Db, id: string, direction: -1 | 1) {
   await db.tx(async (tx) => {
-    const cats = await tx.query<{ id: string }>(
-      "select id from categories order by position, name",
-    );
+    const cats = await tx.query<{ id: string }>("select id from categories order by position, name");
     const i = cats.findIndex((c) => c.id === id);
     const j = i + direction;
     if (i < 0 || j < 0 || j >= cats.length) return;
     [cats[i], cats[j]] = [cats[j], cats[i]];
     for (const [pos, c] of cats.entries())
-      await tx.query("update categories set position = $2 where id = $1", [
-        c.id,
-        pos,
-      ]);
+      await tx.query("update categories set position = $2 where id = $1", [c.id, pos]);
   });
 }
 
@@ -887,11 +741,7 @@ export async function deleteCategory(db: Db, id: string) {
     "select count(*)::int as n from products where category_id = $1 and status <> 'archived'",
     [id],
   );
-  if (used?.n)
-    fail(
-      "conflict",
-      `Cette catégorie contient ${used.n} produit(s). Déplacez-les avant de la supprimer.`,
-    );
+  if (used?.n) fail("conflict", `Cette catégorie contient ${used.n} produit(s). Déplacez-les avant de la supprimer.`);
   await db.query("delete from categories where id = $1", [id]);
 }
 
@@ -920,43 +770,37 @@ export async function savePromotion(
   if (!input.name.trim()) errors.name = "Obligatoire.";
   if (!input.productId) errors.productId = "Choisissez un produit.";
   if (!(input.value > 0)) errors.value = "Valeur positive requise.";
-  if (input.kind === "percent" && input.value >= 100)
-    errors.value = "Moins de 100 %.";
-  if (!(input.endsAt > input.startsAt))
-    errors.endsAt = "La fin doit suivre le début.";
-  if (Object.keys(errors).length)
-    fail("validation", "Vérifiez les champs signalés.", errors);
+  if (input.kind === "percent" && input.value >= 100) errors.value = "Moins de 100 %.";
+  if (!(input.endsAt > input.startsAt)) errors.endsAt = "La fin doit suivre le début.";
+  if (Object.keys(errors).length) fail("validation", "Vérifiez les champs signalés.", errors);
   if (input.id) {
     await db.query(
       "update promotions set name=$2, product_id=$3, kind=$4, value=$5, starts_at=$6, ends_at=$7 where id=$1",
-      [
-        input.id,
-        input.name.trim(),
-        input.productId,
-        input.kind,
-        input.value,
-        input.startsAt,
-        input.endsAt,
-      ],
+      [input.id, input.name.trim(), input.productId, input.kind, input.value, input.startsAt, input.endsAt],
     );
     return input.id;
   }
   const id = newId();
   await db.query(
     "insert into promotions (id, name, product_id, kind, value, starts_at, ends_at) values ($1,$2,$3,$4,$5,$6,$7)",
-    [
-      id,
-      input.name.trim(),
-      input.productId,
-      input.kind,
-      input.value,
-      input.startsAt,
-      input.endsAt,
-    ],
+    [id, input.name.trim(), input.productId, input.kind, input.value, input.startsAt, input.endsAt],
   );
   return id;
 }
 
 export async function stopPromotion(db: Db, id: string) {
   await db.query("update promotions set active = false where id = $1", [id]);
+}
+
+/** Sélection GPS : produits mis en avant, dans l'ordre donné. */
+export async function setFeaturedSelection(db: Db, ids: string[]) {
+  await db.tx(async (tx) => {
+    await tx.query("update products set featured = false where featured and not (id = any($1))", [ids]);
+    for (const [i, id] of ids.entries()) {
+      await tx.query(
+        "update products set featured = true, featured_position = $2 where id = $1 and status = 'published'",
+        [id, i],
+      );
+    }
+  });
 }

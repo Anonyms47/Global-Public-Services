@@ -67,9 +67,7 @@ export function CatalogBrowser({
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [percent, setPercent] = useState("");
-  const [preview, setPreview] = useState<
-    { sku: string; name: string; price: number; newPrice: number }[] | null
-  >(null);
+  const [preview, setPreview] = useState<{ sku: string; name: string; price: number; newPrice: number }[] | null>(null);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [category, setCategory] = useState("");
   const [blocked, setBlocked] = useState<string[]>([]);
@@ -99,16 +97,12 @@ export function CatalogBrowser({
                 type="checkbox"
                 className="h-5 w-5"
                 checked={selected.size === rows.length && rows.length > 0}
-                onChange={(e) =>
-                  e.target.checked
-                    ? setSelected(new Set(rows.map((r) => r.id)))
-                    : clear()
-                }
+                onChange={(e) => (e.target.checked ? setSelected(new Set(rows.map((r) => r.id))) : clear())}
               />
               Tout sélectionner
             </label>
           ) : null}
-          <span className="text-ink-mute text-[14px]">
+          <span className="text-[14px] text-ink-mute">
             {rows.length} produit{rows.length > 1 ? "s" : ""}
           </span>
         </div>
@@ -134,23 +128,18 @@ export function CatalogBrowser({
 
       {selected.size > 0 && canBulk ? (
         <div
-          className="border-gps-blue bg-gps-blue-soft sticky top-16 z-20 mb-4 grid gap-3 rounded-[6px] border-[1.5px] p-3"
+          className="sticky top-16 z-20 mb-4 grid gap-3 rounded-[6px] border-[1.5px] border-gps-blue bg-gps-blue-soft p-3"
           role="region"
           aria-label="Actions groupées"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-gps-blue-deep mr-2 font-bold">
-              {selected.size} sélectionné(s)
-            </p>
+            <p className="mr-2 font-bold text-gps-blue-deep">{selected.size} sélectionné(s)</p>
             <button
               className="btn btn-sm btn-blue"
               disabled={pending}
               onClick={() =>
                 run(() => bulkStatusAction(ids, "published"), {
-                  onSuccess: (r) => (
-                    setBlocked(r.blocked),
-                    setSuccess(r.blocked.length ? null : "Produits publiés.")
-                  ),
+                  onSuccess: (r) => (setBlocked(r.blocked), setSuccess(r.blocked.length ? null : "Produits publiés.")),
                 })
               }
             >
@@ -167,11 +156,7 @@ export function CatalogBrowser({
             >
               Mettre en brouillon
             </button>
-            <button
-              className="btn btn-sm btn-danger"
-              disabled={pending}
-              onClick={() => setArchiveConfirm(true)}
-            >
+            <button className="btn btn-sm btn-danger" disabled={pending} onClick={() => setArchiveConfirm(true)}>
               Archiver…
             </button>
             <span className="flex items-center gap-1">
@@ -209,10 +194,7 @@ export function CatalogBrowser({
                 placeholder="Prix ±%"
                 className="field h-10 min-h-10 w-24 py-0 text-[14px]"
                 value={percent}
-                onChange={(e) => (
-                  setPercent(e.target.value.replace(/[^\d-]/g, "")),
-                  setPreview(null)
-                )}
+                onChange={(e) => (setPercent(e.target.value.replace(/[^\d-]/g, "")), setPreview(null))}
               />
               <button
                 className="btn btn-sm btn-outline"
@@ -227,19 +209,16 @@ export function CatalogBrowser({
                 Aperçu
               </button>
             </span>
-            <button
-              className="text-gps-blue ml-auto text-[13px] font-bold underline"
-              onClick={clear}
-            >
+            <button className="ml-auto text-[13px] font-bold text-gps-blue underline" onClick={clear}>
               Désélectionner
             </button>
           </div>
           {archiveConfirm ? (
             <div className="rounded-[6px] bg-white p-3">
               <p className="font-bold">Archiver {selected.size} produit(s) ?</p>
-              <p className="text-ink-soft text-[14px]">
-                Ils disparaissent du site et de la vente. L&apos;historique des
-                ventes est conservé. Réversible depuis l&apos;onglet Archivés.
+              <p className="text-[14px] text-ink-soft">
+                Ils disparaissent du site et de la vente. L&apos;historique des ventes est conservé. Réversible depuis
+                l&apos;onglet Archivés.
               </p>
               <ul className="mt-2 max-h-32 overflow-y-auto text-[14px]">
                 {rows
@@ -249,10 +228,7 @@ export function CatalogBrowser({
                   ))}
               </ul>
               <div className="mt-2 flex gap-2">
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={() => setArchiveConfirm(false)}
-                >
+                <button className="btn btn-sm btn-ghost" onClick={() => setArchiveConfirm(false)}>
                   Annuler
                 </button>
                 <button
@@ -278,32 +254,22 @@ export function CatalogBrowser({
               </p>
               <div className="mt-2 max-h-56 overflow-y-auto">
                 <table className="w-full text-[14px]">
-                  <tbody className="divide-line-soft divide-y">
+                  <tbody className="divide-y divide-line-soft">
                     {preview.map((p) => (
                       <tr key={p.sku}>
                         <td className="py-1">
-                          {p.name}{" "}
-                          <span className="text-ink-mute">· {p.sku}</span>
+                          {p.name} <span className="text-ink-mute">· {p.sku}</span>
                         </td>
-                        <td className="tabular text-ink-mute py-1 text-right line-through">
-                          {fcfa(p.price)}
-                        </td>
-                        <td className="tabular py-1 text-right font-bold">
-                          {fcfa(p.newPrice)}
-                        </td>
+                        <td className="py-1 text-right text-ink-mute tabular line-through">{fcfa(p.price)}</td>
+                        <td className="py-1 text-right font-bold tabular">{fcfa(p.newPrice)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="hint">
-                Les commandes existantes gardent leurs prix enregistrés.
-              </p>
+              <p className="hint">Les commandes existantes gardent leurs prix enregistrés.</p>
               <div className="mt-2 flex gap-2">
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={() => setPreview(null)}
-                >
+                <button className="btn btn-sm btn-ghost" onClick={() => setPreview(null)}>
                   Annuler
                 </button>
                 <button
@@ -323,13 +289,8 @@ export function CatalogBrowser({
           ) : null}
           <ActionFeedback failure={failure} success={success} />
           {blocked.length ? (
-            <div
-              role="alert"
-              className="bg-warn-soft text-warn rounded-[6px] p-3 text-[14px]"
-            >
-              <p className="font-bold">
-                Non publiés (informations manquantes) :
-              </p>
+            <div role="alert" className="rounded-[6px] bg-warn-soft p-3 text-[14px] text-warn">
+              <p className="font-bold">Non publiés (informations manquantes) :</p>
               <ul>
                 {blocked.map((b) => (
                   <li key={b}>• {b}</li>
@@ -345,10 +306,7 @@ export function CatalogBrowser({
           title="Aucun produit"
           action={
             canEdit ? (
-              <Link
-                href="/comptoir/catalogue/nouveau"
-                className="btn btn-blue btn-sm"
-              >
+              <Link href="/comptoir/catalogue/nouveau" className="btn btn-blue btn-sm">
                 Ajouter un produit
               </Link>
             ) : null
@@ -361,7 +319,7 @@ export function CatalogBrowser({
           {rows.map((r) => (
             <li
               key={r.id}
-              className={`bg-card relative rounded-[6px] border-[1.5px] ${selected.has(r.id) ? "border-gps-blue" : "border-line"}`}
+              className={`relative rounded-[6px] border-[1.5px] bg-card ${selected.has(r.id) ? "border-gps-blue" : "border-line"}`}
             >
               {canBulk ? (
                 <input
@@ -373,7 +331,7 @@ export function CatalogBrowser({
                 />
               ) : null}
               <Link href={`/comptoir/catalogue/${r.id}`} className="block">
-                <div className="bg-paper-deep overflow-hidden rounded-t-[5px]">
+                <div className="overflow-hidden rounded-t-[5px] bg-paper-deep">
                   {r.image ? (
                     <Image
                       src={r.image}
@@ -384,7 +342,7 @@ export function CatalogBrowser({
                       className="aspect-[4/5] w-full object-cover"
                     />
                   ) : (
-                    <div className="text-ink-mute flex aspect-[4/5] items-center justify-center text-[13px]">
+                    <div className="flex aspect-[4/5] items-center justify-center text-[13px] text-ink-mute">
                       Sans photo
                     </div>
                   )}
@@ -395,15 +353,9 @@ export function CatalogBrowser({
                     {r.featured ? <Badge tone="blue">Vedette</Badge> : null}
                   </div>
                   <p className="mt-1 leading-snug font-bold">{r.name}</p>
-                  <p className="text-ink-mute text-[13px]">
-                    {r.category_name ?? "Sans catégorie"}
-                  </p>
-                  <p className="tabular mt-1 text-[14px] font-semibold">
-                    {priceRange(r)}
-                  </p>
-                  <p
-                    className={`text-[13px] ${r.available <= 0 ? "text-gps-red-ink font-bold" : "text-ink-soft"}`}
-                  >
+                  <p className="text-[13px] text-ink-mute">{r.category_name ?? "Sans catégorie"}</p>
+                  <p className="mt-1 text-[14px] font-semibold tabular">{priceRange(r)}</p>
+                  <p className={`text-[13px] ${r.available <= 0 ? "font-bold text-gps-red-ink" : "text-ink-soft"}`}>
                     {r.available} dispo. · {r.variant_count} variante
                     {r.variant_count > 1 ? "s" : ""}
                   </p>
@@ -413,10 +365,10 @@ export function CatalogBrowser({
           ))}
         </ul>
       ) : (
-        <div className="border-line bg-card overflow-x-auto rounded-[6px] border">
+        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[760px] text-[14px]">
             <thead>
-              <tr className="border-line text-ink-mute border-b text-left text-[12px] tracking-wide uppercase">
+              <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                 {canBulk ? <th className="w-10 px-3 py-3" /> : null}
                 <th className="px-3 py-3 font-bold">Produit</th>
                 <th className="py-3 font-bold">Statut</th>
@@ -425,12 +377,9 @@ export function CatalogBrowser({
                 <th className="px-3 py-3 text-right font-bold">Dispo.</th>
               </tr>
             </thead>
-            <tbody className="divide-line-soft divide-y">
+            <tbody className="divide-y divide-line-soft">
               {rows.map((r) => (
-                <tr
-                  key={r.id}
-                  className={selected.has(r.id) ? "bg-gps-blue-soft" : ""}
-                >
+                <tr key={r.id} className={selected.has(r.id) ? "bg-gps-blue-soft" : ""}>
                   {canBulk ? (
                     <td className="px-3">
                       <input
@@ -443,15 +392,11 @@ export function CatalogBrowser({
                     </td>
                   ) : null}
                   <td className="px-3 py-2">
-                    <Link
-                      href={`/comptoir/catalogue/${r.id}`}
-                      className="text-gps-blue font-bold hover:underline"
-                    >
+                    <Link href={`/comptoir/catalogue/${r.id}`} className="font-bold text-gps-blue hover:underline">
                       {r.name}
                     </Link>
-                    <div className="text-ink-mute text-[13px]">
-                      {[r.brand, r.category_name].filter(Boolean).join(" · ")} ·{" "}
-                      {r.variant_count} variante(s)
+                    <div className="text-[13px] text-ink-mute">
+                      {[r.brand, r.category_name].filter(Boolean).join(" · ")} · {r.variant_count} variante(s)
                     </div>
                   </td>
                   <td className="py-2">
@@ -461,10 +406,10 @@ export function CatalogBrowser({
                       {r.is_demo ? <Badge>Exemple</Badge> : null}
                     </div>
                   </td>
-                  <td className="tabular py-2">{priceRange(r)}</td>
-                  <td className="tabular py-2 text-right">{r.on_hand}</td>
+                  <td className="py-2 tabular">{priceRange(r)}</td>
+                  <td className="py-2 text-right tabular">{r.on_hand}</td>
                   <td
-                    className={`tabular px-3 py-2 text-right font-bold ${r.available <= 0 ? "text-gps-red-ink" : ""}`}
+                    className={`px-3 py-2 text-right font-bold tabular ${r.available <= 0 ? "text-gps-red-ink" : ""}`}
                   >
                     {r.available}
                   </td>

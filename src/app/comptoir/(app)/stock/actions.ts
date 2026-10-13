@@ -4,20 +4,11 @@ import { z } from "zod";
 import { guarded } from "@/server/admin";
 import { isDemoMode } from "@/server/db";
 import { AppError } from "@/server/domain/errors";
-import {
-  adjustStock,
-  applyInventory,
-  inventoryPreview,
-  restock,
-} from "@/server/domain/stock";
+import { adjustStock, applyInventory, inventoryPreview, restock } from "@/server/domain/stock";
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const r = schema.safeParse(input);
-  if (!r.success)
-    throw new AppError(
-      "validation",
-      r.error.issues[0]?.message ?? "Données invalides.",
-    );
+  if (!r.success) throw new AppError("validation", r.error.issues[0]?.message ?? "Données invalides.");
   return r.data;
 }
 
@@ -60,9 +51,7 @@ export async function restockAction(input: unknown) {
 }
 
 export async function inventoryPreviewAction(input: unknown) {
-  return guarded("stock.inventory", ({ db }) =>
-    inventoryPreview(db, parse(counts, input)),
-  );
+  return guarded("stock.inventory", ({ db }) => inventoryPreview(db, parse(counts, input)));
 }
 
 export async function inventoryApplyAction(input: unknown, note: string) {
@@ -75,11 +64,7 @@ export async function inventoryApplyAction(input: unknown, note: string) {
   );
 }
 
-export async function adjustAction(
-  variantId: string,
-  delta: number,
-  reason: string,
-) {
+export async function adjustAction(variantId: string, delta: number, reason: string) {
   return guarded(
     "stock.inventory",
     ({ db, user }) =>

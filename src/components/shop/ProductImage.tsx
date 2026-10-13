@@ -16,9 +16,7 @@ export function ProductImage({
 }) {
   if (!src) {
     return (
-      <div
-        className={`bg-paper-deep text-ink-mute flex aspect-[4/5] items-center justify-center text-sm ${className}`}
-      >
+      <div className={`flex aspect-[4/5] items-center justify-center bg-paper-deep text-sm text-ink-mute ${className}`}>
         Photo à venir
       </div>
     );

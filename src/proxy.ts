@@ -11,10 +11,7 @@ export function proxy(request: NextRequest) {
   if (!request.cookies.get("gps_comptoir")?.value) {
     const url = request.nextUrl.clone();
     url.pathname = "/comptoir/connexion";
-    url.search =
-      pathname === "/comptoir"
-        ? ""
-        : `?suite=${encodeURIComponent(pathname + request.nextUrl.search)}`;
+    url.search = pathname === "/comptoir" ? "" : `?suite=${encodeURIComponent(pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   return NextResponse.next();

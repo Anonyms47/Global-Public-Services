@@ -9,14 +9,11 @@ import { IconPlus, IconSearch } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Catalogue" };
 
-export default async function CatalogPage({
-  searchParams,
-}: PageProps<"/comptoir/catalogue">) {
+export default async function CatalogPage({ searchParams }: PageProps<"/comptoir/catalogue">) {
   const { db, user, allowed } = await requirePage("catalog.view");
   if (!allowed) return <Forbidden />;
   const sp = await searchParams;
-  const str = (k: string) =>
-    typeof sp[k] === "string" ? (sp[k] as string) : "";
+  const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
   const statut = str("statut") || "actifs";
   const q = str("q");
   const categorie = str("categorie");
@@ -25,8 +22,7 @@ export default async function CatalogPage({
     adminProducts(db, {
       q,
       category: categorie || undefined,
-      status:
-        statut === "actifs" ? undefined : statut === "tous" ? "all" : statut,
+      status: statut === "actifs" ? undefined : statut === "tous" ? "all" : statut,
     }),
     listCategories(db),
   ]);
@@ -48,16 +44,10 @@ export default async function CatalogPage({
         actions={
           can(user.role, "catalog.edit") ? (
             <>
-              <Link
-                href="/comptoir/catalogue/categories"
-                className="btn btn-outline"
-              >
+              <Link href="/comptoir/catalogue/categories" className="btn btn-outline">
                 Catégories
               </Link>
-              <Link
-                href="/comptoir/catalogue/promotions"
-                className="btn btn-outline"
-              >
+              <Link href="/comptoir/catalogue/promotions" className="btn btn-outline">
                 Promotions
               </Link>
               <Link href="/comptoir/catalogue/nouveau" className="btn btn-blue">
@@ -109,12 +99,7 @@ export default async function CatalogPage({
         <label className="sr-only" htmlFor="cat-c">
           Catégorie
         </label>
-        <select
-          id="cat-c"
-          name="categorie"
-          defaultValue={categorie}
-          className="field w-auto"
-        >
+        <select id="cat-c" name="categorie" defaultValue={categorie} className="field w-auto">
           <option value="">Toutes catégories</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -139,9 +124,7 @@ export default async function CatalogPage({
         }}
         canBulk={can(user.role, "catalog.bulk")}
         canEdit={can(user.role, "catalog.edit")}
-        emptyHint={
-          q ? `Aucun produit pour « ${q} ».` : "Aucun produit dans cette vue."
-        }
+        emptyHint={q ? `Aucun produit pour « ${q} ».` : "Aucun produit dans cette vue."}
       />
     </>
   );

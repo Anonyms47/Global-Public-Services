@@ -10,9 +10,7 @@ import { IconArrowLeft } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Produit" };
 
-export default async function EditProductPage({
-  params,
-}: PageProps<"/comptoir/catalogue/[id]">) {
+export default async function EditProductPage({ params }: PageProps<"/comptoir/catalogue/[id]">) {
   const { db, user, allowed } = await requirePage("catalog.view");
   if (!allowed) return <Forbidden />;
   const canEdit = can(user.role, "catalog.edit");
@@ -25,7 +23,7 @@ export default async function EditProductPage({
     <>
       <Link
         href="/comptoir/catalogue"
-        className="text-gps-blue mb-3 inline-flex min-h-11 items-center gap-1 font-bold hover:underline"
+        className="mb-3 inline-flex min-h-11 items-center gap-1 font-bold text-gps-blue hover:underline"
       >
         <IconArrowLeft size={18} /> Catalogue
       </Link>
@@ -34,20 +32,14 @@ export default async function EditProductPage({
         title={p.name || "Produit sans nom"}
         actions={
           p.status === "published" ? (
-            <Link
-              href={`/produits/${p.slug}`}
-              target="_blank"
-              className="btn btn-outline btn-sm"
-            >
+            <Link href={`/produits/${p.slug}`} target="_blank" className="btn btn-outline btn-sm">
               Voir sur le site
             </Link>
           ) : null
         }
       >
         {p.isDemo ? <Badge>Exemple</Badge> : null}{" "}
-        {p.hasSales
-          ? "Déjà vendu : les variantes retirées seront désactivées, l'historique est conservé."
-          : null}
+        {p.hasSales ? "Déjà vendu : les variantes retirées seront désactivées, l'historique est conservé." : null}
       </PageTitle>
       {canEdit ? (
         <ProductFormClient
@@ -72,12 +64,9 @@ export default async function EditProductPage({
           }}
         />
       ) : (
-        <div className="border-line bg-card rounded-[6px] border p-5">
-          <p className="text-ink-soft">
-            Consultation seule : votre rôle ne permet pas de modifier le
-            catalogue.
-          </p>
-          <ul className="divide-line-soft mt-3 divide-y text-[14px]">
+        <div className="rounded-[6px] border border-line bg-card p-5">
+          <p className="text-ink-soft">Consultation seule : votre rôle ne permet pas de modifier le catalogue.</p>
+          <ul className="mt-3 divide-y divide-line-soft text-[14px]">
             {p.variants.map((v) => (
               <li key={v.id} className="flex justify-between py-2">
                 <span>
@@ -85,8 +74,7 @@ export default async function EditProductPage({
                   <span className="text-ink-mute">· {v.sku}</span>
                 </span>
                 <span className="tabular">
-                  {v.price.toLocaleString("fr-FR")} FCFA ·{" "}
-                  {v.onHand - v.reserved} dispo.
+                  {v.price.toLocaleString("fr-FR")} FCFA · {v.onHand - v.reserved} dispo.
                 </span>
               </li>
             ))}

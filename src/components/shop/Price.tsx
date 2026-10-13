@@ -21,20 +21,12 @@ export function Price({
     xl: "text-[32px] md:text-[40px]",
   }[size];
   return (
-    <p
-      className={`tabular flex flex-wrap items-baseline gap-x-2 font-extrabold ${cls} ${className}`}
-    >
-      {from ? (
-        <span className="text-ink-mute text-[0.62em] font-semibold">
-          à partir de
-        </span>
-      ) : null}
-      <span className={discounted ? "text-gps-red-ink" : undefined}>
-        {fcfa(price)}
-      </span>
+    <p className={`flex flex-wrap items-baseline gap-x-2 font-extrabold tabular ${cls} ${className}`}>
+      {from ? <span className="text-[0.62em] font-semibold text-ink-mute">à partir de</span> : null}
+      <span className={discounted ? "text-gps-red-ink" : undefined}>{fcfa(price)}</span>
       {discounted ? (
         <span
-          className="text-ink-mute text-[0.62em] font-semibold line-through"
+          className="text-[0.62em] font-semibold text-ink-mute line-through"
           aria-label={`au lieu de ${fcfa(basePrice!)}`}
         >
           {fcfa(basePrice!)}

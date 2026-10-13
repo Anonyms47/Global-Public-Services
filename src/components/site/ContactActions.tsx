@@ -31,22 +31,14 @@ export function ContactActions({
   return (
     <div className="flex flex-wrap gap-3">
       {wa ? (
-        <a
-          href={wa}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-wa"
-        >
+        <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-wa">
           <IconWhatsApp /> WhatsApp
         </a>
       ) : (
         off("WhatsApp", IconWhatsApp, "numéro à confirmer")
       )}
       {tel ? (
-        <a
-          href={`tel:${tel}`}
-          className={`btn ${dark ? "btn-light" : "btn-outline"}`}
-        >
+        <a href={`tel:${tel}`} className={`btn ${dark ? "btn-light" : "btn-outline"}`}>
           <IconPhone size={18} /> Appeler
         </a>
       ) : (

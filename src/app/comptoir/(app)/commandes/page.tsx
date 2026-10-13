@@ -4,19 +4,8 @@ import { requirePage } from "@/server/admin";
 import { listOrders, type OrderView } from "@/server/domain/orders";
 import { can } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
-import {
-  Empty,
-  Forbidden,
-  Money,
-  PageTitle,
-  Tabs,
-} from "@/components/admin/ui";
-import {
-  ChannelLabel,
-  FulfillmentBadge,
-  PaymentBadge,
-  StatusBadge,
-} from "@/components/admin/OrderBadges";
+import { Empty, Forbidden, Money, PageTitle, Tabs } from "@/components/admin/ui";
+import { ChannelLabel, FulfillmentBadge, PaymentBadge, StatusBadge } from "@/components/admin/OrderBadges";
 import { IconPlus, IconSearch } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Commandes" };
@@ -35,22 +24,16 @@ const extraLabels: Partial<Record<OrderView, string>> = {
   livraisons: "Livraisons en cours",
 };
 
-export default async function OrdersPage({
-  searchParams,
-}: PageProps<"/comptoir/commandes">) {
+export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/commandes">) {
   const { db, user, allowed } = await requirePage("orders.view");
   if (!allowed) return <Forbidden />;
   const sp = await searchParams;
-  const view = (
-    typeof sp.vue === "string" ? sp.vue : "a-preparer"
-  ) as OrderView;
+  const view = (typeof sp.vue === "string" ? sp.vue : "a-preparer") as OrderView;
   const q = typeof sp.q === "string" ? sp.q : "";
   const channel = typeof sp.canal === "string" ? sp.canal : "";
   const [orders, ...counts] = await Promise.all([
     listOrders(db, { view, q, channel: channel || undefined }),
-    ...views.map((v) =>
-      listOrders(db, { view: v.key, limit: 1000 }).then((r) => r.length),
-    ),
+    ...views.map((v) => listOrders(db, { view: v.key, limit: 1000 }).then((r) => r.length)),
   ]);
   const qs = (patch: Record<string, string>) => {
     const p = new URLSearchParams({
@@ -76,11 +59,10 @@ export default async function OrdersPage({
           ) : null
         }
       >
-        Commandes confirmées après échange WhatsApp ou téléphone, et ventes du
-        comptoir.
+        Commandes confirmées après échange WhatsApp ou téléphone, et ventes du comptoir.
       </PageTitle>
       {extraLabels[view] ? (
-        <p className="bg-gps-blue-soft text-gps-blue mb-3 inline-flex items-center gap-2 rounded-[6px] px-3 py-2 text-[14px] font-semibold">
+        <p className="mb-3 inline-flex items-center gap-2 rounded-[6px] bg-gps-blue-soft px-3 py-2 text-[14px] font-semibold text-gps-blue">
           Vue : {extraLabels[view]} ·{" "}
           <Link className="underline" href="/comptoir/commandes">
             toutes les étapes
@@ -111,12 +93,7 @@ export default async function OrdersPage({
         <label htmlFor="canal" className="sr-only">
           Canal
         </label>
-        <select
-          id="canal"
-          name="canal"
-          defaultValue={channel}
-          className="field w-auto"
-        >
+        <select id="canal" name="canal" defaultValue={channel} className="field w-auto">
           <option value="">Tous les canaux</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="boutique">Boutique</option>
@@ -133,24 +110,19 @@ export default async function OrdersPage({
           title="Aucune commande ici"
           action={
             q || channel ? (
-              <Link
-                className="btn btn-outline btn-sm"
-                href={`/comptoir/commandes?vue=${view}`}
-              >
+              <Link className="btn btn-outline btn-sm" href={`/comptoir/commandes?vue=${view}`}>
                 Effacer la recherche
               </Link>
             ) : null
           }
         >
-          {q
-            ? `Aucun résultat pour « ${q} » dans cette vue.`
-            : "Rien à traiter dans cette étape pour le moment."}
+          {q ? `Aucun résultat pour « ${q} » dans cette vue.` : "Rien à traiter dans cette étape pour le moment."}
         </Empty>
       ) : (
-        <div className="border-line bg-card overflow-x-auto rounded-[6px] border">
+        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[820px] text-[14px]">
             <thead>
-              <tr className="border-line text-ink-mute border-b text-left text-[12px] tracking-wide uppercase">
+              <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                 <th className="px-4 py-3 font-bold">Commande</th>
                 <th className="py-3 font-bold">Client</th>
                 <th className="py-3 font-bold">Étape</th>
@@ -159,34 +131,26 @@ export default async function OrdersPage({
                 <th className="px-4 py-3 text-right font-bold">Solde</th>
               </tr>
             </thead>
-            <tbody className="divide-line-soft divide-y">
+            <tbody className="divide-y divide-line-soft">
               {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-paper relative">
+                <tr key={o.id} className="relative hover:bg-paper">
                   <td className="px-4 py-3">
                     <Link
                       href={`/comptoir/commandes/${o.id}`}
-                      className="text-gps-blue font-bold after:absolute after:inset-0 hover:underline"
+                      className="font-bold text-gps-blue after:absolute after:inset-0 hover:underline"
                     >
                       {o.reference}
                     </Link>
-                    <div className="text-ink-mute text-[13px]">
-                      {formatDateTime(o.created_at)}
-                    </div>
+                    <div className="text-[13px] text-ink-mute">{formatDateTime(o.created_at)}</div>
                   </td>
                   <td className="py-3">
-                    <div className="font-semibold">
-                      {o.customer_name || "Client de passage"}
-                    </div>
+                    <div className="font-semibold">{o.customer_name || "Client de passage"}</div>
                     <ChannelLabel c={o.channel} r={o.reception} />
                   </td>
                   <td className="py-3">
                     <div className="flex flex-wrap gap-1">
                       <StatusBadge status={o.status} />
-                      <FulfillmentBadge
-                        f={o.fulfillment}
-                        reception={o.reception}
-                        status={o.status}
-                      />
+                      <FulfillmentBadge f={o.fulfillment} reception={o.reception} status={o.status} />
                     </div>
                   </td>
                   <td className="py-3">
@@ -194,11 +158,7 @@ export default async function OrdersPage({
                   </td>
                   <td className="py-3 text-right font-semibold">
                     <Money value={o.due} />
-                    {o.feeUnknown ? (
-                      <div className="text-warn text-[12px]">
-                        + frais à confirmer
-                      </div>
-                    ) : null}
+                    {o.feeUnknown ? <div className="text-[12px] text-warn">+ frais à confirmer</div> : null}
                   </td>
                   <td
                     className={`px-4 py-3 text-right font-bold ${o.balance > 0 ? "text-gps-red-ink" : o.balance < 0 ? "text-warn" : "text-ink-mute"}`}

@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePage } from "@/server/admin";
-import {
-  getOrder,
-  methodLabels,
-  receptionLabels,
-} from "@/server/domain/orders";
+import { getOrder, methodLabels, receptionLabels } from "@/server/domain/orders";
 import { getSettings } from "@/server/domain/settings";
 import { fcfa, formatDateTime } from "@/lib/format";
 import { Forbidden } from "@/components/admin/ui";
@@ -16,19 +12,14 @@ import { ReceiptActions } from "./ReceiptActions";
 
 export const metadata: Metadata = { title: "Reçu" };
 
-export default async function ReceiptPage({
-  params,
-}: PageProps<"/comptoir/recus/[id]">) {
+export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus/[id]">) {
   const { db, allowed } = await requirePage("orders.view");
   if (!allowed) return <Forbidden />;
   const o = await getOrder(db, (await params).id);
   if (!o) notFound();
   const s = await getSettings(db);
   const c = s.company;
-  const payments = o.payments.filter(
-    (p) =>
-      p.kind !== "reversal" && !o.payments.some((r) => r.reverses_id === p.id),
-  );
+  const payments = o.payments.filter((p) => p.kind !== "reversal" && !o.payments.some((r) => r.reverses_id === p.id));
 
   const text = [
     "GPS — Global Public Services",
@@ -48,9 +39,7 @@ export default async function ReceiptPage({
     "",
     `Total articles : ${fcfa(o.subtotal)}`,
     o.returned_value ? `Retours : -${fcfa(o.returned_value)}` : "",
-    o.reception === "delivery"
-      ? `Livraison : ${o.delivery_fee === null ? "à confirmer" : fcfa(o.delivery_fee)}`
-      : "",
+    o.reception === "delivery" ? `Livraison : ${o.delivery_fee === null ? "à confirmer" : fcfa(o.delivery_fee)}` : "",
     `Montant dû : ${fcfa(o.due)}`,
     ...payments.map(
       (p) =>
@@ -70,36 +59,31 @@ export default async function ReceiptPage({
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link
           href={`/comptoir/commandes/${o.id}`}
-          className="text-gps-blue inline-flex min-h-11 items-center gap-1 font-bold hover:underline"
+          className="inline-flex min-h-11 items-center gap-1 font-bold text-gps-blue hover:underline"
         >
           <IconArrowLeft size={18} /> Fiche {o.reference}
         </Link>
         <ReceiptActions text={text} filename={`recu-${o.reference}.txt`} />
       </div>
-      <article className="border-line relative overflow-hidden rounded-[6px] border bg-white p-6 text-[14px] md:p-10 print:border-0 print:p-0">
+      <article className="relative overflow-hidden rounded-[6px] border border-line bg-white p-6 text-[14px] md:p-10 print:border-0 print:p-0">
         {o.is_demo ? (
-          <p className="bg-gps-blue-soft text-gps-blue mb-4 rounded-[4px] px-2 py-1 text-center text-[12px] font-bold uppercase">
+          <p className="mb-4 rounded-[4px] bg-gps-blue-soft px-2 py-1 text-center text-[12px] font-bold text-gps-blue uppercase">
             Exemple — démonstration, sans valeur
           </p>
         ) : null}
-        <header className="border-line flex flex-wrap items-start justify-between gap-4 border-b pb-4">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
           <div>
             <Logo className="h-16 w-auto" />
           </div>
-          <div className="text-ink-soft text-right text-[13px]">
-            {[c.address, c.city].filter(Boolean).join(", ") ||
-              "Adresse à confirmer"}
+          <div className="text-right text-[13px] text-ink-soft">
+            {[c.address, c.city].filter(Boolean).join(", ") || "Adresse à confirmer"}
             {c.phone ? <div>Tél. {c.phone}</div> : null}
-            {s.receipt.header ? (
-              <div className="mt-1">{s.receipt.header}</div>
-            ) : null}
+            {s.receipt.header ? <div className="mt-1">{s.receipt.header}</div> : null}
           </div>
         </header>
         <div className="mt-4 flex flex-wrap justify-between gap-2">
           <div>
-            <p className="font-display text-3xl font-extrabold uppercase">
-              Reçu
-            </p>
+            <p className="font-display text-3xl font-extrabold uppercase">Reçu</p>
             <p className="font-bold">{o.reference}</p>
           </div>
           <div className="text-right">
@@ -110,7 +94,7 @@ export default async function ReceiptPage({
         </div>
         <table className="mt-6 w-full">
           <thead>
-            <tr className="border-ink border-b text-left text-[12px] uppercase">
+            <tr className="border-b border-ink text-left text-[12px] uppercase">
               <th className="py-1">Article</th>
               <th className="py-1 text-right">Qté</th>
               <th className="py-1 text-right">P.U.</th>
@@ -119,29 +103,23 @@ export default async function ReceiptPage({
           </thead>
           <tbody>
             {o.lines.map((l) => (
-              <tr key={l.id} className="border-line-soft border-b align-top">
+              <tr key={l.id} className="border-b border-line-soft align-top">
                 <td className="py-2">
                   {l.name}
-                  <div className="text-ink-mute text-[12px]">
+                  <div className="text-[12px] text-ink-mute">
                     {l.options_label ? `${l.options_label} · ` : ""}
                     {l.sku}
-                    {l.returned_quantity
-                      ? ` · retour : ${l.returned_quantity}`
-                      : ""}
+                    {l.returned_quantity ? ` · retour : ${l.returned_quantity}` : ""}
                   </div>
                 </td>
-                <td className="tabular py-2 text-right">{l.quantity}</td>
-                <td className="tabular py-2 text-right whitespace-nowrap">
-                  {fcfa(l.unit_price)}
-                </td>
-                <td className="tabular py-2 text-right whitespace-nowrap">
-                  {fcfa(l.unit_price * l.quantity)}
-                </td>
+                <td className="py-2 text-right tabular">{l.quantity}</td>
+                <td className="py-2 text-right whitespace-nowrap tabular">{fcfa(l.unit_price)}</td>
+                <td className="py-2 text-right whitespace-nowrap tabular">{fcfa(l.unit_price * l.quantity)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <dl className="tabular mt-4 ml-auto grid max-w-xs gap-1">
+        <dl className="mt-4 ml-auto grid max-w-xs gap-1 tabular">
           <div className="flex justify-between">
             <dt>Total articles</dt>
             <dd>{fcfa(o.subtotal)}</dd>
@@ -155,20 +133,17 @@ export default async function ReceiptPage({
           {o.reception === "delivery" ? (
             <div className="flex justify-between">
               <dt>Livraison</dt>
-              <dd>
-                {o.delivery_fee === null ? "à confirmer" : fcfa(o.delivery_fee)}
-              </dd>
+              <dd>{o.delivery_fee === null ? "à confirmer" : fcfa(o.delivery_fee)}</dd>
             </div>
           ) : null}
-          <div className="border-ink flex justify-between border-t pt-1 font-bold">
+          <div className="flex justify-between border-t border-ink pt-1 font-bold">
             <dt>Montant dû</dt>
             <dd>{fcfa(o.due)}</dd>
           </div>
           {payments.map((p) => (
             <div key={p.id} className="flex justify-between text-[13px]">
               <dt>
-                {p.kind === "refund" ? "Remboursement" : "Payé"} ·{" "}
-                {methodLabels[p.method]}
+                {p.kind === "refund" ? "Remboursement" : "Payé"} · {methodLabels[p.method]}
               </dt>
               <dd>
                 {p.kind === "refund" ? "− " : ""}
@@ -181,10 +156,8 @@ export default async function ReceiptPage({
             <dd>{fcfa(o.balance)}</dd>
           </div>
         </dl>
-        {s.receipt.footer ? (
-          <p className="text-ink-soft mt-8 text-center">{s.receipt.footer}</p>
-        ) : null}
-        <p className="font-display text-gps-blue mt-2 text-center text-lg font-bold uppercase">
+        {s.receipt.footer ? <p className="mt-8 text-center text-ink-soft">{s.receipt.footer}</p> : null}
+        <p className="mt-2 text-center font-display text-lg font-bold text-gps-blue uppercase">
           Le service qui rassure
         </p>
       </article>

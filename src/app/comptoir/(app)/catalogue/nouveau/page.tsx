@@ -14,8 +14,7 @@ export default async function NewProductPage() {
   return (
     <>
       <PageTitle eyebrow="Catalogue" title="Nouveau produit">
-        Présenter, configurer, publier. Vous pouvez enregistrer un brouillon à
-        tout moment.
+        Présenter, configurer, publier. Vous pouvez enregistrer un brouillon à tout moment.
       </PageTitle>
       <ProductFormClient
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}

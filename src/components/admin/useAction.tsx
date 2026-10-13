@@ -43,8 +43,7 @@ export function useAction() {
         setFailure({
           ok: false,
           code: "internal",
-          error:
-            "Connexion au serveur impossible. Votre saisie est conservée : réessayez.",
+          error: "Connexion au serveur impossible. Votre saisie est conservée : réessayez.",
         });
       } finally {
         busy.current = false;
@@ -77,31 +76,21 @@ export function ActionFeedback({
     return (
       <div
         role="alert"
-        className="border-gps-red/30 bg-gps-red-soft text-gps-red-ink flex flex-wrap items-start justify-between gap-3 rounded-[6px] border-[1.5px] p-3 text-[15px]"
+        className="flex flex-wrap items-start justify-between gap-3 rounded-[6px] border-[1.5px] border-gps-red/30 bg-gps-red-soft p-3 text-[15px] text-gps-red-ink"
       >
         <p className="flex items-start gap-2 font-semibold">
           <IconAlert className="mt-0.5 shrink-0" size={18} />
           <span>
             {failure.error}
-            {failure.code === "forbidden"
-              ? " Demandez à un propriétaire si besoin."
-              : null}
+            {failure.code === "forbidden" ? " Demandez à un propriétaire si besoin." : null}
           </span>
         </p>
         {expired ? (
-          <Link
-            href="/comptoir/connexion?expiree=1"
-            target="_blank"
-            className="btn btn-danger btn-sm"
-          >
+          <Link href="/comptoir/connexion?expiree=1" target="_blank" className="btn btn-danger btn-sm">
             Se reconnecter (nouvel onglet)
           </Link>
         ) : onRetry && failure.code === "internal" ? (
-          <button
-            type="button"
-            className="btn btn-danger btn-sm"
-            onClick={onRetry}
-          >
+          <button type="button" className="btn btn-danger btn-sm" onClick={onRetry}>
             Réessayer
           </button>
         ) : null}
@@ -112,7 +101,7 @@ export function ActionFeedback({
     return (
       <p
         role="status"
-        className="bg-wa-soft text-wa-ink flex items-center gap-2 rounded-[6px] p-3 text-[15px] font-semibold"
+        className="flex items-center gap-2 rounded-[6px] bg-wa-soft p-3 text-[15px] font-semibold text-wa-ink"
       >
         <IconCheck size={18} /> {success}
       </p>

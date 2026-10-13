@@ -2,22 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePage } from "@/server/admin";
-import {
-  getOrder,
-  methodLabels,
-  nextStep,
-  receptionLabels,
-  channelLabels,
-} from "@/server/domain/orders";
+import { getOrder, methodLabels, nextStep, receptionLabels, channelLabels } from "@/server/domain/orders";
 import { getSettings } from "@/server/domain/settings";
 import { can } from "@/lib/permissions";
 import { fcfa, formatDateTime } from "@/lib/format";
 import { Badge, Forbidden, Money, Panel } from "@/components/admin/ui";
-import {
-  FulfillmentBadge,
-  PaymentBadge,
-  StatusBadge,
-} from "@/components/admin/OrderBadges";
+import { FulfillmentBadge, PaymentBadge, StatusBadge } from "@/components/admin/OrderBadges";
 import {
   CancelForm,
   FeeForm,
@@ -31,17 +21,13 @@ import {
 } from "@/components/admin/OrderActions";
 import { IconArrowLeft, IconPrint } from "@/components/ui/icons";
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/comptoir/commandes/[id]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/comptoir/commandes/[id]">): Promise<Metadata> {
   const { db } = await requirePage("orders.view");
   const o = await getOrder(db, (await params).id);
   return { title: o ? o.reference : "Commande" };
 }
 
-export default async function OrderPage({
-  params,
-}: PageProps<"/comptoir/commandes/[id]">) {
+export default async function OrderPage({ params }: PageProps<"/comptoir/commandes/[id]">) {
   const { db, user, allowed } = await requirePage("orders.view");
   if (!allowed) return <Forbidden />;
   const o = await getOrder(db, (await params).id);
@@ -49,15 +35,10 @@ export default async function OrderPage({
   const settings = await getSettings(db);
   const step = nextStep(o);
   const showCost = can(user.role, "catalog.costs");
-  const reversed = new Set(
-    o.payments.filter((p) => p.reverses_id).map((p) => p.reverses_id),
-  );
+  const reversed = new Set(o.payments.filter((p) => p.reverses_id).map((p) => p.reverses_id));
 
   const linesText = o.lines
-    .map(
-      (l) =>
-        `• ${l.name}${l.options_label ? ` (${l.options_label})` : ""} × ${l.quantity}`,
-    )
+    .map((l) => `• ${l.name}${l.options_label ? ` (${l.options_label})` : ""} × ${l.quantity}`)
     .join("\n");
   const first = o.customer_name.split(" ")[0] || "";
   const templates = [
@@ -70,10 +51,7 @@ export default async function OrderPage({
       }\nRéception : ${receptionLabels[o.reception].toLowerCase()}.${o.balance > 0 ? `\nReste à régler : ${fcfa(o.balance)}.` : ""}\nMerci pour votre confiance — GPS, le service qui rassure.`,
     },
     {
-      label:
-        o.reception === "delivery"
-          ? "Commande prête à livrer"
-          : "Commande prête au retrait",
+      label: o.reception === "delivery" ? "Commande prête à livrer" : "Commande prête au retrait",
       text:
         o.reception === "delivery"
           ? `Bonjour ${first}, votre commande ${o.reference} est prête et va être livrée${o.delivery_address ? ` à : ${o.delivery_address}` : ""}.${o.balance > 0 ? ` Montant à régler : ${fcfa(o.balance)}.` : ""}`
@@ -89,26 +67,21 @@ export default async function OrderPage({
     <>
       <Link
         href="/comptoir/commandes"
-        className="no-print text-gps-blue mb-3 inline-flex min-h-11 items-center gap-1 text-[15px] font-bold hover:underline"
+        className="no-print mb-3 inline-flex min-h-11 items-center gap-1 text-[15px] font-bold text-gps-blue hover:underline"
       >
         <IconArrowLeft size={18} /> Commandes
       </Link>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow text-gps-red-ink">
-            {channelLabels[o.channel]} · {receptionLabels[o.reception]} ·{" "}
-            {formatDateTime(o.created_at)}
+            {channelLabels[o.channel]} · {receptionLabels[o.reception]} · {formatDateTime(o.created_at)}
           </p>
-          <h1 className="font-display mt-1 text-[40px] leading-none font-extrabold uppercase md:text-[52px]">
+          <h1 className="mt-1 font-display text-[40px] leading-none font-extrabold uppercase md:text-[52px]">
             {o.reference}
           </h1>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge status={o.status} />
-            <FulfillmentBadge
-              f={o.fulfillment}
-              reception={o.reception}
-              status={o.status}
-            />
+            <FulfillmentBadge f={o.fulfillment} reception={o.reception} status={o.status} />
             <PaymentBadge p={o.payment} />
             {o.is_demo ? <Badge>Exemple</Badge> : null}
           </div>
@@ -129,44 +102,32 @@ export default async function OrderPage({
             <div className="-mx-4 overflow-x-auto md:-mx-5">
               <table className="w-full min-w-[520px] text-[14px]">
                 <thead>
-                  <tr className="border-line text-ink-mute border-b text-left text-[12px] tracking-wide uppercase">
+                  <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                     <th className="px-4 py-2 font-bold md:px-5">Article</th>
                     <th className="py-2 text-right font-bold">Qté</th>
                     <th className="py-2 text-right font-bold">P.U.</th>
-                    {showCost ? (
-                      <th className="py-2 text-right font-bold">Coût</th>
-                    ) : null}
-                    <th className="px-4 py-2 text-right font-bold md:px-5">
-                      Total
-                    </th>
+                    {showCost ? <th className="py-2 text-right font-bold">Coût</th> : null}
+                    <th className="px-4 py-2 text-right font-bold md:px-5">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-line-soft divide-y">
+                <tbody className="divide-y divide-line-soft">
                   {o.lines.map((l) => (
                     <tr key={l.id}>
                       <td className="px-4 py-2 md:px-5">
                         <div className="font-semibold">{l.name}</div>
-                        <div className="text-ink-mute text-[13px]">
+                        <div className="text-[13px] text-ink-mute">
                           {l.options_label ? `${l.options_label} · ` : ""}
                           {l.sku}
                         </div>
-                        {l.returned_quantity ? (
-                          <Badge tone="warn">
-                            {l.returned_quantity} retourné(s)
-                          </Badge>
-                        ) : null}
+                        {l.returned_quantity ? <Badge tone="warn">{l.returned_quantity} retourné(s)</Badge> : null}
                       </td>
-                      <td className="tabular py-2 text-right">{l.quantity}</td>
+                      <td className="py-2 text-right tabular">{l.quantity}</td>
                       <td className="py-2 text-right">
                         <Money value={l.unit_price} />
                       </td>
                       {showCost ? (
-                        <td className="text-ink-mute py-2 text-right">
-                          {l.cost_price == null ? (
-                            "—"
-                          ) : (
-                            <Money value={l.cost_price} />
-                          )}
+                        <td className="py-2 text-right text-ink-mute">
+                          {l.cost_price == null ? "—" : <Money value={l.cost_price} />}
                         </td>
                       ) : null}
                       <td className="px-4 py-2 text-right font-bold md:px-5">
@@ -177,7 +138,7 @@ export default async function OrderPage({
                 </tbody>
               </table>
             </div>
-            <dl className="border-line mt-4 grid gap-1 border-t pt-3 text-[15px]">
+            <dl className="mt-4 grid gap-1 border-t border-line pt-3 text-[15px]">
               <div className="flex justify-between">
                 <dt>Total des articles</dt>
                 <dd className="font-semibold">
@@ -185,7 +146,7 @@ export default async function OrderPage({
                 </dd>
               </div>
               {o.returned_value ? (
-                <div className="text-warn flex justify-between">
+                <div className="flex justify-between text-warn">
                   <dt>Retours</dt>
                   <dd>
                     − <Money value={o.returned_value} />
@@ -212,17 +173,13 @@ export default async function OrderPage({
               </div>
               <div className="flex justify-between">
                 <dt>Encaissé (net)</dt>
-                <dd className="text-wa-ink font-semibold">
+                <dd className="font-semibold text-wa-ink">
                   <Money value={o.net} />
                 </dd>
               </div>
               <div className="flex justify-between text-lg">
-                <dt className="font-bold">
-                  {o.balance < 0 ? "À rembourser" : "Solde restant"}
-                </dt>
-                <dd
-                  className={`font-extrabold ${o.balance !== 0 ? "text-gps-red-ink" : ""}`}
-                >
+                <dt className="font-bold">{o.balance < 0 ? "À rembourser" : "Solde restant"}</dt>
+                <dd className={`font-extrabold ${o.balance !== 0 ? "text-gps-red-ink" : ""}`}>
                   <Money value={Math.abs(o.balance)} />
                 </dd>
               </div>
@@ -233,12 +190,9 @@ export default async function OrderPage({
             {o.payments.length === 0 ? (
               <p className="text-ink-mute">Aucun encaissement.</p>
             ) : (
-              <ul className="divide-line-soft divide-y">
+              <ul className="divide-y divide-line-soft">
                 {o.payments.map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex flex-wrap items-start justify-between gap-2 py-2"
-                  >
+                  <li key={p.id} className="flex flex-wrap items-start justify-between gap-2 py-2">
                     <div>
                       <p className="flex flex-wrap items-center gap-2 font-semibold">
                         {p.kind === "payment" ? (
@@ -251,19 +205,15 @@ export default async function OrderPage({
                         {methodLabels[p.method]}
                         {reversed.has(p.id) ? <Badge>corrigé</Badge> : null}
                       </p>
-                      <p className="text-ink-mute text-[13px]">
+                      <p className="text-[13px] text-ink-mute">
                         {formatDateTime(p.created_at)} · {p.user_name ?? "—"}
                         {p.note ? ` · ${p.note}` : ""}
                       </p>
-                      {p.kind === "payment" &&
-                      !reversed.has(p.id) &&
-                      can(user.role, "orders.correct") ? (
+                      {p.kind === "payment" && !reversed.has(p.id) && can(user.role, "orders.correct") ? (
                         <ReversePaymentButton paymentId={p.id} />
                       ) : null}
                     </div>
-                    <p
-                      className={`font-bold ${p.kind === "payment" ? "" : "text-gps-red-ink"}`}
-                    >
+                    <p className={`font-bold ${p.kind === "payment" ? "" : "text-gps-red-ink"}`}>
                       {p.kind === "payment" ? "" : "− "}
                       <Money value={p.amount} />
                     </p>
@@ -286,7 +236,7 @@ export default async function OrderPage({
                       {e.kind === "note" ? <strong>Note : </strong> : null}
                       {e.message}
                     </p>
-                    <p className="text-ink-mute text-[12px]">
+                    <p className="text-[12px] text-ink-mute">
                       {formatDateTime(e.created_at)}
                       {e.user_name ? ` · ${e.user_name}` : ""}
                     </p>
@@ -294,7 +244,7 @@ export default async function OrderPage({
                 </li>
               ))}
             </ol>
-            <div className="border-line mt-5 border-t pt-4">
+            <div className="mt-5 border-t border-line pt-4">
               <NoteForm orderId={o.id} />
             </div>
           </Panel>
@@ -304,94 +254,60 @@ export default async function OrderPage({
           <Panel title="Client & réception" id="t-client">
             <dl className="grid gap-3 text-[15px]">
               <div>
-                <dt className="text-ink-mute text-[12px] font-bold tracking-wide uppercase">
-                  Client
-                </dt>
+                <dt className="text-[12px] font-bold tracking-wide text-ink-mute uppercase">Client</dt>
                 <dd className="font-semibold">
                   {o.customer_id ? (
-                    <Link
-                      className="text-gps-blue hover:underline"
-                      href={`/comptoir/clients/${o.customer_id}`}
-                    >
+                    <Link className="text-gps-blue hover:underline" href={`/comptoir/clients/${o.customer_id}`}>
                       {o.customer_name}
                     </Link>
                   ) : (
                     o.customer_name || "Client de passage"
                   )}
                   {o.customer_phone ? (
-                    <span className="text-ink-soft block font-normal">
-                      {o.customer_phone}
-                    </span>
+                    <span className="block font-normal text-ink-soft">{o.customer_phone}</span>
                   ) : null}
                 </dd>
               </div>
               <div>
-                <dt className="text-ink-mute text-[12px] font-bold tracking-wide uppercase">
-                  Réception
-                </dt>
+                <dt className="text-[12px] font-bold tracking-wide text-ink-mute uppercase">Réception</dt>
                 <dd>
                   {receptionLabels[o.reception]}
                   {o.delivery_zone ? ` · ${o.delivery_zone}` : ""}
-                  {o.delivery_address ? (
-                    <span className="text-ink-soft block">
-                      {o.delivery_address}
-                    </span>
-                  ) : null}
+                  {o.delivery_address ? <span className="block text-ink-soft">{o.delivery_address}</span> : null}
                 </dd>
               </div>
               {o.notes ? (
                 <div>
-                  <dt className="text-ink-mute text-[12px] font-bold tracking-wide uppercase">
-                    Note à la saisie
-                  </dt>
+                  <dt className="text-[12px] font-bold tracking-wide text-ink-mute uppercase">Note à la saisie</dt>
                   <dd className="text-ink-soft">{o.notes}</dd>
                 </div>
               ) : null}
               <div>
-                <dt className="text-ink-mute text-[12px] font-bold tracking-wide uppercase">
-                  Enregistrée par
-                </dt>
+                <dt className="text-[12px] font-bold tracking-wide text-ink-mute uppercase">Enregistrée par</dt>
                 <dd className="text-ink-soft">{o.created_by_name ?? "—"}</dd>
               </div>
             </dl>
           </Panel>
 
-          {o.status !== "cancelled" &&
-          o.balance > 0 &&
-          can(user.role, "payments.record") ? (
-            <PaymentForm
-              orderId={o.id}
-              balance={o.balance}
-              feeUnknown={o.feeUnknown}
-            />
+          {o.status !== "cancelled" && o.balance > 0 && can(user.role, "payments.record") ? (
+            <PaymentForm orderId={o.id} balance={o.balance} feeUnknown={o.feeUnknown} />
           ) : null}
-          {o.status !== "cancelled" &&
-          o.feeUnknown &&
-          o.balance === 0 &&
-          can(user.role, "payments.record") ? (
+          {o.status !== "cancelled" && o.feeUnknown && o.balance === 0 && can(user.role, "payments.record") ? (
             <PaymentForm orderId={o.id} balance={0} feeUnknown />
           ) : null}
           {o.customer_phone || o.customer_name ? (
             <WhatsAppMessages phone={o.customer_phone} templates={templates} />
           ) : null}
-          {o.reception === "delivery" &&
-          o.status !== "cancelled" &&
-          can(user.role, "orders.correct") ? (
+          {o.reception === "delivery" && o.status !== "cancelled" && can(user.role, "orders.correct") ? (
             <FeeForm orderId={o.id} current={o.delivery_fee} />
           ) : null}
           {o.status === "completed" && can(user.role, "returns.process") ? (
             <ReturnForm orderId={o.id} lines={o.lines} net={o.net} />
           ) : null}
           {o.net > 0 && can(user.role, "payments.refund") ? (
-            <RefundForm
-              orderId={o.id}
-              net={o.net}
-              suggested={Math.max(0, -o.balance)}
-            />
+            <RefundForm orderId={o.id} net={o.net} suggested={Math.max(0, -o.balance)} />
           ) : null}
-          {o.status === "confirmed" && can(user.role, "orders.cancel") ? (
-            <CancelForm orderId={o.id} />
-          ) : null}
+          {o.status === "confirmed" && can(user.role, "orders.cancel") ? <CancelForm orderId={o.id} /> : null}
         </div>
       </div>
     </>

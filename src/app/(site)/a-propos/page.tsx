@@ -15,8 +15,8 @@ export default async function AboutPage() {
   return (
     <>
       <PageHeader eyebrow="À propos" title="Le service qui rassure">
-        GPS — Global Public Services réunit sous un même toit la vente de
-        produits du quotidien et des services de transfert d&apos;argent.
+        GPS — Global Public Services réunit sous un même toit la vente de produits du quotidien et des services de
+        transfert d&apos;argent.
       </PageHeader>
       <div className="container-site grid gap-12 pb-8 lg:grid-cols-12">
         <div className="lg:col-span-7">
@@ -24,18 +24,14 @@ export default async function AboutPage() {
             {c.storeText ? <p>{c.storeText}</p> : null}
             <h2>Ce que vous trouvez chez GPS</h2>
             <ul>
-              <li>
-                Téléphones, AirPods et écouteurs, casques, chargeurs et
-                accessoires.
-              </li>
+              <li>Téléphones, AirPods et écouteurs, casques, chargeurs et accessoires.</li>
               <li>Lunettes, chaussures et autres articles.</li>
               <li>Des services de transfert d&apos;argent au comptoir.</li>
             </ul>
             <h2>Comment commander</h2>
             <p>
-              Composez votre panier sur le site, puis envoyez le récapitulatif
-              sur WhatsApp. GPS vérifie la disponibilité et vous confirme le
-              total et la réception. Aucun paiement n&apos;est demandé en ligne.
+              Composez votre panier sur le site, puis envoyez le récapitulatif sur WhatsApp. GPS vérifie la
+              disponibilité et vous confirme le total et la réception. Aucun paiement n&apos;est demandé en ligne.
             </p>
             <h2>Notre histoire</h2>
             <p>

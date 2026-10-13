@@ -12,18 +12,8 @@ import {
   reversePayment,
   correctDeliveryFee,
 } from "@/server/domain/orders";
-import {
-  restock,
-  applyInventory,
-  inventoryPreview,
-  adjustStock,
-} from "@/server/domain/stock";
-import {
-  publishedProducts,
-  saveProduct,
-  productForEdit,
-  filterProducts,
-} from "@/server/domain/catalog";
+import { restock, applyInventory, inventoryPreview, adjustStock } from "@/server/domain/stock";
+import { publishedProducts, saveProduct, productForEdit, filterProducts } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, login, userFromToken } from "@/server/domain/auth";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
@@ -61,9 +51,7 @@ describe("Commande, réservation, paiement, remise", () => {
     expect(d.due).toBe(90000);
     expect(d.balance).toBe(60000);
     expect(d.payment).toBe("partial");
-    await expect(
-      recordPayment(db, manager, o.id, { method: "cash", amount: 70000 }),
-    ).rejects.toThrow(/solde/);
+    await expect(recordPayment(db, manager, o.id, { method: "cash", amount: 70000 })).rejects.toThrow(/solde/);
     await recordPayment(db, manager, o.id, {
       method: "mobile_money",
       amount: 60000,
@@ -107,9 +95,7 @@ describe("Commande, réservation, paiement, remise", () => {
       customerName: "Y",
       lines: [{ variantId: v0.id, quantity: 3 }],
     });
-    expect((await variantBySku(db, "LUM-RIV-EC")).reserved).toBe(
-      v0.reserved + 3,
-    );
+    expect((await variantBySku(db, "LUM-RIV-EC")).reserved).toBe(v0.reserved + 3);
     await expect(cancelOrder(db, manager, o.id, "")).rejects.toThrow(/motif/);
     await cancelOrder(db, manager, o.id, "Client injoignable");
     const v = await variantBySku(db, "LUM-RIV-EC");
@@ -178,19 +164,12 @@ describe("Commande, réservation, paiement, remise", () => {
     await correctDeliveryFee(db, manager, o.id, 1500, "Frais confirmés");
     await recordPayment(db, manager, o.id, { method: "cash", amount: 6500 });
     d = (await getOrder(db, o.id))!;
-    await reversePayment(
-      db,
-      manager,
-      d.payments[0].id,
-      "Saisie sur la mauvaise commande",
-    );
+    await reversePayment(db, manager, d.payments[0].id, "Saisie sur la mauvaise commande");
     d = (await getOrder(db, o.id))!;
     expect(d.payments).toHaveLength(2);
     expect(d.net).toBe(0);
     expect(d.events.some((e) => e.kind === "correction")).toBe(true);
-    await expect(
-      reversePayment(db, manager, d.payments[0].id, "encore"),
-    ).rejects.toThrow(/déjà/);
+    await expect(reversePayment(db, manager, d.payments[0].id, "encore")).rejects.toThrow(/déjà/);
   });
 });
 
@@ -208,9 +187,7 @@ describe("Stock", () => {
       });
     const results = await Promise.allSettled([attempt(), attempt(), attempt()]);
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    const rejected = results.filter(
-      (r) => r.status === "rejected",
-    ) as PromiseRejectedResult[];
+    const rejected = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
     expect(rejected[0].reason.message).toMatch(/Stock insuffisant/);
     const after = await variantBySku(db, "ORB-N12-512-GR");
     expect(after.reserved).toBe(v.reserved + 1);
@@ -290,19 +267,15 @@ describe("Stock", () => {
 describe("Catalogue, panier et promotions", () => {
   it("la promotion s'applique pendant sa période puis s'arrête seule", async () => {
     const now = new Date();
-    const during = (await publishedProducts(db, now)).find(
-      (p) => p.name === "Sonna Buds Air",
-    )!;
+    const during = (await publishedProducts(db, now)).find((p) => p.name === "Sonna Buds Air")!;
     expect(during.promo).not.toBeNull();
     expect(during.minPrice).toBe(20000);
-    const after = (
-      await publishedProducts(db, new Date(now.getTime() + 6 * 86400_000))
-    ).find((p) => p.name === "Sonna Buds Air")!;
+    const after = (await publishedProducts(db, new Date(now.getTime() + 6 * 86400_000))).find(
+      (p) => p.name === "Sonna Buds Air",
+    )!;
     expect(after.promo).toBeNull();
     expect(after.minPrice).toBe(25000);
-    const studio = (await publishedProducts(db, now)).find(
-      (p) => p.name === "Sonna Studio 2",
-    )!;
+    const studio = (await publishedProducts(db, now)).find((p) => p.name === "Sonna Studio 2")!;
     expect(studio.promo).toBeNull();
   });
 
@@ -317,9 +290,7 @@ describe("Catalogue, panier et promotions", () => {
     ]);
     expect(res[0].issues).toEqual([{ kind: "price", from: 25000, to: 20000 }]);
     expect(res[1].issues).toEqual([{ kind: "unavailable" }]);
-    expect(res[2].issues).toEqual([
-      { kind: "reduced", requested: 5, available: 2 },
-    ]);
+    expect(res[2].issues).toEqual([{ kind: "reduced", requested: 5, available: 2 }]);
     expect(res[2].quantity).toBe(2);
   });
 
@@ -351,9 +322,7 @@ describe("Catalogue, panier et promotions", () => {
       "select order_id as id from order_lines where sku = 'ORB-N12-256-GR' limit 1",
     );
     const before = (await getOrder(db, o!.id))!.lines[0];
-    const p = await db.one<{ id: string }>(
-      "select product_id as id from variants where sku = 'ORB-N12-256-GR'",
-    );
+    const p = await db.one<{ id: string }>("select product_id as id from variants where sku = 'ORB-N12-256-GR'");
     const edit = (await productForEdit(db, p!.id, { withCosts: true }))!;
     await saveProduct(
       db,
@@ -407,19 +376,13 @@ describe("Catalogue, panier et promotions", () => {
       { userId: manager.id, withCosts: false },
     );
     expect(draft.id).toBeTruthy();
-    expect(
-      filterProducts(await publishedProducts(db), { q: "Brouillon" }),
-    ).toHaveLength(0);
+    expect(filterProducts(await publishedProducts(db), { q: "Brouillon" })).toHaveLength(0);
   });
 
   it("recherche par référence et par catégorie", async () => {
     const all = await publishedProducts(db);
-    expect(filterProducts(all, { q: "pas-urb-no" }).map((p) => p.name)).toEqual(
-      ["Pas Urbain"],
-    );
-    expect(
-      filterProducts(all, { q: "ecouteurs" }).map((p) => p.name),
-    ).toContain("Sonna Buds Air");
+    expect(filterProducts(all, { q: "pas-urb-no" }).map((p) => p.name)).toEqual(["Pas Urbain"]);
+    expect(filterProducts(all, { q: "ecouteurs" }).map((p) => p.name)).toContain("Sonna Buds Air");
     const asc = filterProducts(all, { tri: "prix-asc" });
     expect(asc[0].minPrice).toBeLessThanOrEqual(asc[asc.length - 1].minPrice);
   });
@@ -436,32 +399,20 @@ describe("Droits, clients, rapports, démonstration", () => {
   });
 
   it("comptes de démonstration refusés hors mode démonstration", async () => {
-    await expect(
-      login(db, "vente@demo.gps", DEMO_PASSWORD, { allowDemo: false }),
-    ).rejects.toThrow(/désactivés/);
+    await expect(login(db, "vente@demo.gps", DEMO_PASSWORD, { allowDemo: false })).rejects.toThrow(/désactivés/);
     const { token } = await login(db, "vente@demo.gps", DEMO_PASSWORD, {
       allowDemo: true,
     });
     expect(await userFromToken(db, token, { allowDemo: true })).not.toBeNull();
     expect(await userFromToken(db, token, { allowDemo: false })).toBeNull();
-    await expect(
-      login(db, "vente@demo.gps", "mauvais", { allowDemo: true }),
-    ).rejects.toThrow(/incorrect/);
+    await expect(login(db, "vente@demo.gps", "mauvais", { allowDemo: true })).rejects.toThrow(/incorrect/);
   });
 
   it("signale un numéro déjà connu avant de créer un doublon", async () => {
-    expect((await phoneMatches(db, "+000 00 00 00 01")).length).toBeGreaterThan(
-      0,
-    );
+    expect((await phoneMatches(db, "+000 00 00 00 01")).length).toBeGreaterThan(0);
+    await expect(createCustomer(db, { name: "Doublon", phone: "00 00 00 01" })).rejects.toThrow(/correspond/);
     await expect(
-      createCustomer(db, { name: "Doublon", phone: "00 00 00 01" }),
-    ).rejects.toThrow(/correspond/);
-    await expect(
-      createCustomer(
-        db,
-        { name: "Doublon", phone: "00 00 00 01" },
-        { allowDuplicate: true },
-      ),
+      createCustomer(db, { name: "Doublon", phone: "00 00 00 01" }, { allowDuplicate: true }),
     ).resolves.toBeTruthy();
   });
 
@@ -490,15 +441,9 @@ describe("Droits, clients, rapports, démonstration", () => {
     await db.query("update orders set is_demo = true");
     await db.query("update customers set is_demo = true");
     await purgeDemo(db);
-    const n = await db.one<{ n: number }>(
-      "select count(*)::int as n from products where is_demo",
-    );
+    const n = await db.one<{ n: number }>("select count(*)::int as n from products where is_demo");
     expect(n!.n).toBe(0);
-    expect(
-      (await db.one<{ n: number }>(
-        "select count(*)::int as n from users where is_demo",
-      ))!.n,
-    ).toBe(0);
+    expect((await db.one<{ n: number }>("select count(*)::int as n from users where is_demo"))!.n).toBe(0);
     const after = await getSettings(db);
     expect(after.company.whatsapp).toBe("22500000000");
     expect(after.company.hours).toBe("Lun–Sam");

@@ -12,8 +12,7 @@ export function periodFromKey(
   now = new Date(),
   custom?: { from?: string; to?: string },
 ): Period & { key: string } {
-  const startOfDay = (d: Date) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const today = startOfDay(now);
   const tomorrow = new Date(today.getTime() + 86400_000);
   switch (key) {
@@ -41,11 +40,7 @@ export function periodFromKey(
     case "perso": {
       const from = custom?.from ? new Date(`${custom.from}T00:00:00`) : today;
       const toDay = custom?.to ? new Date(`${custom.to}T00:00:00`) : today;
-      if (
-        !Number.isNaN(from.getTime()) &&
-        !Number.isNaN(toDay.getTime()) &&
-        toDay >= from
-      ) {
+      if (!Number.isNaN(from.getTime()) && !Number.isNaN(toDay.getTime()) && toDay >= from) {
         return {
           key,
           from,
@@ -65,11 +60,7 @@ export function periodFromKey(
  * confirmées), les encaissements (argent reçu) et les soldes restants sont
  * distincts. Les transferts d'argent ne sont pas comptés ici.
  */
-export async function report(
-  db: Db,
-  period: Period,
-  opts: { withMargin: boolean },
-) {
+export async function report(db: Db, period: Period, opts: { withMargin: boolean }) {
   const sales = await db.one<{
     n: number;
     amount: number;
@@ -91,8 +82,7 @@ export async function report(
       where created_at >= $1 and created_at < $2 group by kind, method order by kind, method`,
     [period.from, period.to],
   );
-  const sum = (k: string) =>
-    cashflow.filter((c) => c.kind === k).reduce((s, c) => s + c.total, 0);
+  const sum = (k: string) => cashflow.filter((c) => c.kind === k).reduce((s, c) => s + c.total, 0);
   const encaissements = sum("payment") - sum("reversal");
   const remboursements = sum("refund");
 
@@ -132,8 +122,7 @@ export async function report(
   const soldes = open.reduce((s, o) => s + o.balance, 0);
 
   let margin:
-    | { available: false; reason: string }
-    | { available: true; value: number; revenue: number; method: string } = {
+    { available: false; reason: string } | { available: true; value: number; revenue: number; method: string } = {
     available: false,
     reason: "Réservée au propriétaire.",
   };
@@ -151,8 +140,7 @@ export async function report(
         where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2`,
       [period.from, period.to],
     );
-    if (!m || m.lines === 0)
-      margin = { available: false, reason: "Aucune vente sur la période." };
+    if (!m || m.lines === 0) margin = { available: false, reason: "Aucune vente sur la période." };
     else if (m.missing > 0) {
       margin = {
         available: false,

@@ -21,13 +21,13 @@ export default async function InventoryPage() {
     <>
       <Link
         href="/comptoir/stock"
-        className="text-gps-blue mb-3 inline-flex min-h-11 items-center gap-1 font-bold hover:underline"
+        className="mb-3 inline-flex min-h-11 items-center gap-1 font-bold text-gps-blue hover:underline"
       >
         <IconArrowLeft size={18} /> Stock
       </Link>
       <PageTitle eyebrow="Stock" title="Inventaire">
-        Saisissez les quantités comptées (laissez vide ce qui n&apos;a pas été
-        compté). Les écarts sont présentés avant validation.
+        Saisissez les quantités comptées (laissez vide ce qui n&apos;a pas été compté). Les écarts sont présentés avant
+        validation.
       </PageTitle>
       <InventoryForm
         rows={rows.map((r) => ({

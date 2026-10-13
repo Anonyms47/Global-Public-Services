@@ -21,11 +21,11 @@ export default async function ContactPage() {
   return (
     <>
       <PageHeader eyebrow="Contact" title="Parlons-en">
-        Une question sur un produit, une commande ou le transfert d&apos;argent
-        ? Le plus simple est d&apos;écrire à GPS sur WhatsApp.
+        Une question sur un produit, une commande ou le transfert d&apos;argent ? Le plus simple est d&apos;écrire à GPS
+        sur WhatsApp.
       </PageHeader>
       <div className="container-site grid gap-10 pb-8 lg:grid-cols-12">
-        <dl className="divide-line border-line divide-y border-y lg:col-span-7">
+        <dl className="divide-y divide-line border-y border-line lg:col-span-7">
           {rows.map(([k, v]) => (
             <div key={k} className="grid gap-1 py-4 sm:grid-cols-[180px_1fr]">
               <dt className="font-bold">{k}</dt>
@@ -37,8 +37,7 @@ export default async function ContactPage() {
           <p className="mb-3 font-bold">Nous joindre</p>
           <ContactActions company={c} text="Bonjour GPS, j'ai une question." />
           <p className="hint mt-3">
-            Les boutons s&apos;activent dès que les coordonnées sont renseignées
-            dans le Comptoir.
+            Les boutons s&apos;activent dès que les coordonnées sont renseignées dans le Comptoir.
           </p>
         </div>
       </div>

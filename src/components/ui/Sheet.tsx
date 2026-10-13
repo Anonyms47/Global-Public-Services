@@ -67,32 +67,17 @@ export function Sheet({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className={`${placement} bg-paper text-ink open:animate-rise flex-col overflow-hidden p-0 open:flex`}
-      style={
-        side === "center"
-          ? { width: `min(100vw - 32px, ${wide ? 960 : 560}px)` }
-          : undefined
-      }
+      className={`${placement} open:animate-rise flex-col overflow-hidden bg-paper p-0 text-ink open:flex`}
+      style={side === "center" ? { width: `min(100vw - 32px, ${wide ? 960 : 560}px)` } : undefined}
     >
-      <div className="border-line flex min-h-16 items-center justify-between gap-4 border-b px-4 md:px-6">
+      <div className="flex min-h-16 items-center justify-between gap-4 border-b border-line px-4 md:px-6">
         <h2 className="font-display text-2xl font-bold uppercase">{title}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="btn btn-ghost btn-sm -mr-2 px-2"
-          aria-label="Fermer"
-        >
+        <button type="button" onClick={onClose} className="btn btn-ghost btn-sm -mr-2 px-2" aria-label="Fermer">
           <IconClose size={22} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-6">
-        {children}
-      </div>
-      {footer ? (
-        <div className="border-line bg-card border-t px-4 py-3 md:px-6">
-          {footer}
-        </div>
-      ) : null}
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-6">{children}</div>
+      {footer ? <div className="border-t border-line bg-card px-4 py-3 md:px-6">{footer}</div> : null}
     </dialog>
   );
 }

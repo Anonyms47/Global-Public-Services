@@ -64,15 +64,7 @@ export const adminNav: {
   },
 ];
 
-export function Shell({
-  user,
-  demo,
-  children,
-}: {
-  user: User;
-  demo: boolean;
-  children: ReactNode;
-}) {
+export function Shell({ user, demo, children }: { user: User; demo: boolean; children: ReactNode }) {
   const nav = adminNav.filter((n) => can(user.role, n.perm));
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -80,9 +72,7 @@ export function Shell({
         <span className="rounded-[6px] bg-white p-1.5">
           <Logo variant="mark" className="h-7 w-auto" />
         </span>
-        <span className="font-display text-[26px] leading-none font-extrabold text-white uppercase">
-          Le Comptoir
-        </span>
+        <span className="font-display text-[26px] leading-none font-extrabold text-white uppercase">Le Comptoir</span>
       </Link>
       <nav aria-label="Comptoir" className="flex-1 px-3">
         <ul className="grid gap-0.5">
@@ -96,10 +86,7 @@ export function Shell({
         </ul>
       </nav>
       <div className="relative overflow-hidden border-t border-white/10 px-5 py-4 text-white">
-        <Ribbon
-          tone="white"
-          className="pointer-events-none absolute -bottom-6 left-0 h-20 w-full opacity-20"
-        />
+        <Ribbon tone="white" className="pointer-events-none absolute -bottom-6 left-0 h-20 w-full opacity-20" />
         <p className="text-[14px] font-bold">{user.name}</p>
         <p className="text-[13px] text-white/70">{roleLabels[user.role]}</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -124,34 +111,24 @@ export function Shell({
   );
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[256px_1fr]">
-      <aside className="no-print bg-gps-blue-deep sticky top-0 hidden h-dvh lg:block">
-        {sidebar}
-      </aside>
+      <aside className="no-print sticky top-0 hidden h-dvh bg-gps-blue-deep lg:block">{sidebar}</aside>
       <div className="min-w-0">
-        <header className="no-print border-line bg-paper/95 sticky top-0 z-30 border-b backdrop-blur">
+        <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
           {demo ? (
             <p className="bg-gps-blue-night px-4 py-1 text-center text-[12px] font-semibold text-white">
-              Démonstration — données d&apos;exemple isolées, purge possible
-              avant lancement (Paramètres).
+              Démonstration — données d&apos;exemple isolées, purge possible avant lancement (Paramètres).
             </p>
           ) : null}
           <div className="flex h-16 items-center gap-2 px-4 md:px-8">
             <MobileAdminNav>{sidebar}</MobileAdminNav>
             <GlobalSearch />
-            <Link
-              href="/comptoir/vente"
-              className="btn btn-primary btn-sm ml-auto shrink-0"
-            >
-              <IconPlus size={18} />{" "}
-              <span className="hidden sm:inline">Nouvelle vente</span>
+            <Link href="/comptoir/vente" className="btn btn-primary btn-sm ml-auto shrink-0">
+              <IconPlus size={18} /> <span className="hidden sm:inline">Nouvelle vente</span>
               <span className="sm:hidden">Vente</span>
             </Link>
           </div>
         </header>
-        <main
-          id="contenu"
-          className="mx-auto w-full max-w-[1320px] px-4 py-6 md:px-8 md:py-8"
-        >
+        <main id="contenu" className="mx-auto w-full max-w-[1320px] px-4 py-6 md:px-8 md:py-8">
           {children}
         </main>
       </div>

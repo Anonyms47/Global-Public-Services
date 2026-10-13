@@ -21,26 +21,15 @@ import {
 import { can } from "@/lib/permissions";
 import { optionsLabel } from "@/lib/format";
 
-const method = z.enum([
-  "cash",
-  "mobile_money",
-  "card",
-  "bank_transfer",
-  "other",
-]);
+const method = z.enum(["cash", "mobile_money", "card", "bank_transfer", "other"]);
 const money = z.coerce.number().int("Montant entier attendu.").min(0);
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const r = schema.safeParse(input);
   if (!r.success) {
     const fieldErrors: Record<string, string> = {};
-    for (const issue of r.error.issues)
-      fieldErrors[issue.path.join(".")] ??= issue.message;
-    throw new AppError(
-      "validation",
-      "Certaines informations sont invalides.",
-      fieldErrors,
-    );
+    for (const issue of r.error.issues) fieldErrors[issue.path.join(".")] ??= issue.message;
+    throw new AppError("validation", "Certaines informations sont invalides.", fieldErrors);
   }
   return r.data;
 }
@@ -113,18 +102,14 @@ const orderSchema = z.object({
   deliveryFee: money.nullish(),
   notes: z.string().max(1000).optional(),
   lines: z.array(lineSchema).min(1, "Ajoutez au moins un article."),
-  payment: z
-    .object({ method, amount: money, note: z.string().max(200).optional() })
-    .nullish(),
+  payment: z.object({ method, amount: money, note: z.string().max(200).optional() }).nullish(),
 });
 
 export async function createOrderAction(input: unknown) {
   return guarded("orders.create", async ({ db, user }) => {
     const data = parse(orderSchema, input);
     // Un prix différent du catalogue n'est accepté que pour les rôles autorisés à corriger.
-    const lines = data.lines.map((l) =>
-      can(user.role, "orders.correct") ? l : { ...l, unitPrice: undefined },
-    );
+    const lines = data.lines.map((l) => (can(user.role, "orders.correct") ? l : { ...l, unitPrice: undefined }));
     return createOrder(db, user, {
       ...data,
       lines,
@@ -137,9 +122,7 @@ export async function createOrderAction(input: unknown) {
 export async function quickSaleAction(input: unknown) {
   return guarded("sales.quick", async ({ db, user }) => {
     const data = parse(orderSchema, input);
-    const lines = data.lines.map((l) =>
-      can(user.role, "orders.correct") ? l : { ...l, unitPrice: undefined },
-    );
+    const lines = data.lines.map((l) => (can(user.role, "orders.correct") ? l : { ...l, unitPrice: undefined }));
     return createOrder(db, user, {
       ...data,
       channel: "boutique",
@@ -155,12 +138,7 @@ export async function advanceAction(id: string, to: Fulfillment) {
   return guarded(
     "orders.progress",
     ({ db, user }) =>
-      advanceOrder(
-        db,
-        user,
-        String(id),
-        parse(z.enum(["ready", "out_for_delivery", "handed_over"]), to),
-      ),
+      advanceOrder(db, user, String(id), parse(z.enum(["ready", "out_for_delivery", "handed_over"]), to)),
     {
       message: "Étape enregistrée.",
     },
@@ -168,11 +146,9 @@ export async function advanceAction(id: string, to: Fulfillment) {
 }
 
 export async function cancelAction(id: string, reason: string) {
-  return guarded(
-    "orders.cancel",
-    ({ db, user }) => cancelOrder(db, user, String(id), String(reason ?? "")),
-    { message: "Commande annulée, réservations libérées." },
-  );
+  return guarded("orders.cancel", ({ db, user }) => cancelOrder(db, user, String(id), String(reason ?? "")), {
+    message: "Commande annulée, réservations libérées.",
+  });
 }
 
 export async function paymentAction(id: string, input: unknown) {
@@ -224,27 +200,16 @@ export async function refundAction(id: string, input: unknown) {
 export async function reversePaymentAction(paymentId: string, reason: string) {
   return guarded(
     "orders.correct",
-    ({ db, user }) =>
-      reversePayment(db, user, String(paymentId), String(reason ?? "")),
+    ({ db, user }) => reversePayment(db, user, String(paymentId), String(reason ?? "")),
     { message: "Encaissement corrigé (contre-passation)." },
   );
 }
 
-export async function deliveryFeeAction(
-  id: string,
-  fee: number | null,
-  reason: string,
-) {
+export async function deliveryFeeAction(id: string, fee: number | null, reason: string) {
   return guarded(
     "orders.correct",
     ({ db, user }) =>
-      correctDeliveryFee(
-        db,
-        user,
-        String(id),
-        fee === null ? null : parse(money, fee),
-        String(reason ?? ""),
-      ),
+      correctDeliveryFee(db, user, String(id), fee === null ? null : parse(money, fee), String(reason ?? "")),
     {
       message: "Frais de livraison corrigés.",
     },
@@ -254,8 +219,7 @@ export async function deliveryFeeAction(
 export async function noteAction(id: string, note: string) {
   return guarded(
     "orders.progress",
-    ({ db, user }) =>
-      addOrderNote(db, user, String(id), String(note ?? "").slice(0, 1000)),
+    ({ db, user }) => addOrderNote(db, user, String(id), String(note ?? "").slice(0, 1000)),
     { message: "Note ajoutée." },
   );
 }

@@ -25,15 +25,7 @@ const methods = [
   ["other", "Autre"],
 ] as const;
 
-export function NextStepButton({
-  orderId,
-  to,
-  label,
-}: {
-  orderId: string;
-  to: Fulfillment;
-  label: string;
-}) {
+export function NextStepButton({ orderId, to, label }: { orderId: string; to: Fulfillment; label: string }) {
   const { run, pending, failure, success } = useAction();
   return (
     <div className="grid gap-2">
@@ -50,30 +42,16 @@ export function NextStepButton({
   );
 }
 
-function Section({
-  title,
-  children,
-  open,
-}: {
-  title: string;
-  children: React.ReactNode;
-  open?: boolean;
-}) {
+function Section({ title, children, open }: { title: string; children: React.ReactNode; open?: boolean }) {
   return (
-    <details
-      open={open}
-      className="group border-line bg-card rounded-[6px] border"
-    >
+    <details open={open} className="group rounded-[6px] border border-line bg-card">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-bold [&::-webkit-details-marker]:hidden">
         {title}
-        <span
-          aria-hidden="true"
-          className="text-gps-red text-xl transition-transform group-open:rotate-45"
-        >
+        <span aria-hidden="true" className="text-xl text-gps-red transition-transform group-open:rotate-45">
           +
         </span>
       </summary>
-      <div className="border-line border-t p-4">{children}</div>
+      <div className="border-t border-line p-4">{children}</div>
     </details>
   );
 }
@@ -97,11 +75,9 @@ export function PaymentForm({
         className="grid gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          run(
-            () =>
-              paymentAction(orderId, { method, amount: Number(amount), note }),
-            { onSuccess: () => (setAmount(""), setNote("")) },
-          );
+          run(() => paymentAction(orderId, { method, amount: Number(amount), note }), {
+            onSuccess: () => (setAmount(""), setNote("")),
+          });
         }}
       >
         <div className="grid gap-3 sm:grid-cols-2">
@@ -140,18 +116,10 @@ export function PaymentForm({
           <label className="label" htmlFor="pay-n">
             Note (facultatif)
           </label>
-          <input
-            id="pay-n"
-            className="field"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+          <input id="pay-n" className="field" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         {feeUnknown ? (
-          <p className="hint">
-            Frais de livraison encore à confirmer : le solde affiché ne les
-            inclut pas.
-          </p>
+          <p className="hint">Frais de livraison encore à confirmer : le solde affiché ne les inclut pas.</p>
         ) : null}
         <ActionFeedback failure={failure} success={success} />
         <button className="btn btn-blue" disabled={pending || !amount}>
@@ -170,7 +138,7 @@ export function ReversePaymentButton({ paymentId }: { paymentId: string }) {
     return (
       <button
         type="button"
-        className="text-gps-red-ink text-[13px] font-semibold underline"
+        className="text-[13px] font-semibold text-gps-red-ink underline"
         onClick={() => setOpen(true)}
       >
         Corriger
@@ -200,11 +168,7 @@ export function ReversePaymentButton({ paymentId }: { paymentId: string }) {
       />
       <ActionFeedback failure={failure} />
       <div className="flex gap-2">
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={() => setOpen(false)}
-        >
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
           Annuler
         </button>
         <button className="btn btn-danger btn-sm" disabled={pending}>
@@ -215,15 +179,7 @@ export function ReversePaymentButton({ paymentId }: { paymentId: string }) {
   );
 }
 
-export function RefundForm({
-  orderId,
-  net,
-  suggested,
-}: {
-  orderId: string;
-  net: number;
-  suggested: number;
-}) {
+export function RefundForm({ orderId, net, suggested }: { orderId: string; net: number; suggested: number }) {
   const [method, setMethod] = useState<(typeof methods)[number][0]>("cash");
   const [amount, setAmount] = useState(suggested > 0 ? String(suggested) : "");
   const [note, setNote] = useState("");
@@ -234,14 +190,11 @@ export function RefundForm({
         className="grid gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          run(() =>
-            refundAction(orderId, { method, amount: Number(amount), note }),
-          );
+          run(() => refundAction(orderId, { method, amount: Number(amount), note }));
         }}
       >
-        <p className="text-ink-soft text-[14px]">
-          Encaissé net : {fcfa(net)}. Le remboursement est conservé dans
-          l&apos;historique.
+        <p className="text-[14px] text-ink-soft">
+          Encaissé net : {fcfa(net)}. Le remboursement est conservé dans l&apos;historique.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <select
@@ -291,17 +244,12 @@ export function CancelForm({ orderId }: { orderId: string }) {
         className="grid gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          if (
-            confirm(
-              "Annuler cette commande ? Les articles réservés redeviennent disponibles.",
-            )
-          )
+          if (confirm("Annuler cette commande ? Les articles réservés redeviennent disponibles."))
             run(() => cancelAction(orderId, reason));
         }}
       >
-        <p className="text-ink-soft text-[14px]">
-          Libère les réservations. Les encaissements éventuels restent à
-          rembourser.
+        <p className="text-[14px] text-ink-soft">
+          Libère les réservations. Les encaissements éventuels restent à rembourser.
         </p>
         <label className="label" htmlFor="cancel-r">
           Motif
@@ -355,8 +303,7 @@ export function ReturnForm({
         onSubmit={(e) => {
           e.preventDefault();
           if (!resellable) return;
-          const amount =
-            refundAmount === "" ? Math.min(value, net) : Number(refundAmount);
+          const amount = refundAmount === "" ? Math.min(value, net) : Number(refundAmount);
           run(
             () =>
               returnAction(orderId, {
@@ -376,13 +323,10 @@ export function ReturnForm({
           {returnable.map((l) => (
             <li key={l.id} className="flex items-center justify-between gap-3">
               <span className="text-[14px]">
-                <span className="font-semibold">{l.name}</span>{" "}
-                {l.options_label ? `— ${l.options_label}` : ""}
+                <span className="font-semibold">{l.name}</span> {l.options_label ? `— ${l.options_label}` : ""}
               </span>
               <label className="flex items-center gap-2 text-[14px]">
-                <span className="sr-only">
-                  Quantité retournée pour {l.name}
-                </span>
+                <span className="sr-only">Quantité retournée pour {l.name}</span>
                 <input
                   type="number"
                   min={0}
@@ -392,13 +336,7 @@ export function ReturnForm({
                   onChange={(e) =>
                     setQty({
                       ...qty,
-                      [l.id]: Math.max(
-                        0,
-                        Math.min(
-                          l.quantity - l.returned_quantity,
-                          Number(e.target.value) || 0,
-                        ),
-                      ),
+                      [l.id]: Math.max(0, Math.min(l.quantity - l.returned_quantity, Number(e.target.value) || 0)),
                     })
                   }
                 />
@@ -413,30 +351,20 @@ export function ReturnForm({
             <label
               className={`flex min-h-12 items-center gap-2 rounded-[6px] border-[1.5px] px-3 ${resellable === "yes" ? "border-wa bg-wa-soft" : "border-line"}`}
             >
-              <input
-                type="radio"
-                name="etat"
-                checked={resellable === "yes"}
-                onChange={() => setResellable("yes")}
-              />{" "}
+              <input type="radio" name="etat" checked={resellable === "yes"} onChange={() => setResellable("yes")} />{" "}
               Revendable — remettre en stock
             </label>
             <label
               className={`flex min-h-12 items-center gap-2 rounded-[6px] border-[1.5px] px-3 ${resellable === "no" ? "border-gps-red bg-gps-red-soft" : "border-line"}`}
             >
-              <input
-                type="radio"
-                name="etat"
-                checked={resellable === "no"}
-                onChange={() => setResellable("no")}
-              />{" "}
+              <input type="radio" name="etat" checked={resellable === "no"} onChange={() => setResellable("no")} />{" "}
               Défectueux — ne pas remettre en stock
             </label>
           </div>
           {!resellable ? (
             <p className="hint">
-              Validez l&apos;état avant d&apos;enregistrer : la remise en stock
-              n&apos;a lieu que pour un article revendable.
+              Validez l&apos;état avant d&apos;enregistrer : la remise en stock n&apos;a lieu que pour un article
+              revendable.
             </p>
           ) : null}
         </fieldset>
@@ -448,12 +376,8 @@ export function ReturnForm({
           onChange={(e) => setReason(e.target.value)}
         />
         <label className="flex items-center gap-2 text-[15px]">
-          <input
-            type="checkbox"
-            checked={withRefund}
-            onChange={(e) => setWithRefund(e.target.checked)}
-          />{" "}
-          Rembourser maintenant
+          <input type="checkbox" checked={withRefund} onChange={(e) => setWithRefund(e.target.checked)} /> Rembourser
+          maintenant
         </label>
         {withRefund ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -475,17 +399,12 @@ export function ReturnForm({
               className="field"
               placeholder={String(Math.min(value, net))}
               value={refundAmount}
-              onChange={(e) =>
-                setRefundAmount(e.target.value.replace(/\D/g, ""))
-              }
+              onChange={(e) => setRefundAmount(e.target.value.replace(/\D/g, ""))}
             />
           </div>
         ) : null}
         <ActionFeedback failure={failure} success={success} />
-        <button
-          className="btn btn-blue"
-          disabled={pending || !resellable || value === 0}
-        >
+        <button className="btn btn-blue" disabled={pending || !resellable || value === 0}>
           Enregistrer le retour ({fcfa(value)})
         </button>
       </form>
@@ -493,13 +412,7 @@ export function ReturnForm({
   );
 }
 
-export function FeeForm({
-  orderId,
-  current,
-}: {
-  orderId: string;
-  current: number | null;
-}) {
+export function FeeForm({ orderId, current }: { orderId: string; current: number | null }) {
   const [fee, setFee] = useState(current === null ? "" : String(current));
   const [unknown, setUnknown] = useState(current === null);
   const [reason, setReason] = useState("");
@@ -510,13 +423,7 @@ export function FeeForm({
         className="grid gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          run(() =>
-            deliveryFeeAction(
-              orderId,
-              unknown ? null : Number(fee || 0),
-              reason,
-            ),
-          );
+          run(() => deliveryFeeAction(orderId, unknown ? null : Number(fee || 0), reason));
         }}
       >
         <div className="flex flex-wrap items-center gap-3">
@@ -529,12 +436,7 @@ export function FeeForm({
             onChange={(e) => setFee(e.target.value.replace(/\D/g, ""))}
           />
           <label className="flex items-center gap-2 text-[14px]">
-            <input
-              type="checkbox"
-              checked={unknown}
-              onChange={(e) => setUnknown(e.target.checked)}
-            />{" "}
-            À confirmer
+            <input type="checkbox" checked={unknown} onChange={(e) => setUnknown(e.target.checked)} /> À confirmer
           </label>
         </div>
         <input
@@ -576,10 +478,7 @@ export function NoteForm({ orderId }: { orderId: string }) {
         placeholder="Visible uniquement par l'équipe"
       />
       <ActionFeedback failure={failure} />
-      <button
-        className="btn btn-outline btn-sm justify-self-start"
-        disabled={pending || !note.trim()}
-      >
+      <button className="btn btn-outline btn-sm justify-self-start" disabled={pending || !note.trim()}>
         Ajouter la note
       </button>
     </form>
@@ -628,18 +527,11 @@ export function WhatsAppMessages({
         />
         <div className="flex flex-wrap gap-2">
           {link ? (
-            <a
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-wa btn-sm"
-            >
+            <a href={link} target="_blank" rel="noopener noreferrer" className="btn btn-wa btn-sm">
               <IconWhatsApp size={18} /> Ouvrir dans WhatsApp
             </a>
           ) : (
-            <p className="text-ink-mute text-[13px]">
-              Numéro du client absent ou incomplet : copiez le message.
-            </p>
+            <p className="text-[13px] text-ink-mute">Numéro du client absent ou incomplet : copiez le message.</p>
           )}
           <button
             type="button"
@@ -655,8 +547,8 @@ export function WhatsAppMessages({
           </button>
         </div>
         <p className="hint">
-          L&apos;ouverture de WhatsApp prépare le message : il reste à
-          l&apos;envoyer. Vérifiez l&apos;indicatif du numéro.
+          L&apos;ouverture de WhatsApp prépare le message : il reste à l&apos;envoyer. Vérifiez l&apos;indicatif du
+          numéro.
         </p>
       </div>
     </Section>

@@ -31,20 +31,9 @@ const icons: Record<string, typeof IconMenu> = {
   swap: IconSwap,
 };
 
-export function AdminNavLink({
-  href,
-  icon,
-  children,
-}: {
-  href: string;
-  icon: string;
-  children: ReactNode;
-}) {
+export function AdminNavLink({ href, icon, children }: { href: string; icon: string; children: ReactNode }) {
   const pathname = usePathname();
-  const on =
-    href === "/comptoir"
-      ? pathname === href
-      : pathname === href || pathname.startsWith(`${href}/`);
+  const on = href === "/comptoir" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   const I = icons[icon] ?? IconGrid;
   return (
     <Link
@@ -52,7 +41,7 @@ export function AdminNavLink({
       aria-current={on ? "page" : undefined}
       className={`flex min-h-11 items-center gap-3 rounded-[6px] px-3 text-[15px] font-semibold transition-colors ${
         on
-          ? "text-gps-blue-deep bg-white shadow-[inset_4px_0_0_#e30713]"
+          ? "bg-white text-gps-blue-deep shadow-[inset_4px_0_0_#e30713]"
           : "text-white/85 hover:bg-white/10 hover:text-white"
       }`}
     >
@@ -73,21 +62,14 @@ export function MobileAdminNav({ children }: { children: ReactNode }) {
     <>
       <button
         type="button"
-        className="hover:bg-ink/5 -ml-2 inline-flex h-11 w-11 items-center justify-center rounded-[6px] lg:hidden"
+        className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-[6px] hover:bg-ink/5 lg:hidden"
         aria-label="Ouvrir la navigation"
         onClick={() => setOpen(true)}
       >
         <IconMenu size={24} />
       </button>
-      <Sheet
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Navigation"
-        side="left"
-      >
-        <div className="bg-gps-blue-deep -mx-4 -my-4 min-h-full md:-mx-6">
-          {children}
-        </div>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Navigation" side="left">
+        <div className="-mx-4 -my-4 min-h-full bg-gps-blue-deep md:-mx-6">{children}</div>
       </Sheet>
     </>
   );
@@ -137,29 +119,20 @@ export function GlobalSearch() {
     setOpen(false);
     router.push(href);
   };
-  const total = data
-    ? data.products.length + data.orders.length + data.customers.length
-    : 0;
+  const total = data ? data.products.length + data.orders.length + data.customers.length : 0;
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="border-line text-ink-mute flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[6px] border-[1.5px] bg-white px-3 text-left text-[15px] md:max-w-md"
+        className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[6px] border-[1.5px] border-line bg-white px-3 text-left text-[15px] text-ink-mute md:max-w-md"
       >
         <IconSearch size={18} className="shrink-0" />
         <span className="truncate">Produit, commande, client…</span>
-        <kbd className="border-line ml-auto hidden rounded border px-1.5 text-[12px] md:inline">
-          Ctrl K
-        </kbd>
+        <kbd className="ml-auto hidden rounded border border-line px-1.5 text-[12px] md:inline">Ctrl K</kbd>
       </button>
-      <Sheet
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Recherche"
-        side="center"
-      >
+      <Sheet open={open} onClose={() => setOpen(false)} title="Recherche" side="center">
         <label htmlFor="admin-search" className="sr-only">
           Rechercher un produit, une référence de commande ou un client
         </label>
@@ -173,13 +146,9 @@ export function GlobalSearch() {
           autoComplete="off"
         />
         <div className="mt-4 min-h-24" aria-live="polite">
-          {res && !res.ok ? (
-            <p className="text-gps-red-ink">{res.error}</p>
-          ) : null}
+          {res && !res.ok ? <p className="text-gps-red-ink">{res.error}</p> : null}
           {loading ? <p className="text-ink-mute">Recherche…</p> : null}
-          {!loading && data && total === 0 ? (
-            <p className="text-ink-mute">Aucun résultat pour « {q} ».</p>
-          ) : null}
+          {!loading && data && total === 0 ? <p className="text-ink-mute">Aucun résultat pour « {q} ».</p> : null}
           {data && total > 0 ? (
             <div className="grid gap-5">
               {[
@@ -196,15 +165,7 @@ export function GlobalSearch() {
                   data.products.map((p) => ({
                     href: `/comptoir/catalogue/${p.id}`,
                     title: p.name,
-                    sub: [
-                      p.brand,
-                      p.sku,
-                      p.status === "archived"
-                        ? "archivé"
-                        : p.status === "draft"
-                          ? "brouillon"
-                          : "",
-                    ]
+                    sub: [p.brand, p.sku, p.status === "archived" ? "archivé" : p.status === "draft" ? "brouillon" : ""]
                       .filter(Boolean)
                       .join(" · "),
                   })),
@@ -218,28 +179,19 @@ export function GlobalSearch() {
                   })),
                 ],
               ].map(([label, rows]) =>
-                (rows as { href: string; title: string; sub: string }[])
-                  .length ? (
+                (rows as { href: string; title: string; sub: string }[]).length ? (
                   <div key={label as string}>
-                    <p className="eyebrow text-ink-mute mb-1">
-                      {label as string}
-                    </p>
-                    <ul className="divide-line-soft divide-y">
-                      {(
-                        rows as { href: string; title: string; sub: string }[]
-                      ).map((r) => (
+                    <p className="eyebrow mb-1 text-ink-mute">{label as string}</p>
+                    <ul className="divide-y divide-line-soft">
+                      {(rows as { href: string; title: string; sub: string }[]).map((r) => (
                         <li key={r.href}>
                           <button
                             type="button"
                             onClick={() => go(r.href)}
-                            className="hover:bg-paper-deep focus-visible:bg-paper-deep flex min-h-12 w-full flex-col items-start justify-center rounded px-2 text-left"
+                            className="flex min-h-12 w-full flex-col items-start justify-center rounded px-2 text-left hover:bg-paper-deep focus-visible:bg-paper-deep"
                           >
                             <span className="font-semibold">{r.title}</span>
-                            {r.sub ? (
-                              <span className="text-ink-mute text-[13px]">
-                                {r.sub}
-                              </span>
-                            ) : null}
+                            {r.sub ? <span className="text-[13px] text-ink-mute">{r.sub}</span> : null}
                           </button>
                         </li>
                       ))}

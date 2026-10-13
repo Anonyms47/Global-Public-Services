@@ -8,22 +8,13 @@ import { schemaSql } from "./schema";
  * purgées sans toucher à la configuration validée (table `settings`).
  */
 export interface Db {
-  query<T = Record<string, unknown>>(
-    sql: string,
-    params?: unknown[],
-  ): Promise<T[]>;
-  one<T = Record<string, unknown>>(
-    sql: string,
-    params?: unknown[],
-  ): Promise<T | null>;
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
+  one<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | null>;
   /** Exécute `fn` dans une transaction. Imbriqué, réutilise la transaction en cours. */
   tx<T>(fn: (db: Db) => Promise<T>): Promise<T>;
 }
 
-type RawQuery = (
-  sql: string,
-  params?: unknown[],
-) => Promise<{ rows: unknown[] }>;
+type RawQuery = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
 
 function wrap(raw: RawQuery, tx: Db["tx"]): Db {
   const db: Db = {
@@ -40,8 +31,7 @@ function wrap(raw: RawQuery, tx: Db["tx"]): Db {
 
 async function createPglite(dataDir?: string): Promise<Db> {
   const { PGlite } = await import("@electric-sql/pglite");
-  if (dataDir)
-    (await import("node:fs")).mkdirSync(dataDir, { recursive: true });
+  if (dataDir) (await import("node:fs")).mkdirSync(dataDir, { recursive: true });
   const pg = dataDir ? new PGlite(dataDir) : new PGlite();
   await pg.waitReady;
   await pg.exec(schemaSql);
@@ -83,10 +73,6 @@ async function createPostgres(url: string): Promise<Db> {
   });
 }
 
-export async function openDb(
-  options: { url?: string; dataDir?: string; memory?: boolean } = {},
-) {
-  return options.url
-    ? createPostgres(options.url)
-    : createPglite(options.memory ? undefined : options.dataDir);
+export async function openDb(options: { url?: string; dataDir?: string; memory?: boolean } = {}) {
+  return options.url ? createPostgres(options.url) : createPglite(options.memory ? undefined : options.dataDir);
 }

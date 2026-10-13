@@ -15,9 +15,7 @@ export async function variantBySku(db: Db, sku: string) {
     on_hand: number;
     reserved: number;
     price: number;
-  }>("select id, on_hand, reserved, price from variants where sku = $1", [
-    sku,
-  ]))!;
+  }>("select id, on_hand, reserved, price from variants where sku = $1", [sku]))!;
 }
 
 export async function userByRole(db: Db, role: string) {
@@ -28,8 +26,5 @@ export async function userByRole(db: Db, role: string) {
     email: string;
     active: boolean;
     is_demo: boolean;
-  }>(
-    "select id, name, role, email, active, is_demo from users where role = $1 limit 1",
-    [role],
-  ))!;
+  }>("select id, name, role, email, active, is_demo from users where role = $1 limit 1", [role]))!;
 }

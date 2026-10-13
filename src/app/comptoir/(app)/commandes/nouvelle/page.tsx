@@ -14,8 +14,8 @@ export default async function NewOrderPage() {
   return (
     <>
       <PageTitle eyebrow="Commandes" title="Enregistrer une commande">
-        Pour une commande confirmée avec le client (WhatsApp, téléphone). Les
-        articles sont réservés à l&apos;enregistrement.
+        Pour une commande confirmée avec le client (WhatsApp, téléphone). Les articles sont réservés à
+        l&apos;enregistrement.
       </PageTitle>
       <OrderComposerClient
         mode="order"

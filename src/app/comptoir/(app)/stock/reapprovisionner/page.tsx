@@ -10,9 +10,7 @@ import { IconArrowLeft } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Réapprovisionner" };
 
-export default async function RestockPage({
-  searchParams,
-}: PageProps<"/comptoir/stock/reapprovisionner">) {
+export default async function RestockPage({ searchParams }: PageProps<"/comptoir/stock/reapprovisionner">) {
   const { db, allowed } = await requirePage("stock.restock");
   if (!allowed) return <Forbidden />;
   const s = await getSettings(db);
@@ -24,14 +22,13 @@ export default async function RestockPage({
     <>
       <Link
         href="/comptoir/stock"
-        className="text-gps-blue mb-3 inline-flex min-h-11 items-center gap-1 font-bold hover:underline"
+        className="mb-3 inline-flex min-h-11 items-center gap-1 font-bold text-gps-blue hover:underline"
       >
         <IconArrowLeft size={18} /> Stock
       </Link>
       <PageTitle eyebrow="Stock" title="Réapprovisionner">
-        Un lot = une livraison reçue. Ajoutez les articles reçus, vérifiez,
-        confirmez : le stock physique augmente et chaque mouvement garde le lot,
-        le motif et l&apos;auteur.
+        Un lot = une livraison reçue. Ajoutez les articles reçus, vérifiez, confirmez : le stock physique augmente et
+        chaque mouvement garde le lot, le motif et l&apos;auteur.
       </PageTitle>
       <RestockForm
         preselect={typeof pre === "string" ? pre : undefined}

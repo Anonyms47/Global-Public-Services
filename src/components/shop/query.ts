@@ -2,8 +2,7 @@ import type { ShopQuery, SortKey } from "@/server/domain/catalog";
 
 type Params = Record<string, string | string[] | undefined>;
 
-const first = (v: string | string[] | undefined) =>
-  Array.isArray(v) ? v[0] : v;
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 const num = (v: string | undefined) => {
   if (!v) return undefined;
   const n = Number(v.replace(/\s/g, ""));
@@ -13,9 +12,7 @@ const num = (v: string | undefined) => {
 /** Lit les paramètres d'URL (partageables) de la boutique. */
 export function parseShopQuery(sp: Params): ShopQuery {
   const marque = sp.marque;
-  const brands = (
-    Array.isArray(marque) ? marque : marque ? marque.split(",") : []
-  )
+  const brands = (Array.isArray(marque) ? marque : marque ? marque.split(",") : [])
     .map((m) => m.trim())
     .filter(Boolean);
   const tri = first(sp.tri);
@@ -28,18 +25,13 @@ export function parseShopQuery(sp: Params): ShopQuery {
     dispo: first(sp.dispo) === "1" || undefined,
     promo: first(sp.promo) === "1" || undefined,
     etat: first(sp.etat) || undefined,
-    tri: (["nouveautes", "prix-asc", "prix-desc"] as SortKey[]).includes(
-      tri as SortKey,
-    )
+    tri: (["nouveautes", "prix-asc", "prix-desc"] as SortKey[]).includes(tri as SortKey)
       ? (tri as SortKey)
       : "nouveautes",
   };
 }
 
-export function shopQueryToParams(
-  q: ShopQuery,
-  opts: { omitCategory?: boolean } = {},
-) {
+export function shopQueryToParams(q: ShopQuery, opts: { omitCategory?: boolean } = {}) {
   const p = new URLSearchParams();
   if (q.q) p.set("q", q.q);
   if (q.categorie && !opts.omitCategory) p.set("categorie", q.categorie);

@@ -13,10 +13,7 @@ export async function pageDb() {
 /** Contexte partagé par les pages publiques, calculé une fois par requête. */
 export const siteContext = cache(async () => {
   const db = await pageDb();
-  const [settings, demoData] = await Promise.all([
-    getSettings(db),
-    hasDemoData(db),
-  ]);
+  const [settings, demoData] = await Promise.all([getSettings(db), hasDemoData(db)]);
   const demo = isDemoMode() || demoData;
   return {
     db,

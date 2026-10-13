@@ -33,18 +33,9 @@ export interface CheckedItem {
  * Revérifie prix et disponibilités côté serveur avant la préparation du message.
  * Aucune réservation : le panier n'engage pas le stock.
  */
-export async function checkCart(
-  db: Db,
-  items: CartItemInput[],
-  now = new Date(),
-): Promise<CheckedItem[]> {
+export async function checkCart(db: Db, items: CartItemInput[], now = new Date()): Promise<CheckedItem[]> {
   const clean = items
-    .filter(
-      (i) =>
-        typeof i.variantId === "string" &&
-        Number.isInteger(i.quantity) &&
-        i.quantity > 0,
-    )
+    .filter((i) => typeof i.variantId === "string" && Number.isInteger(i.quantity) && i.quantity > 0)
     .slice(0, 50);
   if (!clean.length) return [];
   const rows = await db.query<{
@@ -68,10 +59,9 @@ export async function checkCart(
        from variants v join products p on p.id = v.product_id where v.id = any($1)`,
     [clean.map((i) => i.variantId)],
   );
-  const promos = await db.query<Promotion>(
-    "select * from promotions where product_id = any($1) and active",
-    [rows.map((r) => r.product_id)],
-  );
+  const promos = await db.query<Promotion>("select * from promotions where product_id = any($1) and active", [
+    rows.map((r) => r.product_id),
+  ]);
   return clean.map((item) => {
     const r = rows.find((x) => x.id === item.variantId);
     if (!r || !r.active || r.status !== "published") {
@@ -98,11 +88,9 @@ export async function checkCart(
     const unitPrice = promo ? discounted(r.price, promo) : r.price;
     const available = Math.max(0, r.on_hand - r.reserved);
     const issues: CartIssue[] = [];
-    if (unitPrice !== item.seenPrice)
-      issues.push({ kind: "price", from: item.seenPrice, to: unitPrice });
+    if (unitPrice !== item.seenPrice) issues.push({ kind: "price", from: item.seenPrice, to: unitPrice });
     if (available === 0) issues.push({ kind: "unavailable" });
-    else if (item.quantity > available)
-      issues.push({ kind: "reduced", requested: item.quantity, available });
+    else if (item.quantity > available) issues.push({ kind: "reduced", requested: item.quantity, available });
     return {
       variantId: r.id,
       productId: r.product_id,
@@ -112,8 +100,7 @@ export async function checkCart(
       optionsLabel: optionsLabel(r.options, r.axes),
       image: r.image,
       unitPrice,
-      quantity:
-        available === 0 ? item.quantity : Math.min(item.quantity, available),
+      quantity: available === 0 ? item.quantity : Math.min(item.quantity, available),
       available,
       isDemo: r.is_demo,
       issues,

@@ -12,11 +12,9 @@ export function publicationIssues(input: PublishableInput) {
   const issues: string[] = [];
   if (!input.name.trim()) issues.push("Le nom du produit est obligatoire.");
   if (!input.categoryId) issues.push("Choisissez une catégorie.");
-  if (input.description.trim().length < 20)
-    issues.push("Rédigez une description d'au moins 20 caractères.");
+  if (input.description.trim().length < 20) issues.push("Rédigez une description d'au moins 20 caractères.");
   if (!input.images.length) issues.push("Ajoutez au moins une photo.");
-  if (!input.variants.length)
-    issues.push("Ajoutez au moins une variante avec un prix.");
+  if (!input.variants.length) issues.push("Ajoutez au moins une variante avec un prix.");
   input.variants.forEach((v, i) => {
     const n = `Variante ${i + 1}`;
     if (!v.sku.trim()) issues.push(`${n} : la référence est obligatoire.`);
@@ -26,11 +24,8 @@ export function publicationIssues(input: PublishableInput) {
     }
   });
   const skus = input.variants.map((v) => v.sku.trim().toUpperCase());
-  if (new Set(skus).size !== skus.length)
-    issues.push("Chaque variante doit avoir une référence unique.");
-  const combos = input.variants.map((v) =>
-    input.axes.map((a) => v.options[a]).join("|"),
-  );
+  if (new Set(skus).size !== skus.length) issues.push("Chaque variante doit avoir une référence unique.");
+  const combos = input.variants.map((v) => input.axes.map((a) => v.options[a]).join("|"));
   if (input.axes.length && new Set(combos).size !== combos.length) {
     issues.push("Deux variantes ont exactement les mêmes options.");
   }

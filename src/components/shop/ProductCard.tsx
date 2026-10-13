@@ -3,15 +3,11 @@ import type { PublicProduct } from "@/server/domain/catalog";
 import { ProductImage } from "./ProductImage";
 import { Price } from "./Price";
 
-export function availabilityText(
-  p: Pick<PublicProduct, "available" | "variants">,
-) {
+export function availabilityText(p: Pick<PublicProduct, "available" | "variants">) {
   if (p.available === 0) return { text: "Épuisé", tone: "out" as const };
   const out = p.variants.filter((v) => v.available === 0).length;
-  if (out > 0)
-    return { text: "Certaines options épuisées", tone: "partial" as const };
-  if (p.available <= 3)
-    return { text: "Derniers articles", tone: "low" as const };
+  if (out > 0) return { text: "Certaines options épuisées", tone: "partial" as const };
+  if (p.available <= 3) return { text: "Derniers articles", tone: "low" as const };
   return { text: "Disponible", tone: "ok" as const };
 }
 
@@ -39,10 +35,8 @@ export function ProductCard({
   const a = availabilityText(product);
   const href = `/produits/${product.slug}${from ? `?depuis=${encodeURIComponent(from)}` : ""}`;
   return (
-    <article
-      className={`group relative ${layout === "wide" ? "grid gap-4 sm:grid-cols-2 sm:items-end" : ""}`}
-    >
-      <div className="bg-paper-deep relative overflow-hidden rounded-[6px]">
+    <article className={`group relative ${layout === "wide" ? "grid gap-4 sm:grid-cols-2 sm:items-end" : ""}`}>
+      <div className="relative overflow-hidden rounded-[6px] bg-paper-deep">
         <ProductImage
           src={image?.url}
           alt={image?.alt ?? product.name}
@@ -52,35 +46,33 @@ export function ProductCard({
         />
         <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
           {product.promo ? (
-            <span className="bg-gps-red rounded-[4px] px-2 py-1 text-[12px] font-extrabold text-white">
+            <span className="rounded-[4px] bg-gps-red px-2 py-1 text-[12px] font-extrabold text-white">
               {product.promo.label}
             </span>
           ) : null}
           {product.condition && product.condition !== "Neuf" ? (
-            <span className="text-ink rounded-[4px] bg-white px-2 py-1 text-[12px] font-bold">
+            <span className="rounded-[4px] bg-white px-2 py-1 text-[12px] font-bold text-ink">
               {product.condition.split(" —")[0]}
             </span>
           ) : null}
         </div>
         {product.isDemo ? (
-          <span className="bg-ink/70 absolute right-2 bottom-2 rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
+          <span className="absolute right-2 bottom-2 rounded-[4px] bg-ink/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
             Illustration
           </span>
         ) : null}
       </div>
       <div className={layout === "wide" ? "" : "mt-3"}>
-        <p className="text-ink-mute text-[13px] font-semibold">
+        <p className="text-[13px] font-semibold text-ink-mute">
           {product.brand}
-          {product.categoryName ? (
-            <span className="sr-only">, {product.categoryName}</span>
-          ) : null}
+          {product.categoryName ? <span className="sr-only">, {product.categoryName}</span> : null}
         </p>
         <h3
           className={`leading-snug font-bold ${layout === "wide" ? "font-display text-3xl uppercase" : "text-[15px] md:text-base"}`}
         >
           <Link
             href={href}
-            className="[&:focus-visible]:after:outline-gps-blue after:absolute after:inset-0 focus-visible:outline-none [&:focus-visible]:after:outline-3"
+            className="after:absolute after:inset-0 focus-visible:outline-none [&:focus-visible]:after:outline-3 [&:focus-visible]:after:outline-gps-blue"
           >
             {product.name}
           </Link>
@@ -94,11 +86,7 @@ export function ProductCard({
         />
         <p
           className={`mt-1 text-[13px] font-semibold ${
-            a.tone === "out"
-              ? "text-gps-red-ink"
-              : a.tone === "ok"
-                ? "text-wa-ink"
-                : "text-warn"
+            a.tone === "out" ? "text-gps-red-ink" : a.tone === "ok" ? "text-wa-ink" : "text-warn"
           }`}
         >
           {a.text}

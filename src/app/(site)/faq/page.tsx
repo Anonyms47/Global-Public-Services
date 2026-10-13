@@ -42,19 +42,16 @@ export default async function FaqPage() {
     <>
       <PageHeader eyebrow="Aide" title="Questions fréquentes" />
       <div className="container-site pb-8">
-        <div className="divide-line border-line max-w-3xl divide-y border-y">
+        <div className="max-w-3xl divide-y divide-line border-y border-line">
           {faq.map(([q, a]) => (
             <details key={q} className="group py-2">
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold [&::-webkit-details-marker]:hidden">
                 {q}
-                <span
-                  aria-hidden="true"
-                  className="text-gps-red text-2xl transition-transform group-open:rotate-45"
-                >
+                <span aria-hidden="true" className="text-2xl text-gps-red transition-transform group-open:rotate-45">
                   +
                 </span>
               </summary>
-              <p className="text-ink-soft pb-4">{a}</p>
+              <p className="pb-4 text-ink-soft">{a}</p>
             </details>
           ))}
         </div>

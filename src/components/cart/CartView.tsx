@@ -8,13 +8,7 @@ import type { CheckedItem } from "@/server/domain/cart";
 import type { DeliveryZone } from "@/server/domain/settings";
 import { fcfa } from "@/lib/format";
 import { TO_CONFIRM, buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
-import {
-  cart,
-  cartCount,
-  useCart,
-  useCartReady,
-  type CartItem,
-} from "./cart-store";
+import { cart, cartCount, useCart, useCartReady, type CartItem } from "./cart-store";
 import {
   IconAlert,
   IconCheck,
@@ -93,35 +87,23 @@ function describeIssues(items: CheckedItem[]): Notice[] {
   return out;
 }
 
-export function CartView({
-  whatsapp,
-  reception,
-}: {
-  whatsapp: string;
-  reception: Reception;
-}) {
+export function CartView({ whatsapp, reception }: { whatsapp: string; reception: Reception }) {
   const items = useCart();
   const ready = useCartReady();
   const [checking, setChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [unavailable, setUnavailable] = useState<Set<string>>(new Set());
-  const [undo, setUndo] = useState<{ item: CartItem; index: number } | null>(
-    null,
-  );
+  const [undo, setUndo] = useState<{ item: CartItem; index: number } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Saisie conservée le temps de la session, sur cet appareil uniquement.
   // (Le formulaire n'est rendu qu'après lecture du panier côté navigateur.)
   const [form, setForm] = useState<Form>(() => {
     try {
-      const saved =
-        typeof window !== "undefined" ? sessionStorage.getItem(FORM_KEY) : null;
+      const saved = typeof window !== "undefined" ? sessionStorage.getItem(FORM_KEY) : null;
       if (saved) return { ...emptyForm, ...JSON.parse(saved) };
     } catch {}
-    const only = [
-      reception.pickupEnabled && "pickup",
-      reception.deliveryEnabled && "delivery",
-    ].filter(Boolean);
+    const only = [reception.pickupEnabled && "pickup", reception.deliveryEnabled && "delivery"].filter(Boolean);
     return {
       ...emptyForm,
       reception: only.length === 1 ? (only[0] as Form["reception"]) : "",
@@ -168,14 +150,10 @@ export function CartView({
     }
     const issues = describeIssues(res.items);
     const out = new Set(
-      res.items
-        .filter((i) => i.issues.some((x) => x.kind === "unavailable"))
-        .map((i) => i.variantId),
+      res.items.filter((i) => i.issues.some((x) => x.kind === "unavailable")).map((i) => i.variantId),
     );
     setUnavailable(out);
-    const changed = res.items.some((i) =>
-      i.issues.some((x) => x.kind !== "unavailable"),
-    );
+    const changed = res.items.some((i) => i.issues.some((x) => x.kind !== "unavailable"));
     if (changed) {
       cart.replace(
         current.map((c) => {
@@ -208,8 +186,7 @@ export function CartView({
   // Le récapitulatif n'est valable que pour le panier et la saisie qui l'ont produit.
   const inputKey = JSON.stringify([items, form]);
   const message = prepared && prepared.key === inputKey ? prepared.text : null;
-  const setMessage = (text: string | null) =>
-    setPrepared(text === null ? null : { text, key: inputKey });
+  const setMessage = (text: string | null) => setPrepared(text === null ? null : { text, key: inputKey });
 
   const remove = (variantId: string) => {
     const r = cart.remove(variantId);
@@ -225,26 +202,19 @@ export function CartView({
     undoTimer.current = setTimeout(() => setUndo(null), 7000);
   };
 
-  const subtotal = items
-    .filter((i) => !unavailable.has(i.variantId))
-    .reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+  const subtotal = items.filter((i) => !unavailable.has(i.variantId)).reduce((s, i) => s + i.unitPrice * i.quantity, 0);
   const zone = reception.zones.find((z) => z.name === form.zone);
-  const deliveryFee: number | null =
-    form.reception === "delivery" ? (zone ? zone.fee : null) : 0;
+  const deliveryFee: number | null = form.reception === "delivery" ? (zone ? zone.fee : null) : 0;
 
   const validate = () => {
     const e: Partial<Record<keyof Form, string>> = {};
     if (!form.reception) e.reception = "Choisissez un mode de réception.";
-    if (!form.name.trim())
-      e.name = "Indiquez votre nom pour que GPS puisse identifier la commande.";
+    if (!form.name.trim()) e.name = "Indiquez votre nom pour que GPS puisse identifier la commande.";
     if (form.reception === "delivery") {
-      if (reception.zones.length && !form.zone)
-        e.zone = "Choisissez votre zone de livraison.";
-      if (!form.address.trim())
-        e.address = "Indiquez l'adresse ou le point de repère de livraison.";
+      if (reception.zones.length && !form.zone) e.zone = "Choisissez votre zone de livraison.";
+      if (!form.address.trim()) e.address = "Indiquez l'adresse ou le point de repère de livraison.";
     }
-    if (form.phone && form.phone.replace(/\D/g, "").length < 6)
-      e.phone = "Numéro trop court.";
+    if (form.phone && form.phone.replace(/\D/g, "").length < 6) e.phone = "Numéro trop court.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -293,9 +263,7 @@ export function CartView({
       await navigator.clipboard.writeText(message);
       setCopied(true);
     } catch {
-      const ta = document.getElementById(
-        "recap-message",
-      ) as HTMLTextAreaElement | null;
+      const ta = document.getElementById("recap-message") as HTMLTextAreaElement | null;
       ta?.select();
       setCopied(document.execCommand?.("copy") ?? false);
     }
@@ -303,11 +271,7 @@ export function CartView({
 
   if (!ready) {
     return (
-      <div
-        className="mt-8 grid gap-4"
-        aria-busy="true"
-        aria-label="Chargement du panier"
-      >
+      <div className="mt-8 grid gap-4" aria-busy="true" aria-label="Chargement du panier">
         <div className="skeleton h-28" />
         <div className="skeleton h-28" />
       </div>
@@ -317,19 +281,11 @@ export function CartView({
   if (!items.length) {
     return (
       <div className="mt-8">
-        {undo ? (
-          <UndoBar
-            undo={undo}
-            onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))}
-          />
-        ) : null}
-        <div className="border-line bg-card rounded-[6px] border px-6 py-14 text-center">
-          <p className="font-display text-4xl font-bold uppercase">
-            Votre panier est vide
-          </p>
-          <p className="text-ink-soft mx-auto mt-3 max-w-md">
-            Ajoutez des articles depuis la boutique. Le panier reste enregistré
-            sur cet appareil.
+        {undo ? <UndoBar undo={undo} onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))} /> : null}
+        <div className="rounded-[6px] border border-line bg-card px-6 py-14 text-center">
+          <p className="font-display text-4xl font-bold uppercase">Votre panier est vide</p>
+          <p className="mx-auto mt-3 max-w-md text-ink-soft">
+            Ajoutez des articles depuis la boutique. Le panier reste enregistré sur cet appareil.
           </p>
           <Link href="/boutique" className="btn btn-primary mt-6">
             Découvrir la boutique
@@ -348,52 +304,32 @@ export function CartView({
         <h2 id="titre-articles" className="sr-only">
           Articles
         </h2>
-        {undo ? (
-          <UndoBar
-            undo={undo}
-            onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))}
-          />
-        ) : null}
+        {undo ? <UndoBar undo={undo} onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))} /> : null}
 
         <div ref={errorRef} tabIndex={-1} className="outline-none">
           {checkError ? (
             <div
               role="alert"
-              className="bg-gps-red-soft text-gps-red-ink mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[6px] p-4"
+              className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[6px] bg-gps-red-soft p-4 text-gps-red-ink"
             >
               <p className="flex items-center gap-2 font-semibold">
                 <IconAlert /> {checkError}
               </p>
-              <button
-                type="button"
-                className="btn btn-danger btn-sm"
-                onClick={() => verify(items)}
-              >
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => verify(items)}>
                 Réessayer
               </button>
             </div>
           ) : null}
           {notices.length ? (
-            <div
-              role="status"
-              className="border-warn/40 bg-warn-soft mb-4 rounded-[6px] border-[1.5px] p-4"
-            >
-              <p className="text-warn flex items-center gap-2 font-bold">
+            <div role="status" className="mb-4 rounded-[6px] border-[1.5px] border-warn/40 bg-warn-soft p-4">
+              <p className="flex items-center gap-2 font-bold text-warn">
                 <IconInfo /> Votre panier a été mis à jour
               </p>
               <ul className="mt-2 space-y-1 text-[15px]">
                 {notices.map((n, i) => (
                   <li key={i}>
                     <strong>{n.name}</strong> —{" "}
-                    <span
-                      className={
-                        n.tone === "error"
-                          ? "text-gps-red-ink font-semibold"
-                          : ""
-                      }
-                    >
-                      {n.text}
-                    </span>
+                    <span className={n.tone === "error" ? "font-semibold text-gps-red-ink" : ""}>{n.text}</span>
                   </li>
                 ))}
               </ul>
@@ -407,11 +343,7 @@ export function CartView({
                     Retirer les articles indisponibles
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setNotices([])}
-                >
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNotices([])}>
                   J&apos;ai compris
                 </button>
               </div>
@@ -419,7 +351,7 @@ export function CartView({
           ) : null}
         </div>
 
-        <ul className="divide-line border-line divide-y border-y">
+        <ul className="divide-y divide-line border-y border-line">
           {items.map((i) => {
             const out = unavailable.has(i.variantId);
             return (
@@ -429,7 +361,7 @@ export function CartView({
               >
                 <Link
                   href={`/produits/${i.slug}`}
-                  className="bg-paper-deep block overflow-hidden rounded-[4px]"
+                  className="block overflow-hidden rounded-[4px] bg-paper-deep"
                   tabIndex={-1}
                   aria-hidden="true"
                 >
@@ -447,36 +379,29 @@ export function CartView({
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
                     <div>
-                      <Link
-                        href={`/produits/${i.slug}`}
-                        className="font-bold hover:underline"
-                      >
+                      <Link href={`/produits/${i.slug}`} className="font-bold hover:underline">
                         {i.name}
                       </Link>
-                      {i.optionsLabel ? (
-                        <p className="text-ink-soft text-[14px]">
-                          {i.optionsLabel}
-                        </p>
-                      ) : null}
-                      <p className="text-ink-mute text-[13px]">Réf. {i.sku}</p>
+                      {i.optionsLabel ? <p className="text-[14px] text-ink-soft">{i.optionsLabel}</p> : null}
+                      <p className="text-[13px] text-ink-mute">Réf. {i.sku}</p>
                     </div>
-                    <p className="tabular text-right font-extrabold">
+                    <p className="text-right font-extrabold tabular">
                       {fcfa(i.unitPrice * i.quantity)}
                       {i.quantity > 1 ? (
-                        <span className="text-ink-mute block text-[13px] font-semibold">
+                        <span className="block text-[13px] font-semibold text-ink-mute">
                           {fcfa(i.unitPrice)} l&apos;unité
                         </span>
                       ) : null}
                     </p>
                   </div>
                   {out ? (
-                    <p className="text-gps-red-ink text-[14px] font-bold">
+                    <p className="text-[14px] font-bold text-gps-red-ink">
                       Indisponible — non inclus dans la commande.
                     </p>
                   ) : null}
                   <div className="mt-auto flex items-center justify-between gap-3">
                     <div
-                      className="border-line flex items-center rounded-[6px] border-[1.5px] bg-white"
+                      className="flex items-center rounded-[6px] border-[1.5px] border-line bg-white"
                       role="group"
                       aria-label={`Quantité pour ${i.name}`}
                     >
@@ -484,26 +409,19 @@ export function CartView({
                         type="button"
                         className="inline-flex h-11 w-11 items-center justify-center disabled:opacity-40"
                         disabled={i.quantity <= 1 || out}
-                        onClick={() =>
-                          cart.setQuantity(i.variantId, i.quantity - 1)
-                        }
+                        onClick={() => cart.setQuantity(i.variantId, i.quantity - 1)}
                         aria-label="Diminuer"
                       >
                         <IconMinus size={18} />
                       </button>
-                      <output
-                        className="tabular w-8 text-center font-bold"
-                        aria-live="polite"
-                      >
+                      <output className="w-8 text-center font-bold tabular" aria-live="polite">
                         {i.quantity}
                       </output>
                       <button
                         type="button"
                         className="inline-flex h-11 w-11 items-center justify-center disabled:opacity-40"
                         disabled={out || i.quantity >= 99}
-                        onClick={() =>
-                          cart.setQuantity(i.variantId, i.quantity + 1)
-                        }
+                        onClick={() => cart.setQuantity(i.variantId, i.quantity + 1)}
                         aria-label="Augmenter"
                       >
                         <IconPlus size={18} />
@@ -524,18 +442,14 @@ export function CartView({
           })}
         </ul>
         <p className="hint mt-3">
-          {cartCount(items)} article{cartCount(items) > 1 ? "s" : ""} · panier
-          conservé sur cet appareil. Les quantités seront vérifiées par GPS ; le
-          panier ne réserve rien.
+          {cartCount(items)} article{cartCount(items) > 1 ? "s" : ""} · panier conservé sur cet appareil. Les quantités
+          seront vérifiées par GPS ; le panier ne réserve rien.
         </p>
       </section>
 
       <section className="lg:col-span-5" aria-labelledby="titre-preparer">
-        <div className="border-line bg-card rounded-[6px] border p-5 md:p-6 lg:sticky lg:top-28">
-          <h2
-            id="titre-preparer"
-            className="font-display text-3xl font-bold uppercase"
-          >
+        <div className="rounded-[6px] border border-line bg-card p-5 md:p-6 lg:sticky lg:top-28">
+          <h2 id="titre-preparer" className="font-display text-3xl font-bold uppercase">
             Préparer la commande
           </h2>
 
@@ -550,20 +464,16 @@ export function CartView({
             {errorList.length ? (
               <div
                 role="alert"
-                className="bg-gps-red-soft text-gps-red-ink rounded-[6px] p-3 text-[14px] font-semibold"
+                className="rounded-[6px] bg-gps-red-soft p-3 text-[14px] font-semibold text-gps-red-ink"
               >
-                {errorList.length === 1
-                  ? errorList[0]
-                  : `${errorList.length} informations manquent : voir ci-dessous.`}
+                {errorList.length === 1 ? errorList[0] : `${errorList.length} informations manquent : voir ci-dessous.`}
               </div>
             ) : null}
 
             <fieldset>
               <legend className="label">Réception</legend>
               {options.length === 0 ? (
-                <p className="text-ink-soft text-[15px]">
-                  Modes de réception : {TO_CONFIRM.toLowerCase()}.
-                </p>
+                <p className="text-[15px] text-ink-soft">Modes de réception : {TO_CONFIRM.toLowerCase()}.</p>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {options.map((o) => (
@@ -579,25 +489,16 @@ export function CartView({
                         onChange={() => setForm({ ...form, reception: o })}
                         className="h-5 w-5 accent-[#31277f]"
                       />
-                      {o === "pickup" ? (
-                        <IconStore size={18} />
-                      ) : (
-                        <IconTruck size={18} />
-                      )}
-                      <span className="font-semibold">
-                        {o === "pickup" ? "Retrait en boutique" : "Livraison"}
-                      </span>
+                      {o === "pickup" ? <IconStore size={18} /> : <IconTruck size={18} />}
+                      <span className="font-semibold">{o === "pickup" ? "Retrait en boutique" : "Livraison"}</span>
                     </label>
                   ))}
                 </div>
               )}
-              {errors.reception ? (
-                <p className="error-text">{errors.reception}</p>
-              ) : null}
+              {errors.reception ? <p className="error-text">{errors.reception}</p> : null}
               {form.reception === "pickup" ? (
                 <p className="hint">
-                  {reception.pickupDetails ||
-                    `Lieu et horaires de retrait : ${TO_CONFIRM.toLowerCase()}.`}
+                  {reception.pickupDetails || `Lieu et horaires de retrait : ${TO_CONFIRM.toLowerCase()}.`}
                 </p>
               ) : null}
               {form.reception === "delivery" && reception.deliveryDetails ? (
@@ -624,9 +525,7 @@ export function CartView({
                     </option>
                   ))}
                 </select>
-                {errors.zone ? (
-                  <p className="error-text">{errors.zone}</p>
-                ) : null}
+                {errors.zone ? <p className="error-text">{errors.zone}</p> : null}
               </div>
             ) : null}
             {form.reception === "delivery" ? (
@@ -639,15 +538,11 @@ export function CartView({
                   className="field"
                   rows={2}
                   value={form.address}
-                  onChange={(e) =>
-                    setForm({ ...form, address: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
                   aria-invalid={!!errors.address}
                   autoComplete="street-address"
                 />
-                {errors.address ? (
-                  <p className="error-text">{errors.address}</p>
-                ) : null}
+                {errors.address ? <p className="error-text">{errors.address}</p> : null}
               </div>
             ) : null}
 
@@ -667,8 +562,7 @@ export function CartView({
             </div>
             <div>
               <label className="label" htmlFor="c-tel">
-                Téléphone{" "}
-                <span className="text-ink-mute font-normal">(facultatif)</span>
+                Téléphone <span className="font-normal text-ink-mute">(facultatif)</span>
               </label>
               <input
                 id="c-tel"
@@ -679,17 +573,12 @@ export function CartView({
                 aria-invalid={!!errors.phone}
                 autoComplete="tel"
               />
-              <p className="hint">
-                Seulement s&apos;il diffère de votre numéro WhatsApp.
-              </p>
-              {errors.phone ? (
-                <p className="error-text">{errors.phone}</p>
-              ) : null}
+              <p className="hint">Seulement s&apos;il diffère de votre numéro WhatsApp.</p>
+              {errors.phone ? <p className="error-text">{errors.phone}</p> : null}
             </div>
             <div>
               <label className="label" htmlFor="c-note">
-                Précision{" "}
-                <span className="text-ink-mute font-normal">(facultatif)</span>
+                Précision <span className="font-normal text-ink-mute">(facultatif)</span>
               </label>
               <input
                 id="c-note"
@@ -700,15 +589,15 @@ export function CartView({
               />
             </div>
 
-            <dl className="border-line grid gap-2 border-t pt-4 text-[15px]">
+            <dl className="grid gap-2 border-t border-line pt-4 text-[15px]">
               <div className="flex justify-between">
                 <dt>Total des produits</dt>
-                <dd className="tabular font-extrabold">{fcfa(subtotal)}</dd>
+                <dd className="font-extrabold tabular">{fcfa(subtotal)}</dd>
               </div>
               {form.reception === "delivery" ? (
                 <div className="flex justify-between gap-4">
                   <dt>Frais de livraison</dt>
-                  <dd className="tabular text-right font-semibold">
+                  <dd className="text-right font-semibold tabular">
                     {deliveryFee === null ? TO_CONFIRM : fcfa(deliveryFee)}
                   </dd>
                 </div>
@@ -716,21 +605,13 @@ export function CartView({
               {form.reception === "delivery" && deliveryFee !== null ? (
                 <div className="flex justify-between text-lg">
                   <dt className="font-bold">Total</dt>
-                  <dd className="tabular font-extrabold">
-                    {fcfa(subtotal + deliveryFee)}
-                  </dd>
+                  <dd className="font-extrabold tabular">{fcfa(subtotal + deliveryFee)}</dd>
                 </div>
               ) : null}
             </dl>
 
-            <button
-              type="submit"
-              className="btn btn-ink w-full"
-              disabled={checking}
-            >
-              {checking
-                ? "Vérification des prix et du stock…"
-                : "Préparer mon récapitulatif"}
+            <button type="submit" className="btn btn-ink w-full" disabled={checking}>
+              {checking ? "Vérification des prix et du stock…" : "Préparer mon récapitulatif"}
             </button>
           </form>
 
@@ -738,13 +619,10 @@ export function CartView({
             <div
               ref={recapRef}
               tabIndex={-1}
-              className="animate-rise border-line mt-6 border-t pt-6 outline-none"
+              className="animate-rise mt-6 border-t border-line pt-6 outline-none"
               aria-labelledby="titre-recap"
             >
-              <h3
-                id="titre-recap"
-                className="flex items-center gap-2 text-lg font-extrabold"
-              >
+              <h3 id="titre-recap" className="flex items-center gap-2 text-lg font-extrabold">
                 <IconCheck className="text-wa" /> Récapitulatif prêt
               </h3>
               <label htmlFor="recap-message" className="sr-only">
@@ -759,63 +637,37 @@ export function CartView({
               />
               <div className="mt-3 grid gap-2">
                 {waUrl ? (
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-wa w-full text-base"
-                  >
+                  <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn btn-wa w-full text-base">
                     <IconWhatsApp /> Envoyer ma commande sur WhatsApp
                   </a>
                 ) : (
-                  <div className="border-wa/50 bg-wa-soft rounded-[6px] border-[1.5px] border-dashed p-3 text-[14px]">
-                    <button
-                      type="button"
-                      disabled
-                      className="btn btn-wa w-full text-base"
-                    >
+                  <div className="rounded-[6px] border-[1.5px] border-dashed border-wa/50 bg-wa-soft p-3 text-[14px]">
+                    <button type="button" disabled className="btn btn-wa w-full text-base">
                       <IconWhatsApp /> Envoyer ma commande sur WhatsApp
                     </button>
-                    <p className="text-wa-ink mt-2">
-                      <strong>Mode démonstration :</strong> le numéro WhatsApp
-                      de GPS n&apos;est pas encore renseigné. Le message peut
-                      être prévisualisé et copié, mais aucun numéro n&apos;est
-                      contacté.
+                    <p className="mt-2 text-wa-ink">
+                      <strong>Mode démonstration :</strong> le numéro WhatsApp de GPS n&apos;est pas encore renseigné.
+                      Le message peut être prévisualisé et copié, mais aucun numéro n&apos;est contacté.
                     </p>
                   </div>
                 )}
-                <button
-                  type="button"
-                  className="btn btn-outline w-full"
-                  onClick={copy}
-                >
-                  <IconCopy size={18} />{" "}
-                  {copied ? "Récapitulatif copié" : "Copier le récapitulatif"}
+                <button type="button" className="btn btn-outline w-full" onClick={copy}>
+                  <IconCopy size={18} /> {copied ? "Récapitulatif copié" : "Copier le récapitulatif"}
                 </button>
               </div>
-              <div className="bg-gps-blue-soft text-gps-blue-deep mt-4 rounded-[6px] p-3 text-[14px] leading-relaxed">
+              <div className="mt-4 rounded-[6px] bg-gps-blue-soft p-3 text-[14px] leading-relaxed text-gps-blue-deep">
                 <p className="font-bold">Ce qui se passe ensuite</p>
                 <ol className="mt-1 list-decimal space-y-1 pl-5">
-                  <li>
-                    WhatsApp s&apos;ouvre avec ce message : envoyez-le
-                    vous-même.
-                  </li>
+                  <li>WhatsApp s&apos;ouvre avec ce message : envoyez-le vous-même.</li>
                   <li>
                     GPS vérifie la disponibilité, confirme le total
-                    {form.reception === "delivery"
-                      ? " et les frais de livraison"
-                      : ""}
-                    .
+                    {form.reception === "delivery" ? " et les frais de livraison" : ""}.
                   </li>
-                  <li>
-                    La commande n&apos;est confirmée qu&apos;après la réponse de
-                    GPS.
-                  </li>
+                  <li>La commande n&apos;est confirmée qu&apos;après la réponse de GPS.</li>
                 </ol>
                 <p className="mt-2">
-                  L&apos;ouverture de WhatsApp ne garantit ni l&apos;envoi du
-                  message, ni la confirmation de la commande, ni la réservation
-                  des articles.
+                  L&apos;ouverture de WhatsApp ne garantit ni l&apos;envoi du message, ni la confirmation de la
+                  commande, ni la réservation des articles.
                 </p>
               </div>
             </div>
@@ -826,26 +678,16 @@ export function CartView({
   );
 }
 
-function UndoBar({
-  undo,
-  onUndo,
-}: {
-  undo: { item: CartItem };
-  onUndo: () => void;
-}) {
+function UndoBar({ undo, onUndo }: { undo: { item: CartItem }; onUndo: () => void }) {
   return (
     <div
       role="status"
-      className="animate-rise bg-ink mb-4 flex items-center justify-between gap-3 rounded-[6px] px-4 py-3 text-white"
+      className="animate-rise mb-4 flex items-center justify-between gap-3 rounded-[6px] bg-ink px-4 py-3 text-white"
     >
       <p className="text-[15px]">
         <strong>{undo.item.name}</strong> retiré du panier.
       </p>
-      <button
-        type="button"
-        className="btn btn-sm text-ink hover:bg-paper bg-white"
-        onClick={onUndo}
-      >
+      <button type="button" className="btn btn-sm bg-white text-ink hover:bg-paper" onClick={onUndo}>
         Annuler
       </button>
     </div>

@@ -5,21 +5,13 @@ import { stockList } from "@/server/domain/stock";
 import { getSettings } from "@/server/domain/settings";
 import { can } from "@/lib/permissions";
 import { optionsLabel } from "@/lib/format";
-import {
-  Badge,
-  Empty,
-  Forbidden,
-  PageTitle,
-  Tabs,
-} from "@/components/admin/ui";
+import { Badge, Empty, Forbidden, PageTitle, Tabs } from "@/components/admin/ui";
 import { AdjustButton } from "@/components/admin/StockForms";
 import { IconSearch } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Stock" };
 
-export default async function StockPage({
-  searchParams,
-}: PageProps<"/comptoir/stock">) {
+export default async function StockPage({ searchParams }: PageProps<"/comptoir/stock">) {
   const { db, user, allowed } = await requirePage("stock.view");
   if (!allowed) return <Forbidden />;
   const sp = await searchParams;
@@ -50,28 +42,20 @@ export default async function StockPage({
               Mouvements
             </Link>
             {can(user.role, "stock.inventory") ? (
-              <Link
-                href="/comptoir/stock/inventaire"
-                className="btn btn-outline"
-              >
+              <Link href="/comptoir/stock/inventaire" className="btn btn-outline">
                 Inventaire
               </Link>
             ) : null}
             {can(user.role, "stock.restock") ? (
-              <Link
-                href="/comptoir/stock/reapprovisionner"
-                className="btn btn-blue"
-              >
+              <Link href="/comptoir/stock/reapprovisionner" className="btn btn-blue">
                 Réapprovisionner
               </Link>
             ) : null}
           </>
         }
       >
-        <strong>Physique</strong> : présent en boutique.{" "}
-        <strong>Réservé</strong> : promis à des commandes confirmées.{" "}
-        <strong>Disponible</strong> : ce qui peut encore être vendu. Le panier
-        et WhatsApp ne réservent rien.
+        <strong>Physique</strong> : présent en boutique. <strong>Réservé</strong> : promis à des commandes confirmées.{" "}
+        <strong>Disponible</strong> : ce qui peut encore être vendu. Le panier et WhatsApp ne réservent rien.
       </PageTitle>
       <Tabs
         current={low ? "faible" : "tout"}
@@ -106,15 +90,13 @@ export default async function StockPage({
       </form>
       {rows.length === 0 ? (
         <Empty title={low ? "Aucun stock faible" : "Aucune variante"}>
-          {low
-            ? "Toutes les variantes sont au-dessus de leur seuil d'alerte."
-            : "Aucun résultat."}
+          {low ? "Toutes les variantes sont au-dessus de leur seuil d'alerte." : "Aucun résultat."}
         </Empty>
       ) : (
-        <div className="border-line bg-card overflow-x-auto rounded-[6px] border">
+        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[820px] text-[14px]">
             <thead>
-              <tr className="border-line text-ink-mute border-b text-left text-[12px] tracking-wide uppercase">
+              <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                 <th className="px-3 py-3 font-bold">Article</th>
                 <th className="py-3 text-right font-bold">Physique</th>
                 <th className="py-3 text-right font-bold">Réservé</th>
@@ -123,40 +105,28 @@ export default async function StockPage({
                 <th className="px-3 py-3 text-right font-bold">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-line-soft divide-y">
+            <tbody className="divide-y divide-line-soft">
               {rows.map((r) => (
-                <tr
-                  key={r.variant_id}
-                  className={r.low ? "bg-warn-soft/40" : ""}
-                >
+                <tr key={r.variant_id} className={r.low ? "bg-warn-soft/40" : ""}>
                   <td className="px-3 py-2">
-                    <Link
-                      href={`/comptoir/catalogue/${r.product_id}`}
-                      className="font-semibold hover:underline"
-                    >
+                    <Link href={`/comptoir/catalogue/${r.product_id}`} className="font-semibold hover:underline">
                       {r.product_name}
                     </Link>
-                    <div className="text-ink-mute text-[13px]">
+                    <div className="text-[13px] text-ink-mute">
                       {optionsLabel(r.options) || "Article unique"} · {r.sku}
                     </div>
                   </td>
-                  <td className="tabular py-2 text-right">{r.on_hand}</td>
-                  <td className="tabular text-gps-blue py-2 text-right">
-                    {r.reserved}
-                  </td>
+                  <td className="py-2 text-right tabular">{r.on_hand}</td>
+                  <td className="py-2 text-right text-gps-blue tabular">{r.reserved}</td>
                   <td className="py-2 text-right">
-                    <span className="tabular font-extrabold">
-                      {r.available}
-                    </span>{" "}
+                    <span className="font-extrabold tabular">{r.available}</span>{" "}
                     {r.available <= 0 ? (
                       <Badge tone="red">Épuisé</Badge>
                     ) : r.low ? (
                       <Badge tone="warn">Faible</Badge>
                     ) : null}
                   </td>
-                  <td className="tabular text-ink-mute py-2 text-right">
-                    {r.threshold}
-                  </td>
+                  <td className="py-2 text-right text-ink-mute tabular">{r.threshold}</td>
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-2">
                       <Link
@@ -179,11 +149,11 @@ export default async function StockPage({
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-line border-t font-bold">
+              <tr className="border-t border-line font-bold">
                 <td className="px-3 py-2">Total ({rows.length} variantes)</td>
-                <td className="tabular py-2 text-right">{totals.onHand}</td>
-                <td className="tabular py-2 text-right">{totals.reserved}</td>
-                <td className="tabular py-2 text-right">{totals.available}</td>
+                <td className="py-2 text-right tabular">{totals.onHand}</td>
+                <td className="py-2 text-right tabular">{totals.reserved}</td>
+                <td className="py-2 text-right tabular">{totals.available}</td>
                 <td colSpan={2} />
               </tr>
             </tfoot>

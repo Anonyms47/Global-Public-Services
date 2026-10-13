@@ -10,7 +10,7 @@ export default async function PanierPage() {
   return (
     <div className="container-site pt-8 pb-8 md:pt-12">
       <p className="eyebrow text-gps-red-ink">Commande WhatsApp</p>
-      <h1 className="font-display mt-2 text-[56px] leading-[0.9] font-extrabold uppercase md:text-[80px]">
+      <h1 className="mt-2 font-display text-[56px] leading-[0.9] font-extrabold uppercase md:text-[80px]">
         Votre panier
       </h1>
       <CartView

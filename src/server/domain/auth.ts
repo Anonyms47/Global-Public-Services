@@ -1,19 +1,10 @@
-import {
-  randomBytes,
-  scrypt as scryptCb,
-  timingSafeEqual,
-  createHash,
-} from "node:crypto";
+import { randomBytes, scrypt as scryptCb, timingSafeEqual, createHash } from "node:crypto";
 import { promisify } from "node:util";
 import type { Db } from "../db/client";
 import { can, type Permission, type Role } from "@/lib/permissions";
 import { AppError, fail, newId } from "./errors";
 
-const scrypt = promisify(scryptCb) as (
-  pw: string,
-  salt: Buffer,
-  len: number,
-) => Promise<Buffer>;
+const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 
 export const SESSION_HOURS = 12;
 
@@ -40,38 +31,25 @@ export async function verifyPassword(password: string, stored: string) {
   return expected.length === key.length && timingSafeEqual(expected, key);
 }
 
-const tokenHash = (token: string) =>
-  createHash("sha256").update(token).digest("hex");
+const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
 
-export async function login(
-  db: Db,
-  email: string,
-  password: string,
-  opts: { allowDemo: boolean },
-) {
-  const row = await db.one<User & { password_hash: string }>(
-    "select * from users where lower(email) = lower($1)",
-    [email.trim()],
-  );
+export async function login(db: Db, email: string, password: string, opts: { allowDemo: boolean }) {
+  const row = await db.one<User & { password_hash: string }>("select * from users where lower(email) = lower($1)", [
+    email.trim(),
+  ]);
   // Vérification systématique pour ne pas révéler l'existence d'un compte par le temps de réponse.
-  const ok = await verifyPassword(
-    password,
-    row?.password_hash ?? "scrypt$00$00",
-  );
-  if (!row || !ok || !row.active)
-    fail("validation", "Adresse e-mail ou mot de passe incorrect.");
+  const ok = await verifyPassword(password, row?.password_hash ?? "scrypt$00$00");
+  if (!row || !ok || !row.active) fail("validation", "Adresse e-mail ou mot de passe incorrect.");
   if (row!.is_demo && !opts.allowDemo) {
-    fail(
-      "forbidden",
-      "Les comptes de démonstration sont désactivés sur cette installation.",
-    );
+    fail("forbidden", "Les comptes de démonstration sont désactivés sur cette installation.");
   }
   const token = randomBytes(32).toString("base64url");
   const expires = new Date(Date.now() + SESSION_HOURS * 3600_000);
-  await db.query(
-    "insert into sessions (id, user_id, expires_at) values ($1, $2, $3)",
-    [tokenHash(token), row!.id, expires],
-  );
+  await db.query("insert into sessions (id, user_id, expires_at) values ($1, $2, $3)", [
+    tokenHash(token),
+    row!.id,
+    expires,
+  ]);
   await db.query("delete from sessions where expires_at < now()");
   return { token, expires };
 }
@@ -80,11 +58,7 @@ export async function logout(db: Db, token: string) {
   await db.query("delete from sessions where id = $1", [tokenHash(token)]);
 }
 
-export async function userFromToken(
-  db: Db,
-  token: string | undefined,
-  opts: { allowDemo: boolean },
-) {
+export async function userFromToken(db: Db, token: string | undefined, opts: { allowDemo: boolean }) {
   if (!token) return null;
   const user = await db.one<User>(
     `select u.id, u.name, u.email, u.role, u.active, u.is_demo
@@ -97,20 +71,10 @@ export async function userFromToken(
 }
 
 /** Vérifie un droit pour un utilisateur déjà authentifié. */
-export function assertCan(
-  user: User | null,
-  permission: Permission,
-): asserts user is User {
-  if (!user)
-    throw new AppError(
-      "session_expired",
-      "Votre session a expiré. Reconnectez-vous pour continuer.",
-    );
+export function assertCan(user: User | null, permission: Permission): asserts user is User {
+  if (!user) throw new AppError("session_expired", "Votre session a expiré. Reconnectez-vous pour continuer.");
   if (!can(user.role, permission)) {
-    throw new AppError(
-      "forbidden",
-      "Vous n'avez pas les droits nécessaires pour cette action.",
-    );
+    throw new AppError("forbidden", "Vous n'avez pas les droits nécessaires pour cette action.");
   }
 }
 
@@ -134,33 +98,24 @@ export async function createUser(
 ) {
   const errors: Record<string, string> = {};
   if (!input.name.trim()) errors.name = "Indiquez le nom.";
-  if (!/^\S+@\S+\.\S+$/.test(input.email))
-    errors.email = "Adresse e-mail invalide.";
+  if (!/^\S+@\S+\.\S+$/.test(input.email)) errors.email = "Adresse e-mail invalide.";
   if (input.password.length < 10) errors.password = "10 caractères minimum.";
-  if (!["owner", "manager", "seller"].includes(input.role))
-    errors.role = "Rôle invalide.";
-  if (Object.keys(errors).length)
-    fail("validation", "Vérifiez les champs signalés.", errors);
-  const exists = await db.one(
-    "select 1 from users where lower(email) = lower($1)",
-    [input.email],
-  );
+  if (!["owner", "manager", "seller"].includes(input.role)) errors.role = "Rôle invalide.";
+  if (Object.keys(errors).length) fail("validation", "Vérifiez les champs signalés.", errors);
+  const exists = await db.one("select 1 from users where lower(email) = lower($1)", [input.email]);
   if (exists)
     fail("conflict", "Un compte existe déjà avec cette adresse.", {
       email: "Déjà utilisée.",
     });
   const id = newId();
-  await db.query(
-    "insert into users (id, name, email, password_hash, role, is_demo) values ($1, $2, $3, $4, $5, $6)",
-    [
-      id,
-      input.name.trim(),
-      input.email.trim().toLowerCase(),
-      await hashPassword(input.password),
-      input.role,
-      !!input.isDemo,
-    ],
-  );
+  await db.query("insert into users (id, name, email, password_hash, role, is_demo) values ($1, $2, $3, $4, $5, $6)", [
+    id,
+    input.name.trim(),
+    input.email.trim().toLowerCase(),
+    await hashPassword(input.password),
+    input.role,
+    !!input.isDemo,
+  ]);
   return id;
 }
 
@@ -172,40 +127,24 @@ export async function updateUser(
 ) {
   const target = await db.one<User>("select * from users where id = $1", [id]);
   if (!target) return fail("not_found", "Compte introuvable.");
-  if (
-    target.role === "owner" &&
-    ((input.role && input.role !== "owner") || input.active === false)
-  ) {
+  if (target.role === "owner" && ((input.role && input.role !== "owner") || input.active === false)) {
     const owners = await db.one<{ n: number }>(
       "select count(*)::int as n from users where role = 'owner' and active and id <> $1",
       [id],
     );
-    if (!owners?.n)
-      fail("conflict", "Il doit rester au moins un propriétaire actif.");
+    if (!owners?.n) fail("conflict", "Il doit rester au moins un propriétaire actif.");
   }
-  if (input.role)
-    await db.query("update users set role = $2 where id = $1", [
-      id,
-      input.role,
-    ]);
+  if (input.role) await db.query("update users set role = $2 where id = $1", [id, input.role]);
   if (input.active !== undefined) {
-    await db.query("update users set active = $2 where id = $1", [
-      id,
-      input.active,
-    ]);
-    if (!input.active)
-      await db.query("delete from sessions where user_id = $1", [id]);
+    await db.query("update users set active = $2 where id = $1", [id, input.active]);
+    if (!input.active) await db.query("delete from sessions where user_id = $1", [id]);
   }
   if (input.password) {
     if (input.password.length < 10)
       fail("validation", "10 caractères minimum.", {
         password: "10 caractères minimum.",
       });
-    await db.query("update users set password_hash = $2 where id = $1", [
-      id,
-      await hashPassword(input.password),
-    ]);
-    if (id !== actor.id)
-      await db.query("delete from sessions where user_id = $1", [id]);
+    await db.query("update users set password_hash = $2 where id = $1", [id, await hashPassword(input.password)]);
+    if (id !== actor.id) await db.query("delete from sessions where user_id = $1", [id]);
   }
 }

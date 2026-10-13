@@ -1,11 +1,5 @@
 export type ErrorCode =
-  | "validation"
-  | "not_found"
-  | "conflict"
-  | "stock"
-  | "forbidden"
-  | "session_expired"
-  | "internal";
+  "validation" | "not_found" | "conflict" | "stock" | "forbidden" | "session_expired" | "internal";
 
 /** Erreur métier : message destiné à l'utilisateur, en français. */
 export class AppError extends Error {
@@ -18,11 +12,7 @@ export class AppError extends Error {
   }
 }
 
-export const fail = (
-  code: ErrorCode,
-  message: string,
-  fieldErrors?: Record<string, string>,
-): never => {
+export const fail = (code: ErrorCode, message: string, fieldErrors?: Record<string, string>): never => {
   throw new AppError(code, message, fieldErrors);
 };
 

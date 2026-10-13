@@ -31,9 +31,7 @@ export function ScrollMemory({ listingKey }: { listingKey: string }) {
     try {
       if (sessionStorage.getItem(RESTORE_KEY) === listingKey) {
         sessionStorage.removeItem(RESTORE_KEY);
-        const y = Number(
-          sessionStorage.getItem(SCROLL_PREFIX + listingKey) ?? 0,
-        );
+        const y = Number(sessionStorage.getItem(SCROLL_PREFIX + listingKey) ?? 0);
         requestAnimationFrame(() => window.scrollTo({ top: y }));
       }
     } catch {}
@@ -41,10 +39,7 @@ export function ScrollMemory({ listingKey }: { listingKey: string }) {
       const a = (e.target as HTMLElement).closest?.("a[href*='depuis=']");
       if (!a) return;
       try {
-        sessionStorage.setItem(
-          SCROLL_PREFIX + listingKey,
-          String(window.scrollY),
-        );
+        sessionStorage.setItem(SCROLL_PREFIX + listingKey, String(window.scrollY));
       } catch {}
     };
     document.addEventListener("click", onClick, true);
@@ -84,20 +79,15 @@ export function ShopControls({
     const p = shopQueryToParams(next, {
       omitCategory: basePath !== "/boutique",
     });
-    startTransition(() =>
-      router.replace(`${pathname}${p.size ? `?${p}` : ""}`, { scroll: false }),
-    );
+    startTransition(() => router.replace(`${pathname}${p.size ? `?${p}` : ""}`, { scroll: false }));
   };
   const set = (patch: Partial<ShopQuery>) => go({ ...query, ...patch });
 
   const active: { label: string; clear: Partial<ShopQuery> }[] = [];
-  if (query.q)
-    active.push({ label: `« ${query.q} »`, clear: { q: undefined } });
+  if (query.q) active.push({ label: `« ${query.q} »`, clear: { q: undefined } });
   if (query.categorie && basePath === "/boutique") {
     active.push({
-      label:
-        categories.find((c) => c.slug === query.categorie)?.name ??
-        query.categorie,
+      label: categories.find((c) => c.slug === query.categorie)?.name ?? query.categorie,
       clear: { categorie: undefined },
     });
   }
@@ -117,18 +107,12 @@ export function ShopControls({
       label: `Jusqu'à ${fcfa(query.prixMax)}`,
       clear: { prixMax: undefined },
     });
-  if (query.dispo)
-    active.push({ label: "Disponibles", clear: { dispo: undefined } });
-  if (query.promo)
-    active.push({ label: "En promotion", clear: { promo: undefined } });
-  if (query.etat)
-    active.push({ label: query.etat, clear: { etat: undefined } });
+  if (query.dispo) active.push({ label: "Disponibles", clear: { dispo: undefined } });
+  if (query.promo) active.push({ label: "En promotion", clear: { promo: undefined } });
+  if (query.etat) active.push({ label: query.etat, clear: { etat: undefined } });
 
   const applyPrice = () => {
-    const toNum = (s: string) =>
-      s.trim() === ""
-        ? undefined
-        : Math.max(0, Math.round(Number(s.replace(/\s/g, ""))));
+    const toNum = (s: string) => (s.trim() === "" ? undefined : Math.max(0, Math.round(Number(s.replace(/\s/g, "")))));
     const min = toNum(priceMin);
     const max = toNum(priceMax);
     set({
@@ -172,9 +156,7 @@ export function ShopControls({
                   aria-pressed={on}
                   onClick={() =>
                     set({
-                      marque: on
-                        ? query.marque!.filter((x) => x !== b)
-                        : [...(query.marque ?? []), b],
+                      marque: on ? query.marque!.filter((x) => x !== b) : [...(query.marque ?? []), b],
                     })
                   }
                   className={`chip min-h-12 lg:min-h-11 ${on ? "border-gps-blue bg-gps-blue text-white" : ""}`}
@@ -267,23 +249,15 @@ export function ShopControls({
 
   return (
     <div>
-      <div className="border-line bg-card hidden rounded-[6px] border p-4 lg:block">
-        {filters}
-      </div>
+      <div className="hidden rounded-[6px] border border-line bg-card p-4 lg:block">{filters}</div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[15px] font-semibold" aria-live="polite">
           <span className="tabular">{count}</span> article{count > 1 ? "s" : ""}
-          {pending ? (
-            <span className="text-ink-mute ml-2">· mise à jour…</span>
-          ) : null}
+          {pending ? <span className="ml-2 text-ink-mute">· mise à jour…</span> : null}
         </p>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="btn btn-outline btn-sm lg:hidden"
-            onClick={() => setOpen(true)}
-          >
+          <button type="button" className="btn btn-outline btn-sm lg:hidden" onClick={() => setOpen(true)}>
             <IconFilter size={18} /> Filtres
             {active.length ? ` (${active.length})` : ""}
           </button>
@@ -306,10 +280,7 @@ export function ShopControls({
       </div>
 
       {active.length ? (
-        <ul
-          className="mt-3 flex flex-wrap items-center gap-2"
-          aria-label="Filtres sélectionnés"
-        >
+        <ul className="mt-3 flex flex-wrap items-center gap-2" aria-label="Filtres sélectionnés">
           {active.map((a) => (
             <li key={a.label}>
               <button
@@ -325,7 +296,7 @@ export function ShopControls({
           <li>
             <button
               type="button"
-              className="text-gps-blue min-h-9 px-2 text-sm font-bold underline underline-offset-2"
+              className="min-h-9 px-2 text-sm font-bold text-gps-blue underline underline-offset-2"
               onClick={() => go({ tri: query.tri })}
             >
               Tout effacer
@@ -340,11 +311,7 @@ export function ShopControls({
         title="Filtres"
         side="bottom"
         footer={
-          <button
-            type="button"
-            className="btn btn-ink w-full"
-            onClick={() => setOpen(false)}
-          >
+          <button type="button" className="btn btn-ink w-full" onClick={() => setOpen(false)}>
             Voir {count} article{count > 1 ? "s" : ""}
           </button>
         }

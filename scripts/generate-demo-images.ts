@@ -24,11 +24,7 @@ function shade(hex: string, amount: number) {
   return `#${[16, 8, 0].map((s) => ch(s).toString(16).padStart(2, "0")).join("")}`;
 }
 
-function frame(
-  bg: string,
-  body: string,
-  opts: { floor?: number; ribbon?: boolean } = {},
-) {
+function frame(bg: string, body: string, opts: { floor?: number; ribbon?: boolean } = {}) {
   const floor = opts.floor ?? 1240;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
 <defs>
@@ -216,10 +212,7 @@ function phoneCase(color: string, bg: string) {
 // ——— Lunettes ———
 function sunglasses(frameColor: string, view: "front" | "angle", bg: string) {
   const lens = "#1E2430";
-  const t =
-    view === "front"
-      ? "translate(140 500)"
-      : "translate(170 470) rotate(-10 450 200) scale(0.95)";
+  const t = view === "front" ? "translate(140 500)" : "translate(170 470) rotate(-10 450 200) scale(0.95)";
   return frame(
     bg,
     `
@@ -316,10 +309,7 @@ for (const [name, hex] of [
   ["noir", C.noir],
   ["creme", C.creme],
 ] as const) {
-  files[`studio2-${name}.svg`] = headphones(
-    hex,
-    name === "noir" ? "#E7E1D5" : "#DDE3EE",
-  );
+  files[`studio2-${name}.svg`] = headphones(hex, name === "noir" ? "#E7E1D5" : "#DDE3EE");
 }
 files["volta25-avec-cable.svg"] = charger(true, "#E6E0D4");
 files["volta25-seul.svg"] = charger(false, "#DFE4EC");
@@ -354,6 +344,5 @@ for (const [name, hex] of [
   files[`fit-${name}.svg`] = watch(hex, "#E6E0D5");
 }
 
-for (const [file, svg] of Object.entries(files))
-  writeFileSync(join(OUT, file), svg.replace(/\n\s*/g, "\n"));
+for (const [file, svg] of Object.entries(files)) writeFileSync(join(OUT, file), svg.replace(/\n\s*/g, "\n"));
 console.log(`${Object.keys(files).length} visuels générés dans public/demo/`);

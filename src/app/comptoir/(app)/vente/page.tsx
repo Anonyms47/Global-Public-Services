@@ -12,14 +12,9 @@ export default async function QuickSalePage() {
   return (
     <>
       <PageTitle eyebrow="Comptoir" title="Nouvelle vente">
-        Rechercher, choisir la variante, ajouter, encaisser, vérifier,
-        confirmer. Le stock sort immédiatement.
+        Rechercher, choisir la variante, ajouter, encaisser, vérifier, confirmer. Le stock sort immédiatement.
       </PageTitle>
-      <OrderComposerClient
-        mode="sale"
-        canEditPrice={can(user.role, "orders.correct")}
-        zones={[]}
-      />
+      <OrderComposerClient mode="sale" canEditPrice={can(user.role, "orders.correct")} zones={[]} />
     </>
   );
 }

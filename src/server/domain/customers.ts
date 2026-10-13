@@ -24,9 +24,7 @@ export interface CustomerInput {
 export async function searchCustomers(db: Db, q: string, limit = 50) {
   const term = q.trim();
   const key = phoneKey(term);
-  return db.query<
-    Customer & { order_count: number; last_order_at: Date | null }
-  >(
+  return db.query<Customer & { order_count: number; last_order_at: Date | null }>(
     `select c.*, (select count(*)::int from orders o where o.customer_id = c.id) as order_count,
             (select max(created_at) from orders o where o.customer_id = c.id) as last_order_at
        from customers c
@@ -53,12 +51,9 @@ export async function phoneMatches(db: Db, phone: string, excludeId?: string) {
 function validate(input: CustomerInput) {
   const errors: Record<string, string> = {};
   if (!input.name.trim()) errors.name = "Indiquez le nom du client.";
-  if (input.phone && phoneKey(input.phone).length < 6)
-    errors.phone = "Numéro trop court.";
-  if (input.email && !/^\S+@\S+\.\S+$/.test(input.email))
-    errors.email = "Adresse e-mail invalide.";
-  if (Object.keys(errors).length)
-    fail("validation", "Vérifiez les champs signalés.", errors);
+  if (input.phone && phoneKey(input.phone).length < 6) errors.phone = "Numéro trop court.";
+  if (input.email && !/^\S+@\S+\.\S+$/.test(input.email)) errors.email = "Adresse e-mail invalide.";
+  if (Object.keys(errors).length) fail("validation", "Vérifiez les champs signalés.", errors);
 }
 
 export async function createCustomer(

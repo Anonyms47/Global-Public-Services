@@ -12,8 +12,7 @@ import { ActionFeedback, useAction } from "./useAction";
 import { Sheet } from "../ui/Sheet";
 import { IconTrash } from "../ui/icons";
 
-const norm = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function AdjustButton({
   variantId,
@@ -33,19 +32,10 @@ export function AdjustButton({
   const d = Number(delta);
   return (
     <>
-      <button
-        type="button"
-        className="btn btn-outline btn-sm"
-        onClick={() => (setOpen(true), setSuccess(null))}
-      >
+      <button type="button" className="btn btn-outline btn-sm" onClick={() => (setOpen(true), setSuccess(null))}>
         Ajuster
       </button>
-      <Sheet
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Ajustement"
-        side="center"
-      >
+      <Sheet open={open} onClose={() => setOpen(false)} title="Ajustement" side="center">
         <form
           className="grid gap-4"
           onSubmit={(e) => {
@@ -56,9 +46,8 @@ export function AdjustButton({
           }}
         >
           <p className="font-semibold">{label}</p>
-          <p className="text-ink-soft text-[14px]">
-            Physique actuel : {onHand} · réservé : {reserved}. Pour un comptage
-            complet, préférez l&apos;inventaire.
+          <p className="text-[14px] text-ink-soft">
+            Physique actuel : {onHand} · réservé : {reserved}. Pour un comptage complet, préférez l&apos;inventaire.
           </p>
           <div>
             <label className="label" htmlFor={`adj-${variantId}`}>
@@ -71,9 +60,7 @@ export function AdjustButton({
               value={delta}
               onChange={(e) => setDelta(e.target.value.replace(/[^\d-]/g, ""))}
             />
-            {Number.isInteger(d) && d !== 0 ? (
-              <p className="hint">Nouveau stock physique : {onHand + d}</p>
-            ) : null}
+            {Number.isInteger(d) && d !== 0 ? <p className="hint">Nouveau stock physique : {onHand + d}</p> : null}
           </div>
           <div>
             <label className="label" htmlFor={`adj-r-${variantId}`}>
@@ -88,10 +75,7 @@ export function AdjustButton({
             />
           </div>
           <ActionFeedback failure={failure} success={success} />
-          <button
-            className="btn btn-blue"
-            disabled={pending || !delta || !reason.trim()}
-          >
+          <button className="btn btn-blue" disabled={pending || !delta || !reason.trim()}>
             Enregistrer l&apos;ajustement
           </button>
         </form>
@@ -109,18 +93,10 @@ interface V {
   low: boolean;
 }
 
-export function RestockForm({
-  variants,
-  preselect,
-}: {
-  variants: V[];
-  preselect?: string;
-}) {
+export function RestockForm({ variants, preselect }: { variants: V[]; preselect?: string }) {
   const [q, setQ] = useState("");
   const [lines, setLines] = useState<{ id: string; quantity: number }[]>(() =>
-    preselect && variants.some((v) => v.id === preselect)
-      ? [{ id: preselect, quantity: 1 }]
-      : [],
+    preselect && variants.some((v) => v.id === preselect) ? [{ id: preselect, quantity: 1 }] : [],
   );
   const [reference, setReference] = useState("");
   const [supplier, setSupplier] = useState("");
@@ -130,9 +106,7 @@ export function RestockForm({
   const found = useMemo(() => {
     const t = norm(q).split(/\s+/).filter(Boolean);
     const list = t.length
-      ? variants.filter((v) =>
-          t.every((x) => norm(`${v.label} ${v.sku}`).includes(x)),
-        )
+      ? variants.filter((v) => t.every((x) => norm(`${v.label} ${v.sku}`).includes(x)))
       : variants.filter((v) => v.low);
     return list.filter((v) => !lines.some((l) => l.id === v.id)).slice(0, 12);
   }, [q, variants, lines]);
@@ -155,58 +129,44 @@ export function RestockForm({
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <ul className="divide-line-soft border-line bg-card mt-2 divide-y rounded-[6px] border">
+        <ul className="mt-2 divide-y divide-line-soft rounded-[6px] border border-line bg-card">
           {found.map((v) => (
             <li key={v.id}>
               <button
                 type="button"
-                className="hover:bg-paper flex min-h-12 w-full items-center justify-between gap-3 px-3 py-2 text-left"
-                onClick={() => (
-                  setLines([...lines, { id: v.id, quantity: 1 }]),
-                  setReview(false)
-                )}
+                className="flex min-h-12 w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-paper"
+                onClick={() => (setLines([...lines, { id: v.id, quantity: 1 }]), setReview(false))}
               >
                 <span>
                   <span className="font-semibold">{v.label}</span>
-                  <span className="text-ink-mute block text-[12px]">
-                    {v.sku}
-                  </span>
+                  <span className="block text-[12px] text-ink-mute">{v.sku}</span>
                 </span>
-                <span
-                  className={`text-[13px] ${v.low ? "text-warn font-bold" : "text-ink-mute"}`}
-                >
+                <span className={`text-[13px] ${v.low ? "font-bold text-warn" : "text-ink-mute"}`}>
                   {v.available} dispo.
                 </span>
               </button>
             </li>
           ))}
           {found.length === 0 ? (
-            <li className="text-ink-mute p-3">
-              {q
-                ? "Aucun article."
-                : "Aucun stock faible : recherchez un article."}
+            <li className="p-3 text-ink-mute">
+              {q ? "Aucun article." : "Aucun stock faible : recherchez un article."}
             </li>
           ) : null}
         </ul>
       </section>
-      <section
-        aria-labelledby="t-lot"
-        className="border-line bg-card rounded-[6px] border p-4"
-      >
+      <section aria-labelledby="t-lot" className="rounded-[6px] border border-line bg-card p-4">
         <h2 id="t-lot" className="font-bold">
           Lot à enregistrer
         </h2>
-        {lines.length === 0 ? (
-          <p className="text-ink-mute mt-2">Aucun article ajouté.</p>
-        ) : null}
-        <ul className="divide-line-soft mt-2 divide-y">
+        {lines.length === 0 ? <p className="mt-2 text-ink-mute">Aucun article ajouté.</p> : null}
+        <ul className="mt-2 divide-y divide-line-soft">
           {lines.map((l) => {
             const v = byId(l.id);
             return (
               <li key={l.id} className="flex items-center gap-2 py-2">
                 <span className="min-w-0 flex-1 text-[14px]">
                   <span className="font-semibold">{v.label}</span>
-                  <span className="text-ink-mute block text-[12px]">
+                  <span className="block text-[12px] text-ink-mute">
                     {v.sku} · physique {v.onHand} → {v.onHand + l.quantity}
                   </span>
                 </span>
@@ -225,10 +185,7 @@ export function RestockForm({
                         x.id === l.id
                           ? {
                               ...x,
-                              quantity: Math.max(
-                                1,
-                                Math.floor(Number(e.target.value) || 1),
-                              ),
+                              quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)),
                             }
                           : x,
                       ),
@@ -254,58 +211,33 @@ export function RestockForm({
               <label className="label" htmlFor="rs-ref">
                 Réf. du lot / bon
               </label>
-              <input
-                id="rs-ref"
-                className="field"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-              />
+              <input id="rs-ref" className="field" value={reference} onChange={(e) => setReference(e.target.value)} />
             </div>
             <div>
               <label className="label" htmlFor="rs-sup">
                 Fournisseur
               </label>
-              <input
-                id="rs-sup"
-                className="field"
-                value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-              />
+              <input id="rs-sup" className="field" value={supplier} onChange={(e) => setSupplier(e.target.value)} />
             </div>
           </div>
           <div>
             <label className="label" htmlFor="rs-note">
               Note
             </label>
-            <input
-              id="rs-note"
-              className="field"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
+            <input id="rs-note" className="field" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
           <ActionFeedback failure={failure} success={success} />
           {!review ? (
-            <button
-              type="button"
-              className="btn btn-ink"
-              disabled={!lines.length}
-              onClick={() => setReview(true)}
-            >
+            <button type="button" className="btn btn-ink" disabled={!lines.length} onClick={() => setReview(true)}>
               Vérifier le lot ({total} article{total > 1 ? "s" : ""})
             </button>
           ) : (
-            <div className="bg-gps-blue-soft text-gps-blue-deep rounded-[6px] p-3 text-[14px]">
+            <div className="rounded-[6px] bg-gps-blue-soft p-3 text-[14px] text-gps-blue-deep">
               <p className="font-bold">
-                {lines.length} référence(s), {total} article(s) ajoutés au stock
-                physique.
+                {lines.length} référence(s), {total} article(s) ajoutés au stock physique.
               </p>
               <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setReview(false)}
-                >
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReview(false)}>
                   Modifier
                 </button>
                 <button
@@ -325,12 +257,7 @@ export function RestockForm({
                           note,
                         }),
                       {
-                        onSuccess: () => (
-                          setLines([]),
-                          setReview(false),
-                          setReference(""),
-                          setNote("")
-                        ),
+                        onSuccess: () => (setLines([]), setReview(false), setReference(""), setNote("")),
                       },
                     )
                   }
@@ -343,7 +270,7 @@ export function RestockForm({
           {success ? (
             <Link
               href="/comptoir/stock/mouvements?type=restock"
-              className="text-gps-blue text-[14px] font-semibold hover:underline"
+              className="text-[14px] font-semibold text-gps-blue hover:underline"
             >
               Voir les mouvements enregistrés
             </Link>
@@ -383,11 +310,7 @@ export function InventoryForm({
   const { run, pending, failure, success, setSuccess } = useAction();
   const list = useMemo(() => {
     const t = norm(q).split(/\s+/).filter(Boolean);
-    return t.length
-      ? rows.filter((r) =>
-          t.every((x) => norm(`${r.label} ${r.sku}`).includes(x)),
-        )
-      : rows;
+    return t.length ? rows.filter((r) => t.every((x) => norm(`${r.label} ${r.sku}`).includes(x))) : rows;
   }, [q, rows]);
   const entered = Object.entries(counts)
     .filter(([, v]) => v.trim() !== "")
@@ -414,26 +337,26 @@ export function InventoryForm({
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <div className="border-line bg-card overflow-x-auto rounded-[6px] border">
+        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[560px] text-[14px]">
             <thead>
-              <tr className="border-line text-ink-mute border-b text-left text-[12px] tracking-wide uppercase">
+              <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                 <th className="px-3 py-2 font-bold">Article</th>
                 <th className="py-2 text-right font-bold">Enregistré</th>
                 <th className="px-3 py-2 text-right font-bold">Compté</th>
               </tr>
             </thead>
-            <tbody className="divide-line-soft divide-y">
+            <tbody className="divide-y divide-line-soft">
               {list.map((r) => (
                 <tr key={r.id}>
                   <td className="px-3 py-2">
                     <div className="font-semibold">{r.label}</div>
-                    <div className="text-ink-mute text-[12px]">
+                    <div className="text-[12px] text-ink-mute">
                       {r.sku}
                       {r.reserved ? ` · ${r.reserved} réservé(s)` : ""}
                     </div>
                   </td>
-                  <td className="tabular py-2 text-right">{r.onHand}</td>
+                  <td className="py-2 text-right tabular">{r.onHand}</td>
                   <td className="px-3 py-2 text-right">
                     <label className="sr-only" htmlFor={`inv-${r.id}`}>
                       Quantité comptée pour {r.label}
@@ -458,15 +381,13 @@ export function InventoryForm({
         </div>
       </section>
       <section
-        className="border-line bg-card grid content-start gap-3 rounded-[6px] border p-4 lg:sticky lg:top-24"
+        className="grid content-start gap-3 rounded-[6px] border border-line bg-card p-4 lg:sticky lg:top-24"
         aria-labelledby="t-ecarts"
       >
         <h2 id="t-ecarts" className="font-bold">
           Écarts
         </h2>
-        <p className="text-ink-soft text-[14px]">
-          {entered.length} article(s) compté(s).
-        </p>
+        <p className="text-[14px] text-ink-soft">{entered.length} article(s) compté(s).</p>
         <button
           type="button"
           className="btn btn-ink"
@@ -483,31 +404,18 @@ export function InventoryForm({
         {preview ? (
           <>
             {changes.length === 0 ? (
-              <p className="text-wa-ink font-semibold">
-                Aucun écart : le stock enregistré correspond au comptage.
-              </p>
+              <p className="font-semibold text-wa-ink">Aucun écart : le stock enregistré correspond au comptage.</p>
             ) : (
-              <ul className="divide-line-soft divide-y text-[14px]">
+              <ul className="divide-y divide-line-soft text-[14px]">
                 {changes.map((p) => (
-                  <li
-                    key={p.variantId}
-                    className="flex justify-between gap-2 py-1.5"
-                  >
+                  <li key={p.variantId} className="flex justify-between gap-2 py-1.5">
                     <span>
                       {p.name} <span className="text-ink-mute">· {p.sku}</span>
-                      {p.problem ? (
-                        <span className="text-gps-red-ink block font-semibold">
-                          {p.problem}
-                        </span>
-                      ) : null}
+                      {p.problem ? <span className="block font-semibold text-gps-red-ink">{p.problem}</span> : null}
                     </span>
-                    <span className="tabular whitespace-nowrap">
+                    <span className="whitespace-nowrap tabular">
                       {p.recorded} → {p.counted}{" "}
-                      <strong
-                        className={
-                          p.delta > 0 ? "text-wa-ink" : "text-gps-red-ink"
-                        }
-                      >
+                      <strong className={p.delta > 0 ? "text-wa-ink" : "text-gps-red-ink"}>
                         ({p.delta > 0 ? "+" : ""}
                         {p.delta})
                       </strong>
@@ -533,9 +441,7 @@ export function InventoryForm({
               onClick={() =>
                 run(() => inventoryApplyAction(entered, note), {
                   onSuccess: (r) => (
-                    setSuccess(
-                      `Inventaire validé : ${r.changed} ajustement(s) enregistré(s).`,
-                    ),
+                    setSuccess(`Inventaire validé : ${r.changed} ajustement(s) enregistré(s).`),
                     setCounts({}),
                     setPreview(null)
                   ),

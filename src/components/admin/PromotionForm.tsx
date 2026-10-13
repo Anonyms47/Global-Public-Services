@@ -1,22 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  savePromotionAction,
-  stopPromotionAction,
-} from "@/app/comptoir/(app)/catalogue/actions";
+import { savePromotionAction, stopPromotionAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { ActionFeedback, useAction } from "./useAction";
 
-const local = (d: Date) =>
-  new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+const local = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-export function PromotionForm({
-  products,
-}: {
-  products: { id: string; name: string }[];
-}) {
+export function PromotionForm({ products }: { products: { id: string; name: string }[] }) {
   const [f, setF] = useState(() => ({
     name: "",
     productId: "",
@@ -28,7 +18,7 @@ export function PromotionForm({
   const { run, pending, failure, success, fieldErrors } = useAction();
   return (
     <form
-      className="border-line bg-card grid content-start gap-3 rounded-[6px] border p-4"
+      className="grid content-start gap-3 rounded-[6px] border border-line bg-card p-4"
       onSubmit={(e) => {
         e.preventDefault();
         run(
@@ -86,9 +76,7 @@ export function PromotionForm({
             id="pr-kind"
             className="field"
             value={f.kind}
-            onChange={(e) =>
-              setF({ ...f, kind: e.target.value as "percent" | "amount" })
-            }
+            onChange={(e) => setF({ ...f, kind: e.target.value as "percent" | "amount" })}
           >
             <option value="percent">Pourcentage</option>
             <option value="amount">Montant (FCFA)</option>
@@ -103,14 +91,10 @@ export function PromotionForm({
             inputMode="numeric"
             className="field"
             value={f.value}
-            onChange={(e) =>
-              setF({ ...f, value: e.target.value.replace(/\D/g, "") })
-            }
+            onChange={(e) => setF({ ...f, value: e.target.value.replace(/\D/g, "") })}
             aria-invalid={!!fieldErrors.value}
           />
-          {fieldErrors.value ? (
-            <p className="error-text">{fieldErrors.value}</p>
-          ) : null}
+          {fieldErrors.value ? <p className="error-text">{fieldErrors.value}</p> : null}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -138,9 +122,7 @@ export function PromotionForm({
             onChange={(e) => setF({ ...f, endsAt: e.target.value })}
             aria-invalid={!!fieldErrors.endsAt}
           />
-          {fieldErrors.endsAt ? (
-            <p className="error-text">{fieldErrors.endsAt}</p>
-          ) : null}
+          {fieldErrors.endsAt ? <p className="error-text">{fieldErrors.endsAt}</p> : null}
         </div>
       </div>
       <ActionFeedback failure={failure} success={success} />
@@ -157,10 +139,7 @@ export function StopPromotionButton({ id }: { id: string }) {
     <button
       className="btn btn-danger btn-sm"
       disabled={pending}
-      onClick={() =>
-        confirm("Arrêter cette promotion maintenant ?") &&
-        run(() => stopPromotionAction(id))
-      }
+      onClick={() => confirm("Arrêter cette promotion maintenant ?") && run(() => stopPromotionAction(id))}
     >
       Arrêter
     </button>

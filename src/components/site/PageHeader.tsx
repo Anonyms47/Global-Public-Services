@@ -14,9 +14,7 @@ export function PageHeader({
 }) {
   const blue = tone === "blue";
   return (
-    <div
-      className={`relative overflow-hidden ${blue ? "bg-gps-blue text-white" : ""}`}
-    >
+    <div className={`relative overflow-hidden ${blue ? "bg-gps-blue text-white" : ""}`}>
       {blue ? (
         <Ribbon
           tone="white"
@@ -24,17 +22,13 @@ export function PageHeader({
           width={5}
         />
       ) : null}
-      <div className="container-site relative pt-8 pb-10 md:pt-14 md:pb-14">
-        <p className={`eyebrow ${blue ? "text-white/80" : "text-gps-red-ink"}`}>
-          {eyebrow}
-        </p>
-        <h1 className="font-display mt-2 max-w-4xl text-[52px] leading-[0.9] font-extrabold uppercase md:text-[80px]">
+      <div className="relative container-site pt-8 pb-10 md:pt-14 md:pb-14">
+        <p className={`eyebrow ${blue ? "text-white/80" : "text-gps-red-ink"}`}>{eyebrow}</p>
+        <h1 className="mt-2 max-w-4xl font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-[80px]">
           {title}
         </h1>
         {children ? (
-          <div
-            className={`mt-5 max-w-2xl text-[17px] leading-relaxed ${blue ? "text-white/85" : "text-ink-soft"}`}
-          >
+          <div className={`mt-5 max-w-2xl text-[17px] leading-relaxed ${blue ? "text-white/85" : "text-ink-soft"}`}>
             {children}
           </div>
         ) : null}
@@ -44,21 +38,13 @@ export function PageHeader({
 }
 
 /** Valeur métier non encore fournie par GPS : affichée explicitement comme à confirmer. */
-export function ToConfirm({
-  label = "À confirmer avec GPS",
-}: {
-  label?: string;
-}) {
-  return (
-    <span className="bg-warn-soft text-warn rounded-[4px] px-1.5 py-0.5 text-[0.9em] font-semibold">
-      {label}
-    </span>
-  );
+export function ToConfirm({ label = "À confirmer avec GPS" }: { label?: string }) {
+  return <span className="rounded-[4px] bg-warn-soft px-1.5 py-0.5 text-[0.9em] font-semibold text-warn">{label}</span>;
 }
 
 export function Prose({ children }: { children: ReactNode }) {
   return (
-    <div className="text-ink-soft [&_h2]:font-display [&_h2]:text-ink [&_strong]:text-ink max-w-[70ch] space-y-4 text-[17px] leading-relaxed [&_h2]:mt-10 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:uppercase [&_li]:ml-5 [&_li]:list-disc">
+    <div className="max-w-[70ch] space-y-4 text-[17px] leading-relaxed text-ink-soft [&_h2]:mt-10 [&_h2]:font-display [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:text-ink [&_h2]:uppercase [&_li]:ml-5 [&_li]:list-disc [&_strong]:text-ink">
       {children}
     </div>
   );

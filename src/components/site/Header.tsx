@@ -10,16 +10,12 @@ export const mainNav = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function Header({
-  categories,
-}: {
-  categories: { slug: string; name: string }[];
-}) {
+export function Header({ categories }: { categories: { slug: string; name: string }[] }) {
   return (
-    <header className="border-line bg-paper/95 supports-[backdrop-filter]:bg-paper/85 sticky top-0 z-40 border-b backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/85">
       <a
         href="#contenu"
-        className="focus:bg-ink sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:px-4 focus:py-3 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-ink focus:px-4 focus:py-3 focus:text-white"
       >
         Aller au contenu
       </a>
@@ -27,11 +23,7 @@ export function Header({
         <MobileMenu nav={mainNav} categories={categories} />
         <Link href="/" className="shrink-0" aria-label="GPS — accueil">
           <Logo variant="mark" className="h-8 w-auto md:hidden" priority />
-          <Logo
-            variant="full"
-            className="hidden h-[60px] w-auto md:block"
-            priority
-          />
+          <Logo variant="full" className="hidden h-[60px] w-auto md:block" priority />
         </Link>
         <nav aria-label="Navigation principale" className="hidden lg:block">
           <ul className="flex items-center gap-1">

@@ -2,13 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   duplicateProductAction,
   removeProductAction,
@@ -19,15 +13,7 @@ import { publicationIssues } from "@/lib/publication";
 import { fcfa, slugify } from "@/lib/format";
 import { ActionFeedback, useAction } from "./useAction";
 import { Badge } from "./ui";
-import {
-  IconCheck,
-  IconDown,
-  IconPlus,
-  IconTrash,
-  IconUp,
-  IconUpload,
-  IconAlert,
-} from "../ui/icons";
+import { IconCheck, IconDown, IconPlus, IconTrash, IconUp, IconUpload, IconAlert } from "../ui/icons";
 
 interface VariantState {
   id?: string;
@@ -60,20 +46,8 @@ export interface ProductState {
   hasSales?: boolean;
 }
 
-const AXIS_PRESETS = [
-  "Couleur",
-  "Capacité",
-  "Pointure",
-  "Taille",
-  "Monture",
-  "Contenu",
-];
-const CONDITIONS = [
-  "Neuf",
-  "Reconditionné — très bon état",
-  "Reconditionné — bon état",
-  "Occasion",
-];
+const AXIS_PRESETS = ["Couleur", "Capacité", "Pointure", "Taille", "Monture", "Contenu"];
+const CONDITIONS = ["Neuf", "Reconditionné — très bon état", "Reconditionné — bon état", "Occasion"];
 const steps = ["Présenter", "Configurer", "Publier"] as const;
 
 function snapshot(s: ProductState) {
@@ -94,11 +68,7 @@ export function ProductFormClient(props: Parameters<typeof ProductForm>[0]) {
   return ready ? (
     <ProductForm {...props} />
   ) : (
-    <div
-      className="skeleton h-96"
-      aria-busy="true"
-      aria-label="Chargement du formulaire"
-    />
+    <div className="skeleton h-96" aria-busy="true" aria-label="Chargement du formulaire" />
   );
 }
 
@@ -118,16 +88,9 @@ function ProductForm({
   const [step, setStep] = useState(0);
   const [localDraft, setLocalDraft] = useState<ProductState | null>(() => {
     try {
-      const raw =
-        typeof window !== "undefined" ? localStorage.getItem(draftKey) : null;
-      const d = raw
-        ? (JSON.parse(raw) as ProductState & { savedFor?: string })
-        : null;
-      return d &&
-        d.savedFor === (initial.updatedAt ?? "") &&
-        snapshot(d) !== snapshot(initial)
-        ? d
-        : null;
+      const raw = typeof window !== "undefined" ? localStorage.getItem(draftKey) : null;
+      const d = raw ? (JSON.parse(raw) as ProductState & { savedFor?: string }) : null;
+      return d && d.savedFor === (initial.updatedAt ?? "") && snapshot(d) !== snapshot(initial) ? d : null;
     } catch {
       return null;
     }
@@ -144,11 +107,7 @@ function ProductForm({
   // Brouillon local + avertissement avant de quitter une saisie non enregistrée.
   useEffect(() => {
     try {
-      if (dirty)
-        localStorage.setItem(
-          draftKey,
-          JSON.stringify({ ...state, savedFor: initial.updatedAt ?? "" }),
-        );
+      if (dirty) localStorage.setItem(draftKey, JSON.stringify({ ...state, savedFor: initial.updatedAt ?? "" }));
       else localStorage.removeItem(draftKey);
     } catch {}
   }, [state, dirty, draftKey, initial.updatedAt]);
@@ -157,20 +116,10 @@ function ProductForm({
       if (dirtyRef.current) e.preventDefault();
     };
     const click = (e: MouseEvent) => {
-      const a = (e.target as HTMLElement).closest?.(
-        "a[href]",
-      ) as HTMLAnchorElement | null;
+      const a = (e.target as HTMLElement).closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || !dirtyRef.current || a.target === "_blank" || a.href.startsWith("blob:")) return;
       if (
-        !a ||
-        !dirtyRef.current ||
-        a.target === "_blank" ||
-        a.href.startsWith("blob:")
-      )
-        return;
-      if (
-        !confirm(
-          "Des modifications ne sont pas enregistrées. Quitter quand même ? (Une copie reste sur cet appareil.)",
-        )
+        !confirm("Des modifications ne sont pas enregistrées. Quitter quand même ? (Une copie reste sur cet appareil.)")
       ) {
         e.preventDefault();
         e.stopPropagation();
@@ -184,19 +133,10 @@ function ProductForm({
     };
   }, []);
 
-  const set = (patch: Partial<ProductState>) =>
-    setState((s) => ({ ...s, ...patch }));
+  const set = (patch: Partial<ProductState>) => setState((s) => ({ ...s, ...patch }));
   const issues = useMemo(() => publicationIssues(state), [state]);
-  const colorAxis = state.axes.find((a) =>
-    ["Couleur", "Monture", "Coloris"].includes(a),
-  );
-  const colorValues = colorAxis
-    ? [
-        ...new Set(
-          state.variants.map((v) => v.options[colorAxis]).filter(Boolean),
-        ),
-      ]
-    : [];
+  const colorAxis = state.axes.find((a) => ["Couleur", "Monture", "Coloris"].includes(a));
+  const colorValues = colorAxis ? [...new Set(state.variants.map((v) => v.options[colorAxis]).filter(Boolean))] : [];
 
   const save = (status: ProductState["status"]) => {
     const payload = {
@@ -213,9 +153,7 @@ function ProductForm({
       variants: state.variants.map((v) => ({
         id: v.id,
         sku: v.sku,
-        options: Object.fromEntries(
-          state.axes.map((a) => [a, v.options[a] ?? ""]),
-        ),
+        options: Object.fromEntries(state.axes.map((a) => [a, v.options[a] ?? ""])),
         price: v.price,
         costPrice: canCosts ? (v.costPrice ?? null) : undefined,
         initialStock: v.id ? undefined : (v.initialStock ?? 0),
@@ -225,10 +163,7 @@ function ProductForm({
       featured: status === "published" ? state.featured : false,
     };
     run(() => saveProductAction(payload), {
-      successMessage:
-        status === "published"
-          ? "Produit enregistré et publié."
-          : "Brouillon enregistré.",
+      successMessage: status === "published" ? "Produit enregistré et publié." : "Brouillon enregistré.",
       onSuccess: (r) => {
         const next = {
           ...state,
@@ -259,16 +194,11 @@ function ProductForm({
         if (r.ok)
           setState((s) => ({
             ...s,
-            images: [
-              ...s.images,
-              { url: r.data.url, alt: s.name, color: null },
-            ],
+            images: [...s.images, { url: r.data.url, alt: s.name, color: null }],
           }));
         else setUploadError(`${file.name} : ${r.error}`);
       } catch {
-        setUploadError(
-          `${file.name} : envoi impossible (connexion ou taille).`,
-        );
+        setUploadError(`${file.name} : envoi impossible (connexion ou taille).`);
       } finally {
         setUploading((n) => n - 1);
       }
@@ -301,15 +231,12 @@ function ProductForm({
         .replace(/-/g, "")
         .slice(0, 8) || "ART";
     const existing = state.variants;
-    const key = (o: Record<string, string>) =>
-      state.axes.map((a) => o[a]).join("|");
+    const key = (o: Record<string, string>) => state.axes.map((a) => o[a]).join("|");
     const price = existing[0]?.price ?? 0;
     const next = combos.map((c) => {
       const found = existing.find((v) => key(v.options) === key(c));
       if (found) return found;
-      const suffix = state.axes
-        .map((a) => slugify(c[a]).toUpperCase().replace(/-/g, "").slice(0, 4))
-        .join("-");
+      const suffix = state.axes.map((a) => slugify(c[a]).toUpperCase().replace(/-/g, "").slice(0, 4)).join("-");
       return {
         sku: `${base}-${suffix}`,
         options: c,
@@ -324,41 +251,27 @@ function ProductForm({
 
   const updateVariant = (i: number, patch: Partial<VariantState>) =>
     set({
-      variants: state.variants.map((v, j) =>
-        j === i ? { ...v, ...patch } : v,
-      ),
+      variants: state.variants.map((v, j) => (j === i ? { ...v, ...patch } : v)),
     });
-  const num = (s: string) =>
-    s.trim() === ""
-      ? undefined
-      : Math.max(0, Math.round(Number(s.replace(/\s/g, "")) || 0));
+  const num = (s: string) => (s.trim() === "" ? undefined : Math.max(0, Math.round(Number(s.replace(/\s/g, "")) || 0)));
 
   return (
     <div className="pb-24">
       {localDraft ? (
         <div
           role="status"
-          className="border-warn/40 bg-warn-soft mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[6px] border-[1.5px] p-3 text-[15px]"
+          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[6px] border-[1.5px] border-warn/40 bg-warn-soft p-3 text-[15px]"
         >
-          <p className="text-warn font-semibold">
-            Une saisie non enregistrée a été retrouvée sur cet appareil.
-          </p>
+          <p className="font-semibold text-warn">Une saisie non enregistrée a été retrouvée sur cet appareil.</p>
           <div className="flex gap-2">
             <button
               type="button"
               className="btn btn-sm btn-ink"
-              onClick={() => (
-                setState({ ...localDraft, updatedAt: initial.updatedAt }),
-                setLocalDraft(null)
-              )}
+              onClick={() => (setState({ ...localDraft, updatedAt: initial.updatedAt }), setLocalDraft(null))}
             >
               Restaurer
             </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-ghost"
-              onClick={() => setLocalDraft(null)}
-            >
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setLocalDraft(null)}>
               Ignorer
             </button>
           </div>
@@ -375,7 +288,7 @@ function ProductForm({
               className={`flex min-h-14 w-full items-center gap-2 rounded-[6px] border-[1.5px] px-3 text-left font-bold ${step === i ? "border-gps-blue bg-gps-blue text-white" : "border-line bg-card"}`}
             >
               <span
-                className={`tabular inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] ${step === i ? "text-gps-blue bg-white" : "bg-paper-deep"}`}
+                className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] tabular ${step === i ? "bg-white text-gps-blue" : "bg-paper-deep"}`}
               >
                 {i + 1}
               </span>
@@ -392,12 +305,7 @@ function ProductForm({
               <label className="label" htmlFor="p-name">
                 Nom du produit
               </label>
-              <input
-                id="p-name"
-                className="field"
-                value={state.name}
-                onChange={(e) => set({ name: e.target.value })}
-              />
+              <input id="p-name" className="field" value={state.name} onChange={(e) => set({ name: e.target.value })} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -432,10 +340,7 @@ function ProductForm({
             </div>
             <div>
               <label className="label" htmlFor="p-cond">
-                État{" "}
-                <span className="text-ink-mute font-normal">
-                  (si pertinent)
-                </span>
+                État <span className="font-normal text-ink-mute">(si pertinent)</span>
               </label>
               <select
                 id="p-cond"
@@ -460,10 +365,7 @@ function ProductForm({
                 value={state.description}
                 onChange={(e) => set({ description: e.target.value })}
               />
-              <p className="hint">
-                {state.description.trim().length} caractères · 20 minimum pour
-                publier.
-              </p>
+              <p className="hint">{state.description.trim().length} caractères · 20 minimum pour publier.</p>
             </div>
             <fieldset>
               <legend className="label">Caractéristiques</legend>
@@ -477,9 +379,7 @@ function ProductForm({
                       value={s.label}
                       onChange={(e) =>
                         set({
-                          specs: state.specs.map((x, j) =>
-                            j === i ? { ...x, label: e.target.value } : x,
-                          ),
+                          specs: state.specs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
                         })
                       }
                     />
@@ -490,9 +390,7 @@ function ProductForm({
                       value={s.value}
                       onChange={(e) =>
                         set({
-                          specs: state.specs.map((x, j) =>
-                            j === i ? { ...x, value: e.target.value } : x,
-                          ),
+                          specs: state.specs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)),
                         })
                       }
                     />
@@ -500,9 +398,7 @@ function ProductForm({
                       type="button"
                       className="btn btn-ghost px-3"
                       aria-label={`Supprimer la caractéristique ${i + 1}`}
-                      onClick={() =>
-                        set({ specs: state.specs.filter((_, j) => j !== i) })
-                      }
+                      onClick={() => set({ specs: state.specs.filter((_, j) => j !== i) })}
                     >
                       <IconTrash size={18} />
                     </button>
@@ -512,9 +408,7 @@ function ProductForm({
               <button
                 type="button"
                 className="btn btn-outline btn-sm mt-2"
-                onClick={() =>
-                  set({ specs: [...state.specs, { label: "", value: "" }] })
-                }
+                onClick={() => set({ specs: [...state.specs, { label: "", value: "" }] })}
               >
                 <IconPlus size={16} /> Ajouter une caractéristique
               </button>
@@ -522,14 +416,12 @@ function ProductForm({
           </div>
 
           <fieldset className="content-start">
-            <legend className="label">
-              Photos (la première est la photo principale)
-            </legend>
+            <legend className="label">Photos (la première est la photo principale)</legend>
             <ul className="grid gap-2">
               {state.images.map((img, i) => (
                 <li
                   key={img.url + i}
-                  className="border-line bg-card grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-[6px] border p-2"
+                  className="grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-[6px] border border-line bg-card p-2"
                 >
                   <Image
                     src={img.url}
@@ -547,9 +439,7 @@ function ProductForm({
                       value={img.alt}
                       onChange={(e) =>
                         set({
-                          images: state.images.map((x, j) =>
-                            j === i ? { ...x, alt: e.target.value } : x,
-                          ),
+                          images: state.images.map((x, j) => (j === i ? { ...x, alt: e.target.value } : x)),
                         })
                       }
                     />
@@ -560,17 +450,11 @@ function ProductForm({
                         value={img.color ?? ""}
                         onChange={(e) =>
                           set({
-                            images: state.images.map((x, j) =>
-                              j === i
-                                ? { ...x, color: e.target.value || null }
-                                : x,
-                            ),
+                            images: state.images.map((x, j) => (j === i ? { ...x, color: e.target.value || null } : x)),
                           })
                         }
                       >
-                        <option value="">
-                          Toutes les {colorAxis.toLowerCase()}s
-                        </option>
+                        <option value="">Toutes les {colorAxis.toLowerCase()}s</option>
                         {colorValues.map((c) => (
                           <option key={c}>{c}</option>
                         ))}
@@ -598,10 +482,8 @@ function ProductForm({
                     </button>
                     <button
                       type="button"
-                      className="btn btn-ghost btn-sm text-gps-red-ink px-2"
-                      onClick={() =>
-                        set({ images: state.images.filter((_, j) => j !== i) })
-                      }
+                      className="btn btn-ghost btn-sm px-2 text-gps-red-ink"
+                      onClick={() => set({ images: state.images.filter((_, j) => j !== i) })}
                       aria-label={`Retirer la photo ${i + 1}`}
                     >
                       <IconTrash size={18} />
@@ -610,26 +492,18 @@ function ProductForm({
                 </li>
               ))}
             </ul>
-            <label className="border-line hover:border-gps-blue focus-within:border-gps-blue mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed bg-white p-4 text-center">
+            <label className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed border-line bg-white p-4 text-center focus-within:border-gps-blue hover:border-gps-blue">
               <IconUpload />
-              <span className="font-bold">
-                {uploading
-                  ? `Envoi en cours (${uploading})…`
-                  : "Ajouter des photos"}
-              </span>
-              <span className="text-ink-mute text-[13px]">
-                JPEG, PNG ou WebP · 3 Mo max par photo · format vertical 4:5
-                conseillé
+              <span className="font-bold">{uploading ? `Envoi en cours (${uploading})…` : "Ajouter des photos"}</span>
+              <span className="text-[13px] text-ink-mute">
+                JPEG, PNG ou WebP · 3 Mo max par photo · format vertical 4:5 conseillé
               </span>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
                 className="sr-only"
-                onChange={(e) => (
-                  upload(e.target.files),
-                  (e.target.value = "")
-                )}
+                onChange={(e) => (upload(e.target.files), (e.target.value = ""))}
               />
             </label>
             {uploadError ? (
@@ -643,11 +517,10 @@ function ProductForm({
 
       {step === 1 ? (
         <div className="grid gap-6">
-          <fieldset className="border-line bg-card rounded-[6px] border p-4">
+          <fieldset className="rounded-[6px] border border-line bg-card p-4">
             <legend className="px-1 font-bold">Options du produit</legend>
-            <p className="text-ink-soft mb-3 text-[14px]">
-              Exemples : Couleur, Capacité, Pointure. Laissez vide pour un
-              article unique.
+            <p className="mb-3 text-[14px] text-ink-soft">
+              Exemples : Couleur, Capacité, Pointure. Laissez vide pour un article unique.
             </p>
             <div className="mb-3 flex flex-wrap gap-2">
               {AXIS_PRESETS.filter((a) => !state.axes.includes(a)).map((a) => (
@@ -664,10 +537,7 @@ function ProductForm({
             </div>
             <ul className="grid gap-3">
               {state.axes.map((a) => (
-                <li
-                  key={a}
-                  className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center"
-                >
+                <li key={a} className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
                   <span className="font-bold">{a}</span>
                   <input
                     aria-label={`Valeurs pour ${a}, séparées par des virgules`}
@@ -675,13 +545,7 @@ function ProductForm({
                     placeholder="Valeurs séparées par des virgules (ex. Noir, Blanc)"
                     value={
                       state.axisValues[a] ??
-                      [
-                        ...new Set(
-                          state.variants
-                            .map((v) => v.options[a])
-                            .filter(Boolean),
-                        ),
-                      ].join(", ")
+                      [...new Set(state.variants.map((v) => v.options[a]).filter(Boolean))].join(", ")
                     }
                     onChange={(e) =>
                       set({
@@ -695,9 +559,7 @@ function ProductForm({
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
-                    onClick={() =>
-                      set({ axes: state.axes.filter((x) => x !== a) })
-                    }
+                    onClick={() => set({ axes: state.axes.filter((x) => x !== a) })}
                   >
                     Retirer
                   </button>
@@ -713,13 +575,7 @@ function ProductForm({
                     state.axes.map((a) => [
                       a,
                       state.axisValues[a] ??
-                        [
-                          ...new Set(
-                            state.variants
-                              .map((v) => v.options[a])
-                              .filter(Boolean),
-                          ),
-                        ].join(", "),
+                        [...new Set(state.variants.map((v) => v.options[a]).filter(Boolean))].join(", "),
                     ]),
                   );
                   generateVariants(values);
@@ -730,10 +586,10 @@ function ProductForm({
             ) : null}
           </fieldset>
 
-          <div className="border-line bg-card overflow-x-auto rounded-[6px] border">
+          <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
             <table className="w-full min-w-[760px] text-[14px]">
               <thead>
-                <tr className="border-line text-ink-mute border-b text-left text-[12px] tracking-wide uppercase">
+                <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                   {state.axes.map((a) => (
                     <th key={a} className="px-2 py-2 font-bold">
                       {a}
@@ -741,15 +597,13 @@ function ProductForm({
                   ))}
                   <th className="px-2 py-2 font-bold">Référence</th>
                   <th className="px-2 py-2 font-bold">Prix (FCFA)</th>
-                  {canCosts ? (
-                    <th className="px-2 py-2 font-bold">Coût d&apos;achat</th>
-                  ) : null}
+                  {canCosts ? <th className="px-2 py-2 font-bold">Coût d&apos;achat</th> : null}
                   <th className="px-2 py-2 font-bold">Stock</th>
                   <th className="px-2 py-2 font-bold">Seuil</th>
                   <th className="px-2 py-2" />
                 </tr>
               </thead>
-              <tbody className="divide-line-soft divide-y">
+              <tbody className="divide-y divide-line-soft">
                 {state.variants.map((v, i) => (
                   <tr key={v.id ?? `n${i}`}>
                     {state.axes.map((a) => (
@@ -784,9 +638,7 @@ function ProductForm({
                         inputMode="numeric"
                         className="field h-10 min-h-10 w-28 text-[14px]"
                         value={v.price || ""}
-                        onChange={(e) =>
-                          updateVariant(i, { price: num(e.target.value) ?? 0 })
-                        }
+                        onChange={(e) => updateVariant(i, { price: num(e.target.value) ?? 0 })}
                       />
                     </td>
                     {canCosts ? (
@@ -806,11 +658,8 @@ function ProductForm({
                     ) : null}
                     <td className="px-2 py-2">
                       {v.id ? (
-                        <span className="tabular text-[13px]">
-                          {v.onHand}{" "}
-                          <span className="text-ink-mute">
-                            ({v.reserved} rés.)
-                          </span>
+                        <span className="text-[13px] tabular">
+                          {v.onHand} <span className="text-ink-mute">({v.reserved} rés.)</span>
                         </span>
                       ) : (
                         <input
@@ -851,11 +700,7 @@ function ProductForm({
                           })
                         }
                         aria-label={`Retirer la variante ${i + 1}`}
-                        title={
-                          v.hasSales
-                            ? "Déjà vendue : sera désactivée, pas supprimée"
-                            : undefined
-                        }
+                        title={v.hasSales ? "Déjà vendue : sera désactivée, pas supprimée" : undefined}
                       >
                         <IconTrash size={18} />
                       </button>
@@ -864,7 +709,7 @@ function ProductForm({
                 ))}
               </tbody>
             </table>
-            <div className="border-line flex flex-wrap items-center gap-3 border-t p-3">
+            <div className="flex flex-wrap items-center gap-3 border-t border-line p-3">
               <button
                 type="button"
                 className="btn btn-outline btn-sm"
@@ -884,9 +729,9 @@ function ProductForm({
               >
                 <IconPlus size={16} /> Ajouter une variante
               </button>
-              <p className="text-ink-mute text-[13px]">
-                Le stock des variantes existantes se modifie dans Stock
-                (réapprovisionnement, inventaire), avec motif et historique.
+              <p className="text-[13px] text-ink-mute">
+                Le stock des variantes existantes se modifie dans Stock (réapprovisionnement, inventaire), avec motif et
+                historique.
               </p>
             </div>
           </div>
@@ -895,31 +740,25 @@ function ProductForm({
 
       {step === 2 ? (
         <div className="grid gap-6 lg:grid-cols-2">
-          <section
-            className="border-line bg-card rounded-[6px] border p-4"
-            aria-labelledby="t-verif"
-          >
+          <section className="rounded-[6px] border border-line bg-card p-4" aria-labelledby="t-verif">
             <h2 id="t-verif" className="font-bold">
               Vérifications avant publication
             </h2>
             {issues.length === 0 ? (
-              <p className="text-wa-ink mt-2 flex items-center gap-2 font-semibold">
+              <p className="mt-2 flex items-center gap-2 font-semibold text-wa-ink">
                 <IconCheck /> Tout est prêt pour la publication.
               </p>
             ) : (
               <ul className="mt-2 grid gap-1 text-[14px]">
                 {issues.map((i) => (
-                  <li key={i} className="text-gps-red-ink flex gap-2">
+                  <li key={i} className="flex gap-2 text-gps-red-ink">
                     <IconAlert size={16} className="mt-0.5 shrink-0" /> {i}
                   </li>
                 ))}
               </ul>
             )}
           </section>
-          <section
-            className="border-line bg-card rounded-[6px] border p-4"
-            aria-labelledby="t-resume"
-          >
+          <section className="rounded-[6px] border border-line bg-card p-4" aria-labelledby="t-resume">
             <h2 id="t-resume" className="font-bold">
               Résumé
             </h2>
@@ -963,41 +802,29 @@ function ProductForm({
               Mettre dans la Sélection GPS (accueil)
             </label>
           </section>
-          {state.id ? (
-            <SecondaryActions id={state.id} hasSales={!!state.hasSales} />
-          ) : null}
+          {state.id ? <SecondaryActions id={state.id} hasSales={!!state.hasSales} /> : null}
         </div>
       ) : null}
 
       {/* Barre d'enregistrement */}
-      <div className="border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur lg:left-[256px]">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 backdrop-blur lg:left-[256px]">
         <div className="mx-auto flex max-w-[1320px] flex-wrap items-center gap-2 px-4 py-3 md:px-8">
           <div className="mr-auto min-w-0 text-[14px]" aria-live="polite">
             {failure || success ? (
               <ActionFeedback failure={failure} success={success} />
             ) : dirty ? (
-              <span className="text-warn font-semibold">
-                Modifications non enregistrées
-              </span>
+              <span className="font-semibold text-warn">Modifications non enregistrées</span>
             ) : (
               <span className="text-ink-mute">Tout est enregistré</span>
             )}
           </div>
           {step > 0 ? (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setStep(step - 1)}
-            >
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStep(step - 1)}>
               Précédent
             </button>
           ) : null}
           {step < 2 ? (
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => setStep(step + 1)}
-            >
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setStep(step + 1)}>
               Suivant : {steps[step + 1]}
             </button>
           ) : null}
@@ -1006,13 +833,7 @@ function ProductForm({
             className="btn btn-ink btn-sm"
             disabled={pending || !state.name.trim()}
             onClick={() =>
-              save(
-                state.status === "published"
-                  ? "draft"
-                  : state.status === "archived"
-                    ? "archived"
-                    : "draft",
-              )
+              save(state.status === "published" ? "draft" : state.status === "archived" ? "archived" : "draft")
             }
           >
             {state.status === "published"
@@ -1026,17 +847,9 @@ function ProductForm({
             className="btn btn-primary btn-sm"
             disabled={pending || issues.length > 0}
             onClick={() => save("published")}
-            title={
-              issues.length
-                ? "Complétez les vérifications de l'étape Publier"
-                : undefined
-            }
+            title={issues.length ? "Complétez les vérifications de l'étape Publier" : undefined}
           >
-            {pending
-              ? "Enregistrement…"
-              : state.status === "published"
-                ? "Enregistrer"
-                : "Publier"}
+            {pending ? "Enregistrement…" : state.status === "published" ? "Enregistrer" : "Publier"}
           </button>
         </div>
       </div>
@@ -1048,10 +861,7 @@ function SecondaryActions({ id, hasSales }: { id: string; hasSales: boolean }) {
   const router = useRouter();
   const { run, pending, failure, success } = useAction();
   return (
-    <section
-      className="border-line bg-card rounded-[6px] border p-4 lg:col-span-2"
-      aria-labelledby="t-autres"
-    >
+    <section className="rounded-[6px] border border-line bg-card p-4 lg:col-span-2" aria-labelledby="t-autres">
       <h2 id="t-autres" className="font-bold">
         Autres actions
       </h2>
@@ -1078,10 +888,7 @@ function SecondaryActions({ id, hasSales }: { id: string; hasSales: boolean }) {
               : "Supprimer définitivement ce produit jamais vendu ?";
             if (confirm(msg))
               run(() => removeProductAction(id), {
-                onSuccess: (r) =>
-                  r === "deleted"
-                    ? router.push("/comptoir/catalogue")
-                    : undefined,
+                onSuccess: (r) => (r === "deleted" ? router.push("/comptoir/catalogue") : undefined),
                 successMessage: hasSales ? "Produit archivé." : undefined,
               });
           }}

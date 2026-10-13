@@ -106,10 +106,7 @@ export interface StockRow {
   status: string;
 }
 
-export async function stockList(
-  db: Db,
-  opts: { q?: string; low?: boolean; defaultThreshold: number },
-) {
+export async function stockList(db: Db, opts: { q?: string; low?: boolean; defaultThreshold: number }) {
   const params: unknown[] = [opts.defaultThreshold];
   let where = "v.active and p.status <> 'archived'";
   if (opts.q) {
@@ -157,27 +154,16 @@ export async function restock(
   },
 ) {
   const lines = input.lines.filter((l) => l.quantity !== 0);
-  if (!lines.length)
-    fail("validation", "Indiquez au moins une quantité reçue.");
+  if (!lines.length) fail("validation", "Indiquez au moins une quantité reçue.");
   for (const l of lines) {
     if (!Number.isInteger(l.quantity) || l.quantity < 1)
-      fail(
-        "validation",
-        "Les quantités reçues doivent être des nombres entiers positifs.",
-      );
+      fail("validation", "Les quantités reçues doivent être des nombres entiers positifs.");
   }
   return db.tx(async (tx) => {
     const batchId = newId();
     await tx.query(
       "insert into stock_batches (id, kind, reference, supplier, note, user_id, is_demo) values ($1,'restock',$2,$3,$4,$5,$6)",
-      [
-        batchId,
-        input.reference,
-        input.supplier,
-        input.note,
-        input.userId,
-        !!input.isDemo,
-      ],
+      [batchId, input.reference, input.supplier, input.note, input.userId, !!input.isDemo],
     );
     for (const l of lines) {
       await applyMovement(tx, {
@@ -185,11 +171,7 @@ export async function restock(
         kind: "restock",
         onHandDelta: l.quantity,
         reason:
-          [
-            input.reference && `Lot ${input.reference}`,
-            input.supplier && `Fournisseur : ${input.supplier}`,
-            input.note,
-          ]
+          [input.reference && `Lot ${input.reference}`, input.supplier && `Fournisseur : ${input.supplier}`, input.note]
             .filter(Boolean)
             .join(" · ") || "Réapprovisionnement",
         batchId,
@@ -201,10 +183,7 @@ export async function restock(
 }
 
 /** Aperçu d'inventaire : écarts entre stock compté et stock enregistré. */
-export async function inventoryPreview(
-  db: Db,
-  counts: { variantId: string; counted: number }[],
-) {
+export async function inventoryPreview(db: Db, counts: { variantId: string; counted: number }[]) {
   if (!counts.length) return [];
   const rows = await db.query<{
     id: string;
@@ -229,9 +208,7 @@ export async function inventoryPreview(
         counted: c.counted,
         delta: c.counted - r.on_hand,
         problem:
-          c.counted < r.reserved
-            ? `Compté ${c.counted}, mais ${r.reserved} réservé(s) pour des commandes.`
-            : null,
+          c.counted < r.reserved ? `Compté ${c.counted}, mais ${r.reserved} réservé(s) pour des commandes.` : null,
       };
     })
     .filter((x): x is NonNullable<typeof x> => !!x);
@@ -247,27 +224,22 @@ export async function applyInventory(
 ) {
   for (const c of input.counts) {
     if (!Number.isInteger(c.counted) || c.counted < 0)
-      fail(
-        "validation",
-        "Les quantités comptées doivent être des entiers positifs ou nuls.",
-      );
+      fail("validation", "Les quantités comptées doivent être des entiers positifs ou nuls.");
   }
   return db.tx(async (tx) => {
     const batchId = newId();
-    await tx.query(
-      "insert into stock_batches (id, kind, note, user_id) values ($1,'inventory',$2,$3)",
-      [batchId, input.note, input.userId],
-    );
+    await tx.query("insert into stock_batches (id, kind, note, user_id) values ($1,'inventory',$2,$3)", [
+      batchId,
+      input.note,
+      input.userId,
+    ]);
     let changed = 0;
     for (const c of input.counts) {
       const v = await tx.one<{
         on_hand: number;
         reserved: number;
         sku: string;
-      }>(
-        "select on_hand, reserved, sku from variants where id = $1 for update",
-        [c.variantId],
-      );
+      }>("select on_hand, reserved, sku from variants where id = $1 for update", [c.variantId]);
       if (!v) continue;
       if (c.counted < v.reserved) {
         fail(
@@ -291,10 +263,7 @@ export async function applyInventory(
   });
 }
 
-export async function adjustStock(
-  db: Db,
-  input: { variantId: string; delta: number; reason: string; userId: string },
-) {
+export async function adjustStock(db: Db, input: { variantId: string; delta: number; reason: string; userId: string }) {
   if (!input.reason.trim())
     fail("validation", "Le motif est obligatoire pour un ajustement.", {
       reason: "Obligatoire.",
@@ -312,10 +281,7 @@ export async function adjustStock(
   );
 }
 
-export async function movements(
-  db: Db,
-  opts: { variantId?: string; kind?: string; limit?: number } = {},
-) {
+export async function movements(db: Db, opts: { variantId?: string; kind?: string; limit?: number } = {}) {
   const params: unknown[] = [];
   const where: string[] = [];
   if (opts.variantId) {

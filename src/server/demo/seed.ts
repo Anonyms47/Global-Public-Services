@@ -36,10 +36,7 @@ const img = (file: string, alt: string, color: string | null = null) => ({
   color,
 });
 
-type DemoProduct = Omit<
-  ProductInput,
-  "status" | "featured" | "categoryId" | "isDemo"
-> & {
+type DemoProduct = Omit<ProductInput, "status" | "featured" | "categoryId" | "isDemo"> & {
   category: string;
   featured?: boolean;
   stock: Record<string, number>;
@@ -108,28 +105,12 @@ const products: DemoProduct[] = [
     ],
     axes: ["Capacité", "Couleur"],
     images: [
-      img(
-        "nova12-face-graphite.svg",
-        "Orbis Nova 12 graphite, vue de face",
-        "Graphite",
-      ),
-      img(
-        "nova12-dos-graphite.svg",
-        "Orbis Nova 12 graphite, vue de dos",
-        "Graphite",
-      ),
-      img(
-        "nova12-profil-graphite.svg",
-        "Orbis Nova 12 graphite, de trois quarts",
-        "Graphite",
-      ),
+      img("nova12-face-graphite.svg", "Orbis Nova 12 graphite, vue de face", "Graphite"),
+      img("nova12-dos-graphite.svg", "Orbis Nova 12 graphite, vue de dos", "Graphite"),
+      img("nova12-profil-graphite.svg", "Orbis Nova 12 graphite, de trois quarts", "Graphite"),
       img("nova12-face-sable.svg", "Orbis Nova 12 sable, vue de face", "Sable"),
       img("nova12-dos-sable.svg", "Orbis Nova 12 sable, vue de dos", "Sable"),
-      img(
-        "nova12-profil-sable.svg",
-        "Orbis Nova 12 sable, de trois quarts",
-        "Sable",
-      ),
+      img("nova12-profil-sable.svg", "Orbis Nova 12 sable, de trois quarts", "Sable"),
     ],
     variants: [
       {
@@ -198,16 +179,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Capacité", "Couleur"],
     images: [
-      img(
-        "lite8-face-bleu-nuit.svg",
-        "Orbis Lite 8 bleu nuit, face",
-        "Bleu nuit",
-      ),
-      img(
-        "lite8-dos-bleu-nuit.svg",
-        "Orbis Lite 8 bleu nuit, dos",
-        "Bleu nuit",
-      ),
+      img("lite8-face-bleu-nuit.svg", "Orbis Lite 8 bleu nuit, face", "Bleu nuit"),
+      img("lite8-dos-bleu-nuit.svg", "Orbis Lite 8 bleu nuit, dos", "Bleu nuit"),
       img("lite8-face-blanc.svg", "Orbis Lite 8 blanc, face", "Blanc"),
       img("lite8-dos-blanc.svg", "Orbis Lite 8 blanc, dos", "Blanc"),
     ],
@@ -256,32 +229,12 @@ const products: DemoProduct[] = [
     ],
     axes: ["Couleur"],
     images: [
-      img(
-        "buds-boitier-blanc.svg",
-        "Sonna Buds Air blanc, boîtier ouvert",
-        "Blanc",
-      ),
-      img(
-        "buds-ecouteurs-blanc.svg",
-        "Sonna Buds Air blanc, écouteurs",
-        "Blanc",
-      ),
-      img(
-        "buds-boitier-noir.svg",
-        "Sonna Buds Air noir, boîtier ouvert",
-        "Noir",
-      ),
+      img("buds-boitier-blanc.svg", "Sonna Buds Air blanc, boîtier ouvert", "Blanc"),
+      img("buds-ecouteurs-blanc.svg", "Sonna Buds Air blanc, écouteurs", "Blanc"),
+      img("buds-boitier-noir.svg", "Sonna Buds Air noir, boîtier ouvert", "Noir"),
       img("buds-ecouteurs-noir.svg", "Sonna Buds Air noir, écouteurs", "Noir"),
-      img(
-        "buds-boitier-bleu-nuit.svg",
-        "Sonna Buds Air bleu nuit, boîtier ouvert",
-        "Bleu nuit",
-      ),
-      img(
-        "buds-ecouteurs-bleu-nuit.svg",
-        "Sonna Buds Air bleu nuit, écouteurs",
-        "Bleu nuit",
-      ),
+      img("buds-boitier-bleu-nuit.svg", "Sonna Buds Air bleu nuit, boîtier ouvert", "Bleu nuit"),
+      img("buds-ecouteurs-bleu-nuit.svg", "Sonna Buds Air bleu nuit, écouteurs", "Bleu nuit"),
     ],
     variants: [
       { sku: "SON-BA-BL", options: { Couleur: "Blanc" }, price: 25000 },
@@ -396,30 +349,17 @@ const products: DemoProduct[] = [
     featured: true,
     ageDays: 12,
     condition: "Neuf",
-    description:
-      "Lunettes de soleil à monture ronde, verres teintés. Livrées avec étui et chiffon.",
+    description: "Lunettes de soleil à monture ronde, verres teintés. Livrées avec étui et chiffon.",
     specs: [
       { label: "Forme", value: "Ronde" },
       { label: "Livrées avec", value: "Étui et chiffon" },
     ],
     axes: ["Monture"],
     images: [
-      img(
-        "rive-face-ecaille.svg",
-        "Lunettes Lumen Rive écaille, de face",
-        "Écaille",
-      ),
-      img(
-        "rive-profil-ecaille.svg",
-        "Lunettes Lumen Rive écaille, de trois quarts",
-        "Écaille",
-      ),
+      img("rive-face-ecaille.svg", "Lunettes Lumen Rive écaille, de face", "Écaille"),
+      img("rive-profil-ecaille.svg", "Lunettes Lumen Rive écaille, de trois quarts", "Écaille"),
       img("rive-face-noir.svg", "Lunettes Lumen Rive noires, de face", "Noir"),
-      img(
-        "rive-profil-noir.svg",
-        "Lunettes Lumen Rive noires, de trois quarts",
-        "Noir",
-      ),
+      img("rive-profil-noir.svg", "Lunettes Lumen Rive noires, de trois quarts", "Noir"),
     ],
     variants: [
       { sku: "LUM-RIV-EC", options: { Monture: "Écaille" }, price: 18000 },
@@ -442,16 +382,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Couleur", "Pointure"],
     images: [
-      img(
-        "urbain-profil-blanc.svg",
-        "Basket Pas Urbain blanche, profil",
-        "Blanc",
-      ),
-      img(
-        "urbain-paire-blanc.svg",
-        "Basket Pas Urbain blanche, paire",
-        "Blanc",
-      ),
+      img("urbain-profil-blanc.svg", "Basket Pas Urbain blanche, profil", "Blanc"),
+      img("urbain-paire-blanc.svg", "Basket Pas Urbain blanche, paire", "Blanc"),
       img("urbain-profil-noir.svg", "Basket Pas Urbain noire, profil", "Noir"),
       img("urbain-paire-noir.svg", "Basket Pas Urbain noire, paire", "Noir"),
     ],
@@ -485,8 +417,7 @@ const products: DemoProduct[] = [
     category: "chaussures",
     ageDays: 25,
     condition: "Neuf",
-    description:
-      "Chaussure de sport respirante pour la marche et la course légère.",
+    description: "Chaussure de sport respirante pour la marche et la course légère.",
     specs: [{ label: "Dessus", value: "Maille respirante" }],
     axes: ["Pointure"],
     images: [
@@ -512,8 +443,7 @@ const products: DemoProduct[] = [
     category: "autres-articles",
     ageDays: 15,
     condition: "Neuf",
-    description:
-      "Montre connectée pour suivre ses pas et recevoir ses notifications. Bracelet souple.",
+    description: "Montre connectée pour suivre ses pas et recevoir ses notifications. Bracelet souple.",
     specs: [{ label: "Compatibilité", value: "Android et iOS" }],
     axes: ["Couleur"],
     images: [
@@ -529,23 +459,14 @@ const products: DemoProduct[] = [
 ];
 
 export async function hasDemoData(db: Db) {
-  const r = await db.one<{ n: number }>(
-    "select count(*)::int as n from products where is_demo",
-  );
+  const r = await db.one<{ n: number }>("select count(*)::int as n from products where is_demo");
   return (r?.n ?? 0) > 0;
 }
 
-export async function seedDemo(
-  db: Db,
-  opts: { onlyIfEmpty?: boolean; now?: Date } = {},
-) {
+export async function seedDemo(db: Db, opts: { onlyIfEmpty?: boolean; now?: Date } = {}) {
   if (opts.onlyIfEmpty) {
-    const any = await db.one<{ n: number }>(
-      "select count(*)::int as n from products",
-    );
-    const seeded = await db.one(
-      "select 1 from settings where key = 'demo_seeded'",
-    );
+    const any = await db.one<{ n: number }>("select count(*)::int as n from products");
+    const seeded = await db.one("select 1 from settings where key = 'demo_seeded'");
     if ((any?.n ?? 0) > 0 || seeded) return false;
   }
   const now = opts.now ?? new Date();
@@ -553,21 +474,13 @@ export async function seedDemo(
 
   const userIds: Record<string, string> = {};
   for (const a of demoAccounts) {
-    const existing = await db.one<{ id: string }>(
-      "select id from users where email = $1",
-      [a.email],
-    );
-    userIds[a.role] =
-      existing?.id ??
-      (await createUser(db, { ...a, password: DEMO_PASSWORD, isDemo: true }));
+    const existing = await db.one<{ id: string }>("select id from users where email = $1", [a.email]);
+    userIds[a.role] = existing?.id ?? (await createUser(db, { ...a, password: DEMO_PASSWORD, isDemo: true }));
   }
 
   const catIds: Record<string, string> = {};
   for (const [i, c] of categories.entries()) {
-    const existing = await db.one<{ id: string }>(
-      "select id from categories where slug = $1",
-      [c.slug],
-    );
+    const existing = await db.one<{ id: string }>("select id from categories where slug = $1", [c.slug]);
     if (existing) {
       catIds[c.slug] = existing.id;
       continue;
@@ -606,10 +519,11 @@ export async function seedDemo(
     );
     productIds[p.name] = saved.id;
     const created = new Date(now.getTime() - p.ageDays * day);
-    await db.query(
-      "update products set created_at = $2, published_at = $2, featured_position = $3 where id = $1",
-      [saved.id, created, i],
-    );
+    await db.query("update products set created_at = $2, published_at = $2, featured_position = $3 where id = $1", [
+      saved.id,
+      created,
+      i,
+    ]);
   }
 
   // Promotion en cours (se termine automatiquement) + promotion terminée pour vérifier la fin programmée.
@@ -656,9 +570,7 @@ export async function seedDemo(
     { isDemo: true },
   );
   const variant = async (sku: string) =>
-    (await db.one<{ id: string }>("select id from variants where sku = $1", [
-      sku,
-    ]))!.id;
+    (await db.one<{ id: string }>("select id from variants where sku = $1", [sku]))!.id;
 
   const o1 = await createOrder(db, actor, {
     idempotencyKey: newId(),
@@ -713,9 +625,7 @@ export async function seedDemo(
       focusText: "",
     });
   }
-  await db.query(
-    "insert into settings (key, value) values ('demo_seeded', 'true') on conflict (key) do nothing",
-  );
+  await db.query("insert into settings (key, value) values ('demo_seeded', 'true') on conflict (key) do nothing");
   return true;
 }
 
@@ -746,19 +656,12 @@ export async function purgeDemo(db: Db) {
     await tx.query("delete from services where is_demo");
     await tx.query("delete from users where is_demo");
     const s = await getSettings(tx);
-    const exists = async (id: string | null) =>
-      !!id && !!(await tx.one("select 1 from products where id = $1", [id]));
+    const exists = async (id: string | null) => !!id && !!(await tx.one("select 1 from products where id = $1", [id]));
     await saveSettingsSection(tx, "storefront", {
       ...s.storefront,
-      heroProductId: (await exists(s.storefront.heroProductId))
-        ? s.storefront.heroProductId
-        : null,
-      focusProductId: (await exists(s.storefront.focusProductId))
-        ? s.storefront.focusProductId
-        : null,
+      heroProductId: (await exists(s.storefront.heroProductId)) ? s.storefront.heroProductId : null,
+      focusProductId: (await exists(s.storefront.focusProductId)) ? s.storefront.focusProductId : null,
     });
-    await tx.query(
-      "insert into settings (key, value) values ('demo_seeded', 'true') on conflict (key) do nothing",
-    );
+    await tx.query("insert into settings (key, value) values ('demo_seeded', 'true') on conflict (key) do nothing");
   });
 }

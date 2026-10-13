@@ -17,8 +17,7 @@ export async function verifyCart(items: CartItemInput[]) {
     console.error(error);
     return {
       ok: false as const,
-      error:
-        "La vérification du panier a échoué. Vérifiez votre connexion puis réessayez.",
+      error: "La vérification du panier a échoué. Vérifiez votre connexion puis réessayez.",
     };
   }
 }

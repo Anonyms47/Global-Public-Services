@@ -30,38 +30,21 @@ export function FulfillmentBadge({
   status: OrderStatus;
 }) {
   if (status === "cancelled") return <Badge>—</Badge>;
-  const tone =
-    f === "to_prepare" ? "red" : f === "handed_over" ? "green" : "warn";
+  const tone = f === "to_prepare" ? "red" : f === "handed_over" ? "green" : "warn";
   const label =
-    f === "ready"
-      ? reception === "delivery"
-        ? "Prête à livrer"
-        : "Prête au retrait"
-      : fulfillmentLabels[f];
-  return (
-    <Badge tone={tone}>
-      {reception === "immediate" ? "Remise au comptoir" : label}
-    </Badge>
-  );
+    f === "ready" ? (reception === "delivery" ? "Prête à livrer" : "Prête au retrait") : fulfillmentLabels[f];
+  return <Badge tone={tone}>{reception === "immediate" ? "Remise au comptoir" : label}</Badge>;
 }
 
 export function PaymentBadge({ p }: { p: keyof typeof paymentLabels }) {
   const tone =
-    p === "paid"
-      ? "green"
-      : p === "partial"
-        ? "warn"
-        : p === "to_refund"
-          ? "red"
-          : p === "unpaid"
-            ? "red"
-            : "neutral";
+    p === "paid" ? "green" : p === "partial" ? "warn" : p === "to_refund" ? "red" : p === "unpaid" ? "red" : "neutral";
   return <Badge tone={tone}>{paymentLabels[p]}</Badge>;
 }
 
 export function ChannelLabel({ c, r }: { c: Channel; r: Reception }) {
   return (
-    <span className="text-ink-mute text-[13px]">
+    <span className="text-[13px] text-ink-mute">
       {channelLabels[c]} · {receptionLabels[r]}
     </span>
   );

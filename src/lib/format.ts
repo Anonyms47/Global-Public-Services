@@ -25,9 +25,7 @@ export function formatDate(d: Date | string) {
 
 /** Libellé lisible des options d'une variante : « Capacité : 256 Go · Couleur : Graphite ». */
 export function optionsLabel(options: Record<string, string>, axes?: string[]) {
-  const keys = axes?.length
-    ? axes.filter((a) => a in options)
-    : Object.keys(options);
+  const keys = axes?.length ? axes.filter((a) => a in options) : Object.keys(options);
   return keys.map((k) => `${k} : ${options[k]}`).join(" · ");
 }
 

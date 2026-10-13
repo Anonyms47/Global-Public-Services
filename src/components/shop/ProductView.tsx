@@ -23,38 +23,15 @@ import { Price } from "./Price";
 
 const VISUAL_AXES = ["Couleur", "Monture", "Coloris"];
 
-function matches(
-  v: PublicVariant,
-  sel: Record<string, string | undefined>,
-  except?: string,
-) {
-  return Object.entries(sel).every(
-    ([k, val]) => k === except || !val || v.options[k] === val,
-  );
+function matches(v: PublicVariant, sel: Record<string, string | undefined>, except?: string) {
+  return Object.entries(sel).every(([k, val]) => k === except || !val || v.options[k] === val);
 }
 
-export function ProductView({
-  product,
-  url,
-  whatsapp,
-}: {
-  product: PublicProduct;
-  url: string;
-  whatsapp: string;
-}) {
+export function ProductView({ product, url, whatsapp }: { product: PublicProduct; url: string; whatsapp: string }) {
   const axes = product.axes;
   const values = useMemo(
     () =>
-      Object.fromEntries(
-        axes.map((a) => [
-          a,
-          [
-            ...new Set(
-              product.variants.map((v) => v.options[a]).filter(Boolean),
-            ),
-          ],
-        ]),
-      ),
+      Object.fromEntries(axes.map((a) => [a, [...new Set(product.variants.map((v) => v.options[a]).filter(Boolean))]])),
     [axes, product.variants],
   );
 
@@ -64,11 +41,8 @@ export function ProductView({
       if (values[a].length === 1) init[a] = values[a][0];
       else if (VISUAL_AXES.includes(a)) {
         init[a] =
-          values[a].find((val) =>
-            product.variants.some(
-              (v) => v.options[a] === val && v.available > 0,
-            ),
-          ) ?? values[a][0];
+          values[a].find((val) => product.variants.some((v) => v.options[a] === val && v.available > 0)) ??
+          values[a][0];
       }
     }
     return init;
@@ -84,9 +58,8 @@ export function ProductView({
   const missing = axes.filter((a) => !sel[a]);
   const variant =
     missing.length === 0
-      ? (product.variants.find((v) =>
-          axes.every((a) => v.options[a] === sel[a]),
-        ) ?? (axes.length === 0 ? product.variants[0] : undefined))
+      ? (product.variants.find((v) => axes.every((a) => v.options[a] === sel[a])) ??
+        (axes.length === 0 ? product.variants[0] : undefined))
       : undefined;
   const maxQty = variant ? Math.min(variant.available, 10) : 10;
   const variantKey = `${variant?.id ?? ""}|${maxQty}`;
@@ -123,8 +96,7 @@ export function ProductView({
       tone: "info",
       text: `Choisissez : ${missing.join(", ").toLowerCase()}.`,
     };
-  else if (!variant)
-    status = { tone: "out", text: "Cette combinaison n'existe pas." };
+  else if (!variant) status = { tone: "out", text: "Cette combinaison n'existe pas." };
   else if (variant.available === 0)
     status = {
       tone: "out",
@@ -164,21 +136,13 @@ export function ProductView({
 
   const question = whatsappLink(
     whatsapp,
-    productQuestionMessage(
-      product.name,
-      url,
-      variant ? optionsLabel(variant.options, axes) : undefined,
-    ),
+    productQuestionMessage(product.name, url, variant ? optionsLabel(variant.options, axes) : undefined),
   );
 
   const optionState = (axis: string, val: string) => {
-    const pool = product.variants.filter(
-      (v) => v.options[axis] === val && matches(v, sel, axis),
-    );
+    const pool = product.variants.filter((v) => v.options[axis] === val && matches(v, sel, axis));
     if (!pool.length) return "none" as const;
-    return pool.some((v) => v.available > 0)
-      ? ("ok" as const)
-      : ("out" as const);
+    return pool.some((v) => v.available > 0) ? ("ok" as const) : ("out" as const);
   };
 
   return (
@@ -186,7 +150,7 @@ export function ProductView({
       {/* Galerie */}
       <div className="lg:col-span-7">
         <div className="grid gap-3 md:grid-cols-[88px_1fr] md:gap-4">
-          <div className="bg-paper-deep relative order-1 overflow-hidden rounded-[6px] md:order-2">
+          <div className="relative order-1 overflow-hidden rounded-[6px] bg-paper-deep md:order-2">
             {current ? (
               <button
                 type="button"
@@ -205,31 +169,26 @@ export function ProductView({
                   unoptimized={current.url.endsWith(".svg")}
                   className="animate-rise aspect-[4/5] w-full object-cover"
                 />
-                <span className="bg-paper/90 text-ink absolute right-3 bottom-3 inline-flex h-11 w-11 items-center justify-center rounded-[6px]">
+                <span className="absolute right-3 bottom-3 inline-flex h-11 w-11 items-center justify-center rounded-[6px] bg-paper/90 text-ink">
                   <IconZoom />
                 </span>
               </button>
             ) : (
-              <div className="text-ink-mute flex aspect-[4/5] items-center justify-center">
-                Photo à venir
-              </div>
+              <div className="flex aspect-[4/5] items-center justify-center text-ink-mute">Photo à venir</div>
             )}
             {product.isDemo ? (
-              <span className="bg-ink/70 absolute top-3 right-3 rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
+              <span className="absolute top-3 right-3 rounded-[4px] bg-ink/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
                 Illustration
               </span>
             ) : null}
             {product.promo ? (
-              <span className="bg-gps-red absolute top-3 left-3 rounded-[4px] px-2 py-1 text-[13px] font-extrabold text-white">
+              <span className="absolute top-3 left-3 rounded-[4px] bg-gps-red px-2 py-1 text-[13px] font-extrabold text-white">
                 {product.promo.label}
               </span>
             ) : null}
           </div>
           {images.length > 1 ? (
-            <ul
-              className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col"
-              aria-label="Photos du produit"
-            >
+            <ul className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col" aria-label="Photos du produit">
               {images.map((img, i) => (
                 <li key={img.url} className="shrink-0">
                   <button
@@ -258,25 +217,22 @@ export function ProductView({
       {/* Achat */}
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-28">
-          <p className="text-ink-mute text-[14px] font-semibold">
+          <p className="text-[14px] font-semibold text-ink-mute">
             {product.brand}
             {product.categoryName ? (
               <>
                 {" · "}
-                <Link
-                  className="underline-offset-2 hover:underline"
-                  href={`/categories/${product.categorySlug}`}
-                >
+                <Link className="underline-offset-2 hover:underline" href={`/categories/${product.categorySlug}`}>
                   {product.categoryName}
                 </Link>
               </>
             ) : null}
           </p>
-          <h1 className="font-display mt-2 text-[44px] leading-[0.92] font-extrabold uppercase md:text-[56px]">
+          <h1 className="mt-2 font-display text-[44px] leading-[0.92] font-extrabold uppercase md:text-[56px]">
             {product.name}
           </h1>
           {product.condition ? (
-            <p className="bg-gps-blue-soft text-gps-blue mt-3 inline-flex rounded-[4px] px-2 py-1 text-[13px] font-bold">
+            <p className="mt-3 inline-flex rounded-[4px] bg-gps-blue-soft px-2 py-1 text-[13px] font-bold text-gps-blue">
               État : {product.condition}
             </p>
           ) : null}
@@ -285,18 +241,13 @@ export function ProductView({
             <Price
               price={priceShown}
               basePrice={product.promo ? baseShown : undefined}
-              from={
-                !variant &&
-                new Set(product.variants.map((v) => v.price)).size > 1
-              }
+              from={!variant && new Set(product.variants.map((v) => v.price)).size > 1}
               size="xl"
             />
             {product.promo ? (
-              <p className="text-gps-red-ink mt-1 text-[14px] font-semibold">
+              <p className="mt-1 text-[14px] font-semibold text-gps-red-ink">
                 {product.promo.name} — jusqu&apos;au{" "}
-                {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(
-                  new Date(product.promo.endsAt),
-                )}
+                {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date(product.promo.endsAt))}
               </p>
             ) : null}
           </div>
@@ -306,12 +257,7 @@ export function ProductView({
               <legend className="mb-2 flex w-full justify-between text-[15px] font-bold">
                 <span>
                   {axis}
-                  {sel[axis] ? (
-                    <span className="text-ink-soft font-semibold">
-                      {" "}
-                      : {sel[axis]}
-                    </span>
-                  ) : null}
+                  {sel[axis] ? <span className="font-semibold text-ink-soft"> : {sel[axis]}</span> : null}
                 </span>
               </legend>
               <div className="flex flex-wrap gap-2">
@@ -327,20 +273,13 @@ export function ProductView({
                       onClick={() => {
                         setSel((s) => ({
                           ...s,
-                          [axis]:
-                            on &&
-                            values[axis].length > 1 &&
-                            !VISUAL_AXES.includes(axis)
-                              ? undefined
-                              : val,
+                          [axis]: on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
                         }));
                         setShowMissing(false);
                       }}
                       className={`relative min-h-12 min-w-12 rounded-[6px] border-[1.5px] px-4 text-[15px] font-semibold transition-colors ${
-                        on
-                          ? "border-gps-blue bg-gps-blue text-white"
-                          : "border-line hover:border-ink bg-white"
-                      } ${st !== "ok" ? "text-ink-mute decoration-gps-red line-through decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
+                        on ? "border-gps-blue bg-gps-blue text-white" : "border-line bg-white hover:border-ink"
+                      } ${st !== "ok" ? "text-ink-mute line-through decoration-gps-red decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
                     >
                       {val}
                     </button>
@@ -367,17 +306,13 @@ export function ProductView({
             <IconInfo className="mt-0.5 shrink-0" size={18} />
             <span>
               {status.text}
-              {variant ? (
-                <span className="block text-[13px] font-normal opacity-80">
-                  Réf. {variant.sku}
-                </span>
-              ) : null}
+              {variant ? <span className="block text-[13px] font-normal opacity-80">Réf. {variant.sku}</span> : null}
             </span>
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
             <div
-              className="border-line flex items-center rounded-[6px] border-[1.5px] bg-white"
+              className="flex items-center rounded-[6px] border-[1.5px] border-line bg-white"
               role="group"
               aria-label="Quantité"
             >
@@ -390,18 +325,13 @@ export function ProductView({
               >
                 <IconMinus />
               </button>
-              <output
-                className="tabular w-8 text-center text-lg font-bold"
-                aria-live="polite"
-              >
+              <output className="w-8 text-center text-lg font-bold tabular" aria-live="polite">
                 {qty}
               </output>
               <button
                 type="button"
                 className="inline-flex h-12 w-12 items-center justify-center disabled:opacity-40"
-                onClick={() =>
-                  setQty((q) => Math.min(Math.max(1, maxQty), q + 1))
-                }
+                onClick={() => setQty((q) => Math.min(Math.max(1, maxQty), q + 1))}
                 disabled={!canAdd || qty >= maxQty}
                 aria-label="Augmenter la quantité"
               >
@@ -431,16 +361,14 @@ export function ProductView({
               ref={confirmRef}
               tabIndex={-1}
               role="status"
-              className="animate-rise border-wa bg-wa-soft mt-4 rounded-[6px] border-[1.5px] p-4 outline-none"
+              className="animate-rise mt-4 rounded-[6px] border-[1.5px] border-wa bg-wa-soft p-4 outline-none"
             >
-              <p className="text-wa-ink flex items-center gap-2 font-bold">
+              <p className="flex items-center gap-2 font-bold text-wa-ink">
                 <IconCheck /> Ajouté au panier
               </p>
-              <p className="text-ink-soft mt-1 text-[14px]">
+              <p className="mt-1 text-[14px] text-ink-soft">
                 {product.name}
-                {variant
-                  ? ` — ${optionsLabel(variant.options, axes)}`
-                  : ""} · {added.quantity} au total dans le panier
+                {variant ? ` — ${optionsLabel(variant.options, axes)}` : ""} · {added.quantity} au total dans le panier
                 {added.capped ? " (limité au stock disponible)" : ""}.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -454,24 +382,23 @@ export function ProductView({
             </div>
           ) : null}
 
-          <div className="border-line mt-6 border-t pt-5">
+          <div className="mt-6 border-t border-line pt-5">
             {question ? (
               <a
                 href={question}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-outline border-wa text-wa-ink hover:bg-wa-soft w-full"
+                className="btn btn-outline w-full border-wa text-wa-ink hover:bg-wa-soft"
               >
                 <IconWhatsApp /> Poser une question sur WhatsApp
               </a>
             ) : (
-              <div className="border-line text-ink-soft rounded-[6px] border border-dashed p-3 text-[14px]">
-                <p className="text-ink flex items-center gap-2 font-bold">
+              <div className="rounded-[6px] border border-dashed border-line p-3 text-[14px] text-ink-soft">
+                <p className="flex items-center gap-2 font-bold text-ink">
                   <IconWhatsApp className="text-wa" /> Question sur WhatsApp
                 </p>
                 <p className="mt-1">
-                  Disponible dès que le numéro WhatsApp de GPS sera renseigné
-                  (mode démonstration).
+                  Disponible dès que le numéro WhatsApp de GPS sera renseigné (mode démonstration).
                 </p>
               </div>
             )}
@@ -479,21 +406,13 @@ export function ProductView({
         </div>
       </div>
 
-      <Sheet
-        open={zoom}
-        onClose={() => setZoom(false)}
-        title={product.name}
-        side="center"
-        wide
-      >
+      <Sheet open={zoom} onClose={() => setZoom(false)} title={product.name} side="center" wide>
         {current ? (
           <div
             className="relative"
             onKeyDown={(e) => {
-              if (e.key === "ArrowRight")
-                setActive((a) => (a + 1) % images.length);
-              if (e.key === "ArrowLeft")
-                setActive((a) => (a - 1 + images.length) % images.length);
+              if (e.key === "ArrowRight") setActive((a) => (a + 1) % images.length);
+              if (e.key === "ArrowLeft") setActive((a) => (a - 1 + images.length) % images.length);
             }}
           >
             <Image
@@ -510,14 +429,12 @@ export function ProductView({
                 <button
                   type="button"
                   className="btn btn-outline btn-sm"
-                  onClick={() =>
-                    setActive((a) => (a - 1 + images.length) % images.length)
-                  }
+                  onClick={() => setActive((a) => (a - 1 + images.length) % images.length)}
                   aria-label="Photo précédente"
                 >
                   <IconChevronLeft />
                 </button>
-                <span className="tabular text-[14px]">
+                <span className="text-[14px] tabular">
                   {active + 1} / {images.length}
                 </span>
                 <button
@@ -530,9 +447,7 @@ export function ProductView({
                 </button>
               </div>
             ) : null}
-            <p className="text-ink-mute mt-2 text-center text-[14px]">
-              {current.alt}
-            </p>
+            <p className="mt-2 text-center text-[14px] text-ink-mute">{current.alt}</p>
           </div>
         ) : null}
       </Sheet>
@@ -549,7 +464,7 @@ export function BackToResults({ href }: { href: string }) {
           sessionStorage.setItem("gps-restore", href);
         } catch {}
       }}
-      className="text-gps-blue inline-flex min-h-11 items-center gap-1 text-[15px] font-bold hover:underline"
+      className="inline-flex min-h-11 items-center gap-1 text-[15px] font-bold text-gps-blue hover:underline"
     >
       <IconChevronLeft size={18} /> Retour aux résultats
     </Link>

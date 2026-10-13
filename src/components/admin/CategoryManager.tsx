@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  deleteCategoryAction,
-  moveCategoryAction,
-  saveCategoryAction,
-} from "@/app/comptoir/(app)/catalogue/actions";
+import { deleteCategoryAction, moveCategoryAction, saveCategoryAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { ActionFeedback, useAction } from "./useAction";
 import { IconDown, IconUp } from "../ui/icons";
 
@@ -28,13 +24,13 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
   };
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-      <ol className="divide-line border-line bg-card divide-y rounded-[6px] border">
+      <ol className="divide-y divide-line rounded-[6px] border border-line bg-card">
         {categories.map((c, i) => (
           <li key={c.id} className="flex flex-wrap items-center gap-3 p-3">
-            <span className="tabular text-ink-mute w-6">{i + 1}</span>
+            <span className="w-6 text-ink-mute tabular">{i + 1}</span>
             <div className="min-w-0 flex-1">
               <p className="font-bold">{c.name}</p>
-              <p className="text-ink-mute text-[13px]">
+              <p className="text-[13px] text-ink-mute">
                 {c.count} produit(s) publié(s)
                 {c.description ? ` · ${c.description}` : ""}
               </p>
@@ -56,18 +52,14 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
               >
                 <IconDown size={18} />
               </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => start(c)}
-              >
+              <button className="btn btn-outline btn-sm" onClick={() => start(c)}>
                 Modifier
               </button>
               <button
                 className="btn btn-danger btn-sm"
                 disabled={pending}
                 onClick={() =>
-                  confirm(`Supprimer la catégorie « ${c.name} » ?`) &&
-                  run(() => deleteCategoryAction(c.id))
+                  confirm(`Supprimer la catégorie « ${c.name} » ?`) && run(() => deleteCategoryAction(c.id))
                 }
               >
                 Supprimer
@@ -75,23 +67,16 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
             </div>
           </li>
         ))}
-        {categories.length === 0 ? (
-          <li className="text-ink-mute p-4">Aucune catégorie.</li>
-        ) : null}
+        {categories.length === 0 ? <li className="p-4 text-ink-mute">Aucune catégorie.</li> : null}
       </ol>
       <form
-        className="border-line bg-card grid content-start gap-3 rounded-[6px] border p-4"
+        className="grid content-start gap-3 rounded-[6px] border border-line bg-card p-4"
         onSubmit={(e) => {
           e.preventDefault();
-          run(
-            () => saveCategoryAction({ id: editing?.id, name, description }),
-            { onSuccess: () => start(null) },
-          );
+          run(() => saveCategoryAction({ id: editing?.id, name, description }), { onSuccess: () => start(null) });
         }}
       >
-        <h2 className="font-bold">
-          {editing ? `Modifier « ${editing.name} »` : "Nouvelle catégorie"}
-        </h2>
+        <h2 className="font-bold">{editing ? `Modifier « ${editing.name} »` : "Nouvelle catégorie"}</h2>
         <div>
           <label className="label" htmlFor="cat-name">
             Nom
@@ -103,9 +88,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
             onChange={(e) => setName(e.target.value)}
             aria-invalid={!!fieldErrors.name}
           />
-          {fieldErrors.name ? (
-            <p className="error-text">{fieldErrors.name}</p>
-          ) : null}
+          {fieldErrors.name ? <p className="error-text">{fieldErrors.name}</p> : null}
         </div>
         <div>
           <label className="label" htmlFor="cat-desc">
@@ -122,11 +105,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
         <ActionFeedback failure={failure} success={success} />
         <div className="flex gap-2">
           {editing ? (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => start(null)}
-            >
+            <button type="button" className="btn btn-ghost" onClick={() => start(null)}>
               Annuler
             </button>
           ) : null}

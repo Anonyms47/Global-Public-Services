@@ -16,13 +16,12 @@ export default async function CategoriesAdminPage() {
     <>
       <Link
         href="/comptoir/catalogue"
-        className="text-gps-blue mb-3 inline-flex min-h-11 items-center gap-1 font-bold hover:underline"
+        className="mb-3 inline-flex min-h-11 items-center gap-1 font-bold text-gps-blue hover:underline"
       >
         <IconArrowLeft size={18} /> Catalogue
       </Link>
       <PageTitle eyebrow="Catalogue" title="Catégories">
-        L&apos;ordre ci-dessous est celui de l&apos;accueil, du menu et de la
-        boutique.
+        L&apos;ordre ci-dessous est celui de l&apos;accueil, du menu et de la boutique.
       </PageTitle>
       <CategoryManager
         categories={cats.map((c) => ({

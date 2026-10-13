@@ -5,10 +5,7 @@ import { listCategories, publishedProducts } from "@/server/domain/catalog";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { db, indexable } = await siteContext();
   if (!indexable) return [];
-  const [products, categories] = await Promise.all([
-    publishedProducts(db),
-    listCategories(db),
-  ]);
+  const [products, categories] = await Promise.all([publishedProducts(db), listCategories(db)]);
   const pages = [
     "",
     "/boutique",
@@ -22,9 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
   return [
     ...pages.map((p) => ({ url: siteUrl(p) })),
-    ...categories
-      .filter((c) => c.product_count > 0)
-      .map((c) => ({ url: siteUrl(`/categories/${c.slug}`) })),
+    ...categories.filter((c) => c.product_count > 0).map((c) => ({ url: siteUrl(`/categories/${c.slug}`) })),
     ...products.map((p) => ({
       url: siteUrl(`/produits/${p.slug}`),
       lastModified: p.createdAt,

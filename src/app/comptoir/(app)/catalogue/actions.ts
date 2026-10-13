@@ -20,22 +20,14 @@ import {
 } from "@/server/domain/catalog";
 import { can } from "@/lib/permissions";
 
-const ids = z
-  .array(z.string().min(1))
-  .min(1, "Sélectionnez au moins un produit.")
-  .max(500);
+const ids = z.array(z.string().min(1)).min(1, "Sélectionnez au moins un produit.").max(500);
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const r = schema.safeParse(input);
   if (!r.success) {
     const fieldErrors: Record<string, string> = {};
-    for (const issue of r.error.issues)
-      fieldErrors[issue.path.join(".")] ??= issue.message;
-    throw new AppError(
-      "validation",
-      r.error.issues[0]?.message ?? "Données invalides.",
-      fieldErrors,
-    );
+    for (const issue of r.error.issues) fieldErrors[issue.path.join(".")] ??= issue.message;
+    throw new AppError("validation", r.error.issues[0]?.message ?? "Données invalides.", fieldErrors);
   }
   return r.data;
 }
@@ -47,9 +39,7 @@ const productSchema = z.object({
   brand: z.string().max(60),
   categoryId: z.string().nullable(),
   description: z.string().max(4000),
-  specs: z
-    .array(z.object({ label: z.string().max(60), value: z.string().max(200) }))
-    .max(30),
+  specs: z.array(z.object({ label: z.string().max(60), value: z.string().max(200) })).max(30),
   condition: z.string().max(80).nullable(),
   axes: z.array(z.string().min(1).max(30)).max(3),
   images: z
@@ -91,82 +81,44 @@ export async function saveProductAction(input: unknown) {
 }
 
 export async function duplicateProductAction(id: string) {
-  return guarded(
-    "catalog.edit",
-    ({ db, user }) => duplicateProduct(db, String(id), user.id),
-    { message: "Copie créée en brouillon." },
-  );
+  return guarded("catalog.edit", ({ db, user }) => duplicateProduct(db, String(id), user.id), {
+    message: "Copie créée en brouillon.",
+  });
 }
 
 export async function removeProductAction(id: string) {
-  return guarded("catalog.edit", ({ db }) =>
-    deleteOrArchiveProduct(db, String(id)),
-  );
+  return guarded("catalog.edit", ({ db }) => deleteOrArchiveProduct(db, String(id)));
 }
 
-export async function bulkStatusAction(
-  productIds: string[],
-  status: "draft" | "published" | "archived",
-) {
+export async function bulkStatusAction(productIds: string[], status: "draft" | "published" | "archived") {
   return guarded("catalog.bulk", ({ db }) =>
-    setProductsStatus(
-      db,
-      parse(ids, productIds),
-      parse(z.enum(["draft", "published", "archived"]), status),
-    ),
+    setProductsStatus(db, parse(ids, productIds), parse(z.enum(["draft", "published", "archived"]), status)),
   );
 }
 
-export async function bulkCategoryAction(
-  productIds: string[],
-  categoryId: string,
-) {
-  return guarded(
-    "catalog.bulk",
-    ({ db }) =>
-      setCategoryForProducts(db, parse(ids, productIds), String(categoryId)),
-    { message: "Catégorie mise à jour." },
-  );
+export async function bulkCategoryAction(productIds: string[], categoryId: string) {
+  return guarded("catalog.bulk", ({ db }) => setCategoryForProducts(db, parse(ids, productIds), String(categoryId)), {
+    message: "Catégorie mise à jour.",
+  });
 }
 
-export async function pricePreviewAction(
-  productIds: string[],
-  percent: number,
-) {
+export async function pricePreviewAction(productIds: string[], percent: number) {
   return guarded("catalog.bulk", ({ db }) =>
-    previewPriceChange(
-      db,
-      parse(ids, productIds),
-      parse(z.coerce.number().min(-90).max(200), percent),
-    ),
+    previewPriceChange(db, parse(ids, productIds), parse(z.coerce.number().min(-90).max(200), percent)),
   );
 }
 
 export async function priceApplyAction(productIds: string[], percent: number) {
   return guarded("catalog.bulk", ({ db }) =>
-    applyPriceChange(
-      db,
-      parse(ids, productIds),
-      parse(z.coerce.number(), percent),
-    ),
+    applyPriceChange(db, parse(ids, productIds), parse(z.coerce.number(), percent)),
   );
 }
 
 const MAX_BYTES = 3 * 1024 * 1024;
 function sniff(bytes: Uint8Array) {
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
-    return "image/jpeg";
-  if (
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47
-  )
-    return "image/png";
-  if (
-    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
-  )
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
+  if (String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP")
     return "image/webp";
   return null;
 }
@@ -175,23 +127,13 @@ function sniff(bytes: Uint8Array) {
 export async function uploadImageAction(formData: FormData) {
   return guarded("catalog.edit", async ({ db }) => {
     const file = formData.get("file");
-    if (!(file instanceof File) || file.size === 0)
-      throw new AppError("validation", "Aucun fichier reçu.");
-    if (file.size > MAX_BYTES)
-      throw new AppError("validation", "Photo trop lourde (3 Mo maximum).");
+    if (!(file instanceof File) || file.size === 0) throw new AppError("validation", "Aucun fichier reçu.");
+    if (file.size > MAX_BYTES) throw new AppError("validation", "Photo trop lourde (3 Mo maximum).");
     const bytes = new Uint8Array(await file.arrayBuffer());
     const mime = sniff(bytes);
-    if (!mime)
-      throw new AppError(
-        "validation",
-        "Format non pris en charge : utilisez JPEG, PNG ou WebP.",
-      );
+    if (!mime) throw new AppError("validation", "Format non pris en charge : utilisez JPEG, PNG ou WebP.");
     const id = newId();
-    await db.query("insert into media (id, mime, data) values ($1, $2, $3)", [
-      id,
-      mime,
-      bytes,
-    ]);
+    await db.query("insert into media (id, mime, data) values ($1, $2, $3)", [id, mime, bytes]);
     return { url: `/media/${id}` };
   });
 }
@@ -218,9 +160,7 @@ export async function saveCategoryAction(input: unknown) {
 }
 
 export async function moveCategoryAction(id: string, direction: -1 | 1) {
-  return guarded("catalog.edit", ({ db }) =>
-    moveCategory(db, String(id), direction === -1 ? -1 : 1),
-  );
+  return guarded("catalog.edit", ({ db }) => moveCategory(db, String(id), direction === -1 ? -1 : 1));
 }
 
 export async function deleteCategoryAction(id: string) {
