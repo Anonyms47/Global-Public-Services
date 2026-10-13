@@ -1,0 +1,43 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { requirePage } from "@/server/admin";
+import { stockList } from "@/server/domain/stock";
+import { getSettings } from "@/server/domain/settings";
+import { optionsLabel } from "@/lib/format";
+import { Forbidden, PageTitle } from "@/components/admin/ui";
+import { InventoryForm } from "@/components/admin/StockForms";
+import { IconArrowLeft } from "@/components/ui/icons";
+
+export const metadata: Metadata = { title: "Inventaire" };
+
+export default async function InventoryPage() {
+  const { db, allowed } = await requirePage("stock.inventory");
+  if (!allowed) return <Forbidden />;
+  const s = await getSettings(db);
+  const rows = await stockList(db, {
+    defaultThreshold: s.stock.defaultLowThreshold,
+  });
+  return (
+    <>
+      <Link
+        href="/comptoir/stock"
+        className="text-gps-blue mb-3 inline-flex min-h-11 items-center gap-1 font-bold hover:underline"
+      >
+        <IconArrowLeft size={18} /> Stock
+      </Link>
+      <PageTitle eyebrow="Stock" title="Inventaire">
+        Saisissez les quantités comptées (laissez vide ce qui n&apos;a pas été
+        compté). Les écarts sont présentés avant validation.
+      </PageTitle>
+      <InventoryForm
+        rows={rows.map((r) => ({
+          id: r.variant_id,
+          label: `${r.product_name}${optionsLabel(r.options) ? ` — ${optionsLabel(r.options)}` : ""}`,
+          sku: r.sku,
+          onHand: r.on_hand,
+          reserved: r.reserved,
+        }))}
+      />
+    </>
+  );
+}
