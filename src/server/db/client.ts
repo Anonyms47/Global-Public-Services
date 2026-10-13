@@ -1,4 +1,5 @@
 import { schemaSql } from "./schema";
+import { SUPABASE_ROOT_CA } from "./supabase-ca";
 
 /**
  * Accès base de données minimal, commun à PGlite (démonstration locale)
@@ -48,9 +49,24 @@ async function createPglite(dataDir?: string): Promise<Db> {
   return root;
 }
 
+/**
+ * Connexion chiffrée : pour Supabase, certificat vérifié avec l'autorité racine
+ * de Supabase. DATABASE_SSL=no-verify chiffre sans vérifier (dernier recours),
+ * DATABASE_SSL=off désactive le chiffrement (base locale). Un sslmode présent
+ * dans l'URL reste prioritaire.
+ */
+function sslOptions(url: string) {
+  const mode = process.env.DATABASE_SSL;
+  if (/[?&]sslmode=/.test(url) || mode === "off") return undefined;
+  if (mode === "no-verify") return { rejectUnauthorized: false };
+  const host = new URL(url).hostname;
+  if (/\.supabase\.(co|com)$/.test(host)) return { ca: SUPABASE_ROOT_CA, rejectUnauthorized: true };
+  return undefined;
+}
+
 async function createPostgres(url: string): Promise<Db> {
   const { Pool } = await import("pg");
-  const pool = new Pool({ connectionString: url, max: 5 });
+  const pool = new Pool({ connectionString: url, max: 5, ssl: sslOptions(url) });
   await pool.query(schemaSql);
   const raw: RawQuery = (sql, params) => pool.query(sql, params as unknown[]);
   return wrap(raw, async (fn) => {
