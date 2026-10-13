@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# base de démonstration locale
+/.data/
+/test-results/
+/playwright-report/

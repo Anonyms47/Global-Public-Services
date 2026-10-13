@@ -1,0 +1,111 @@
+import type { Db } from "../db/client";
+
+export interface DeliveryZone {
+  name: string;
+  /** null = frais à confirmer avec GPS */
+  fee: number | null;
+}
+
+export interface Settings {
+  company: {
+    name: string;
+    slogan: string;
+    /** Numéro WhatsApp au format international, chiffres uniquement (ex. 22500000000). Vide = mode démonstration. */
+    whatsapp: string;
+    phone: string;
+    email: string;
+    address: string;
+    city: string;
+    hours: string;
+    mapsUrl: string;
+    storePhotoUrl: string;
+    storeText: string;
+  };
+  reception: {
+    pickupEnabled: boolean;
+    pickupDetails: string;
+    deliveryEnabled: boolean;
+    deliveryDetails: string;
+    zones: DeliveryZone[];
+  };
+  policies: {
+    warranty: string;
+    returns: string;
+    payment: string;
+  };
+  stock: { defaultLowThreshold: number };
+  receipt: { header: string; footer: string };
+  storefront: {
+    heroProductId: string | null;
+    focusProductId: string | null;
+    focusText: string;
+  };
+}
+
+export const defaultSettings: Settings = {
+  company: {
+    name: "GPS — Global Public Services",
+    slogan: "Le service qui rassure",
+    whatsapp: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    hours: "",
+    mapsUrl: "",
+    storePhotoUrl: "",
+    storeText: "",
+  },
+  reception: {
+    pickupEnabled: true,
+    pickupDetails: "",
+    deliveryEnabled: true,
+    deliveryDetails: "",
+    zones: [],
+  },
+  policies: { warranty: "", returns: "", payment: "" },
+  stock: { defaultLowThreshold: 2 },
+  receipt: { header: "", footer: "Merci pour votre confiance." },
+  storefront: { heroProductId: null, focusProductId: null, focusText: "" },
+};
+
+export { TO_CONFIRM } from "@/lib/whatsapp";
+
+type Section = keyof Settings;
+
+export async function ensureBaseSettings(db: Db) {
+  for (const key of Object.keys(defaultSettings) as Section[]) {
+    await db.query(
+      "insert into settings (key, value) values ($1, $2) on conflict (key) do nothing",
+      [key, JSON.stringify(defaultSettings[key])],
+    );
+  }
+}
+
+export async function getSettings(db: Db): Promise<Settings> {
+  const rows = await db.query<{ key: Section; value: unknown }>(
+    "select key, value from settings",
+  );
+  const s = structuredClone(defaultSettings) as unknown as Record<
+    string,
+    unknown
+  >;
+  for (const row of rows) {
+    if (row.key in s) {
+      s[row.key] = { ...(s[row.key] as object), ...(row.value as object) };
+    }
+  }
+  return s as unknown as Settings;
+}
+
+export async function saveSettingsSection<K extends Section>(
+  db: Db,
+  key: K,
+  value: Settings[K],
+) {
+  await db.query(
+    `insert into settings (key, value, updated_at) values ($1, $2, now())
+     on conflict (key) do update set value = excluded.value, updated_at = now()`,
+    [key, JSON.stringify(value)],
+  );
+}
