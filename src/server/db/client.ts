@@ -55,12 +55,17 @@ async function createPostgres(url: string): Promise<Db> {
   const raw: RawQuery = (sql, params) => pool.query(sql, params as unknown[]);
   return wrap(raw, async (fn) => {
     const client = await pool.connect();
+    // Une connexion n'exécute qu'une requête à la fois : on sérialise celles
+    // lancées en parallèle (Promise.all) à l'intérieur d'une transaction.
+    let queue: Promise<unknown> = Promise.resolve();
+    const serial: RawQuery = (sql, params) => {
+      const run = queue.then(() => client.query(sql, params as unknown[]));
+      queue = run.catch(() => undefined);
+      return run;
+    };
     try {
       await client.query("begin");
-      const inner: Db = wrap(
-        (sql, params) => client.query(sql, params as unknown[]),
-        (f) => f(inner),
-      );
+      const inner: Db = wrap(serial, (f) => f(inner));
       const result = await fn(inner);
       await client.query("commit");
       return result;

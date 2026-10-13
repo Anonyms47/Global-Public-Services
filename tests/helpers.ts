@@ -2,8 +2,20 @@ import { openDb, type Db } from "@/server/db/client";
 import { ensureBaseSettings } from "@/server/domain/settings";
 import { seedDemo } from "@/server/demo/seed";
 
+/**
+ * Base de test : PGlite en mémoire par défaut, ou un vrai PostgreSQL si
+ * TEST_DATABASE_URL est défini (schéma public réinitialisé à chaque fois).
+ */
 export async function demoDb(now = new Date()) {
-  const db = await openDb({ memory: true });
+  const url = process.env.TEST_DATABASE_URL;
+  if (url) {
+    const { Client } = await import("pg");
+    const c = new Client({ connectionString: url });
+    await c.connect();
+    await c.query("drop schema public cascade; create schema public;");
+    await c.end();
+  }
+  const db = await openDb(url ? { url } : { memory: true });
   await ensureBaseSettings(db);
   await seedDemo(db, { now });
   return db;

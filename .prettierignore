@@ -6,3 +6,7 @@ node_modules
 package-lock.json
 next-env.d.ts
 AGENTS.md
+public/demo
+test-results
+playwright-report
+.data
