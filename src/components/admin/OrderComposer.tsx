@@ -166,7 +166,6 @@ function OrderComposer({
   const searchRef = useRef<HTMLInputElement>(null);
 
   const load = () => {
-    setCatalogError(null);
     sellableAction()
       .then((r) => (r.ok ? setCatalog(r.data) : setCatalogError(r.error)))
       .catch(() =>
