@@ -37,7 +37,7 @@ function frame(
   <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#31277F" stop-opacity="0"/><stop offset="1" stop-color="#31277F" stop-opacity="0.22"/></linearGradient>
 </defs>
 <rect width="${W}" height="${H}" fill="url(#bg)"/>
-${opts.ribbon === false ? "" : `<path d="M-40 ${H - 260} C 300 ${H - 120}, 760 ${H - 220}, ${W + 40} ${H - 620}" fill="none" stroke="url(#rib)" stroke-width="22" stroke-linecap="round"/>`}
+${opts.ribbon !== true ? "" : `<path d="M-40 ${H - 260} C 300 ${H - 120}, 760 ${H - 220}, ${W + 40} ${H - 620}" fill="none" stroke="url(#rib)" stroke-width="22" stroke-linecap="round"/>`}
 <ellipse cx="${W / 2}" cy="${floor}" rx="430" ry="46" fill="url(#floor)"/>
 ${body}
 </svg>`;

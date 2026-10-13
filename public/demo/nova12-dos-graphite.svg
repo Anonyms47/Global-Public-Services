@@ -5,7 +5,6 @@
 <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#31277F" stop-opacity="0"/><stop offset="1" stop-color="#31277F" stop-opacity="0.22"/></linearGradient>
 </defs>
 <rect width="1200" height="1500" fill="url(#bg)"/>
-<path d="M-40 1240 C 300 1380, 760 1280, 1240 880" fill="none" stroke="url(#rib)" stroke-width="22" stroke-linecap="round"/>
 <ellipse cx="600" cy="1240" rx="430" ry="46" fill="url(#floor)"/>
 <g transform="translate(330 170)">
 <defs><linearGradient id="bk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7f8185"/><stop offset="0.6" stop-color="#3A3D44"/><stop offset="1" stop-color="#26282c"/></linearGradient></defs>

@@ -1,0 +1,557 @@
+import Image from "next/image";
+import Link from "next/link";
+import { siteContext } from "@/server/context";
+import {
+  listCategories,
+  publishedProducts,
+  type PublicProduct,
+} from "@/server/domain/catalog";
+import { listServices } from "@/server/domain/services";
+import { Ribbon } from "@/components/brand/Ribbon";
+import { ProductCard } from "@/components/shop/ProductCard";
+import { ProductImage } from "@/components/shop/ProductImage";
+import { Price } from "@/components/shop/Price";
+import {
+  IconArrowRight,
+  IconClock,
+  IconPhone,
+  IconPin,
+  IconWhatsApp,
+  IconSwap,
+  IconStore,
+} from "@/components/ui/icons";
+import { whatsappLink } from "@/lib/whatsapp";
+
+function SectionHead({
+  index,
+  eyebrow,
+  title,
+  children,
+}: {
+  index: string;
+  eyebrow: string;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p className="eyebrow text-gps-red-ink flex items-center gap-3">
+          <span className="tabular text-ink">{index}</span>
+          <span className="bg-gps-red h-px w-8" aria-hidden="true" />
+          {eyebrow}
+        </p>
+        <h2 className="font-display mt-3 text-[44px] leading-[0.95] font-bold uppercase md:text-[64px]">
+          {title}
+        </h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function optionSummary(p: PublicProduct) {
+  return p.axes
+    .map((axis) => {
+      const values = [
+        ...new Set(p.variants.map((v) => v.options[axis]).filter(Boolean)),
+      ];
+      if (axis === "Pointure" && values.length > 2)
+        return `Pointures ${values[0]} à ${values[values.length - 1]}`;
+      return values.length > 1
+        ? `${values.length} ${axis.toLowerCase()}s`
+        : `${axis} : ${values[0]}`;
+    })
+    .join(" · ");
+}
+
+export default async function HomePage() {
+  const { db, settings } = await siteContext();
+  const [products, categories, services] = await Promise.all([
+    publishedProducts(db),
+    listCategories(db),
+    listServices(db, { publicOnly: true }),
+  ]);
+  const c = settings.company;
+
+  const hero =
+    products.find((p) => p.id === settings.storefront.heroProductId) ??
+    products.find((p) => p.featured) ??
+    products[0];
+  const selection = products
+    .filter((p) => p.featured && p.id !== hero?.id)
+    .sort((a, b) => a.featuredPosition - b.featuredPosition)
+    .slice(0, 5);
+  const focus =
+    products.find((p) => p.id === settings.storefront.focusProductId) ??
+    selection[selection.length - 1];
+  const univers = categories.filter((cat) => cat.product_count > 0);
+  const waGeneral = whatsappLink(c.whatsapp, "Bonjour GPS, j'ai une question.");
+  const heroImage = hero?.images[0];
+
+  return (
+    <>
+      {/* ——— Vitrine ——— */}
+      <section
+        aria-labelledby="titre-vitrine"
+        className="relative overflow-hidden"
+      >
+        <div className="container-site grid gap-6 pt-6 pb-12 md:pt-12 lg:grid-cols-12 lg:gap-10 lg:pb-20">
+          <div className="order-1 flex flex-col justify-center lg:col-span-5">
+            <p className="eyebrow text-gps-blue">
+              GPS — Global Public Services
+            </p>
+            <h1
+              id="titre-vitrine"
+              className="font-display mt-4 text-[56px] leading-[0.88] font-extrabold uppercase sm:text-[72px] xl:text-[96px]"
+            >
+              La bonne adresse.
+              <span className="text-gps-red block">Le bon produit.</span>
+            </h1>
+            <p className="text-ink-soft mt-6 max-w-[46ch] text-[17px] leading-relaxed">
+              Téléphones, écouteurs, casques, chargeurs, accessoires, lunettes,
+              chaussures et services de transfert d&apos;argent. Choisissez en
+              ligne, envoyez votre commande sur WhatsApp, GPS vous confirme.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/boutique" className="btn btn-primary">
+                Voir la boutique <IconArrowRight size={18} />
+              </Link>
+              <Link href="/services" className="btn btn-outline">
+                Transfert d&apos;argent
+              </Link>
+            </div>
+          </div>
+
+          {hero ? (
+            <div className="relative order-2 lg:col-span-7">
+              <Ribbon
+                className="pointer-events-none absolute bottom-16 -left-[12%] z-10 h-[40%] w-[124%] md:-bottom-6"
+                width={7}
+              />
+              <Link
+                href={`/produits/${hero.slug}`}
+                className="group bg-paper-deep relative block overflow-hidden rounded-[6px]"
+                aria-label={`${hero.name}, ${hero.brand} — voir l'article`}
+              >
+                {heroImage ? (
+                  <Image
+                    src={heroImage.url}
+                    alt={heroImage.alt}
+                    width={1200}
+                    height={1500}
+                    priority
+                    unoptimized={heroImage.url.endsWith(".svg")}
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    className="aspect-[4/3] w-full object-cover object-[50%_40%] sm:aspect-[16/11] lg:aspect-[4/4.2]"
+                  />
+                ) : null}
+                <div className="bg-card md:bg-paper/95 flex flex-wrap items-end justify-between gap-3 p-4 md:absolute md:bottom-6 md:left-6 md:max-w-sm md:rounded-[6px]">
+                  <div>
+                    <p className="eyebrow text-gps-red-ink">En vitrine</p>
+                    <p className="font-display mt-1 text-[28px] leading-none font-bold uppercase">
+                      {hero.name}
+                    </p>
+                    <Price
+                      price={hero.minPrice}
+                      basePrice={hero.promo ? hero.minBasePrice : undefined}
+                      from={new Set(hero.variants.map((v) => v.price)).size > 1}
+                      className="mt-2"
+                    />
+                  </div>
+                  <span className="btn btn-ink btn-sm">
+                    Voir <IconArrowRight size={16} />
+                  </span>
+                </div>
+                {hero.isDemo ? (
+                  <span className="bg-ink/70 absolute top-3 right-3 rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
+                    Illustration
+                  </span>
+                ) : null}
+              </Link>
+            </div>
+          ) : (
+            <div className="border-line order-2 flex aspect-[4/3] items-center justify-center rounded-[6px] border border-dashed lg:col-span-7">
+              <p className="text-ink-mute max-w-xs text-center">
+                La vedette apparaîtra ici dès qu&apos;un produit sera publié.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ——— 01 Univers ——— */}
+      {univers.length ? (
+        <section
+          aria-labelledby="titre-univers"
+          className="border-line border-t"
+        >
+          <div className="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
+            <div className="lg:col-span-4">
+              <SectionHead
+                index="01"
+                eyebrow="Univers"
+                title="Tout sous un même toit"
+              />
+              <p className="text-ink-soft mt-4 max-w-sm">
+                Du téléphone à la paire de baskets : choisissez un univers pour
+                voir les articles disponibles.
+              </p>
+            </div>
+            <ol className="lg:col-span-8" id="titre-univers-liste">
+              <span id="titre-univers" className="sr-only">
+                Univers produits
+              </span>
+              {univers.map((cat, i) => {
+                const sample = products.find(
+                  (p) => p.categorySlug === cat.slug,
+                );
+                return (
+                  <li
+                    key={cat.id}
+                    className="border-line border-b first:border-t"
+                  >
+                    <Link
+                      href={`/categories/${cat.slug}`}
+                      className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3 md:gap-8 md:py-4"
+                    >
+                      <span className="tabular text-ink-mute w-8 text-[13px] font-bold">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span>
+                        <span className="font-display group-hover:text-gps-blue block text-[30px] leading-none font-bold uppercase transition-colors md:text-[44px]">
+                          {cat.name}
+                        </span>
+                        <span className="text-ink-mute mt-1 block text-[13px]">
+                          {cat.product_count} article
+                          {cat.product_count > 1 ? "s" : ""}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-4">
+                        {sample?.images[0] ? (
+                          <Image
+                            src={sample.images[0].url}
+                            alt=""
+                            width={96}
+                            height={120}
+                            unoptimized={sample.images[0].url.endsWith(".svg")}
+                            className="h-[60px] w-12 rounded-[4px] object-cover md:h-[90px] md:w-[72px]"
+                          />
+                        ) : null}
+                        <IconArrowRight className="text-gps-red hidden transition-transform group-hover:translate-x-1 md:block" />
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ——— 02 Sélection GPS ——— */}
+      {selection.length ? (
+        <section aria-labelledby="titre-selection" className="bg-card">
+          <div className="container-site py-16 md:py-24">
+            <SectionHead
+              index="02"
+              eyebrow="Sélection GPS"
+              title="Choisis au comptoir"
+            >
+              <Link href="/boutique" className="btn btn-outline btn-sm">
+                Toute la boutique <IconArrowRight size={16} />
+              </Link>
+            </SectionHead>
+            <h2 id="titre-selection" className="sr-only">
+              Sélection GPS
+            </h2>
+            <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-12">
+              <div className="col-span-2 lg:col-span-6 lg:row-span-2">
+                <ProductCard
+                  product={selection[0]}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  imageClassName="aspect-[4/3] lg:aspect-[4/4.3]"
+                />
+              </div>
+              {selection.slice(1, 5).map((p) => (
+                <div key={p.id} className="lg:col-span-3">
+                  <ProductCard
+                    product={p}
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ——— 03 Focus ——— */}
+      {focus ? (
+        <section aria-labelledby="titre-focus" className="border-line border-t">
+          <div className="container-site grid gap-8 py-16 md:py-24 lg:grid-cols-12 lg:items-center lg:gap-16">
+            <div className="relative lg:order-2 lg:col-span-7">
+              <div className="grid grid-cols-5 gap-3">
+                <div className="col-span-3 overflow-hidden rounded-[6px]">
+                  <ProductImage
+                    src={focus.images[0]?.url}
+                    alt={focus.images[0]?.alt ?? focus.name}
+                    sizes="(max-width: 1024px) 60vw, 35vw"
+                  />
+                </div>
+                <div className="col-span-2 mt-16 overflow-hidden rounded-[6px]">
+                  <ProductImage
+                    src={(focus.images[1] ?? focus.images[0])?.url}
+                    alt={
+                      (focus.images[1] ?? focus.images[0])?.alt ?? focus.name
+                    }
+                    sizes="(max-width: 1024px) 40vw, 25vw"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="lg:order-1 lg:col-span-5">
+              <SectionHead index="03" eyebrow="Focus" title={focus.name} />
+              <h2 id="titre-focus" className="sr-only">
+                Focus sur {focus.name}
+              </h2>
+              <p className="text-ink-soft mt-5 text-[17px] leading-relaxed">
+                {settings.storefront.focusText || focus.description}
+              </p>
+              <dl className="divide-line border-line mt-6 divide-y border-y">
+                {focus.specs.slice(0, 3).map((s) => (
+                  <div
+                    key={s.label}
+                    className="flex justify-between gap-4 py-3 text-[15px]"
+                  >
+                    <dt className="text-ink-mute">{s.label}</dt>
+                    <dd className="text-right font-semibold">{s.value}</dd>
+                  </div>
+                ))}
+                {optionSummary(focus) ? (
+                  <div className="flex justify-between gap-4 py-3 text-[15px]">
+                    <dt className="text-ink-mute">Choix</dt>
+                    <dd className="text-right font-semibold">
+                      {optionSummary(focus)}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <Price
+                  price={focus.minPrice}
+                  basePrice={focus.promo ? focus.minBasePrice : undefined}
+                  from={new Set(focus.variants.map((v) => v.price)).size > 1}
+                  size="lg"
+                />
+                <Link
+                  href={`/produits/${focus.slug}`}
+                  className="btn btn-primary"
+                >
+                  Choisir{" "}
+                  {focus.axes.includes("Pointure")
+                    ? "ma pointure"
+                    : "mon modèle"}{" "}
+                  <IconArrowRight size={18} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ——— 04 Comptoir services ——— */}
+      <section
+        aria-labelledby="titre-services"
+        className="bg-gps-blue relative overflow-hidden text-white"
+      >
+        <Ribbon
+          tone="white"
+          className="pointer-events-none absolute -right-10 bottom-0 h-[70%] w-[80%] opacity-30"
+          width={5}
+        />
+        <div className="container-site relative grid gap-10 py-16 md:py-24 lg:grid-cols-12">
+          <div className="lg:col-span-6">
+            <p className="eyebrow flex items-center gap-3 text-white/80">
+              <span className="tabular text-white">04</span>
+              <span className="bg-gps-red h-px w-8" aria-hidden="true" />
+              Comptoir services
+            </p>
+            <h2
+              id="titre-services"
+              className="font-display mt-3 text-[44px] leading-[0.95] font-bold uppercase md:text-[64px]"
+            >
+              Transfert d&apos;argent,
+              <br />
+              au comptoir GPS.
+            </h2>
+            <p className="mt-5 max-w-[48ch] text-[17px] leading-relaxed text-white/85">
+              Envoyer ou recevoir de l&apos;argent se fait en personne, au
+              comptoir. Le site présente le service ; aucune opération
+              n&apos;est réalisée en ligne.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/services" className="btn btn-light">
+                Voir le service <IconArrowRight size={18} />
+              </Link>
+              {waGeneral ? (
+                <a
+                  href={waGeneral}
+                  className="btn btn-wa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <IconWhatsApp /> Poser une question
+                </a>
+              ) : null}
+            </div>
+          </div>
+          <ul className="grid gap-3 self-end lg:col-span-5 lg:col-start-8">
+            {(services.length ? services : [null]).map((s, i) => (
+              <li
+                key={s?.id ?? i}
+                className="rounded-[6px] border border-white/20 bg-white/5 p-5"
+              >
+                <p className="font-display flex items-center gap-3 text-2xl font-bold uppercase">
+                  <IconSwap /> {s?.title ?? "Transfert d'argent"}
+                </p>
+                <dl className="mt-3 grid gap-2 text-[15px]">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-white/70">Opérateurs</dt>
+                    <dd className="text-right font-semibold">
+                      {s?.operators || "À confirmer avec GPS"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-white/70">Horaires</dt>
+                    <dd className="text-right font-semibold">
+                      {s?.hours || c.hours || "À confirmer avec GPS"}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ——— 05 Boutique physique ——— */}
+      <section aria-labelledby="titre-boutique">
+        <div className="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            {c.storePhotoUrl ? (
+              <Image
+                src={c.storePhotoUrl}
+                alt="La boutique GPS"
+                width={1400}
+                height={1000}
+                sizes="(max-width: 1024px) 100vw, 58vw"
+                className="aspect-[7/5] w-full rounded-[6px] object-cover"
+              />
+            ) : (
+              <div className="border-line bg-paper-deep relative flex aspect-[16/7] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[6px] border-2 border-dashed text-center">
+                <IconStore size={40} className="text-ink-mute" />
+                <p className="text-ink-mute max-w-xs px-4">
+                  Photo de la boutique GPS à fournir
+                </p>
+                <Ribbon className="absolute bottom-6 left-0 h-24 w-full opacity-40" />
+              </div>
+            )}
+          </div>
+          <div className="lg:col-span-5">
+            <SectionHead
+              index="05"
+              eyebrow="La boutique"
+              title="Passez au comptoir"
+            />
+            <h2 id="titre-boutique" className="sr-only">
+              La boutique physique
+            </h2>
+            <p className="text-ink-soft mt-5 text-[17px] leading-relaxed">
+              {c.storeText ||
+                "Un lieu pour voir les produits, poser vos questions, retirer une commande confirmée et utiliser les services de transfert d'argent."}
+            </p>
+            <Link href="/a-propos" className="btn btn-outline mt-6">
+              Découvrir GPS
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ——— 06 Infos pratiques ——— */}
+      <section
+        aria-labelledby="titre-infos"
+        className="border-line bg-card border-t"
+      >
+        <div className="container-site py-16 md:py-20">
+          <SectionHead
+            index="06"
+            eyebrow="Pratique"
+            title="Commander chez GPS"
+          />
+          <h2 id="titre-infos" className="sr-only">
+            Informations pratiques
+          </h2>
+          <div className="mt-10 grid gap-10 lg:grid-cols-12">
+            <ol className="grid gap-6 sm:grid-cols-3 lg:col-span-7">
+              {[
+                [
+                  "Choisissez",
+                  "Variante, quantité : constituez votre panier sur le site. Rien n'est réservé à ce stade.",
+                ],
+                [
+                  "Envoyez",
+                  "Le site prépare un récapitulatif. Vous l'envoyez vous-même sur WhatsApp.",
+                ],
+                [
+                  "GPS confirme",
+                  "GPS vérifie la disponibilité, confirme le total et les modalités de réception.",
+                ],
+              ].map(([t, d], i) => (
+                <li key={t} className="border-gps-red border-t-[3px] pt-4">
+                  <p className="tabular font-display text-gps-blue text-[40px] leading-none font-bold">
+                    {i + 1}
+                  </p>
+                  <p className="mt-2 text-lg font-extrabold">{t}</p>
+                  <p className="text-ink-soft mt-1 text-[15px] leading-relaxed">
+                    {d}
+                  </p>
+                </li>
+              ))}
+            </ol>
+            <dl className="grid gap-5 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
+              {[
+                [
+                  IconPin,
+                  "Adresse",
+                  [c.address, c.city].filter(Boolean).join(", "),
+                ],
+                [IconClock, "Horaires", c.hours],
+                [IconPhone, "Téléphone", c.phone],
+              ].map(([Icon, label, value]) => {
+                const I = Icon as typeof IconPin;
+                return (
+                  <div key={label as string} className="flex gap-3">
+                    <I className="text-gps-blue mt-0.5 shrink-0" />
+                    <div>
+                      <dt className="text-ink-mute text-[13px] font-bold tracking-wide uppercase">
+                        {label as string}
+                      </dt>
+                      <dd className="mt-0.5 font-semibold">
+                        {(value as string) || (
+                          <span className="text-ink-mute font-normal italic">
+                            À confirmer avec GPS
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  </div>
+                );
+              })}
+            </dl>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
