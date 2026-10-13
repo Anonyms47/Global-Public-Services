@@ -218,6 +218,14 @@ export async function publishedProducts(db: Db, now = new Date()) {
   return hydrate(db, rows, now);
 }
 
+/** Articles vendables au comptoir : publiés ou en brouillon (hors archives). */
+export async function sellableProducts(db: Db, now = new Date()) {
+  const rows = await db.query<ProductRow>(
+    `${productSelect} where p.status <> 'archived' order by p.name`,
+  );
+  return hydrate(db, rows, now);
+}
+
 export async function publishedProductBySlug(
   db: Db,
   slug: string,

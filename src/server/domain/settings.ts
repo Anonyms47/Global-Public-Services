@@ -64,7 +64,7 @@ export const defaultSettings: Settings = {
     zones: [],
   },
   policies: { warranty: "", returns: "", payment: "" },
-  stock: { defaultLowThreshold: 2 },
+  stock: { defaultLowThreshold: 1 },
   receipt: { header: "", footer: "Merci pour votre confiance." },
   storefront: { heroProductId: null, focusProductId: null, focusText: "" },
 };
