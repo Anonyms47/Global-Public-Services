@@ -26,6 +26,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
     "Le service qui rassure",
     [c.address, c.city].filter(Boolean).join(", "),
     c.phone && `Tél. ${c.phone}`,
+    [c.legalName, c.legalId].filter(Boolean).join(" · "),
     s.receipt.header,
     "",
     `Reçu ${o.reference} — ${formatDateTime(o.created_at)}`,
@@ -78,6 +79,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
           <div className="text-right text-[13px] text-ink-soft">
             {[c.address, c.city].filter(Boolean).join(", ") || "Adresse à confirmer"}
             {c.phone ? <div>Tél. {c.phone}</div> : null}
+            {c.legalName || c.legalId ? <div>{[c.legalName, c.legalId].filter(Boolean).join(" · ")}</div> : null}
             {s.receipt.header ? <div className="mt-1">{s.receipt.header}</div> : null}
           </div>
         </header>

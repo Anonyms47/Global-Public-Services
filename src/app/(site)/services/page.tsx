@@ -3,8 +3,9 @@ import Image from "next/image";
 import { siteContext } from "@/server/context";
 import { listServices } from "@/server/domain/services";
 import { PageHeader, ToConfirm } from "@/components/site/PageHeader";
+import { BrandPanel } from "@/components/brand/BrandPanel";
 import { ContactActions } from "@/components/site/ContactActions";
-import { IconInfo, IconStore, IconSwap } from "@/components/ui/icons";
+import { IconInfo, IconSwap } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
   title: "Transfert d'argent",
@@ -81,9 +82,7 @@ export default async function ServicesPage() {
                 className="aspect-[3/2] w-full object-cover"
               />
             ) : (
-              <div className="flex aspect-[3/1] items-center justify-center gap-2 bg-paper-deep text-ink-mute">
-                <IconStore /> Photo du point de service à fournir
-              </div>
+              <BrandPanel caption="Photo du point de service à venir" className="aspect-[3/2] rounded-none" />
             )}
             <dl className="grid gap-3 p-5 text-[15px]">
               <div>

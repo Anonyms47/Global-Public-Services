@@ -10,6 +10,7 @@ import {
 import type { Settings } from "@/server/domain/settings";
 import { roleLabels, type Role } from "@/lib/permissions";
 import { ActionFeedback, useAction } from "./useAction";
+import { proposals } from "@/lib/content-proposals";
 import { Badge, Panel } from "./ui";
 import { IconPlus, IconTrash } from "../ui/icons";
 
@@ -24,6 +25,8 @@ function Field({
   error,
   textarea,
   type = "text",
+  proposal,
+  rows = 3,
 }: {
   id: string;
   label: string;
@@ -33,6 +36,9 @@ function Field({
   error?: string;
   textarea?: boolean;
   type?: string;
+  /** Texte proposé, appliqué au champ sur demande (à relire avant d'enregistrer). */
+  proposal?: string;
+  rows?: number;
 }) {
   return (
     <div>
@@ -42,7 +48,7 @@ function Field({
       {textarea ? (
         <textarea
           id={id}
-          rows={3}
+          rows={rows}
           className="field"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -58,6 +64,17 @@ function Field({
           aria-invalid={!!error}
         />
       )}
+      {proposal && value.trim() !== proposal ? (
+        <button
+          type="button"
+          className="mt-1 text-[13px] font-bold text-gps-blue underline underline-offset-2"
+          onClick={() => {
+            if (!value.trim() || confirm("Remplacer le texte actuel par la proposition GPS ?")) onChange(proposal);
+          }}
+        >
+          Utiliser la proposition GPS
+        </button>
+      ) : null}
       {hint ? <p className="hint">{hint}</p> : null}
       {error ? <p className="error-text">{error}</p> : null}
     </div>
@@ -121,6 +138,33 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             error={fieldErrors["company.mapsUrl"]}
           />
         </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Field
+            id="s-legal"
+            label="Raison sociale"
+            value={c.legalName}
+            onChange={(v) => setC({ legalName: v })}
+            hint="Affichée sur les reçus et les conditions de vente."
+          />
+          <Field
+            id="s-legal-id"
+            label="Immatriculation (RCCM, NINEA, IFU…)"
+            value={c.legalId}
+            onChange={(v) => setC({ legalId: v })}
+          />
+        </div>
+        <div className="mt-4">
+          <Field
+            id="s-about"
+            label="Notre histoire (page À propos)"
+            textarea
+            rows={7}
+            value={c.aboutText}
+            onChange={(v) => setC({ aboutText: v })}
+            proposal={proposals.aboutText}
+            hint="Relisez et personnalisez la proposition : année de création, quartier, équipe…"
+          />
+        </div>
         <p className="hint mt-3">Slogan officiel : « {c.slogan} » (non modifiable ici).</p>
       </Panel>
 
@@ -141,6 +185,8 @@ export function SettingsForm({ initial }: { initial: Initial }) {
               label="Précisions sur le retrait"
               value={r.pickupDetails}
               onChange={(v) => setR({ pickupDetails: v })}
+              proposal={proposals.pickupDetails}
+              textarea
               hint="Affiché au client. Vide = « à confirmer avec GPS »."
             />
           </div>
@@ -159,6 +205,8 @@ export function SettingsForm({ initial }: { initial: Initial }) {
               label="Précisions sur la livraison"
               value={r.deliveryDetails}
               onChange={(v) => setR({ deliveryDetails: v })}
+              proposal={proposals.deliveryDetails}
+              textarea
             />
           </div>
         </div>
@@ -235,6 +283,8 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             textarea
             value={s.policies.warranty}
             onChange={(v) => setS({ ...s, policies: { ...s.policies, warranty: v } })}
+            proposal={proposals.warranty}
+            rows={6}
             hint="Texte validé par GPS. Vide = « à confirmer »."
           />
           <Field
@@ -243,6 +293,8 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             textarea
             value={s.policies.returns}
             onChange={(v) => setS({ ...s, policies: { ...s.policies, returns: v } })}
+            proposal={proposals.returns}
+            rows={6}
           />
           <Field
             id="s-payment"
@@ -250,6 +302,8 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             textarea
             value={s.policies.payment}
             onChange={(v) => setS({ ...s, policies: { ...s.policies, payment: v } })}
+            proposal={proposals.payment}
+            rows={6}
           />
         </div>
       </Panel>
@@ -276,13 +330,14 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             label="En-tête des reçus"
             value={s.receipt.header}
             onChange={(v) => setS({ ...s, receipt: { ...s.receipt, header: v } })}
-            hint="Ex. mentions légales, numéro d'immatriculation."
+            hint="Ligne libre en tête de reçu (la raison sociale et l'immatriculation sont ajoutées automatiquement)."
           />
           <Field
             id="s-rf"
             label="Pied des reçus"
             value={s.receipt.footer}
             onChange={(v) => setS({ ...s, receipt: { ...s.receipt, footer: v } })}
+            proposal={proposals.receiptFooter}
           />
         </div>
       </Panel>

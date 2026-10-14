@@ -20,6 +20,11 @@ export interface Settings {
     mapsUrl: string;
     storePhotoUrl: string;
     storeText: string;
+    /** Texte « Notre histoire » de la page À propos. */
+    aboutText: string;
+    /** Raison sociale et immatriculation (reçus, conditions de vente). */
+    legalName: string;
+    legalId: string;
   };
   reception: {
     pickupEnabled: boolean;
@@ -55,6 +60,9 @@ export const defaultSettings: Settings = {
     mapsUrl: "",
     storePhotoUrl: "",
     storeText: "",
+    aboutText: "",
+    legalName: "",
+    legalId: "",
   },
   reception: {
     pickupEnabled: true,

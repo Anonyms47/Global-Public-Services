@@ -67,6 +67,8 @@ Chaque mouvement passe par une mise à jour conditionnelle unique, et la base re
 
 ## Mise en production
 
+La base Supabase et le projet Vercel sont déjà créés : voir [`docs/mise-en-ligne.md`](docs/mise-en-ligne.md) pour les deux étapes restantes.
+
 1. Créer une base PostgreSQL gérée (Supabase, Neon…) et renseigner `DATABASE_URL`. Le schéma est créé au démarrage.
 2. Mettre `DEMO_MODE=false` : aucune donnée d'exemple n'est chargée et les comptes de démonstration ne peuvent pas se connecter.
 3. Créer le premier propriétaire : `DATABASE_URL=… npm run admin:create -- "Nom" email@domaine`.
@@ -97,11 +99,16 @@ Si une base de démonstration a servi de base réelle : **Paramètres → Donné
 ## Limites connues
 
 - **Photos** : les photos téléversées sont stockées dans la base (simple et sauvegardé avec elle). Pour un gros catalogue, prévoir un stockage objet (Supabase Storage, S3…).
+- **Connexion Supabase** : certificat vérifié avec l'autorité racine de Supabase ; `DATABASE_SSL=no-verify` en dernier recours.
 - **Démonstration sur Vercel** : sans `DATABASE_URL`, chaque instance aurait sa propre base PGlite éphémère. Pour une démonstration en ligne, utiliser une base PostgreSQL.
 - **Visuels** : les illustrations SVG ne remplacent pas des photos ; le rendu final dépendra des photos fournies.
 - **Accessibilité** : navigation clavier, focus visible, Échap, libellés et zones tactiles traités et testés en partie ; un audit complet avec lecteur d'écran reste à faire.
 - **Notifications** : aucun envoi automatique (WhatsApp, SMS, e-mail) ; les messages sont préparés pour être envoyés par GPS.
 - **Paiement en ligne** : volontairement absent de cette version.
+
+## Contenus proposés
+
+Tous les textes du site ont une proposition rédigée (présentation, histoire, retrait, livraison, garantie, retours, paiement, reçus, transfert d'argent) : bouton **« Utiliser la proposition GPS »** dans Paramètres et Vitrine & services. Le fichier [`docs/kit-contenu-gps.md`](docs/kit-contenu-gps.md) les regroupe, avec les textes WhatsApp Business (profil, accueil, absence, réponses rapides), Google Business, réseaux sociaux, un modèle de fiche produit et un guide photo. Aucun fait n'y est inventé : les éléments à compléter sont entre crochets.
 
 ## Informations GPS à fournir ou valider
 

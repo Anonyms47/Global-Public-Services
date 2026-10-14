@@ -1,4 +1,5 @@
 import { schemaSql } from "./schema";
+import { SUPABASE_ROOT_CA } from "./supabase-ca";
 
 /**
  * Accès base de données minimal, commun à PGlite (démonstration locale)
@@ -48,10 +49,37 @@ async function createPglite(dataDir?: string): Promise<Db> {
   return root;
 }
 
+/**
+ * Connexion chiffrée : pour Supabase, certificat vérifié avec l'autorité racine
+ * de Supabase. DATABASE_SSL=no-verify chiffre sans vérifier (dernier recours),
+ * DATABASE_SSL=off désactive le chiffrement (base locale). Un sslmode présent
+ * dans l'URL reste prioritaire.
+ */
+function sslOptions(url: string) {
+  const mode = process.env.DATABASE_SSL;
+  if (/[?&]sslmode=/.test(url) || mode === "off") return undefined;
+  if (mode === "no-verify") return { rejectUnauthorized: false };
+  const host = new URL(url).hostname;
+  if (/\.supabase\.(co|com)$/.test(host)) return { ca: SUPABASE_ROOT_CA, rejectUnauthorized: true };
+  return undefined;
+}
+
 async function createPostgres(url: string): Promise<Db> {
   const { Pool } = await import("pg");
-  const pool = new Pool({ connectionString: url, max: 5 });
-  await pool.query(schemaSql);
+  const pool = new Pool({ connectionString: url, max: 5, ssl: sslOptions(url) });
+  // Schéma appliqué sous verrou : plusieurs instances peuvent démarrer en même temps.
+  const init = await pool.connect();
+  try {
+    await init.query("begin");
+    await init.query("select pg_advisory_xact_lock(4747000)");
+    await init.query(schemaSql);
+    await init.query("commit");
+  } catch (error) {
+    await init.query("rollback");
+    throw error;
+  } finally {
+    init.release();
+  }
   const raw: RawQuery = (sql, params) => pool.query(sql, params as unknown[]);
   return wrap(raw, async (fn) => {
     const client = await pool.connect();

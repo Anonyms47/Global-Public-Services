@@ -16,7 +16,15 @@ export default async function CgvPage() {
         <Prose>
           <h2>1. Vendeur</h2>
           <p>
-            GPS — Global Public Services. Raison sociale, immatriculation et adresse : <ToConfirm />
+            GPS — Global Public Services. {settings.company.legalName ? `${settings.company.legalName}. ` : null}
+            {settings.company.legalId ? `Immatriculation : ${settings.company.legalId}. ` : null}
+            {[settings.company.address, settings.company.city].filter(Boolean).join(", ") || null}
+            {!settings.company.legalName || !settings.company.legalId || !settings.company.address ? (
+              <>
+                {" "}
+                Informations manquantes : <ToConfirm />
+              </>
+            ) : null}
           </p>
           <h2>2. Commande</h2>
           <p>
