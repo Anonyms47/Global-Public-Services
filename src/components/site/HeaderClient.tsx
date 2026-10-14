@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { cartCount, useCart } from "../cart/cart-store";
-import { IconBag, IconMenu, IconSearch, IconClose, IconArrowRight } from "../ui/icons";
+import { IconBag, IconSearch } from "../ui/icons";
 import { Sheet } from "../ui/Sheet";
 
 export function NavLink({ href, children }: { href: string; children: ReactNode }) {
@@ -118,62 +118,5 @@ export function HeaderActions() {
         <p className="hint">Exemples : téléphone, écouteurs, une marque ou une référence.</p>
       </Sheet>
     </div>
-  );
-}
-
-export function MobileMenu({
-  nav,
-  categories,
-}: {
-  nav: { href: string; label: string }[];
-  categories: { slug: string; name: string }[];
-}) {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const [seenPath, setSeenPath] = useState(pathname);
-  if (seenPath !== pathname) {
-    setSeenPath(pathname);
-    setOpen(false);
-  }
-  return (
-    <>
-      <button
-        type="button"
-        className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-[6px] hover:bg-ink/5 lg:hidden"
-        aria-label="Ouvrir le menu"
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
-      >
-        {open ? <IconClose size={24} /> : <IconMenu size={24} />}
-      </button>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Menu" side="left">
-        <nav aria-label="Menu mobile">
-          <ul className="divide-y divide-line-soft">
-            {nav.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="flex min-h-14 items-center justify-between font-display text-[26px] font-bold uppercase"
-                  aria-current={pathname === item.href ? "page" : undefined}
-                >
-                  {item.label}
-                  <IconArrowRight className="text-gps-red" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <p className="eyebrow mt-8 mb-2 text-ink-mute">Univers</p>
-          <ul className="flex flex-wrap gap-2">
-            {categories.map((c) => (
-              <li key={c.slug}>
-                <Link href={`/categories/${c.slug}`} className="chip">
-                  {c.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </Sheet>
-    </>
   );
 }

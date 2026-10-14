@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Header } from "@/components/site/Header";
 import { Ribbon } from "@/components/brand/Ribbon";
+import { defaultSettings } from "@/server/domain/settings";
 
 export const metadata = { title: "Page introuvable", robots: { index: false } };
 
 export default function NotFound() {
   return (
     <>
-      <Header categories={[]} />
+      <Header categories={[]} company={defaultSettings.company} />
       <main id="contenu" className="relative overflow-hidden">
         <Ribbon className="pointer-events-none absolute bottom-0 left-0 h-64 w-full opacity-60" width={6} />
         <div className="relative container-site py-20 md:py-32">

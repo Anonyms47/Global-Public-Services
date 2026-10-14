@@ -280,3 +280,198 @@
     background: #fff;
   }
 }
+
+/* ——— Menu mobile plein écran ——— */
+.burger-lines {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 16px;
+}
+.burger-lines span {
+  position: absolute;
+  left: 0;
+  height: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+  transition:
+    width 220ms var(--ease-out-gps),
+    background-color 220ms var(--ease-out-gps);
+}
+.burger-lines span:nth-child(1) {
+  top: 0;
+  width: 22px;
+}
+.burger-lines span:nth-child(2) {
+  top: 7px;
+  width: 15px;
+  background: var(--color-gps-red);
+}
+.burger-lines span:nth-child(3) {
+  top: 14px;
+  width: 22px;
+}
+.burger:hover .burger-lines span:nth-child(2) {
+  width: 22px;
+}
+.burger:hover .burger-lines span:nth-child(1),
+.burger:hover .burger-lines span:nth-child(3) {
+  width: 15px;
+}
+
+.menu-epic {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: #fff;
+  background:
+    radial-gradient(120% 60% at 100% 0%, rgb(227 7 19 / 0.22), transparent 60%),
+    radial-gradient(90% 50% at 0% 100%, rgb(49 39 127 / 0.9), transparent 70%), var(--color-gps-blue-night);
+}
+.menu-epic[open] {
+  animation: menu-reveal 520ms var(--ease-out-gps) both;
+}
+.menu-epic::backdrop {
+  background: var(--color-gps-blue-night);
+}
+@keyframes menu-reveal {
+  from {
+    clip-path: circle(0% at 28px 32px);
+  }
+  to {
+    clip-path: circle(150% at 28px 32px);
+  }
+}
+
+.menu-in {
+  animation: menu-in 520ms var(--ease-out-gps) both;
+  animation-delay: calc(140ms + var(--i, 0) * 60ms);
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.menu-ribbon path {
+  fill: none;
+  stroke: var(--color-gps-red);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.35;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ribbon-draw 1400ms 200ms var(--ease-out-gps) forwards;
+}
+@keyframes ribbon-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.menu-label {
+  background: linear-gradient(currentColor, currentColor) left bottom / 0% 3px no-repeat;
+  transition: background-size 320ms var(--ease-out-gps);
+  width: fit-content;
+}
+.menu-link:hover .menu-label,
+.menu-link:focus-visible .menu-label {
+  background-size: 100% 3px;
+}
+.menu-link[aria-current="page"] .menu-label {
+  color: #fff;
+  background-image: linear-gradient(var(--color-gps-red), var(--color-gps-red));
+  background-size: 100% 4px;
+}
+.menu-link:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.menu-close {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  transition:
+    transform 320ms var(--ease-out-gps),
+    border-color 200ms;
+}
+.menu-close:hover {
+  transform: rotate(90deg);
+  border-color: #fff;
+}
+.menu-close span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: #fff;
+  animation: close-in 420ms 120ms var(--ease-out-gps) both;
+}
+.menu-close span:first-child {
+  --r: 45deg;
+}
+.menu-close span:last-child {
+  --r: -45deg;
+}
+.menu-close span {
+  transform: translate(-50%, -50%) rotate(var(--r));
+}
+@keyframes close-in {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) scaleX(0.4);
+  }
+}
+
+.menu-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  font-weight: 800;
+  transition:
+    background-color 160ms,
+    border-color 160ms;
+}
+.menu-action:hover {
+  background: rgb(255 255 255 / 0.1);
+  border-color: #fff;
+}
+.menu-action-wa {
+  background: var(--color-wa);
+  border-color: var(--color-wa);
+}
+.menu-action-wa:hover {
+  background: var(--color-wa-ink);
+  border-color: var(--color-wa-ink);
+}
+.menu-badge {
+  display: inline-flex;
+  min-width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-gps-red);
+  padding: 0 6px;
+  font-size: 12px;
+}

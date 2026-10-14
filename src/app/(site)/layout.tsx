@@ -16,7 +16,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       {demo ? <DemoBanner /> : null}
-      <Header categories={categories} />
+      <Header categories={categories} company={settings.company} />
       <main id="contenu">{children}</main>
       <Footer settings={settings} categories={categories} />
     </>

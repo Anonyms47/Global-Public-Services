@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { Logo } from "../brand/Logo";
-import { HeaderActions, MobileMenu, NavLink } from "./HeaderClient";
+import type { Settings } from "@/server/domain/settings";
+import { HeaderActions, NavLink } from "./HeaderClient";
+import { MobileMenu } from "./MobileMenu";
 
 export const mainNav = [
-  { href: "/boutique", label: "Boutique" },
-  { href: "/categories", label: "Univers" },
-  { href: "/services", label: "Transfert d'argent" },
-  { href: "/a-propos", label: "La boutique" },
-  { href: "/contact", label: "Contact" },
+  { href: "/boutique", label: "Boutique", hint: "Tous les articles, prix en FCFA" },
+  { href: "/categories", label: "Univers", hint: "Téléphones, audio, accessoires, mode" },
+  { href: "/services", label: "Transfert d'argent", hint: "Envoyer et recevoir au comptoir" },
+  { href: "/a-propos", label: "La boutique", hint: "Qui nous sommes, où nous trouver" },
+  { href: "/contact", label: "Contact", hint: "WhatsApp, appel, itinéraire" },
 ];
 
-export function Header({ categories }: { categories: { slug: string; name: string }[] }) {
+export function Header({
+  categories,
+  company,
+}: {
+  categories: { slug: string; name: string; product_count: number }[];
+  company: Settings["company"];
+}) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/85">
       <a
@@ -20,7 +28,7 @@ export function Header({ categories }: { categories: { slug: string; name: strin
         Aller au contenu
       </a>
       <div className="container-site flex h-16 items-center gap-3 md:h-[84px] md:gap-6">
-        <MobileMenu nav={mainNav} categories={categories} />
+        <MobileMenu nav={mainNav} categories={categories} company={company} />
         <Link href="/" className="shrink-0" aria-label="GPS — accueil">
           <Logo variant="mark" className="h-8 w-auto md:hidden" priority />
           <Logo variant="full" className="hidden h-[60px] w-auto md:block" priority />
