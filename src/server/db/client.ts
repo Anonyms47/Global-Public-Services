@@ -67,7 +67,19 @@ function sslOptions(url: string) {
 async function createPostgres(url: string): Promise<Db> {
   const { Pool } = await import("pg");
   const pool = new Pool({ connectionString: url, max: 5, ssl: sslOptions(url) });
-  await pool.query(schemaSql);
+  // Schéma appliqué sous verrou : plusieurs instances peuvent démarrer en même temps.
+  const init = await pool.connect();
+  try {
+    await init.query("begin");
+    await init.query("select pg_advisory_xact_lock(4747000)");
+    await init.query(schemaSql);
+    await init.query("commit");
+  } catch (error) {
+    await init.query("rollback");
+    throw error;
+  } finally {
+    init.release();
+  }
   const raw: RawQuery = (sql, params) => pool.query(sql, params as unknown[]);
   return wrap(raw, async (fn) => {
     const client = await pool.connect();
