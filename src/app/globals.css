@@ -329,54 +329,50 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   color: #fff;
-  background:
-    radial-gradient(120% 60% at 100% 0%, rgb(227 7 19 / 0.22), transparent 60%),
-    radial-gradient(90% 50% at 0% 100%, rgb(49 39 127 / 0.9), transparent 70%), var(--color-gps-blue-night);
+  background: radial-gradient(120% 60% at 100% 0%, rgb(227 7 19 / 0.18), transparent 60%), var(--color-gps-blue-night);
+  will-change: clip-path;
 }
 .menu-epic[open] {
-  animation: menu-reveal 520ms var(--ease-out-gps) both;
+  animation: menu-show 480ms var(--ease-out-gps) both;
+}
+.menu-epic[data-closing] {
+  animation: menu-hide 260ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 .menu-epic::backdrop {
-  background: var(--color-gps-blue-night);
+  background: transparent;
 }
-@keyframes menu-reveal {
+@keyframes menu-show {
   from {
-    clip-path: circle(0% at 28px 32px);
+    clip-path: circle(22px at 34px 32px);
   }
   to {
-    clip-path: circle(150% at 28px 32px);
+    clip-path: circle(150% at 34px 32px);
+  }
+}
+@keyframes menu-hide {
+  from {
+    clip-path: circle(150% at 34px 32px);
+  }
+  to {
+    clip-path: circle(22px at 34px 32px);
   }
 }
 
 .menu-in {
-  animation: menu-in 520ms var(--ease-out-gps) both;
-  animation-delay: calc(140ms + var(--i, 0) * 60ms);
+  animation: menu-in 420ms var(--ease-out-gps) both;
+  animation-delay: calc(120ms + var(--i, 0) * 45ms);
+}
+.menu-epic[data-closing] .menu-in {
+  animation: none;
 }
 @keyframes menu-in {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateX(-16px);
   }
   to {
     opacity: 1;
     transform: none;
-  }
-}
-
-.menu-ribbon path {
-  fill: none;
-  stroke: var(--color-gps-red);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  opacity: 0.35;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: ribbon-draw 1400ms 200ms var(--ease-out-gps) forwards;
-}
-@keyframes ribbon-draw {
-  to {
-    stroke-dashoffset: 0;
   }
 }
 
