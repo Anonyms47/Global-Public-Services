@@ -18,7 +18,7 @@ import { checkCart } from "@/server/domain/cart";
 import { assertCan, login, userFromToken } from "@/server/domain/auth";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
-import { purgeDemo, DEMO_PASSWORD } from "@/server/demo/seed";
+import { purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { buildOrderMessage } from "@/lib/whatsapp";
 
@@ -448,5 +448,24 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(after.company.whatsapp).toBe("22500000000");
     expect(after.company.hours).toBe("Lun–Sam");
     expect(after.storefront.heroProductId).toBeNull();
+  });
+});
+
+describe("Démonstration déjà en ligne", () => {
+  it("remplace les anciennes illustrations par les photos, sans toucher aux photos modifiées", async () => {
+    const db = await demoDb();
+    const nova = (await db.one<{ id: string }>("select id from products where name = 'Orbis Nova 12'"))!;
+    const fit = (await db.one<{ id: string }>("select id from products where name = 'Orbis Fit'"))!;
+    await db.query("update product_images set url = '/demo/ancienne.svg' where product_id = $1", [nova.id]);
+    await db.query("update product_images set url = '/media/photo-gps' where product_id = $1", [fit.id]);
+    await refreshDemoImages(db);
+    const urls = async (id: string) =>
+      (
+        await db.query<{ url: string }>("select url from product_images where product_id = $1 order by position", [id])
+      ).map((r) => r.url);
+    const novaUrls = await urls(nova.id);
+    expect(novaUrls.length).toBeGreaterThan(0);
+    expect(novaUrls.every((u) => u.startsWith("https://images.unsplash.com/"))).toBe(true);
+    expect((await urls(fit.id)).every((u) => u === "/media/photo-gps")).toBe(true);
   });
 });
