@@ -30,10 +30,15 @@ export const demoAccounts = [
   },
 ];
 
-const img = (file: string, alt: string, color: string | null = null) => ({
-  url: `/demo/${file}`,
+/**
+ * Photos d'exemple issues d'Unsplash (licence Unsplash : usage commercial libre,
+ * sans attribution obligatoire). Elles illustrent la catégorie, pas le modèle
+ * fictif exact : à remplacer par les photos réelles des articles GPS.
+ */
+const photo = (id: string, alt: string) => ({
+  url: `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&h=1500&q=80`,
   alt,
-  color,
+  color: null,
 });
 
 type DemoProduct = Omit<ProductInput, "status" | "featured" | "categoryId" | "isDemo"> & {
@@ -105,12 +110,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Capacité", "Couleur"],
     images: [
-      img("nova12-face-graphite.svg", "Orbis Nova 12 graphite, vue de face", "Graphite"),
-      img("nova12-dos-graphite.svg", "Orbis Nova 12 graphite, vue de dos", "Graphite"),
-      img("nova12-profil-graphite.svg", "Orbis Nova 12 graphite, de trois quarts", "Graphite"),
-      img("nova12-face-sable.svg", "Orbis Nova 12 sable, vue de face", "Sable"),
-      img("nova12-dos-sable.svg", "Orbis Nova 12 sable, vue de dos", "Sable"),
-      img("nova12-profil-sable.svg", "Orbis Nova 12 sable, de trois quarts", "Sable"),
+      photo("1598327105666-5b89351aff97", "Smartphone Orbis Nova 12 (photo d'exemple)"),
+      photo("1511707171634-5f897ff02aa9", "Smartphone Orbis Nova 12 posé sur une table (photo d'exemple)"),
     ],
     variants: [
       {
@@ -179,10 +180,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Capacité", "Couleur"],
     images: [
-      img("lite8-face-bleu-nuit.svg", "Orbis Lite 8 bleu nuit, face", "Bleu nuit"),
-      img("lite8-dos-bleu-nuit.svg", "Orbis Lite 8 bleu nuit, dos", "Bleu nuit"),
-      img("lite8-face-blanc.svg", "Orbis Lite 8 blanc, face", "Blanc"),
-      img("lite8-dos-blanc.svg", "Orbis Lite 8 blanc, dos", "Blanc"),
+      photo("1565849904461-04a58ad377e0", "Smartphone Orbis Lite 8 en main (photo d'exemple)"),
+      photo("1610945265064-0e34e5519bbf", "Smartphone Orbis Lite 8 (photo d'exemple)"),
     ],
     variants: [
       {
@@ -229,12 +228,9 @@ const products: DemoProduct[] = [
     ],
     axes: ["Couleur"],
     images: [
-      img("buds-boitier-blanc.svg", "Sonna Buds Air blanc, boîtier ouvert", "Blanc"),
-      img("buds-ecouteurs-blanc.svg", "Sonna Buds Air blanc, écouteurs", "Blanc"),
-      img("buds-boitier-noir.svg", "Sonna Buds Air noir, boîtier ouvert", "Noir"),
-      img("buds-ecouteurs-noir.svg", "Sonna Buds Air noir, écouteurs", "Noir"),
-      img("buds-boitier-bleu-nuit.svg", "Sonna Buds Air bleu nuit, boîtier ouvert", "Bleu nuit"),
-      img("buds-ecouteurs-bleu-nuit.svg", "Sonna Buds Air bleu nuit, écouteurs", "Bleu nuit"),
+      photo("1572569511254-d8f925fe2cbb", "Écouteurs sans fil Sonna Buds Air (photo d'exemple)"),
+      photo("1600294037681-c80b4cb5b434", "Écouteurs Sonna Buds Air et leur boîtier (photo d'exemple)"),
+      photo("1606220945770-b5b6c2c55bf1", "Écouteurs Sonna Buds Air noirs (photo d'exemple)"),
     ],
     variants: [
       { sku: "SON-BA-BL", options: { Couleur: "Blanc" }, price: 25000 },
@@ -259,8 +255,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Couleur"],
     images: [
-      img("studio2-noir.svg", "Casque Sonna Studio 2 noir", "Noir"),
-      img("studio2-creme.svg", "Casque Sonna Studio 2 crème", "Crème"),
+      photo("1505740420928-5e560c06d30e", "Casque Sonna Studio 2 (photo d'exemple)"),
+      photo("1546435770-a3e426bf472b", "Casque Sonna Studio 2 de profil (photo d'exemple)"),
     ],
     variants: [
       { sku: "SON-ST2-NO", options: { Couleur: "Noir" }, price: 45000 },
@@ -281,10 +277,7 @@ const products: DemoProduct[] = [
       { label: "Port", value: "USB-C" },
     ],
     axes: ["Contenu"],
-    images: [
-      img("volta25-avec-cable.svg", "Chargeur Volta 25W avec câble"),
-      img("volta25-seul.svg", "Chargeur Volta 25W seul"),
-    ],
+    images: [photo("1583863788434-e58a36330cf0", "Chargeur Volta 25W (photo d'exemple)")],
     variants: [
       {
         sku: "VOL-25-CAB",
@@ -313,7 +306,7 @@ const products: DemoProduct[] = [
       { label: "Sorties", value: "USB-C et USB-A" },
     ],
     axes: [],
-    images: [img("powerbank-noir.svg", "Batterie externe Volta noire")],
+    images: [photo("1618410320928-25228d811631", "Batterie externe Volta (photo d'exemple)")],
     variants: [{ sku: "VOL-PB20", options: {}, price: 15000 }],
     stock: { "VOL-PB20": 9 },
   },
@@ -331,9 +324,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Couleur"],
     images: [
-      img("etui-nova12-rouge.svg", "Étui Nova 12 rouge", "Rouge"),
-      img("etui-nova12-noir.svg", "Étui Nova 12 noir", "Noir"),
-      img("etui-nova12-sable.svg", "Étui Nova 12 sable", "Sable"),
+      photo("1603313011101-320f26a4f6f6", "Étui de téléphone (photo d'exemple)"),
+      photo("1556656793-08538906a9f8", "Étuis de téléphone (photo d'exemple)"),
     ],
     variants: [
       { sku: "ACC-ET-N12-RG", options: { Couleur: "Rouge" }, price: 5000 },
@@ -356,10 +348,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Monture"],
     images: [
-      img("rive-face-ecaille.svg", "Lunettes Lumen Rive écaille, de face", "Écaille"),
-      img("rive-profil-ecaille.svg", "Lunettes Lumen Rive écaille, de trois quarts", "Écaille"),
-      img("rive-face-noir.svg", "Lunettes Lumen Rive noires, de face", "Noir"),
-      img("rive-profil-noir.svg", "Lunettes Lumen Rive noires, de trois quarts", "Noir"),
+      photo("1572635196237-14b3f281503f", "Lunettes de soleil Lumen Rive (photo d'exemple)"),
+      photo("1511499767150-a48a237f0083", "Lunettes Lumen Rive de face (photo d'exemple)"),
     ],
     variants: [
       { sku: "LUM-RIV-EC", options: { Monture: "Écaille" }, price: 18000 },
@@ -382,10 +372,8 @@ const products: DemoProduct[] = [
     ],
     axes: ["Couleur", "Pointure"],
     images: [
-      img("urbain-profil-blanc.svg", "Basket Pas Urbain blanche, profil", "Blanc"),
-      img("urbain-paire-blanc.svg", "Basket Pas Urbain blanche, paire", "Blanc"),
-      img("urbain-profil-noir.svg", "Basket Pas Urbain noire, profil", "Noir"),
-      img("urbain-paire-noir.svg", "Basket Pas Urbain noire, paire", "Noir"),
+      photo("1600269452121-4f2416e55c28", "Baskets Pas Urbain (photo d'exemple)"),
+      photo("1549298916-b41d501d3772", "Baskets Pas Urbain, paire (photo d'exemple)"),
     ],
     variants: ["Blanc", "Noir"].flatMap((c) =>
       ["39", "40", "41", "42", "43", "44", "45"].map((p) => ({
@@ -421,8 +409,8 @@ const products: DemoProduct[] = [
     specs: [{ label: "Dessus", value: "Maille respirante" }],
     axes: ["Pointure"],
     images: [
-      img("course-profil-gris.svg", "Chaussure Pas Course grise, profil"),
-      img("course-paire-gris.svg", "Chaussure Pas Course grise, paire"),
+      photo("1606107557195-0e29a4b5b4aa", "Chaussures de course Pas Course (photo d'exemple)"),
+      photo("1551107696-a4b0c5a0d9a2", "Chaussure de course Pas Course de profil (photo d'exemple)"),
     ],
     variants: ["40", "41", "42", "43", "44"].map((p) => ({
       sku: `PAS-CRS-GR-${p}`,
@@ -447,8 +435,8 @@ const products: DemoProduct[] = [
     specs: [{ label: "Compatibilité", value: "Android et iOS" }],
     axes: ["Couleur"],
     images: [
-      img("fit-noir.svg", "Montre Orbis Fit noire", "Noir"),
-      img("fit-vert.svg", "Montre Orbis Fit verte", "Vert"),
+      photo("1546868871-7041f2a55e12", "Montre connectée Orbis Fit (photo d'exemple)"),
+      photo("1579586337278-3befd40fd17a", "Montre Orbis Fit au poignet (photo d'exemple)"),
     ],
     variants: [
       { sku: "ORB-FIT-NO", options: { Couleur: "Noir" }, price: 22000 },

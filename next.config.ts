@@ -5,7 +5,9 @@ const nextConfig: NextConfig = {
   // Photos produits jusqu'à 3 Mo (marge pour l'enveloppe multipart).
   experimental: { serverActions: { bodySizeLimit: "3.2mb" } },
   images: {
-    localPatterns: [{ pathname: "/demo/**" }, { pathname: "/media/**" }],
+    localPatterns: [{ pathname: "/demo/**" }, { pathname: "/media/**" }, { pathname: "/brand/**" }],
+    // Photos d'exemple de la démonstration (banque d'images Unsplash).
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com", pathname: "/photo-*" }],
   },
   async headers() {
     return [
