@@ -446,6 +446,29 @@ const products: DemoProduct[] = [
   },
 ];
 
+/**
+ * Remplace, sur une base déjà amorcée, les anciennes illustrations vectorielles
+ * des produits d'exemple par les photos actuelles. Sans effet sur les produits
+ * réels ni sur les photos modifiées depuis le Comptoir.
+ */
+export async function refreshDemoImages(db: Db) {
+  for (const p of products) {
+    const row = await db.one<{ id: string }>(
+      `select id from products where is_demo and name = $1
+         and exists (select 1 from product_images where product_id = products.id and url like '/demo/%')`,
+      [p.name],
+    );
+    if (!row) continue;
+    await db.query("delete from product_images where product_id = $1", [row.id]);
+    for (const [i, im] of p.images.entries()) {
+      await db.query(
+        "insert into product_images (id, product_id, url, alt, color, position) values ($1,$2,$3,$4,$5,$6)",
+        [newId(), row.id, im.url, im.alt, im.color ?? null, i],
+      );
+    }
+  }
+}
+
 export async function hasDemoData(db: Db) {
   const r = await db.one<{ n: number }>("select count(*)::int as n from products where is_demo");
   return (r?.n ?? 0) > 0;

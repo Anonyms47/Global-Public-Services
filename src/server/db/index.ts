@@ -1,6 +1,6 @@
 import { openDb, type Db } from "./client";
 import { ensureBaseSettings } from "../domain/settings";
-import { seedDemo } from "../demo/seed";
+import { refreshDemoImages, seedDemo } from "../demo/seed";
 
 export type { Db };
 
@@ -27,7 +27,10 @@ async function init(): Promise<Db> {
   await db.tx(async (tx) => {
     await tx.query("select pg_advisory_xact_lock(4747000)");
     await ensureBaseSettings(tx);
-    if (isDemoMode()) await seedDemo(tx, { onlyIfEmpty: true });
+    if (isDemoMode()) {
+      await seedDemo(tx, { onlyIfEmpty: true });
+      await refreshDemoImages(tx);
+    }
   });
   return db;
 }
