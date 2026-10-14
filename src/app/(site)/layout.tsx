@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { DemoBanner } from "@/components/site/DemoBanner";
 import { siteContext } from "@/server/context";
 import { listCategories } from "@/server/domain/catalog";
 
@@ -11,12 +10,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
-  const { db, settings, demo } = await siteContext();
+  const { db, settings } = await siteContext();
   const categories = (await listCategories(db)).filter((c) => c.product_count > 0);
   return (
     <>
-      {demo ? <DemoBanner /> : null}
-      <Header categories={categories} />
+      <Header company={settings.company} />
       <main id="contenu">{children}</main>
       <Footer settings={settings} categories={categories} />
     </>
