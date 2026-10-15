@@ -5,6 +5,8 @@ import { listRequests, requestCounts, requestStatusLabels, type RequestStatus } 
 import { can } from "@/lib/permissions";
 import { fcfa, formatDateTime } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
+import { renderTemplate } from "@/lib/templates";
+import { getSettings } from "@/server/domain/settings";
 import { Badge, Empty, PageTitle, Tabs } from "@/components/admin/ui";
 import { RequestActions } from "@/components/admin/RequestActions";
 import { IconWhatsApp } from "@/components/ui/icons";
@@ -23,7 +25,11 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
   const sp = await searchParams;
   const status = (tabs.find(([k]) => k === sp.etat)?.[0] ?? "new") as RequestStatus;
   const q = typeof sp.q === "string" ? sp.q : "";
-  const [rows, counts] = await Promise.all([listRequests(db, { status, q }), requestCounts(db)]);
+  const [rows, counts, settings] = await Promise.all([
+    listRequests(db, { status, q }),
+    requestCounts(db),
+    getSettings(db),
+  ]);
   const canAct = can(user, "orders.create");
   return (
     <>
@@ -64,7 +70,10 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
             const wa = r.customer_phone
               ? whatsappLink(
                   r.customer_phone,
-                  `Bonjour ${r.customer_name}, GPS a bien reçu votre demande ${r.reference}.`,
+                  renderTemplate(settings.messages.requestReceived, {
+                    prenom: r.customer_name.split(" ")[0] ?? "",
+                    reference: r.reference,
+                  }),
                 )
               : null;
             return (

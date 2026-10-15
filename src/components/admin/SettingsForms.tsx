@@ -11,10 +11,12 @@ import type { Settings } from "@/server/domain/settings";
 import { roleLabels, type Role } from "@/lib/permissions";
 import { ActionFeedback, useAction } from "./useAction";
 import { proposals } from "@/lib/content-proposals";
+import { defaultTemplates, templateKeys, templateMeta } from "@/lib/templates";
+import { paymentMethods } from "@/lib/payment-methods";
 import { Badge, Panel } from "./ui";
 import { IconPlus, IconTrash } from "../ui/icons";
 
-type Initial = Pick<Settings, "company" | "reception" | "policies" | "stock" | "receipt">;
+type Initial = Pick<Settings, "company" | "reception" | "policies" | "stock" | "receipt" | "messages" | "payments">;
 
 function Field({
   id,
@@ -147,10 +149,32 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             hint="Affichée sur les reçus et les conditions de vente."
           />
           <Field
+            id="s-ninea"
+            label="NINEA"
+            value={c.ninea}
+            onChange={(v) => setC({ ninea: v })}
+            hint="Numéro d'identification national, tel qu'il figure sur vos documents officiels."
+          />
+          <Field
+            id="s-rccm"
+            label="RCCM"
+            value={c.rccm}
+            onChange={(v) => setC({ rccm: v })}
+            hint="Registre du commerce, tel qu'il figure sur vos documents officiels."
+          />
+          <Field
             id="s-legal-id"
-            label="Immatriculation (RCCM, NINEA, IFU…)"
+            label="Autre immatriculation (facultatif)"
             value={c.legalId}
             onChange={(v) => setC({ legalId: v })}
+          />
+          <Field
+            id="s-tz"
+            label="Fuseau horaire"
+            value={c.timezone}
+            onChange={(v) => setC({ timezone: v })}
+            hint="Africa/Dakar par défaut (heure universelle toute l'année)."
+            error={fieldErrors["company.timezone"]}
           />
         </div>
         <div className="mt-4">
@@ -305,6 +329,67 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             proposal={proposals.payment}
             rows={6}
           />
+        </div>
+      </Panel>
+
+      <Panel title="Moyens de paiement" id="t-paiements">
+        <fieldset>
+          <legend className="sr-only">Moyens proposés à l&apos;encaissement</legend>
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {paymentMethods.map(([k, label]) => (
+              <li key={k}>
+                <label className="flex min-h-11 items-center gap-2 rounded-[6px] border border-line px-3 font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={s.payments.methods.includes(k)}
+                    onChange={(e) =>
+                      setS({
+                        ...s,
+                        payments: {
+                          methods: e.target.checked
+                            ? paymentMethods.map(([m]) => m).filter((m) => m === k || s.payments.methods.includes(m))
+                            : s.payments.methods.filter((m) => m !== k),
+                        },
+                      })
+                    }
+                  />
+                  {label}
+                </label>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
+        <p className="hint mt-2">
+          Seuls les moyens cochés sont proposés à l&apos;encaissement. Les opérations déjà enregistrées ne changent pas.
+        </p>
+        {fieldErrors["payments.methods"] ? <p className="error-text">{fieldErrors["payments.methods"]}</p> : null}
+      </Panel>
+
+      <Panel title="Messages WhatsApp aux clients" id="t-messages">
+        <div className="grid gap-4 md:grid-cols-2">
+          {templateKeys.map((k) => (
+            <div key={k}>
+              <Field
+                id={`s-msg-${k}`}
+                label={templateMeta[k].label}
+                textarea
+                rows={5}
+                value={s.messages[k]}
+                onChange={(v) => setS({ ...s, messages: { ...s.messages, [k]: v } })}
+                hint={`Variables : ${templateMeta[k].vars.map((v) => `{${v}}`).join(" ")}`}
+                error={fieldErrors[`messages.${k}`]}
+              />
+              {s.messages[k] !== defaultTemplates[k] ? (
+                <button
+                  type="button"
+                  className="mt-1 text-[13px] font-bold text-gps-blue underline underline-offset-2"
+                  onClick={() => setS({ ...s, messages: { ...s.messages, [k]: defaultTemplates[k] } })}
+                >
+                  Revenir au modèle d&apos;origine
+                </button>
+              ) : null}
+            </div>
+          ))}
         </div>
       </Panel>
 

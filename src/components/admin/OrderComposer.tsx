@@ -87,7 +87,13 @@ const methods = paymentMethods;
 const noop = () => () => {};
 
 /** Le brouillon vit dans le navigateur : rendu après hydratation uniquement. */
-export function OrderComposerClient(props: { mode: "order" | "sale"; canEditPrice: boolean; zones: DeliveryZone[] }) {
+export function OrderComposerClient(props: {
+  mode: "order" | "sale";
+  canEditPrice: boolean;
+  zones: DeliveryZone[];
+  /** Moyens de paiement activés dans la configuration. */
+  enabledMethods?: PaymentMethodKey[];
+}) {
   const ready = useSyncExternalStore(
     noop,
     () => true,
@@ -108,10 +114,12 @@ function OrderComposer({
   mode,
   canEditPrice,
   zones,
+  enabledMethods,
 }: {
   mode: "order" | "sale";
   canEditPrice: boolean;
   zones: DeliveryZone[];
+  enabledMethods?: PaymentMethodKey[];
 }) {
   const storageKey = `gps-brouillon-${mode}`;
   const router = useRouter();
@@ -899,11 +907,13 @@ function OrderComposer({
                   value={draft.payMethod}
                   onChange={(e) => update({ payMethod: e.target.value as Draft["payMethod"] })}
                 >
-                  {methods.map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
+                  {methods
+                    .filter(([k]) => !enabledMethods || enabledMethods.includes(k) || k === draft.payMethod)
+                    .map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
@@ -938,11 +948,13 @@ function OrderComposer({
                       })
                     }
                   >
-                    {methods.map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
+                    {methods
+                      .filter(([k]) => !enabledMethods || enabledMethods.includes(k) || k === p.method)
+                      .map(([k, v]) => (
+                        <option key={k} value={k}>
+                          {v}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div>

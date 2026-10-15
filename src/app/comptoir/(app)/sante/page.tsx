@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requirePage, serverEnv } from "@/server/admin";
 import { healthChecks, type HealthStatus } from "@/server/domain/health";
-import { listAudit } from "@/server/domain/audit";
+import { auditLabels, listAudit } from "@/server/domain/audit";
 import { formatDateTime } from "@/lib/format";
 import { Badge, Forbidden, PageTitle, Panel } from "@/components/admin/ui";
 
@@ -45,7 +45,7 @@ export default async function HealthPage() {
             {log.map((l) => (
               <li key={l.id} className="flex flex-wrap justify-between gap-2 py-2">
                 <span>
-                  <strong>{l.action}</strong> {l.target ? `· ${l.target}` : ""}
+                  <strong>{auditLabels[l.action] ?? l.action}</strong> {l.target ? `· ${l.target}` : ""}
                 </span>
                 <span className="text-ink-mute">
                   {l.user_name ?? "—"} · {formatDateTime(l.created_at)}

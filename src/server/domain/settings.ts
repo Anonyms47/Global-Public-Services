@@ -1,4 +1,6 @@
 import type { Db } from "../db/client";
+import { defaultTemplates, type TemplateKey } from "@/lib/templates";
+import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
 
 export interface DeliveryZone {
   name: string;
@@ -24,7 +26,12 @@ export interface Settings {
     aboutText: string;
     /** Raison sociale et immatriculation (reçus, conditions de vente). */
     legalName: string;
+    /** Autre immatriculation (texte libre, conservé pour compatibilité). */
     legalId: string;
+    ninea: string;
+    rccm: string;
+    /** Fuseau horaire de la boutique (affichages et reçus). */
+    timezone: string;
   };
   reception: {
     pickupEnabled: boolean;
@@ -45,6 +52,10 @@ export interface Settings {
     focusProductId: string | null;
     focusText: string;
   };
+  /** Modèles des messages WhatsApp envoyés aux clients depuis le Comptoir. */
+  messages: Record<TemplateKey, string>;
+  /** Moyens de paiement proposés à l'encaissement. */
+  payments: { methods: PaymentMethodKey[] };
   /** Mode de boutique visé, préparé par le propriétaire (le basculement réel se fait dans l'hébergeur). */
   launch: {
     targetMode: ShopMode;
@@ -71,6 +82,9 @@ export const defaultSettings: Settings = {
     aboutText: "",
     legalName: "",
     legalId: "",
+    ninea: "",
+    rccm: "",
+    timezone: "Africa/Dakar",
   },
   reception: {
     pickupEnabled: true,
@@ -84,7 +98,14 @@ export const defaultSettings: Settings = {
   receipt: { header: "", footer: "Merci pour votre confiance." },
   storefront: { heroProductId: null, focusProductId: null, focusText: "" },
   launch: { targetMode: "demo", updatedAt: null, updatedBy: null },
+  messages: { ...defaultTemplates },
+  payments: { methods: paymentMethods.map(([k]) => k) },
 };
+
+/** NINEA, RCCM et autre immatriculation, prêts à afficher. */
+export function legalIds(c: Settings["company"]) {
+  return [c.ninea && `NINEA ${c.ninea}`, c.rccm && `RCCM ${c.rccm}`, c.legalId].filter(Boolean).join(" · ");
+}
 
 export { TO_CONFIRM } from "@/lib/whatsapp";
 

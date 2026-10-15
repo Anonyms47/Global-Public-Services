@@ -183,4 +183,20 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/lancement");
     await expect(page.getByText("Droits insuffisants")).toBeVisible();
   });
+
+  test("configuration : NINEA et RCCM enregistrés puis affichés sur les conditions de vente", async ({ page }) => {
+    await login(page, "proprietaire@demo.gps");
+    await page.goto("/comptoir/parametres");
+    await page.getByLabel("NINEA").fill("0000000 0A0");
+    await page.getByLabel("RCCM").fill("SN-TEST-0000");
+    await page
+      .getByRole("button", { name: /Enregistrer/ })
+      .first()
+      .click();
+    await expect(page.getByText("Paramètres enregistrés.")).toBeVisible();
+    await page.goto("/conditions-de-vente");
+    await expect(page.getByText(/Immatriculation : NINEA 0000000 0A0 · RCCM SN-TEST-0000/)).toBeVisible();
+    await page.goto("/comptoir/sante");
+    await expect(page.getByText("Configuration modifiée")).toBeVisible();
+  });
 });

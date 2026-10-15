@@ -14,7 +14,10 @@ export default async function SettingsPage() {
   const [s, demoData] = await Promise.all([getSettings(db), hasDemoData(db)]);
   return (
     <>
-      <PageTitle eyebrow="Configuration" title="Paramètres & équipe" />
+      <PageTitle eyebrow="Développer" title="Configuration">
+        Entreprise, coordonnées, réception, paiements, messages WhatsApp et conditions. Rien n&apos;est inventé : un
+        champ vide reste « à confirmer » sur le site.
+      </PageTitle>
       <Tabs
         current="parametres"
         items={[
@@ -37,6 +40,8 @@ export default async function SettingsPage() {
           policies: s.policies,
           stock: s.stock,
           receipt: s.receipt,
+          messages: s.messages,
+          payments: s.payments,
         }}
       />
       <DemoPurge demoMode={isDemoMode()} hasDemo={demoData} />

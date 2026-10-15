@@ -158,7 +158,7 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
       key: "legal",
       level: 2,
       label: "Raison sociale et immatriculation",
-      status: filled([c.legalName, c.legalId]),
+      status: filled([c.legalName, c.ninea || c.legalId, c.rccm || c.legalId]),
       detail: "Raison sociale, NINEA et RCCM, imprimés sur les reçus.",
       fix: "/comptoir/parametres#t-entreprise",
     },

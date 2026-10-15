@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Settings } from "@/server/domain/settings";
+import { legalIds, type Settings } from "@/server/domain/settings";
 import { Logo } from "../brand/Logo";
 
 /** Ligne de ticket : libellé, points de conduite, valeur. */
@@ -120,7 +120,7 @@ export function Footer({ settings, categories }: { settings: Settings; categorie
             <span>
               © {new Date().getFullYear()} GPS — Global Public Services
               {c.legalName ? ` · ${c.legalName}` : ""}
-              {c.legalId ? ` · ${c.legalId}` : ""}
+              {legalIds(c) ? ` · ${legalIds(c)}` : ""}
             </span>
             <span>Le service qui rassure</span>
           </p>
