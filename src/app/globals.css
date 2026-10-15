@@ -1280,3 +1280,44 @@
 .footer-link:focus-visible {
   background-size: 100% 2px;
 }
+
+/* ——— Contact ——— */
+.contact-card {
+  border-radius: 20px;
+  background: #fff;
+  padding: 24px;
+  border: 1px solid var(--color-line);
+  box-shadow:
+    0 1px 0 rgb(20 16 57 / 0.04),
+    0 28px 50px -30px rgb(20 16 57 / 0.45);
+  transform: rotate(-1.5deg);
+  transition: transform 400ms var(--ease-out-gps);
+}
+.contact-card:hover {
+  transform: rotate(0deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-card {
+    transform: none;
+  }
+}
+.contact-way-icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+.contact-way-wa {
+  background: var(--color-wa-soft);
+  color: var(--color-wa-ink);
+}
+.contact-way-blue {
+  background: var(--color-gps-blue-soft);
+  color: var(--color-gps-blue);
+}
+.contact-way-red {
+  background: var(--color-gps-red-soft);
+  color: var(--color-gps-red-ink);
+}
