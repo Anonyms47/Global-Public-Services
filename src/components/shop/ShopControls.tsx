@@ -266,7 +266,7 @@ export function ShopControls({
           </label>
           <select
             id="f-tri"
-            className="field h-10 min-h-10 w-auto py-0 text-[15px]"
+            className="field h-10 min-h-10 w-auto rounded-full py-0 pr-9 pl-4 text-[15px]"
             value={query.tri ?? "nouveautes"}
             onChange={(e) => set({ tri: e.target.value as ShopQuery["tri"] })}
           >
