@@ -162,7 +162,7 @@ create table if not exists payments (
   id text primary key,
   order_id text not null references orders (id) on delete cascade,
   kind text not null check (kind in ('payment', 'refund', 'reversal')),
-  method text not null check (method in ('cash', 'mobile_money', 'card', 'bank_transfer', 'other')),
+  method text not null check (method in ('cash', 'wave', 'orange_money', 'mobile_money', 'card', 'bank_transfer', 'other')),
   amount int not null check (amount > 0),
   note text not null default '',
   reverses_id text references payments (id),
@@ -184,7 +184,7 @@ create table if not exists stock_batches (
 create table if not exists stock_movements (
   id text primary key,
   variant_id text not null references variants (id) on delete cascade,
-  kind text not null check (kind in ('initial', 'restock', 'reservation', 'release', 'sale', 'return_restock', 'return_no_restock', 'inventory', 'adjustment')),
+  kind text not null check (kind in ('initial', 'restock', 'reservation', 'release', 'sale', 'return_restock', 'return_no_restock', 'inventory', 'adjustment', 'unsellable', 'sellable', 'writeoff')),
   on_hand_delta int not null default 0,
   reserved_delta int not null default 0,
   on_hand_after int not null,
@@ -239,6 +239,31 @@ create table if not exists queue_items (
   is_demo boolean not null default false
 );
 
+-- Demandes reçues depuis le panier du site (message WhatsApp avec référence GPS-R-…).
+-- Une demande n'engage pas le stock : elle devient une commande après confirmation.
+create sequence if not exists request_number_seq start 1001;
+create table if not exists order_requests (
+  id text primary key,
+  reference text not null unique,
+  status text not null default 'new' check (status in ('new', 'converted', 'dismissed')),
+  customer_name text not null default '',
+  customer_phone text not null default '',
+  reception text not null check (reception in ('pickup', 'delivery')),
+  delivery_zone text not null default '',
+  delivery_address text not null default '',
+  delivery_fee int,
+  note text not null default '',
+  lines jsonb not null default '[]',
+  subtotal int not null default 0,
+  order_id text references orders (id) on delete set null,
+  status_note text not null default '',
+  handled_by text references users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  is_demo boolean not null default false
+);
+create index if not exists order_requests_created_at on order_requests (created_at);
+
 -- Journal des actions sensibles (modes, équipe, configuration).
 create table if not exists audit_log (
   id text primary key,
@@ -249,6 +274,36 @@ create table if not exists audit_log (
   created_at timestamptz not null default now()
 );
 create index if not exists audit_log_created_at on audit_log (created_at);
+
+-- Moyens de paiement Wave et Orange Money : contrainte élargie (aucune ligne existante n'est modifiée).
+do $$ begin
+  if exists (select 1 from pg_constraint where conname = 'payments_method_check'
+              and pg_get_constraintdef(oid) not like '%orange_money%') then
+    alter table payments drop constraint payments_method_check;
+    alter table payments add constraint payments_method_check
+      check (method in ('cash', 'wave', 'orange_money', 'mobile_money', 'card', 'bank_transfer', 'other'));
+  end if;
+end $$;
+
+-- Stock non vendable (abîmé, en contrôle, réservé à l'exposition) : exclu du disponible.
+alter table variants add column if not exists unsellable int not null default 0;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'unsellable_within_stock') then
+    alter table variants add constraint unsellable_within_stock check (unsellable >= 0 and reserved + unsellable <= on_hand);
+  end if;
+end $$;
+
+alter table stock_movements add column if not exists unsellable_delta int not null default 0;
+alter table stock_movements add column if not exists unsellable_after int not null default 0;
+do $$ begin
+  if exists (select 1 from pg_constraint where conname = 'stock_movements_kind_check'
+              and pg_get_constraintdef(oid) not like '%writeoff%') then
+    alter table stock_movements drop constraint stock_movements_kind_check;
+    alter table stock_movements add constraint stock_movements_kind_check
+      check (kind in ('initial', 'restock', 'reservation', 'release', 'sale', 'return_restock', 'return_no_restock',
+                      'inventory', 'adjustment', 'unsellable', 'sellable', 'writeoff'));
+  end if;
+end $$;
 
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
@@ -272,4 +327,5 @@ alter table order_events enable row level security;
 alter table services enable row level security;
 alter table queue_items enable row level security;
 alter table audit_log enable row level security;
+alter table order_requests enable row level security;
 `;

@@ -9,7 +9,7 @@ export type Channel = "whatsapp" | "boutique" | "telephone" | "autre";
 export type OrderStatus = "confirmed" | "completed" | "cancelled";
 export type Fulfillment = "to_prepare" | "ready" | "out_for_delivery" | "handed_over";
 export type Reception = "pickup" | "delivery" | "immediate";
-export type PaymentMethod = "cash" | "mobile_money" | "card" | "bank_transfer" | "other";
+export type PaymentMethod = "cash" | "wave" | "orange_money" | "mobile_money" | "card" | "bank_transfer" | "other";
 
 export const channelLabels: Record<Channel, string> = {
   whatsapp: "WhatsApp",
@@ -35,7 +35,9 @@ export const receptionLabels: Record<Reception, string> = {
 };
 export const methodLabels: Record<PaymentMethod, string> = {
   cash: "Espèces",
-  mobile_money: "Mobile money",
+  wave: "Wave",
+  orange_money: "Orange Money",
+  mobile_money: "Autre mobile money",
   card: "Carte",
   bank_transfer: "Virement",
   other: "Autre",
@@ -62,6 +64,8 @@ export interface OrderInput {
   notes?: string;
   lines: LineInput[];
   payment?: { method: PaymentMethod; amount: number; note?: string } | null;
+  /** Paiement mixte : plusieurs moyens pour une même vente. */
+  payments?: { method: PaymentMethod; amount: number; note?: string }[];
   isDemo?: boolean;
 }
 
@@ -75,7 +79,7 @@ async function nextReference(tx: Db, at: Date) {
   return `GPS-${at.getFullYear()}-${String(r!.n).padStart(5, "0")}`;
 }
 
-async function event(tx: Db, orderId: string, kind: string, message: string, userId: string | null) {
+export async function event(tx: Db, orderId: string, kind: string, message: string, userId: string | null) {
   await tx.query("insert into order_events (id, order_id, kind, message, user_id) values ($1,$2,$3,$4,$5)", [
     newId(),
     orderId,
@@ -267,15 +271,21 @@ export async function createOrder(db: Db, actor: Actor, input: OrderInput, now =
       actor.id,
     );
 
-    if (input.payment && input.payment.amount > 0) {
+    const pays = [...(input.payment ? [input.payment] : []), ...(input.payments ?? [])].filter((p) => p.amount > 0);
+    const totalPaid = pays.reduce((sum, p) => sum + p.amount, 0);
+    const dueNow = subtotal + (input.deliveryFee ?? 0);
+    if (totalPaid > dueNow && input.deliveryFee !== null) {
+      fail("validation", `Le total encaissé (${totalPaid.toLocaleString("fr-FR")} FCFA) dépasse le montant dû.`);
+    }
+    for (const p of pays) {
       await insertPayment(
         tx,
         actor,
         id,
         "payment",
-        input.payment.method,
-        input.payment.amount,
-        input.payment.note ?? "",
+        p.method,
+        p.amount,
+        p.note ?? (pays.length > 1 ? "Paiement mixte" : ""),
       );
     }
     return { id, reference, duplicate: false };

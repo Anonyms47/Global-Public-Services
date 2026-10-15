@@ -12,13 +12,14 @@ import {
   reversePayment,
   correctDeliveryFee,
 } from "@/server/domain/orders";
-import { restock, applyInventory, inventoryPreview, adjustStock } from "@/server/domain/stock";
+import { restock, applyInventory, inventoryPreview, adjustStock, moveUnsellable } from "@/server/domain/stock";
 import { publishedProducts, saveProduct, productForEdit, filterProducts } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
 import { can } from "@/lib/permissions";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
+import { createRequest, convertRequest, dismissRequest, getRequest } from "@/server/domain/requests";
 import { listQueue, updateQueueItem, addManualTask } from "@/server/domain/queue";
 import { launchChecks, setTargetMode, currentMode, summarize } from "@/server/domain/launch";
 import { healthChecks } from "@/server/domain/health";
@@ -255,6 +256,79 @@ describe("Stock", () => {
     );
     expect(mv.map((m) => m.kind)).toEqual(["restock", "inventory"]);
     expect(mv.every((m) => m.user_id === manager.id)).toBe(true);
+  });
+
+  it("stock non vendable : exclu du disponible, ni réservé ni vendu, sortie tracée", async () => {
+    const owner = await userByRole(db, "owner");
+    const v0 = await variantBySku(db, "VOL-PB20");
+    const avail0 = v0.on_hand - v0.reserved;
+    await moveUnsellable(db, {
+      variantId: v0.id,
+      action: "unsellable",
+      quantity: 1,
+      reason: "Boîte abîmée",
+      userId: owner.id,
+    });
+    let v = await db.one<{ on_hand: number; reserved: number; unsellable: number }>(
+      "select on_hand, reserved, unsellable from variants where id = $1",
+      [v0.id],
+    );
+    expect(v!.on_hand).toBe(v0.on_hand);
+    expect(v!.unsellable).toBe(1);
+    const cart = await checkCart(db, [{ variantId: v0.id, quantity: 1, seenPrice: v0.price }]);
+    expect(cart[0].available).toBe(avail0 - 1);
+    // On ne peut pas vendre plus que le disponible : l'unité non vendable est protégée.
+    await expect(
+      createOrder(db, manager, {
+        idempotencyKey: key(),
+        channel: "boutique",
+        reception: "immediate",
+        lines: [{ variantId: v0.id, quantity: avail0 }],
+      }),
+    ).rejects.toThrow(/Stock insuffisant/);
+    await expect(
+      moveUnsellable(db, { variantId: v0.id, action: "writeoff", quantity: 2, reason: "x", userId: owner.id }),
+    ).rejects.toThrow(/Seulement 1/);
+    await expect(
+      moveUnsellable(db, { variantId: v0.id, action: "unsellable", quantity: 1, reason: " ", userId: owner.id }),
+    ).rejects.toThrow(/motif/);
+    await moveUnsellable(db, { variantId: v0.id, action: "writeoff", quantity: 1, reason: "Casse", userId: owner.id });
+    v = await db.one("select on_hand, reserved, unsellable from variants where id = $1", [v0.id]);
+    expect(v!.on_hand).toBe(v0.on_hand - 1);
+    expect(v!.unsellable).toBe(0);
+    const m = await db.one<{ kind: string; unsellable_delta: number }>(
+      "select kind, unsellable_delta from stock_movements where variant_id = $1 order by created_at desc limit 1",
+      [v0.id],
+    );
+    expect(m).toEqual({ kind: "writeoff", unsellable_delta: -1 });
+  });
+
+  it("vente rapide : paiement mixte Wave + espèces, plafonné au montant dû", async () => {
+    const v = await variantBySku(db, "VOL-PB20");
+    await expect(
+      createOrder(db, manager, {
+        idempotencyKey: key(),
+        channel: "boutique",
+        reception: "immediate",
+        lines: [{ variantId: v.id, quantity: 1 }],
+        payment: { method: "cash", amount: v.price },
+        payments: [{ method: "wave", amount: 1000 }],
+      }),
+    ).rejects.toThrow(/dépasse/);
+    const o = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "cash", amount: v.price - 5000 },
+      payments: [
+        { method: "wave", amount: 3000 },
+        { method: "orange_money", amount: 2000 },
+      ],
+    });
+    const d = (await getOrder(db, o.id))!;
+    expect(d.payment).toBe("paid");
+    expect(d.payments.map((p) => p.method).sort()).toEqual(["cash", "orange_money", "wave"]);
   });
 
   it("l'inventaire refuse un comptage inférieur aux réservations", async () => {
@@ -560,6 +634,53 @@ describe("Droits, clients, rapports, démonstration", () => {
     const health = await healthChecks(db, { ...env, postgres: false, region: "" });
     expect(health.find((h) => h.key === "schema")?.status).toBe("ok");
     expect(health.find((h) => h.key === "stock")?.status).not.toBe("error");
+  });
+
+  it("demande WhatsApp : référence GPS-R, aucune réservation, conversion en commande, classement", async () => {
+    const owner = await userByRole(db, "owner");
+    const v0 = await variantBySku(db, "SON-ST2-NO");
+    const input = {
+      items: [{ variantId: v0.id, quantity: 2, seenPrice: 1 }],
+      name: "Cliente Demande",
+      phone: "000 11 22 33",
+      reception: "pickup" as const,
+      deliveryFee: 0,
+    };
+    const r = await createRequest(db, input);
+    expect(r.reference).toMatch(/^GPS-R-\d{4,}$/);
+    // Prix recalculé côté serveur, pas celui envoyé par le navigateur.
+    expect(r.lines[0].unitPrice).toBe(v0.price);
+    expect((await variantBySku(db, "SON-ST2-NO")).reserved).toBe(v0.reserved);
+    const msg = buildOrderMessage({
+      reference: r.reference,
+      lines: r.lines,
+      reception: "pickup",
+      deliveryFee: 0,
+      name: input.name,
+    });
+    expect(msg.split("\n")[1]).toBe(`Demande ${r.reference}`);
+    const q = await listQueue(db, { view: "a-faire", userId: owner.id, lowThreshold: 1 });
+    expect(q.items.some((i) => i.key === `request:${r.id}`)).toBe(true);
+
+    const order = await convertRequest(db, owner, r.id, { isDemo: true });
+    const after = await variantBySku(db, "SON-ST2-NO");
+    expect(after.reserved).toBe(v0.reserved + 2);
+    const req = await getRequest(db, r.id);
+    expect(req?.status).toBe("converted");
+    expect(req?.order_reference).toBe(order.reference);
+    await expect(convertRequest(db, owner, r.id, { isDemo: true })).rejects.toThrow(/déjà/);
+    const d = (await getOrder(db, order.id))!;
+    expect(d.events.some((e) => e.message.includes(r.reference))).toBe(true);
+    await cancelOrder(db, manager, order.id, "test");
+
+    // Le client modifie son panier : la demande précédente est remplacée, pas dupliquée.
+    const r2 = await createRequest(db, input);
+    const r3 = await createRequest(db, { ...input, replacesId: r2.id });
+    expect((await getRequest(db, r2.id))?.status).toBe("dismissed");
+    await expect(dismissRequest(db, owner, r3.id, "")).rejects.toThrow(/raison/);
+    await dismissRequest(db, owner, r3.id, "Doublon");
+    expect((await getRequest(db, r3.id))?.status).toBe("dismissed");
+    await expect(createRequest(db, { ...input, name: " " })).rejects.toThrow(/nom/);
   });
 
   it("la purge de démonstration conserve la configuration", async () => {

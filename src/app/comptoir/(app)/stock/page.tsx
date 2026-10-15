@@ -6,7 +6,7 @@ import { getSettings } from "@/server/domain/settings";
 import { can } from "@/lib/permissions";
 import { optionsLabel } from "@/lib/format";
 import { Badge, Empty, Forbidden, PageTitle, Tabs } from "@/components/admin/ui";
-import { AdjustButton } from "@/components/admin/StockForms";
+import { AdjustButton, UnsellableButton } from "@/components/admin/StockForms";
 import { IconSearch } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Stock" };
@@ -28,8 +28,9 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
       onHand: t.onHand + r.on_hand,
       reserved: t.reserved + r.reserved,
       available: t.available + r.available,
+      unsellable: t.unsellable + r.unsellable,
     }),
-    { onHand: 0, reserved: 0, available: 0 },
+    { onHand: 0, reserved: 0, available: 0, unsellable: 0 },
   );
   return (
     <>
@@ -94,13 +95,14 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
         </Empty>
       ) : (
         <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
-          <table className="w-full min-w-[820px] text-[14px]">
+          <table className="w-full min-w-[920px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                 <th className="px-3 py-3 font-bold">Article</th>
                 <th className="py-3 text-right font-bold">Physique</th>
                 <th className="py-3 text-right font-bold">Réservé</th>
                 <th className="py-3 text-right font-bold">Disponible</th>
+                <th className="py-3 text-right font-bold">Non vendable</th>
                 <th className="py-3 text-right font-bold">Seuil</th>
                 <th className="px-3 py-3 text-right font-bold">Actions</th>
               </tr>
@@ -126,6 +128,9 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
                       <Badge tone="warn">Faible</Badge>
                     ) : null}
                   </td>
+                  <td className="py-2 text-right tabular">
+                    {r.unsellable ? <span className="font-bold text-warn">{r.unsellable}</span> : "—"}
+                  </td>
                   <td className="py-2 text-right text-ink-mute tabular">{r.threshold}</td>
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-2">
@@ -143,6 +148,14 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
                           reserved={r.reserved}
                         />
                       ) : null}
+                      {can(user, "stock.inventory") ? (
+                        <UnsellableButton
+                          variantId={r.variant_id}
+                          label={`${r.product_name} ${optionsLabel(r.options)}`}
+                          available={r.available}
+                          unsellable={r.unsellable}
+                        />
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -154,6 +167,7 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
                 <td className="py-2 text-right tabular">{totals.onHand}</td>
                 <td className="py-2 text-right tabular">{totals.reserved}</td>
                 <td className="py-2 text-right tabular">{totals.available}</td>
+                <td className="py-2 text-right tabular">{totals.unsellable}</td>
                 <td colSpan={2} />
               </tr>
             </tfoot>

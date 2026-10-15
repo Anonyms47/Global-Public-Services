@@ -7,6 +7,7 @@ import {
   inventoryApplyAction,
   inventoryPreviewAction,
   restockAction,
+  unsellableAction,
 } from "@/app/comptoir/(app)/stock/actions";
 import { ActionFeedback, useAction } from "./useAction";
 import { Sheet } from "../ui/Sheet";
@@ -77,6 +78,111 @@ export function AdjustButton({
           <ActionFeedback failure={failure} success={success} />
           <button className="btn btn-blue" disabled={pending || !delta || !reason.trim()}>
             Enregistrer l&apos;ajustement
+          </button>
+        </form>
+      </Sheet>
+    </>
+  );
+}
+
+const unsellableChoices = [
+  [
+    "unsellable",
+    "Passer en non vendable",
+    "Abîmé, en contrôle, pièce d'exposition : retiré de la vente, toujours en stock.",
+  ],
+  ["sellable", "Remettre en vente", "L'article est de nouveau vendable."],
+  [
+    "writeoff",
+    "Sortir du stock",
+    "L'article non vendable quitte définitivement le stock (casse, perte, retour fournisseur).",
+  ],
+] as const;
+
+export function UnsellableButton({
+  variantId,
+  label,
+  available,
+  unsellable,
+}: {
+  variantId: string;
+  label: string;
+  available: number;
+  unsellable: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [action, setAction] = useState<(typeof unsellableChoices)[number][0]>("unsellable");
+  const [quantity, setQuantity] = useState("1");
+  const [reason, setReason] = useState("");
+  const { run, pending, failure, success, setSuccess } = useAction();
+  const max = action === "unsellable" ? available : unsellable;
+  return (
+    <>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => (setOpen(true), setSuccess(null))}>
+        Non vendable
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Stock non vendable" side="center">
+        <form
+          className="grid gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(() => unsellableAction({ variantId, action, quantity: Number(quantity), reason }), {
+              onSuccess: () => setReason(""),
+            });
+          }}
+        >
+          <p className="font-semibold">{label}</p>
+          <p className="text-[14px] text-ink-soft">
+            Disponible à la vente : {available} · non vendable : {unsellable}.
+          </p>
+          <fieldset className="grid gap-2">
+            <legend className="label">Opération</legend>
+            {unsellableChoices.map(([k, title, text]) => (
+              <label key={k} className="flex gap-2 rounded-[6px] border border-line p-2 text-[14px]">
+                <input
+                  type="radio"
+                  name={`uns-${variantId}`}
+                  checked={action === k}
+                  disabled={k !== "unsellable" && unsellable === 0}
+                  onChange={() => setAction(k)}
+                />
+                <span>
+                  <span className="block font-bold">{title}</span>
+                  <span className="text-ink-mute">{text}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          <div>
+            <label className="label" htmlFor={`uns-q-${variantId}`}>
+              Quantité (max. {max})
+            </label>
+            <input
+              id={`uns-q-${variantId}`}
+              inputMode="numeric"
+              className="field"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ""))}
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor={`uns-r-${variantId}`}>
+              Motif (obligatoire)
+            </label>
+            <input
+              id={`uns-r-${variantId}`}
+              className="field"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Écran fissuré, boîte abîmée, exposition…"
+            />
+          </div>
+          <ActionFeedback failure={failure} success={success} />
+          <button
+            className="btn btn-blue"
+            disabled={pending || !reason.trim() || !Number(quantity) || Number(quantity) > max}
+          >
+            Enregistrer
           </button>
         </form>
       </Sheet>

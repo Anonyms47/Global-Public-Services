@@ -74,7 +74,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
                   <span className="text-ink-mute">· {v.sku}</span>
                 </span>
                 <span className="tabular">
-                  {v.price.toLocaleString("fr-FR")} FCFA · {v.onHand - v.reserved} dispo.
+                  {v.price.toLocaleString("fr-FR")} FCFA · {v.onHand - v.reserved - v.unsellable} dispo.
                 </span>
               </li>
             ))}

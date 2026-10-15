@@ -12,6 +12,7 @@ import {
   sellableAction,
 } from "@/app/comptoir/(app)/commandes/actions";
 import type { DeliveryZone } from "@/server/domain/settings";
+import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
 import { fcfa } from "@/lib/format";
 import { ActionFeedback, useAction } from "./useAction";
 import {
@@ -55,8 +56,10 @@ interface Draft {
   fee: string;
   feeUnknown: boolean;
   notes: string;
-  payMethod: "cash" | "mobile_money" | "card" | "bank_transfer" | "other";
+  payMethod: PaymentMethodKey;
   amount: string;
+  /** Moyens supplémentaires (paiement mixte). */
+  extraPays: { method: PaymentMethodKey; amount: string }[];
 }
 
 const newDraft = (): Draft => ({
@@ -76,15 +79,10 @@ const newDraft = (): Draft => ({
   notes: "",
   payMethod: "cash",
   amount: "",
+  extraPays: [],
 });
 
-const methods = [
-  ["cash", "Espèces"],
-  ["mobile_money", "Mobile money"],
-  ["card", "Carte"],
-  ["bank_transfer", "Virement"],
-  ["other", "Autre"],
-] as const;
+const methods = paymentMethods;
 
 const noop = () => () => {};
 
@@ -215,10 +213,21 @@ function OrderComposer({
       ? Math.max(0, Math.round(Number(draft.fee) || 0))
       : 0;
   const total = subtotal + fee;
+  const extras = (draft.extraPays ?? []).map((p) => ({
+    method: p.method,
+    amount: Math.max(0, Math.round(Number(p.amount) || 0)),
+  }));
+  const extraTotal = extras.reduce((s, p) => s + p.amount, 0);
   const received =
-    draft.amount === "" ? (mode === "sale" ? total : 0) : Math.max(0, Math.round(Number(draft.amount) || 0));
-  const paid = Math.min(received, total);
-  const change = mode === "sale" && draft.payMethod === "cash" ? Math.max(0, received - total) : 0;
+    draft.amount === ""
+      ? mode === "sale"
+        ? Math.max(0, total - extraTotal)
+        : 0
+      : Math.max(0, Math.round(Number(draft.amount) || 0));
+  // La monnaie ne se rend que sur les espèces (premier moyen).
+  const change = mode === "sale" && draft.payMethod === "cash" ? Math.max(0, received + extraTotal - total) : 0;
+  const firstPaid = Math.min(received, Math.max(0, total - extraTotal));
+  const paid = Math.min(total, firstPaid + extraTotal);
   const needsCustomer = mode === "order" || draft.withCustomer;
 
   const checkPhone = async (phone: string) => {
@@ -261,13 +270,14 @@ function OrderComposer({
         unitPrice: canEditPrice && l.unitPrice !== l.catalogPrice ? l.unitPrice : undefined,
       })),
       payment:
-        paid > 0
+        firstPaid > 0
           ? {
               method: draft.payMethod,
-              amount: paid,
-              note: change ? `Reçu ${fcfa(received)}, rendu ${fcfa(change)}` : "",
+              amount: firstPaid,
+              note: change ? `Reçu ${fcfa(received)}, rendu ${fcfa(change)}` : extras.length ? "Paiement mixte" : "",
             }
           : null,
+      payments: extras.filter((p) => p.amount > 0).map((p) => ({ ...p, note: "Paiement mixte" })),
     };
     run(() => (mode === "sale" ? quickSaleAction(payload) : createOrderAction(payload)), {
       refresh: false,
@@ -905,11 +915,72 @@ function OrderComposer({
                   inputMode="numeric"
                   className="field"
                   value={draft.amount}
-                  placeholder={mode === "sale" ? String(total) : "0"}
+                  placeholder={mode === "sale" ? String(Math.max(0, total - extraTotal)) : "0"}
                   onChange={(e) => update({ amount: e.target.value.replace(/\D/g, "") })}
                 />
               </div>
             </div>
+            {(draft.extraPays ?? []).map((p, i) => (
+              <div key={i} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <div>
+                  <label className="label" htmlFor={`p-method-${i}`}>
+                    Autre moyen
+                  </label>
+                  <select
+                    id={`p-method-${i}`}
+                    className="field"
+                    value={p.method}
+                    onChange={(e) =>
+                      update({
+                        extraPays: draft.extraPays.map((x, j) =>
+                          j === i ? { ...x, method: e.target.value as PaymentMethodKey } : x,
+                        ),
+                      })
+                    }
+                  >
+                    {methods.map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label" htmlFor={`p-amount-${i}`}>
+                    Montant
+                  </label>
+                  <input
+                    id={`p-amount-${i}`}
+                    inputMode="numeric"
+                    className="field"
+                    value={p.amount}
+                    onChange={(e) =>
+                      update({
+                        extraPays: draft.extraPays.map((x, j) =>
+                          j === i ? { ...x, amount: e.target.value.replace(/\D/g, "") } : x,
+                        ),
+                      })
+                    }
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => update({ extraPays: draft.extraPays.filter((_, j) => j !== i) })}
+                >
+                  Retirer
+                </button>
+              </div>
+            ))}
+            {(draft.extraPays ?? []).length < 3 ? (
+              <button
+                type="button"
+                className="justify-self-start text-[14px] font-semibold text-gps-blue hover:underline"
+                onClick={() => update({ extraPays: [...(draft.extraPays ?? []), { method: "wave", amount: "" }] })}
+              >
+                + Paiement mixte : ajouter un moyen
+              </button>
+            ) : null}
           </fieldset>
 
           <dl className="grid gap-1 border-t border-line pt-3 text-[15px]">
@@ -964,8 +1035,12 @@ function OrderComposer({
                 </li>
                 <li>{mode === "sale" ? "Sortie de stock immédiate" : "Les articles seront réservés"}</li>
                 <li>
-                  Encaissement : {fcfa(paid)} ({methods.find((m) => m[0] === draft.payMethod)?.[1]}) · solde{" "}
-                  {fcfa(total - paid)}
+                  Encaissement : {fcfa(paid)} (
+                  {[
+                    methods.find((m) => m[0] === draft.payMethod)?.[1],
+                    ...extras.filter((p) => p.amount > 0).map((p) => methods.find((m) => m[0] === p.method)?.[1]),
+                  ].join(" + ")}
+                  ) · solde {fcfa(total - paid)}
                 </li>
               </ul>
               <div className="mt-3 flex gap-2">

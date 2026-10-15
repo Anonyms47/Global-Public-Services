@@ -49,12 +49,13 @@ export async function checkCart(db: Db, items: CartItemInput[], now = new Date()
     price: number;
     on_hand: number;
     reserved: number;
+    unsellable: number;
     active: boolean;
     status: string;
     is_demo: boolean;
     image: string | null;
   }>(
-    `select v.id, v.product_id, p.slug, p.name, v.sku, v.options, p.axes, v.price, v.on_hand, v.reserved, v.active, p.status, p.is_demo,
+    `select v.id, v.product_id, p.slug, p.name, v.sku, v.options, p.axes, v.price, v.on_hand, v.reserved, v.unsellable, v.active, p.status, p.is_demo,
             (select url from product_images i where i.product_id = p.id order by position limit 1) as image
        from variants v join products p on p.id = v.product_id where v.id = any($1)`,
     [clean.map((i) => i.variantId)],
@@ -86,7 +87,7 @@ export async function checkCart(db: Db, items: CartItemInput[], now = new Date()
       now,
     );
     const unitPrice = promo ? discounted(r.price, promo) : r.price;
-    const available = Math.max(0, r.on_hand - r.reserved);
+    const available = Math.max(0, r.on_hand - r.reserved - r.unsellable);
     const issues: CartIssue[] = [];
     if (unitPrice !== item.seenPrice) issues.push({ kind: "price", from: item.seenPrice, to: unitPrice });
     if (available === 0) issues.push({ kind: "unavailable" });

@@ -26,6 +26,8 @@ export interface OrderMessageInput {
   name: string;
   phone?: string;
   note?: string;
+  /** Référence de la demande enregistrée (GPS-R-…), si l'enregistrement a réussi. */
+  reference?: string;
 }
 
 export const TO_CONFIRM = "À confirmer avec GPS";
@@ -36,7 +38,11 @@ export function orderSubtotal(lines: MessageLine[]) {
 
 /** Message de commande envoyé par le client à GPS via WhatsApp. */
 export function buildOrderMessage(input: OrderMessageInput) {
-  const out: string[] = ["Bonjour GPS, je souhaite passer cette commande :", ""];
+  const out: string[] = [
+    "Bonjour GPS, je souhaite passer cette commande :",
+    ...(input.reference ? [`Demande ${input.reference}`] : []),
+    "",
+  ];
   input.lines.forEach((l, i) => {
     out.push(`${i + 1}. ${l.name}${l.optionsLabel ? ` — ${l.optionsLabel}` : ""}`);
     out.push(`   Réf. ${l.sku} · Qté ${l.quantity} × ${fcfa(l.unitPrice)} = ${fcfa(l.unitPrice * l.quantity)}`);

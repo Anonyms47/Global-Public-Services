@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { verifyCart } from "@/app/(site)/panier/actions";
+import { registerRequest, verifyCart } from "@/app/(site)/panier/actions";
 import type { CheckedItem } from "@/server/domain/cart";
 import type { DeliveryZone } from "@/server/domain/settings";
 import { fcfa } from "@/lib/format";
@@ -178,6 +178,8 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
   }, []);
 
   const verifiedOnce = useRef(false);
+  /** Dernière demande enregistrée : remplacée si le client modifie puis prépare à nouveau. */
+  const lastRequest = useRef<string | null>(null);
   useEffect(() => {
     if (ready && !verifiedOnce.current && items.length) {
       verifiedOnce.current = true;
@@ -237,7 +239,20 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
     }
+    const req = await registerRequest({
+      items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, seenPrice: i.unitPrice })),
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      reception: form.reception as "pickup" | "delivery",
+      zone: form.zone,
+      address: form.address.trim(),
+      deliveryFee,
+      note: form.note.trim(),
+      replacesId: lastRequest.current ?? undefined,
+    }).catch(() => ({ ok: false as const }));
+    if (req.ok) lastRequest.current = req.id;
     const msg = buildOrderMessage({
+      reference: req.ok ? req.reference : undefined,
       lines: items.map((i) => ({
         sku: i.sku,
         name: i.name,

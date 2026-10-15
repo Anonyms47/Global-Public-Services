@@ -736,6 +736,7 @@ export async function purgeDemo(db: Db) {
         "Des commandes réelles contiennent des produits d'exemple : archivez ces produits au lieu de les purger.",
       );
     }
+    await tx.query("delete from order_requests where is_demo");
     await tx.query("delete from orders where is_demo");
     await tx.query("delete from customers where is_demo");
     await tx.query("delete from promotions where is_demo");

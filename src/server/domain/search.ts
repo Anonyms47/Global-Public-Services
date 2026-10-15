@@ -4,10 +4,10 @@ import { phoneKey } from "@/lib/format";
 /** Recherche globale du Comptoir : produits, commandes, clients. */
 export async function globalSearch(db: Db, q: string) {
   const term = q.trim();
-  if (term.length < 2) return { products: [], orders: [], customers: [] };
+  if (term.length < 2) return { products: [], orders: [], customers: [], requests: [] };
   const like = `%${term}%`;
   const digits = phoneKey(term);
-  const [products, orders, customers] = await Promise.all([
+  const [products, orders, customers, requests] = await Promise.all([
     db.query<{
       id: string;
       name: string;
@@ -37,6 +37,11 @@ export async function globalSearch(db: Db, q: string) {
       `select id, name, phone from customers where name ilike $1 or ($2 <> '' and phone_key like '%' || $2 || '%') order by name limit 6`,
       [like, digits.length >= 3 ? digits : ""],
     ),
+    db.query<{ id: string; reference: string; customer_name: string; status: string }>(
+      `select id, reference, customer_name, status from order_requests
+        where reference ilike $1 or customer_name ilike $1 order by created_at desc limit 6`,
+      [like],
+    ),
   ]);
-  return { products, orders, customers };
+  return { products, orders, customers, requests };
 }

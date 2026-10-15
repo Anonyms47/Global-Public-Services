@@ -4,7 +4,7 @@ import { z } from "zod";
 import { guarded } from "@/server/admin";
 import { isDemoMode } from "@/server/db";
 import { AppError } from "@/server/domain/errors";
-import { adjustStock, applyInventory, inventoryPreview, restock } from "@/server/domain/stock";
+import { adjustStock, applyInventory, inventoryPreview, moveUnsellable, restock } from "@/server/domain/stock";
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const r = schema.safeParse(input);
@@ -77,5 +77,24 @@ export async function adjustAction(variantId: string, delta: number, reason: str
     {
       message: "Ajustement enregistré.",
     },
+  );
+}
+
+export async function unsellableAction(input: unknown) {
+  return guarded(
+    "stock.inventory",
+    ({ db, user }) => {
+      const d = parse(
+        z.object({
+          variantId: z.string(),
+          action: z.enum(["unsellable", "sellable", "writeoff"]),
+          quantity: z.coerce.number().int(),
+          reason: z.string().max(200),
+        }),
+        input,
+      );
+      return moveUnsellable(db, { ...d, userId: user.id });
+    },
+    { message: "Stock non vendable mis à jour." },
   );
 }

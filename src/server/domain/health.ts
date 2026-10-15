@@ -29,6 +29,7 @@ const EXPECTED_TABLES = [
   "order_events",
   "services",
   "queue_items",
+  "order_requests",
   "audit_log",
 ];
 
@@ -49,7 +50,9 @@ export async function healthChecks(
       "select table_name from information_schema.tables where table_schema = current_schema() and table_name = any($1)",
       [EXPECTED_TABLES],
     ),
-    db.one<{ n: number }>("select count(*)::int as n from variants where reserved > on_hand or on_hand < 0"),
+    db.one<{ n: number }>(
+      "select count(*)::int as n from variants where reserved + unsellable > on_hand or on_hand < 0",
+    ),
     db.one<{ n: number }>(
       `select count(*)::int as n from variants v
         where v.reserved <> coalesce((select sum(l.quantity) from order_lines l join orders o on o.id = l.order_id
@@ -116,7 +119,7 @@ export async function healthChecks(
       status: n(overReserved) ? "error" : n(reserveDrift) ? "warn" : "ok",
       value: n(overReserved) + n(reserveDrift) ? `${n(overReserved) + n(reserveDrift)} écart(s)` : "Aucun écart",
       detail:
-        "Réservé ≤ physique pour chaque variante, et réservé = quantités des commandes confirmées non remises." +
+        "Réservé + non vendable ≤ physique pour chaque variante, et réservé = quantités des commandes confirmées non remises." +
         (n(reserveDrift) ? ` ${n(reserveDrift)} variante(s) à contrôler (inventaire).` : ""),
     },
     {
