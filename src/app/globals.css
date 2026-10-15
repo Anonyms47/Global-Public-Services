@@ -1191,3 +1191,37 @@
   background: var(--color-gps-blue-soft);
   color: var(--color-gps-blue);
 }
+
+/* ——— À propos ——— */
+.about-offer {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  border-radius: 24px;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  padding: 24px;
+  transition:
+    transform 300ms var(--ease-out-gps),
+    box-shadow 300ms var(--ease-out-gps),
+    border-color 200ms;
+}
+.about-offer:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-gps-blue);
+  box-shadow: 0 24px 40px -26px rgb(20 16 57 / 0.55);
+}
+.about-offer:focus-visible {
+  outline: 3px solid var(--color-gps-blue);
+  outline-offset: 3px;
+}
+.about-offer > :last-child {
+  margin-top: auto;
+  padding-top: 24px;
+}
+.about-lead {
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--color-ink);
+}
