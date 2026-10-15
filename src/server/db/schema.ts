@@ -317,6 +317,14 @@ create table if not exists product_versions (
 );
 create index if not exists product_versions_product on product_versions (product_id, created_at);
 
+-- Médiathèque : métadonnées et corbeille des fichiers téléversés.
+alter table media add column if not exists name text not null default '';
+alter table media add column if not exists size int not null default 0;
+alter table media add column if not exists alt text not null default '';
+alter table media add column if not exists uploaded_by text references users (id) on delete set null;
+alter table media add column if not exists deleted_at timestamptz;
+alter table media add column if not exists is_demo boolean not null default false;
+
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
 -- des tables, n'est pas concernée.

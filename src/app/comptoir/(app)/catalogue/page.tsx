@@ -51,6 +51,11 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
               <Link href="/comptoir/catalogue/promotions" className="btn btn-outline">
                 Promotions
               </Link>
+              {can(user, "catalog.bulk") ? (
+                <Link href="/comptoir/catalogue/import" className="btn btn-outline">
+                  Import CSV
+                </Link>
+              ) : null}
               <Link href="/comptoir/catalogue/nouveau" className="btn btn-blue">
                 <IconPlus size={18} /> Ajouter un produit
               </Link>

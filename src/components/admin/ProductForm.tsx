@@ -12,6 +12,7 @@ import {
 import { publicationIssues } from "@/lib/publication";
 import { fcfa, slugify } from "@/lib/format";
 import { ActionFeedback, useAction } from "./useAction";
+import { MediaPicker } from "./MediaLibrary";
 import { Badge } from "./ui";
 import { IconCheck, IconDown, IconPlus, IconTrash, IconUp, IconUpload, IconAlert } from "../ui/icons";
 
@@ -521,6 +522,15 @@ function ProductForm({
                 onChange={(e) => (upload(e.target.files), (e.target.value = ""))}
               />
             </label>
+            <MediaPicker
+              onPick={(img) =>
+                setState((s) =>
+                  s.images.some((x) => x.url === img.url)
+                    ? s
+                    : { ...s, images: [...s.images, { url: img.url, alt: img.alt || s.name, color: null }] },
+                )
+              }
+            />
             {uploadError ? (
               <p role="alert" className="error-text">
                 {uploadError}

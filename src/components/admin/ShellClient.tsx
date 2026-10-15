@@ -15,6 +15,7 @@ import {
   IconRocket,
   IconHeart,
   IconWhatsApp,
+  IconImage,
   IconMenu,
   IconSearch,
   IconGrid,
@@ -45,6 +46,7 @@ const icons: Record<string, typeof IconMenu> = {
   launch: IconRocket,
   health: IconHeart,
   request: IconWhatsApp,
+  media: IconImage,
 };
 
 export function AdminNavLink({ href, icon, children }: { href: string; icon: string; children: ReactNode }) {

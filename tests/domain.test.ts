@@ -31,6 +31,9 @@ import { can } from "@/lib/permissions";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
 import { createRequest, convertRequest, dismissRequest, getRequest } from "@/server/domain/requests";
+import { storeMedia, listMedia, trashMedia, restoreMedia, purgeMedia, sniffMime } from "@/server/domain/media";
+import { previewImport, applyImport, importTemplate } from "@/server/domain/import";
+import { parseCsv } from "@/lib/csv";
 import { listQueue, updateQueueItem, addManualTask } from "@/server/domain/queue";
 import { launchChecks, setTargetMode, currentMode, summarize } from "@/server/domain/launch";
 import { healthChecks } from "@/server/domain/health";
@@ -522,6 +525,88 @@ describe("Catalogue, panier et promotions", () => {
     await expect(purgeProduct(db, sold!.product_id)).rejects.toThrow(/commandes/);
     await restoreProduct(db, sold!.product_id);
     await db.query("update products set status = 'published' where id = $1", [sold!.product_id]);
+  });
+
+  it("médiathèque : type vérifié sur le contenu, fichier utilisé protégé, corbeille", async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    const mp4 = new Uint8Array([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42"), 0, 0]);
+    expect(sniffMime(png)).toBe("image/png");
+    expect(sniffMime(mp4)).toBe("video/mp4");
+    expect(sniffMime(new TextEncoder().encode("<svg onload=alert(1)>"))).toBeNull();
+    await expect(
+      storeMedia(db, { bytes: new TextEncoder().encode("GIF89a"), name: "x.gif", userId: null, isDemo: true }),
+    ).rejects.toThrow(/Format/);
+    await expect(
+      storeMedia(db, { bytes: mp4, name: "v.mp4", userId: null, isDemo: true, imagesOnly: true }),
+    ).rejects.toThrow(/JPEG/);
+    await expect(
+      storeMedia(db, { bytes: new Uint8Array(3 * 1024 * 1024 + 1), name: "big", userId: null, isDemo: true }),
+    ).rejects.toThrow(/trop lourd/);
+    const img = await storeMedia(db, { bytes: png, name: "photo.png", userId: null, isDemo: true });
+    const vid = await storeMedia(db, { bytes: mp4, name: "clip.mp4", userId: null, isDemo: true });
+    expect((await listMedia(db, { view: "unused" })).map((m) => m.id)).toEqual(
+      expect.arrayContaining([img.id, vid.id]),
+    );
+    const product = (await publishedProducts(db))[0];
+    await db.query("insert into product_images (id, product_id, url, position) values ($1, $2, $3, 99)", [
+      crypto.randomUUID(),
+      product.id,
+      img.url,
+    ]);
+    await expect(trashMedia(db, img.id)).rejects.toThrow(/utilisé/);
+    await trashMedia(db, vid.id);
+    expect((await listMedia(db, { view: "trash" })).map((m) => m.id)).toContain(vid.id);
+    await restoreMedia(db, vid.id);
+    await expect(purgeMedia(db, vid.id)).rejects.toThrow(/corbeille/);
+    await trashMedia(db, vid.id);
+    await purgeMedia(db, vid.id);
+    expect((await listMedia(db, { view: "trash" })).map((m) => m.id)).not.toContain(vid.id);
+    await db.query("delete from product_images where url = $1", [img.url]);
+  });
+
+  it("import CSV : aperçu, erreurs par ligne, regroupement en variantes, tout ou rien", async () => {
+    const owner = await userByRole(db, "owner");
+    expect(parseCsv('a;b\n"x;1";"di""t"\n')).toEqual([
+      ["a", "b"],
+      ["x;1", 'di"t'],
+    ]);
+    const tpl = await previewImport(db, importTemplate());
+    expect(tpl.errors).toEqual([]);
+    expect(tpl.products).toHaveLength(1);
+    expect(tpl.products[0].variants.map((v) => v.sku)).toEqual(["EX-ECO-NO", "EX-ECO-BL"]);
+
+    const bad = [
+      "nom;reference;prix;categorie;options",
+      "Lot A;IMP-1;1000;;Couleur=Rouge",
+      "Lot A;IMP-1;1000;;Couleur=Bleu",
+      "Lot B;IMP-2;abc;;",
+      "Lot C;SON-ST2-NO;1000;;",
+      "Lot D;IMP-3;1000;Inconnue;",
+      "Lot A;IMP-4;1000;;Taille=M",
+    ].join("\n");
+    const p = await previewImport(db, bad);
+    expect(p.errors.map((e) => e.line)).toEqual([3, 4, 5, 6, 7]);
+    expect(p.errors[0].message).toMatch(/double/);
+    expect(p.errors[1].message).toMatch(/prix/);
+    expect(p.errors[2].message).toMatch(/déjà utilisée/);
+    expect(p.errors[3].message).toMatch(/catégorie/);
+    expect(p.errors[4].message).toMatch(/axes/);
+    const before = await db.one<{ n: number }>("select count(*)::int as n from products");
+    await expect(applyImport(db, bad, { userId: owner.id, withCosts: true, isDemo: true })).rejects.toThrow(/erreur/);
+    expect((await db.one<{ n: number }>("select count(*)::int as n from products"))?.n).toBe(before?.n);
+
+    const ok =
+      "nom;marque;reference;prix;cout;stock;options\nImport Test;GPS;IMP-OK-1;2000;1200;4;Couleur=Noir\nImport Test;GPS;IMP-OK-2;2000;1200;2;Couleur=Blanc\n";
+    const r = await applyImport(db, ok, { userId: owner.id, withCosts: true, isDemo: true });
+    expect(r).toEqual({ products: 1, variants: 2 });
+    const v = await variantBySku(db, "IMP-OK-1");
+    expect(v.on_hand).toBe(4);
+    const prod = await db.one<{ status: string; axes: string[] }>(
+      "select p.status, p.axes from products p join variants v on v.product_id = p.id where v.sku = $1",
+      ["IMP-OK-1"],
+    );
+    expect(prod).toEqual({ status: "draft", axes: ["Couleur"] });
+    await expect(applyImport(db, ok, { userId: owner.id, withCosts: true, isDemo: true })).rejects.toThrow(/erreur/);
   });
 
   it("recherche par référence et par catégorie", async () => {
