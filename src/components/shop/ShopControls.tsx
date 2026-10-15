@@ -123,26 +123,6 @@ export function ShopControls({
 
   const filters = (
     <div className="grid gap-6 lg:flex lg:flex-wrap lg:items-end lg:gap-4">
-      {categories.length ? (
-        <div className="lg:w-52">
-          <label className="label" htmlFor="f-categorie">
-            Univers
-          </label>
-          <select
-            id="f-categorie"
-            className="field"
-            value={query.categorie ?? ""}
-            onChange={(e) => set({ categorie: e.target.value || undefined })}
-          >
-            <option value="">Tous les univers</option>
-            {categories.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
       {facets.brands.length > 1 ? (
         <fieldset>
           <legend className="label">Marque</legend>
@@ -207,7 +187,7 @@ export function ShopControls({
         </button>
       </form>
       {facets.conditions.length > 1 ? (
-        <div className="lg:w-56">
+        <div className="lg:w-44">
           <label className="label" htmlFor="f-etat">
             État
           </label>
@@ -248,31 +228,33 @@ export function ShopControls({
   );
 
   return (
-    <div>
-      <div className="hidden rounded-[6px] border border-line bg-card p-4 lg:block">{filters}</div>
+    <div className="contents">
+      <div className="hidden rounded-[22px] border border-line bg-card p-5 shadow-[0_12px_32px_-24px_rgb(20_16_57/0.35)] lg:block">
+        {filters}
+      </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[15px] font-semibold" aria-live="polite">
+      <div className="shop-toolbar sticky top-16 z-30 -mx-4 mt-3 flex flex-nowrap items-center justify-between gap-2 px-4 py-2.5 md:top-[84px] md:-mx-8 md:px-8">
+        <p className="shrink-0 text-[14px] font-semibold whitespace-nowrap md:text-[15px]" aria-live="polite">
           <span className="tabular">{count}</span> article{count > 1 ? "s" : ""}
           {pending ? <span className="ml-2 text-ink-mute">· mise à jour…</span> : null}
         </p>
         <div className="flex items-center gap-2">
-          <button type="button" className="btn btn-outline btn-sm lg:hidden" onClick={() => setOpen(true)}>
-            <IconFilter size={18} /> Filtres
-            {active.length ? ` (${active.length})` : ""}
+          <button type="button" className="btn btn-ink btn-sm lg:hidden" onClick={() => setOpen(true)}>
+            <IconFilter size={17} /> Filtres
+            {active.length ? <span className="filter-count tabular">{active.length}</span> : null}
           </button>
           <label htmlFor="f-tri" className="sr-only">
             Trier par
           </label>
           <select
             id="f-tri"
-            className="field h-10 min-h-10 w-auto rounded-full py-0 pr-9 pl-4 text-[15px]"
+            className="field h-10 min-h-10 w-auto rounded-full py-0 pr-8 pl-4 text-[14px] md:text-[15px]"
             value={query.tri ?? "nouveautes"}
             onChange={(e) => set({ tri: e.target.value as ShopQuery["tri"] })}
           >
             {Object.entries(sortLabels).map(([k, v]) => (
               <option key={k} value={k}>
-                Trier : {v}
+                {v}
               </option>
             ))}
           </select>
