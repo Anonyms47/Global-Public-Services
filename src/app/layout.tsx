@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s · GPS",
   },
   description:
-    "GPS — Global Public Services : téléphones, écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures et services de transfert d'argent.",
+    "GPS — Global Public Services : téléphones, écouteurs, casques, chargeurs, accessoires, montres, parfums, lunettes, chaussures et services de transfert d'argent.",
   applicationName: "GPS — Global Public Services",
 };
 

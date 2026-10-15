@@ -100,8 +100,8 @@ export default async function HomePage() {
               </span>
             </h1>
             <p className="hero-fade mt-6 max-w-[46ch] text-[17px] leading-relaxed text-ink-soft">
-              Téléphones, écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures et services de
-              transfert d&apos;argent. Choisissez en ligne, envoyez votre commande sur WhatsApp, GPS vous confirme.
+              Téléphones, écouteurs, casques, chargeurs, accessoires, montres, parfums, lunettes, chaussures et services
+              de transfert d&apos;argent. Choisissez en ligne, envoyez votre commande sur WhatsApp, GPS vous confirme.
             </p>
             <div className="hero-fade mt-8 flex flex-wrap gap-3">
               <Link href="/boutique" className="btn btn-primary">

@@ -1,6 +1,6 @@
 import { openDb, type Db } from "./client";
 import { ensureBaseSettings } from "../domain/settings";
-import { refreshDemoImages, seedDemo } from "../demo/seed";
+import { addLateDemoProducts, refreshDemoImages, seedDemo } from "../demo/seed";
 
 export type { Db };
 
@@ -30,6 +30,7 @@ async function init(): Promise<Db> {
     if (isDemoMode()) {
       await seedDemo(tx, { onlyIfEmpty: true });
       await refreshDemoImages(tx);
+      await addLateDemoProducts(tx);
     }
   });
   return db;

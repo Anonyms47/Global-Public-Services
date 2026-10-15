@@ -9,7 +9,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/boutique">)
   return {
     title: q.q ? `Recherche « ${q.q} »` : "Boutique",
     description:
-      "Le catalogue GPS : téléphones, écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures et plus.",
+      "Le catalogue GPS : téléphones, écouteurs, casques, chargeurs, accessoires, montres, parfums, lunettes, chaussures et plus.",
     alternates: { canonical: "/boutique" },
   };
 }
