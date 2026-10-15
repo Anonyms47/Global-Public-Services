@@ -745,6 +745,7 @@ export async function purgeDemo(db: Db) {
       "delete from categories c where is_demo and not exists (select 1 from products p where p.category_id = c.id)",
     );
     await tx.query("delete from services where is_demo");
+    await tx.query("delete from queue_items where is_demo");
     await tx.query("delete from users where is_demo");
     const s = await getSettings(tx);
     const exists = async (id: string | null) => !!id && !!(await tx.one("select 1 from products where id = $1", [id]));

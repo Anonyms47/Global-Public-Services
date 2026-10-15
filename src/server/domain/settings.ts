@@ -45,7 +45,15 @@ export interface Settings {
     focusProductId: string | null;
     focusText: string;
   };
+  /** Mode de boutique visé, préparé par le propriétaire (le basculement réel se fait dans l'hébergeur). */
+  launch: {
+    targetMode: ShopMode;
+    updatedAt: string | null;
+    updatedBy: string | null;
+  };
 }
+
+export type ShopMode = "demo" | "test" | "open";
 
 export const defaultSettings: Settings = {
   company: {
@@ -75,6 +83,7 @@ export const defaultSettings: Settings = {
   stock: { defaultLowThreshold: 1 },
   receipt: { header: "", footer: "Merci pour votre confiance." },
   storefront: { heroProductId: null, focusProductId: null, focusText: "" },
+  launch: { targetMode: "demo", updatedAt: null, updatedBy: null },
 };
 
 export { TO_CONFIRM } from "@/lib/whatsapp";

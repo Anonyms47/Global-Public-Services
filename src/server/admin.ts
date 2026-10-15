@@ -79,3 +79,15 @@ export async function guarded<T>(
     return { ok: false, code: "internal", error: msg };
   }
 }
+
+/** Configuration du serveur, sans aucun secret. */
+export function serverEnv() {
+  return {
+    demoMode: isDemoMode(),
+    indexable: process.env.SITE_INDEXABLE === "true",
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "",
+    protectedDemo: isDemoProtected(),
+    postgres: !!process.env.DATABASE_URL,
+    region: process.env.VERCEL_REGION ?? "",
+  };
+}

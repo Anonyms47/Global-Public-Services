@@ -355,7 +355,7 @@ export const paymentLabels = {
   none: "Aucun montant dû",
 } as const;
 
-const summarySelect = `
+export const summarySelect = `
   select o.id, o.reference, o.customer_name, o.customer_phone, o.channel, o.status, o.fulfillment, o.reception,
          o.subtotal, o.delivery_fee, o.created_at, o.is_demo,
          coalesce((select sum(l.returned_quantity * l.unit_price) from order_lines l where l.order_id = o.id), 0)::int as returned_value,

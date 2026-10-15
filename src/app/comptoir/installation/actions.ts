@@ -44,5 +44,5 @@ export async function installAction(_prev: State, formData: FormData): Promise<S
     console.error(error);
     return { error: "L'installation a échoué. Réessayez dans un instant.", name: input.name, email: input.email };
   }
-  redirect("/comptoir");
+  redirect("/comptoir/lancement");
 }

@@ -1,94 +1,58 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { User } from "@/server/domain/auth";
-import { can, roleLabels, type Permission } from "@/lib/permissions";
+import { can, roleLabels } from "@/lib/permissions";
+import { adminNavGroups, quickActions } from "@/lib/admin-nav";
 import { Logo } from "../brand/Logo";
 import { Ribbon } from "../brand/Ribbon";
-import { AdminNavLink, GlobalSearch, MobileAdminNav } from "./ShellClient";
+import { AdminNavLink, CommandPalette, MobileAdminNav, QuickActionButton } from "./ShellClient";
 import { logoutAction } from "@/app/comptoir/connexion/actions";
 import { IconLogout, IconPlus } from "../ui/icons";
 
-export const adminNav: {
-  href: string;
-  label: string;
-  perm: Permission;
-  icon: string;
-}[] = [
-  {
-    href: "/comptoir",
-    label: "Aujourd'hui",
-    perm: "orders.view",
-    icon: "today",
-  },
-  {
-    href: "/comptoir/commandes",
-    label: "Commandes",
-    perm: "orders.view",
-    icon: "orders",
-  },
-  {
-    href: "/comptoir/catalogue",
-    label: "Catalogue",
-    perm: "catalog.view",
-    icon: "catalog",
-  },
-  {
-    href: "/comptoir/stock",
-    label: "Stock",
-    perm: "stock.view",
-    icon: "stock",
-  },
-  {
-    href: "/comptoir/clients",
-    label: "Clients",
-    perm: "customers.view",
-    icon: "customers",
-  },
-  {
-    href: "/comptoir/vitrine",
-    label: "Vitrine & services",
-    perm: "storefront.edit",
-    icon: "storefront",
-  },
-  {
-    href: "/comptoir/rapports",
-    label: "Rapports",
-    perm: "reports.view",
-    icon: "reports",
-  },
-  {
-    href: "/comptoir/parametres",
-    label: "Paramètres & équipe",
-    perm: "settings.edit",
-    icon: "settings",
-  },
-];
-
 export function Shell({ user, demo, children }: { user: User; demo: boolean; children: ReactNode }) {
-  const nav = adminNav.filter((n) => can(user, n.perm));
+  const groups = adminNavGroups
+    .map((g) => ({ ...g, items: g.items.filter((n) => can(user, n.perm)) }))
+    .filter((g) => g.items.length);
+  const actions = quickActions.filter((a) => can(user, a.perm));
+  const commands = [
+    ...actions.map((a) => ({ href: a.href, label: a.label, group: "Actions", keywords: a.keywords ?? "" })),
+    ...groups.flatMap((g) =>
+      g.items.map((n) => ({ href: n.href, label: n.label, group: `Aller à · ${g.label}`, keywords: n.keywords ?? "" })),
+    ),
+  ];
   const sidebar = (
     <div className="flex h-full flex-col">
-      <Link href="/comptoir" className="flex items-center gap-3 px-5 pt-5 pb-6">
+      <Link href="/comptoir" className="flex items-center gap-3 px-5 pt-5 pb-5">
         <span className="rounded-[6px] bg-white p-1.5">
           <Logo variant="mark" className="h-7 w-auto" />
         </span>
         <span className="font-display text-[26px] leading-none font-extrabold text-white uppercase">Le Comptoir</span>
       </Link>
-      <nav aria-label="Comptoir" className="flex-1 px-3">
-        <ul className="grid gap-0.5">
-          {nav.map((n) => (
-            <li key={n.href}>
-              <AdminNavLink href={n.href} icon={n.icon}>
-                {n.label}
-              </AdminNavLink>
-            </li>
-          ))}
-        </ul>
+      <nav aria-label="Comptoir" className="flex-1 overflow-y-auto px-3 pb-4">
+        {groups.map((g) => (
+          <div key={g.key} className="mt-3 first:mt-0">
+            <p id={`nav-${g.key}`} className="admin-nav-group">
+              {g.label}
+            </p>
+            <ul className="grid gap-0.5" aria-labelledby={`nav-${g.key}`}>
+              {g.items.map((n) => (
+                <li key={n.href}>
+                  <AdminNavLink href={n.href} icon={n.icon}>
+                    {n.label}
+                  </AdminNavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
       <div className="relative overflow-hidden border-t border-white/10 px-5 py-4 text-white">
         <Ribbon tone="white" className="pointer-events-none absolute -bottom-6 left-0 h-20 w-full opacity-20" />
         <p className="text-[14px] font-bold">{user.name}</p>
-        <p className="text-[13px] text-white/70">{roleLabels[user.role]}</p>
+        <p className="text-[13px] text-white/70">
+          {roleLabels[user.role]}
+          {user.is_demo ? " · exemple" : ""}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href="/"
@@ -110,7 +74,7 @@ export function Shell({ user, demo, children }: { user: User; demo: boolean; chi
     </div>
   );
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[256px_1fr]">
+    <div className="admin-app min-h-dvh lg:grid lg:grid-cols-[256px_1fr]">
       <aside className="no-print sticky top-0 hidden h-dvh bg-gps-blue-deep lg:block">{sidebar}</aside>
       <div className="min-w-0">
         <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
@@ -123,17 +87,19 @@ export function Shell({ user, demo, children }: { user: User; demo: boolean; chi
           ) : null}
           <div className="flex h-16 items-center gap-2 px-4 md:px-8">
             <MobileAdminNav>{sidebar}</MobileAdminNav>
-            <GlobalSearch />
-            <Link href="/comptoir/vente" className="btn btn-primary btn-sm ml-auto shrink-0">
-              <IconPlus size={18} /> <span className="hidden sm:inline">Nouvelle vente</span>
-              <span className="sm:hidden">Vente</span>
-            </Link>
+            <CommandPalette commands={commands} />
+            {can(user, "sales.quick") ? (
+              <Link href="/comptoir/vente" className="btn btn-primary btn-sm ml-auto hidden shrink-0 sm:inline-flex">
+                <IconPlus size={18} /> Nouvelle vente
+              </Link>
+            ) : null}
           </div>
         </header>
-        <main id="contenu" className="mx-auto w-full max-w-[1320px] px-4 py-6 md:px-8 md:py-8">
+        <main id="contenu" className="mx-auto w-full max-w-[1320px] px-4 py-6 pb-28 md:px-8 md:py-8 lg:pb-8">
           {children}
         </main>
       </div>
+      <QuickActionButton actions={actions.slice(0, 5).map((a) => ({ href: a.href, label: a.label }))} />
     </div>
   );
 }

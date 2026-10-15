@@ -131,4 +131,49 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/stock/mouvements");
     await expect(page.getByText("Lot LOT-E2E").first()).toBeVisible();
   });
+
+  test("navigation : palette de commandes, tableau de bord détaillé, file GPS", async ({ page }) => {
+    await login(page, "proprietaire@demo.gps");
+    const nav = page.getByRole("navigation", { name: "Comptoir" });
+    for (const g of ["Piloter", "Exploiter", "Développer"])
+      await expect(nav.getByText(g, { exact: true })).toBeVisible();
+
+    await page.keyboard.press("Control+k");
+    const box = page.getByRole("combobox", { name: /Rechercher une action/ });
+    await expect(box).toBeFocused();
+    await box.fill("réappro");
+    await expect(page.getByRole("option", { name: "Réapprovisionner" })).toBeVisible();
+    await box.press("Enter");
+    await expect(page).toHaveURL(/\/comptoir\/stock\/reapprovisionner$/);
+
+    await page.goto("/comptoir/tableau-de-bord?periode=30j");
+    await page.getByRole("link", { name: /Chiffre d'affaires/ }).click();
+    await expect(page.getByText("Calcul :")).toBeVisible();
+    await expect(page.locator("table").getByRole("link").first()).toBeVisible();
+
+    await page.goto("/comptoir/file");
+    await page.getByLabel("Nouvelle tâche").fill("Tâche E2E");
+    await page.getByRole("button", { name: "Ajouter" }).click();
+    await expect(page.getByText("Tâche E2E")).toBeVisible();
+    const row = page.locator("li", { hasText: "Tâche E2E" }).last();
+    await row.getByRole("button", { name: "Fait" }).click();
+    await expect(page.getByText("Tâche E2E")).toHaveCount(0);
+    await page.goto("/comptoir/file?vue=resolues");
+    await expect(page.getByText("Tâche E2E")).toBeVisible();
+
+    await page.goto("/comptoir/lancement");
+    await expect(page.getByText("Compte du propriétaire réel")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Corriger/ }).first()).toBeVisible();
+  });
+
+  test("vendeur : sans montants ni centre de lancement", async ({ page }) => {
+    await login(page, "vente@demo.gps");
+    await page.goto("/comptoir/tableau-de-bord");
+    await expect(page.getByText("Les montants sont réservés")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Chiffre d'affaires/ })).toHaveCount(0);
+    await page.goto("/comptoir/tableau-de-bord?detail=ca");
+    await expect(page.getByText("Calcul :")).toHaveCount(0);
+    await page.goto("/comptoir/lancement");
+    await expect(page.getByText("Droits insuffisants")).toBeVisible();
+  });
 });
