@@ -37,7 +37,7 @@ export default async function AboutPage() {
     {
       Icon: IconBag,
       title: "Des produits du quotidien",
-      text: `${univers.length || "Plusieurs"} univers : téléphones, écouteurs, casques, chargeurs, accessoires, lunettes, chaussures et plus.`,
+      text: `${univers.length || "Plusieurs"} univers : téléphones, écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures et plus.`,
       href: "/boutique",
       cta: "Voir la boutique",
     },
