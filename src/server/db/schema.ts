@@ -219,6 +219,37 @@ create table if not exists services (
   created_at timestamptz not null default now()
 );
 
+-- ——— Refonte du Comptoir (ajouts uniquement, sans perte de données) ———
+
+-- File GPS : état des éléments de travail (dérivés des commandes et du stock,
+-- ou ajoutés à la main). La clé d'un élément dérivé change avec son état.
+create table if not exists queue_items (
+  key text primary key,
+  kind text not null default 'manual',
+  title text not null default '',
+  href text not null default '',
+  assignee_id text references users (id) on delete set null,
+  note text not null default '',
+  snoozed_until timestamptz,
+  resolved_at timestamptz,
+  resolved_by text references users (id) on delete set null,
+  created_by text references users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  is_demo boolean not null default false
+);
+
+-- Journal des actions sensibles (modes, équipe, configuration).
+create table if not exists audit_log (
+  id text primary key,
+  action text not null,
+  target text not null default '',
+  detail jsonb not null default '{}',
+  user_id text references users (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists audit_log_created_at on audit_log (created_at);
+
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
 -- des tables, n'est pas concernée.
@@ -239,4 +270,6 @@ alter table stock_batches enable row level security;
 alter table stock_movements enable row level security;
 alter table order_events enable row level security;
 alter table services enable row level security;
+alter table queue_items enable row level security;
+alter table audit_log enable row level security;
 `;

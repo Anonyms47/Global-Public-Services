@@ -4,31 +4,25 @@ import { requirePage } from "@/server/admin";
 import { todayCounts } from "@/server/domain/orders";
 import { lowStockCount } from "@/server/domain/stock";
 import { getSettings } from "@/server/domain/settings";
-import { periodFromKey, report } from "@/server/domain/reports";
+import { periodFromKey } from "@/server/domain/reports";
+import { computeMetrics } from "@/server/domain/metrics";
+import { listQueue, queueKindLabels } from "@/server/domain/queue";
 import { can } from "@/lib/permissions";
-import { formatDate, formatDateTime } from "@/lib/format";
-import { methodLabels, type PaymentMethod } from "@/server/domain/orders";
+import { formatDate } from "@/lib/format";
 import { Badge, Money, PageTitle, Panel } from "@/components/admin/ui";
 import { IconArrowRight, IconBag, IconGrid, IconPlus, IconList } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Aujourd'hui" };
 
-const periods = [
-  ["jour", "Aujourd'hui"],
-  ["7j", "7 jours"],
-  ["30j", "30 jours"],
-  ["mois", "Ce mois"],
-] as const;
-
-export default async function TodayPage({ searchParams }: PageProps<"/comptoir">) {
+export default async function TodayPage() {
   const { db, user } = await requirePage();
-  const sp = await searchParams;
-  const period = periodFromKey(typeof sp.periode === "string" ? sp.periode : undefined);
   const settings = await getSettings(db);
-  const [counts, low, r] = await Promise.all([
+  const finance = can(user, "dashboard.finance");
+  const [counts, low, m, queue] = await Promise.all([
     todayCounts(db),
     lowStockCount(db, settings.stock.defaultLowThreshold),
-    report(db, period, { withMargin: false }),
+    computeMetrics(db, periodFromKey("jour")),
+    listQueue(db, { view: "a-faire", userId: user.id, lowThreshold: settings.stock.defaultLowThreshold }),
   ]);
 
   const tasks = [
@@ -149,118 +143,72 @@ export default async function TodayPage({ searchParams }: PageProps<"/comptoir">
         </ul>
       </section>
 
-      <section aria-labelledby="titre-chiffres" className="mt-10">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <h2 id="titre-chiffres" className="font-display text-3xl font-bold uppercase">
-            Chiffres · {period.label}
-          </h2>
-          <nav aria-label="Période" className="flex flex-wrap gap-1">
-            {periods.map(([k, label]) => (
-              <Link
-                key={k}
-                href={`/comptoir?periode=${k}`}
-                aria-current={period.key === k ? "page" : undefined}
-                className={`chip ${period.key === k ? "border-ink bg-ink text-white" : ""}`}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          <Panel>
-            <p className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">Ventes enregistrées</p>
-            <p className="mt-1 text-[28px] font-extrabold">
-              <Money value={r.sales.amount} />
-            </p>
-            <p className="text-[13px] text-ink-mute">
-              {r.sales.count} commande{r.sales.count > 1 ? "s" : ""} ou vente
-              {r.sales.count > 1 ? "s" : ""}, hors annulations et retours, hors frais de livraison.
-            </p>
-          </Panel>
-          <Panel>
-            <p className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">Encaissements</p>
-            <p className="mt-1 text-[28px] font-extrabold text-wa-ink">
-              <Money value={r.encaissements} />
-            </p>
-            <p className="text-[13px] text-ink-mute">
-              Argent effectivement reçu sur la période
-              {r.remboursements ? ` · remboursements : ` : "."}
-              {r.remboursements ? <Money value={r.remboursements} /> : null}
-            </p>
-          </Panel>
-          <Panel>
-            <p className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">Soldes restants</p>
-            <p className="mt-1 text-[28px] font-extrabold text-gps-red-ink">
-              <Money value={r.soldes} />
-            </p>
-            <p className="text-[13px] text-ink-mute">
-              Reste à encaisser sur les commandes en cours, toutes dates confondues.
-            </p>
-          </Panel>
-        </div>
-
-        <Panel title="Détail des opérations" className="mt-4" id="titre-ops">
-          {r.operations.length === 0 ? (
-            <p className="text-ink-mute">Aucune opération sur la période.</p>
+      <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <Panel
+          title="File GPS"
+          id="titre-file"
+          actions={
+            <Link href="/comptoir/file" className="text-[14px] font-semibold text-gps-blue hover:underline">
+              Tout voir ({queue.counts["a-faire"]})
+            </Link>
+          }
+        >
+          {queue.items.length === 0 ? (
+            <p className="text-ink-mute">Rien en attente.</p>
           ) : (
-            <div className="-mx-4 overflow-x-auto md:mx-0">
-              <table className="w-full min-w-[560px] text-[14px]">
-                <thead>
-                  <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
-                    <th className="px-4 py-2 font-bold md:px-0">Heure</th>
-                    <th className="py-2 font-bold">Opération</th>
-                    <th className="py-2 font-bold">Commande</th>
-                    <th className="py-2 font-bold">Détail</th>
-                    <th className="py-2 pr-4 text-right font-bold md:pr-0">Montant</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line-soft">
-                  {r.operations.map((o, i) => (
-                    <tr key={i}>
-                      <td className="px-4 py-2 whitespace-nowrap text-ink-mute md:px-0">{formatDateTime(o.at)}</td>
-                      <td className="py-2">
-                        {o.kind === "vente" ? (
-                          <Badge tone="blue">Vente</Badge>
-                        ) : o.kind === "payment" ? (
-                          <Badge tone="green">Encaissement</Badge>
-                        ) : o.kind === "refund" ? (
-                          <Badge tone="red">Remboursement</Badge>
-                        ) : (
-                          <Badge tone="warn">Correction</Badge>
-                        )}
-                      </td>
-                      <td className="py-2">
-                        <Link
-                          className="font-semibold text-gps-blue hover:underline"
-                          href={`/comptoir/commandes/${o.order_id}`}
-                        >
-                          {o.reference}
-                        </Link>
-                      </td>
-                      <td className="py-2 text-ink-soft">
-                        {o.kind === "vente"
-                          ? o.detail || "Vente au comptoir"
-                          : (methodLabels[o.detail as PaymentMethod] ?? o.detail)}
-                      </td>
-                      <td
-                        className={`py-2 pr-4 text-right font-bold md:pr-0 ${o.kind === "refund" || o.kind === "reversal" ? "text-gps-red-ink" : ""}`}
-                      >
-                        {o.kind === "refund" || o.kind === "reversal" ? "− " : ""}
-                        <Money value={o.amount} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ul className="divide-y divide-line-soft">
+              {queue.items.slice(0, 6).map((i) => (
+                <li key={i.key}>
+                  <Link href={i.href || "/comptoir/file"} className="group flex items-center gap-3 py-2.5">
+                    <Badge tone={i.priority === 1 ? "red" : i.priority === 2 ? "blue" : "neutral"}>
+                      {queueKindLabels[i.kind]}
+                    </Badge>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-bold group-hover:underline">{i.title}</span>
+                      {i.detail ? <span className="block truncate text-[13px] text-ink-mute">{i.detail}</span> : null}
+                    </span>
+                    <IconArrowRight size={16} className="shrink-0 text-ink-mute" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
-          <p className="hint mt-3">
-            Les transferts d&apos;argent ne sont pas enregistrés ici : leurs fonds restent séparés des ventes de
-            produits.
-          </p>
         </Panel>
-      </section>
+        <Panel
+          title="Chiffres du jour"
+          id="titre-chiffres"
+          actions={
+            <Link href="/comptoir/tableau-de-bord" className="text-[14px] font-semibold text-gps-blue hover:underline">
+              Tableau de bord
+            </Link>
+          }
+        >
+          <dl className="grid gap-3">
+            {(finance
+              ? ([
+                  ["ca", "Chiffre d'affaires", <Money key="ca" value={m.ca} />],
+                  ["encaissements", "Encaissements", <Money key="enc" value={m.encaissements} />],
+                  ["reste", "Reste à encaisser", <Money key="reste" value={m.reste} />],
+                  ["commandes", "Commandes", m.commandes],
+                ] as const)
+              : ([
+                  ["commandes", "Commandes", m.commandes],
+                  ["finalisees", "Ventes finalisées", m.finalisees],
+                ] as const)
+            ).map(([k, label, value]) => (
+              <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line-soft pb-2">
+                <dt className="text-[14px] text-ink-soft">
+                  <Link href={`/comptoir/tableau-de-bord?periode=jour&detail=${k}#detail`} className="hover:underline">
+                    {label}
+                  </Link>
+                </dt>
+                <dd className="text-[20px] font-extrabold tabular">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="hint mt-3">Transferts d&apos;argent exclus : leurs fonds restent séparés des ventes.</p>
+        </Panel>
+      </div>
     </>
   );
 }

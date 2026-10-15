@@ -217,3 +217,52 @@ export function IconWhatsApp({ size = 20, ...rest }: P) {
     </svg>
   );
 }
+export const IconChart = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+  </Svg>
+);
+export const IconCash = (p: P) => (
+  <Svg {...p}>
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M6 9v.01M18 15v.01" />
+  </Svg>
+);
+export const IconTeam = (p: P) => (
+  <Svg {...p}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+    <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6" />
+  </Svg>
+);
+export const IconInbox = (p: P) => (
+  <Svg {...p}>
+    <path d="M3 13h5l1.5 3h5L16 13h5" />
+    <path d="M5 5h14l2 8v6H3v-6l2-8Z" />
+  </Svg>
+);
+export const IconRocket = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 15l-3-3c1.5-5 5-8 10-8 0 5-3 8.5-8 10Z" />
+    <path d="M9 12H5l2.5-3.5H11M12 15v4l3.5-2.5V13" />
+    <path d="M6 18c-1 1-1.5 3-1.5 3s2-.5 3-1.5" />
+  </Svg>
+);
+export const IconHeart = (p: P) => (
+  <Svg {...p}>
+    <path d="M3 12h4l2-4 4 8 2-4h6" />
+  </Svg>
+);
+export const IconImage = (p: P) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="9" cy="10" r="2" />
+    <path d="m21 16-5-5-9 9" />
+  </Svg>
+);
+export const IconBolt = (p: P) => (
+  <Svg {...p}>
+    <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
+  </Svg>
+);

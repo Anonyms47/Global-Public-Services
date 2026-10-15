@@ -19,6 +19,10 @@ import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/ser
 import { can } from "@/lib/permissions";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
+import { listQueue, updateQueueItem, addManualTask } from "@/server/domain/queue";
+import { launchChecks, setTargetMode, currentMode, summarize } from "@/server/domain/launch";
+import { healthChecks } from "@/server/domain/health";
+import { computeMetrics, metricDetail, previousPeriod, change } from "@/server/domain/metrics";
 import { addLateDemoProducts, purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { buildOrderMessage } from "@/lib/whatsapp";
@@ -454,6 +458,108 @@ describe("Droits, clients, rapports, démonstration", () => {
       withMargin: false,
     });
     expect(hidden.margin.available).toBe(false);
+  });
+
+  it("tableau de bord : formules centralisées et détail de chaque chiffre", async () => {
+    const period = periodFromKey("jour");
+    const before = await computeMetrics(db, period);
+    const v = await variantBySku(db, "SON-ST2-NO");
+    const o = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "whatsapp",
+      reception: "pickup",
+      customerName: "Indicateurs",
+      customerPhone: "000",
+      lines: [{ variantId: v.id, quantity: 1 }],
+    });
+    await recordPayment(db, manager, o.id, { method: "cash", amount: 10000 });
+    const after = await computeMetrics(db, period);
+    expect(after.commandes - before.commandes).toBe(1);
+    expect(after.ca - before.ca).toBe(v.price);
+    expect(after.encaissements - before.encaissements).toBe(10000);
+    expect(after.reste - before.reste).toBe(v.price - 10000);
+    expect(after.panier).toBe(Math.round(after.ca / after.commandes));
+    const rows = await metricDetail(db, "reste", period);
+    expect(rows.find((r) => r.reference === o.reference)?.amount).toBe(v.price - 10000);
+    // Le détail retombe exactement sur le chiffre affiché.
+    expect((await metricDetail(db, "ca", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(after.ca);
+    expect((await metricDetail(db, "encaissements", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
+      after.encaissements,
+    );
+    const prev = previousPeriod(period);
+    expect(prev.to.getTime()).toBe(period.from.getTime());
+    expect(change(150, 100)).toBe(50);
+    expect(change(5, 0)).toBeNull();
+    await cancelOrder(db, manager, o.id, "test");
+  });
+
+  it("File GPS : éléments dérivés, attribution, report, résolution et tâche manuelle", async () => {
+    const owner = await userByRole(db, "owner");
+    const v = await variantBySku(db, "SON-ST2-NO");
+    const o = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "whatsapp",
+      reception: "pickup",
+      customerName: "File",
+      customerPhone: "000",
+      lines: [{ variantId: v.id, quantity: 1 }],
+    });
+    const opts = { view: "a-faire" as const, userId: owner.id, lowThreshold: 1 };
+    let q = await listQueue(db, opts);
+    const prep = q.items.find((i) => i.key === `order:${o.id}:prepare`);
+    expect(prep?.title).toContain(o.reference);
+    expect(q.items.some((i) => i.key.startsWith(`order:${o.id}:balance:`))).toBe(true);
+
+    await updateQueueItem(db, owner, prep!.key, { action: "assign", userId: owner.id }, 1);
+    expect((await listQueue(db, { ...opts, view: "moi" })).items.map((i) => i.key)).toContain(prep!.key);
+    await updateQueueItem(db, owner, prep!.key, { action: "snooze", until: new Date(Date.now() + 3600_000) }, 1);
+    q = await listQueue(db, opts);
+    expect(q.items.map((i) => i.key)).not.toContain(prep!.key);
+    expect((await listQueue(db, { ...opts, view: "reportees" })).items.map((i) => i.key)).toContain(prep!.key);
+    await updateQueueItem(db, owner, prep!.key, { action: "resolve" }, 1);
+    expect((await listQueue(db, { ...opts, view: "resolues" })).items.map((i) => i.key)).toContain(prep!.key);
+    await expect(updateQueueItem(db, owner, "order:inconnu:prepare", { action: "resolve" }, 1)).rejects.toThrow(
+      /plus d'actualité/,
+    );
+
+    // Une fois prête, la commande change de clé : l'élément « à préparer » n'existe plus.
+    await advanceOrder(db, manager, o.id, "ready");
+    q = await listQueue(db, opts);
+    expect(q.items.some((i) => i.key === `order:${o.id}:pickup`)).toBe(true);
+
+    const k = await addManualTask(db, owner, { title: "Appeler le fournisseur" });
+    expect((await listQueue(db, opts)).items.find((i) => i.key === k)?.kind).toBe("manual");
+    await expect(addManualTask(db, owner, { title: "  " })).rejects.toThrow(/Indiquez/);
+    await cancelOrder(db, manager, o.id, "test");
+  });
+
+  it("centre de lancement : contrôles, modes journalisés sans bascule, santé", async () => {
+    const owner = await userByRole(db, "owner");
+    const env = { demoMode: true, indexable: false, siteUrl: "", protectedDemo: false };
+    const settings = await getSettings(db);
+    const checks = await launchChecks(db, settings, env);
+    const by = (k: string) => checks.find((c) => c.key === k)!;
+    expect(by("owner").status).toBe("blocking");
+    expect(by("demo").status).toBe("blocking");
+    expect(by("catalog").status).toBe("blocking");
+    expect(checks.every((c) => c.fix.startsWith("/comptoir"))).toBe(true);
+    expect(summarize(checks).blocking).toBeGreaterThan(0);
+    expect(currentMode(env)).toBe("demo");
+    expect(currentMode({ ...env, demoMode: false })).toBe("test");
+    expect(currentMode({ ...env, demoMode: false, indexable: true })).toBe("open");
+
+    await expect(setTargetMode(db, owner, "open", "OUVERT", checks)).rejects.toThrow(/bloquants/);
+    await expect(setTargetMode(db, owner, "demo", "oui", checks)).rejects.toThrow(/Tapez/);
+    await setTargetMode(db, owner, "demo", "démonstration", checks);
+    expect((await getSettings(db)).launch.targetMode).toBe("demo");
+    const log = await db.one<{ n: number }>(
+      "select count(*)::int as n from audit_log where action = 'launch.target_mode'",
+    );
+    expect(log?.n).toBeGreaterThan(0);
+
+    const health = await healthChecks(db, { ...env, postgres: false, region: "" });
+    expect(health.find((h) => h.key === "schema")?.status).toBe("ok");
+    expect(health.find((h) => h.key === "stock")?.status).not.toBe("error");
   });
 
   it("la purge de démonstration conserve la configuration", async () => {
