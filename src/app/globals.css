@@ -91,84 +91,154 @@
 }
 
 @layer components {
+  /* Boutons : forme pilule, relief léger, reflet au survol, pression tactile. */
   .btn {
+    --btn-shadow: transparent;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     min-height: 48px;
-    padding: 0 20px;
-    border-radius: var(--radius-btn);
-    font-weight: 700;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-weight: 800;
     font-size: 15px;
     line-height: 1.1;
+    letter-spacing: 0.005em;
     text-align: center;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      0 6px 16px -8px var(--btn-shadow);
     transition:
-      background-color 120ms var(--ease-out-gps),
-      color 120ms,
-      border-color 120ms,
-      transform 120ms;
+      background-color 160ms var(--ease-out-gps),
+      color 160ms,
+      border-color 160ms,
+      box-shadow 200ms var(--ease-out-gps),
+      transform 160ms var(--ease-out-gps);
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
-  .btn:active:not(:disabled) {
-    transform: translateY(1px);
+  /* Reflet qui traverse le bouton au survol */
+  .btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.28) 50%, transparent 65%);
+    transform: translateX(-120%);
+    pointer-events: none;
+  }
+  .btn > svg {
+    flex-shrink: 0;
+    transition: transform 200ms var(--ease-out-gps);
+  }
+  @media (hover: hover) {
+    .btn:hover:not(:disabled, [aria-disabled="true"]) {
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.18),
+        0 12px 24px -10px var(--btn-shadow);
+    }
+    .btn:hover:not(:disabled, [aria-disabled="true"])::after {
+      transform: translateX(120%);
+      transition: transform 650ms var(--ease-out-gps);
+    }
+    /* Flèche finale qui avance */
+    .btn:hover:not(:disabled) > svg:last-child:not(:first-child) {
+      transform: translateX(3px);
+    }
+  }
+  .btn:active:not(:disabled, [aria-disabled="true"]) {
+    transform: scale(0.97);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    transition-duration: 60ms;
+  }
+  .btn:focus-visible {
+    outline: 3px solid var(--color-gps-blue);
+    outline-offset: 3px;
   }
   .btn:disabled,
   .btn[aria-disabled="true"] {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.5;
+    box-shadow: none;
   }
   .btn-sm {
     min-height: 40px;
-    padding: 0 14px;
+    padding: 0 16px;
     font-size: 14px;
   }
+
   .btn-primary {
-    background: var(--color-gps-red);
+    --btn-shadow: rgb(227 7 19 / 0.7);
+    background: linear-gradient(180deg, #f0121e, var(--color-gps-red));
     color: #fff;
   }
   .btn-primary:hover:not(:disabled) {
-    background: var(--color-gps-red-ink);
+    background: linear-gradient(180deg, var(--color-gps-red), var(--color-gps-red-ink));
   }
   .btn-blue {
-    background: var(--color-gps-blue);
+    --btn-shadow: rgb(49 39 127 / 0.7);
+    background: linear-gradient(180deg, #3d32a0, var(--color-gps-blue));
     color: #fff;
   }
   .btn-blue:hover:not(:disabled) {
-    background: var(--color-gps-blue-deep);
+    background: linear-gradient(180deg, var(--color-gps-blue), var(--color-gps-blue-deep));
   }
   .btn-ink {
-    background: var(--color-ink);
+    --btn-shadow: rgb(18 19 24 / 0.65);
+    background: linear-gradient(180deg, #2a2c33, var(--color-ink));
     color: #fff;
   }
   .btn-ink:hover:not(:disabled) {
-    background: #2a2c33;
+    background: linear-gradient(180deg, var(--color-gps-blue), var(--color-gps-blue-deep));
+    --btn-shadow: rgb(49 39 127 / 0.7);
   }
   .btn-wa {
-    background: var(--color-wa);
+    --btn-shadow: rgb(18 128 74 / 0.7);
+    background: linear-gradient(180deg, #17985a, var(--color-wa));
     color: #fff;
   }
   .btn-wa:hover:not(:disabled) {
-    background: var(--color-wa-ink);
+    background: linear-gradient(180deg, var(--color-wa), var(--color-wa-ink));
   }
   .btn-outline {
     border: 1.5px solid currentColor;
     color: var(--color-ink);
     background: transparent;
+    box-shadow: none;
+  }
+  .btn-outline::after,
+  .btn-ghost::after,
+  .btn-danger::after {
+    display: none;
   }
   .btn-outline:hover:not(:disabled) {
-    background: rgb(18 19 24 / 0.05);
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: #fff;
+    --btn-shadow: rgb(18 19 24 / 0.5);
   }
   .btn-ghost {
     color: var(--color-ink);
     background: transparent;
+    box-shadow: none;
   }
   .btn-ghost:hover:not(:disabled) {
     background: rgb(18 19 24 / 0.06);
+    transform: none;
+    box-shadow: none;
   }
   .btn-light {
+    --btn-shadow: rgb(0 0 0 / 0.45);
     background: #fff;
     color: var(--color-gps-blue-deep);
+  }
+  .btn-light::after {
+    background: linear-gradient(105deg, transparent 35%, rgb(49 39 127 / 0.12) 50%, transparent 65%);
   }
   .btn-light:hover:not(:disabled) {
     background: var(--color-gps-blue-soft);
@@ -177,9 +247,12 @@
     border: 1.5px solid var(--color-gps-red-ink);
     color: var(--color-gps-red-ink);
     background: transparent;
+    box-shadow: none;
   }
   .btn-danger:hover:not(:disabled) {
-    background: var(--color-gps-red-soft);
+    background: var(--color-gps-red-ink);
+    color: #fff;
+    --btn-shadow: rgb(184 5 15 / 0.6);
   }
 
   .field {
@@ -241,6 +314,19 @@
     background: #fff;
     font-size: 14px;
     font-weight: 600;
+    transition:
+      border-color 150ms,
+      background-color 150ms,
+      color 150ms,
+      transform 150ms var(--ease-out-gps);
+  }
+  a.chip:hover,
+  button.chip:hover {
+    border-color: var(--color-gps-blue);
+  }
+  a.chip:active,
+  button.chip:active {
+    transform: scale(0.95);
   }
 
   .skeleton {

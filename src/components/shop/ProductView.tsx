@@ -277,8 +277,10 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
                         }));
                         setShowMissing(false);
                       }}
-                      className={`relative min-h-12 min-w-12 rounded-[6px] border-[1.5px] px-4 text-[15px] font-semibold transition-colors ${
-                        on ? "border-gps-blue bg-gps-blue text-white" : "border-line bg-white hover:border-ink"
+                      className={`relative min-h-12 min-w-12 rounded-full border-[1.5px] px-5 text-[15px] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-95 ${
+                        on
+                          ? "border-gps-blue bg-gps-blue text-white shadow-[0_6px_14px_-8px_rgb(49_39_127/0.8)]"
+                          : "border-line bg-white hover:border-gps-blue hover:text-gps-blue"
                       } ${st !== "ok" ? "text-ink-mute line-through decoration-gps-red decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
                     >
                       {val}
@@ -312,13 +314,13 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
 
           <div className="mt-5 flex flex-wrap gap-3">
             <div
-              className="flex items-center rounded-[6px] border-[1.5px] border-line bg-white"
+              className="flex items-center rounded-full border-[1.5px] border-line bg-white"
               role="group"
               aria-label="Quantité"
             >
               <button
                 type="button"
-                className="inline-flex h-12 w-12 items-center justify-center disabled:opacity-40"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-90 disabled:opacity-40"
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 disabled={qty <= 1}
                 aria-label="Diminuer la quantité"
@@ -330,7 +332,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
               </output>
               <button
                 type="button"
-                className="inline-flex h-12 w-12 items-center justify-center disabled:opacity-40"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-90 disabled:opacity-40"
                 onClick={() => setQty((q) => Math.min(Math.max(1, maxQty), q + 1))}
                 disabled={!canAdd || qty >= maxQty}
                 aria-label="Augmenter la quantité"

@@ -66,7 +66,7 @@ export function MobileMenu({
       <button
         ref={toggle}
         type="button"
-        className="burger -ml-2 inline-flex h-11 w-11 items-center justify-center rounded-[6px] hover:bg-ink/5 lg:hidden"
+        className="burger -ml-2 inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-ink/5 lg:hidden"
         aria-label="Ouvrir le menu"
         aria-expanded={open}
         aria-haspopup="dialog"

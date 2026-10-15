@@ -14,7 +14,7 @@ export function NavLink({ href, children }: { href: string; children: ReactNode 
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`relative inline-flex min-h-11 items-center rounded-[6px] px-3 text-[15px] font-semibold transition-colors hover:bg-ink/5 ${
+      className={`relative inline-flex min-h-11 items-center rounded-full px-4 text-[15px] font-semibold transition-colors hover:bg-ink/5 ${
         active
           ? "text-gps-blue after:absolute after:inset-x-3 after:bottom-1 after:h-[3px] after:rounded-full after:bg-gps-red"
           : ""
@@ -31,7 +31,7 @@ function CartButton() {
   return (
     <Link
       href="/panier"
-      className="relative inline-flex h-11 items-center gap-2 rounded-[6px] px-3 font-bold hover:bg-ink/5"
+      className="relative inline-flex h-11 items-center gap-2 rounded-full px-3 font-bold transition-colors hover:bg-ink/5"
       aria-label={count ? `Panier, ${count} article${count > 1 ? "s" : ""}` : "Panier, vide"}
     >
       <IconBag size={22} />

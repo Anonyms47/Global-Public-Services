@@ -122,7 +122,7 @@ export function SearchOverlay({ categories }: { categories: { slug: string; name
       {/* Mobile : icône */}
       <button
         type="button"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-[6px] hover:bg-ink/5 md:hidden"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-ink/5 md:hidden"
         aria-label="Rechercher"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
