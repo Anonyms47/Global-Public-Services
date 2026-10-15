@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePage } from "@/server/admin";
 import { getOrder, methodLabels, nextStep, receptionLabels, channelLabels } from "@/server/domain/orders";
+import { renderTemplate, templateMeta } from "@/lib/templates";
 import { getSettings } from "@/server/domain/settings";
 import { can } from "@/lib/permissions";
 import { fcfa, formatDateTime } from "@/lib/format";
@@ -41,26 +42,28 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
     .map((l) => `• ${l.name}${l.options_label ? ` (${l.options_label})` : ""} × ${l.quantity}`)
     .join("\n");
   const first = o.customer_name.split(" ")[0] || "";
+  const vars = {
+    prenom: first,
+    reference: o.reference,
+    articles: linesText,
+    total: fcfa(o.subtotal),
+    livraison:
+      o.reception === "delivery"
+        ? `Livraison : ${o.delivery_fee === null ? "frais à confirmer" : fcfa(o.delivery_fee)}`
+        : "",
+    reception: receptionLabels[o.reception].toLowerCase(),
+    reste: o.balance > 0 ? `Reste à régler : ${fcfa(o.balance)}.` : "",
+    solde: fcfa(Math.max(0, o.balance)),
+    horaires: settings.company.hours ? `(${settings.company.hours})` : "",
+    adresse: o.delivery_address ? `à : ${o.delivery_address}` : "",
+  };
+  const m = settings.messages;
   const templates = [
-    {
-      label: "Confirmation de commande",
-      text: `Bonjour ${first}, GPS confirme votre commande ${o.reference} :\n${linesText}\nTotal articles : ${fcfa(o.subtotal)}${
-        o.reception === "delivery"
-          ? `\nLivraison : ${o.delivery_fee === null ? "frais à confirmer" : fcfa(o.delivery_fee)}`
-          : ""
-      }\nRéception : ${receptionLabels[o.reception].toLowerCase()}.${o.balance > 0 ? `\nReste à régler : ${fcfa(o.balance)}.` : ""}\nMerci pour votre confiance — GPS, le service qui rassure.`,
-    },
-    {
-      label: o.reception === "delivery" ? "Commande prête à livrer" : "Commande prête au retrait",
-      text:
-        o.reception === "delivery"
-          ? `Bonjour ${first}, votre commande ${o.reference} est prête et va être livrée${o.delivery_address ? ` à : ${o.delivery_address}` : ""}.${o.balance > 0 ? ` Montant à régler : ${fcfa(o.balance)}.` : ""}`
-          : `Bonjour ${first}, votre commande ${o.reference} est prête. Vous pouvez venir la retirer en boutique${settings.company.hours ? ` (${settings.company.hours})` : ""}.${o.balance > 0 ? ` Reste à régler : ${fcfa(o.balance)}.` : ""}`,
-    },
-    {
-      label: "Rappel de solde",
-      text: `Bonjour ${first}, il reste ${fcfa(Math.max(0, o.balance))} à régler pour votre commande ${o.reference}. Merci — GPS.`,
-    },
+    { label: templateMeta.confirmation.label, text: renderTemplate(m.confirmation, vars) },
+    o.reception === "delivery"
+      ? { label: templateMeta.readyDelivery.label, text: renderTemplate(m.readyDelivery, vars) }
+      : { label: templateMeta.readyPickup.label, text: renderTemplate(m.readyPickup, vars) },
+    { label: templateMeta.balance.label, text: renderTemplate(m.balance, vars) },
   ];
 
   return (

@@ -26,3 +26,11 @@ export async function listAudit(db: Db, limit = 50) {
     [limit],
   );
 }
+
+export const auditLabels: Record<string, string> = {
+  "launch.target_mode": "Mode de boutique visé",
+  "settings.update": "Configuration modifiée",
+  "team.create": "Compte créé",
+  "team.update": "Compte modifié",
+  "demo.purge": "Données d'exemple purgées",
+};

@@ -7,6 +7,9 @@ import { AppError } from "@/server/domain/errors";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { createUser, updateUser } from "@/server/domain/auth";
 import { purgeDemo } from "@/server/demo/seed";
+import { audit } from "@/server/domain/audit";
+import { templateKeys, type TemplateKey } from "@/lib/templates";
+import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const r = schema.safeParse(input);
@@ -51,6 +54,19 @@ const settingsSchema = z.object({
     aboutText: text(3000),
     legalName: text(160),
     legalId: text(120),
+    ninea: text(40),
+    rccm: text(60),
+    timezone: z
+      .string()
+      .trim()
+      .refine((tz) => {
+        try {
+          new Intl.DateTimeFormat("fr-FR", { timeZone: tz });
+          return true;
+        } catch {
+          return false;
+        }
+      }, "Fuseau horaire inconnu (ex. Africa/Dakar)."),
   }),
   reception: z.object({
     pickupEnabled: z.boolean(),
@@ -75,14 +91,29 @@ const settingsSchema = z.object({
     defaultLowThreshold: z.coerce.number().int().min(0).max(1000),
   }),
   receipt: z.object({ header: text(200), footer: text(200) }),
+  messages: z.object(
+    Object.fromEntries(templateKeys.map((k) => [k, text(1200)])) as Record<TemplateKey, ReturnType<typeof text>>,
+  ),
+  payments: z.object({
+    methods: z
+      .array(z.enum(paymentMethods.map(([k]) => k) as [PaymentMethodKey, ...PaymentMethodKey[]]))
+      .min(1, "Gardez au moins un moyen de paiement."),
+  }),
 });
 
 export async function saveSettingsAction(input: unknown) {
   return guarded(
     "settings.edit",
-    async ({ db }) => {
+    async ({ db, user }) => {
       const d = parse(settingsSchema, input);
       const s = await getSettings(db);
+      const changed = (
+        ["company", "reception", "policies", "stock", "receipt", "messages", "payments"] as const
+      ).filter(
+        (k) =>
+          JSON.stringify(s[k]) !==
+          JSON.stringify(k === "company" ? { ...s.company, ...d.company, slogan: s.company.slogan } : d[k]),
+      );
       await db.tx(async (tx) => {
         await saveSettingsSection(tx, "company", {
           ...s.company,
@@ -93,6 +124,9 @@ export async function saveSettingsAction(input: unknown) {
         await saveSettingsSection(tx, "policies", d.policies);
         await saveSettingsSection(tx, "stock", d.stock);
         await saveSettingsSection(tx, "receipt", d.receipt);
+        await saveSettingsSection(tx, "messages", d.messages);
+        await saveSettingsSection(tx, "payments", d.payments);
+        if (changed.length) await audit(tx, user.id, "settings.update", changed.join(", "));
       });
     },
     { message: "Paramètres enregistrés." },
@@ -102,7 +136,7 @@ export async function saveSettingsAction(input: unknown) {
 export async function createUserAction(input: unknown) {
   return guarded(
     "team.manage",
-    ({ db, user }) => {
+    async ({ db, user }) => {
       const d = parse(
         z.object({
           name: z.string(),
@@ -113,7 +147,9 @@ export async function createUserAction(input: unknown) {
         input,
       );
       // Un compte créé par un compte réel est réel, même en mode démonstration.
-      return createUser(db, { ...d, isDemo: user.is_demo && isDemoMode() });
+      const id = await createUser(db, { ...d, isDemo: user.is_demo && isDemoMode() });
+      await audit(db, user.id, "team.create", d.email.trim().toLowerCase(), { role: d.role });
+      return id;
     },
     { message: "Compte créé." },
   );
@@ -122,7 +158,7 @@ export async function createUserAction(input: unknown) {
 export async function updateUserAction(id: string, input: unknown) {
   return guarded(
     "team.manage",
-    ({ db, user }) => {
+    async ({ db, user }) => {
       const d = parse(
         z.object({
           role: z.enum(["owner", "manager", "seller"]).optional(),
@@ -133,7 +169,12 @@ export async function updateUserAction(id: string, input: unknown) {
       );
       if (id === user.id && (d.active === false || (d.role && d.role !== "owner")))
         throw new AppError("conflict", "Vous ne pouvez pas retirer vos propres droits de propriétaire.");
-      return updateUser(db, user, String(id), d);
+      await updateUser(db, user, String(id), d);
+      await audit(db, user.id, "team.update", String(id), {
+        ...(d.role ? { role: d.role } : {}),
+        ...(d.active !== undefined ? { active: d.active } : {}),
+        ...(d.password ? { password: "modifié" } : {}),
+      });
     },
     { message: "Compte mis à jour." },
   );
@@ -142,10 +183,11 @@ export async function updateUserAction(id: string, input: unknown) {
 export async function purgeDemoAction(confirmText: string) {
   return guarded(
     "demo.purge",
-    async ({ db }) => {
+    async ({ db, user }) => {
       if (confirmText !== "PURGER") throw new AppError("validation", "Tapez PURGER pour confirmer.");
       try {
         await purgeDemo(db);
+        await audit(db, user.is_demo ? null : user.id, "demo.purge");
       } catch (e) {
         throw new AppError("conflict", e instanceof Error ? e.message : "Purge impossible.");
       }

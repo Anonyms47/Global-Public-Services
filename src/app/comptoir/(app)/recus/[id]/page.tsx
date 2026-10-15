@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePage } from "@/server/admin";
 import { getOrder, methodLabels, receptionLabels } from "@/server/domain/orders";
-import { getSettings } from "@/server/domain/settings";
+import { getSettings, legalIds } from "@/server/domain/settings";
 import { fcfa, formatDateTime } from "@/lib/format";
 import { Forbidden } from "@/components/admin/ui";
 import { Logo } from "@/components/brand/Logo";
@@ -26,7 +26,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
     "Le service qui rassure",
     [c.address, c.city].filter(Boolean).join(", "),
     c.phone && `Tél. ${c.phone}`,
-    [c.legalName, c.legalId].filter(Boolean).join(" · "),
+    [c.legalName, legalIds(c)].filter(Boolean).join(" · "),
     s.receipt.header,
     "",
     `Reçu ${o.reference} — ${formatDateTime(o.created_at)}`,
@@ -79,7 +79,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
           <div className="text-right text-[13px] text-ink-soft">
             {[c.address, c.city].filter(Boolean).join(", ") || "Adresse à confirmer"}
             {c.phone ? <div>Tél. {c.phone}</div> : null}
-            {c.legalName || c.legalId ? <div>{[c.legalName, c.legalId].filter(Boolean).join(" · ")}</div> : null}
+            {c.legalName || legalIds(c) ? <div>{[c.legalName, legalIds(c)].filter(Boolean).join(" · ")}</div> : null}
             {s.receipt.header ? <div className="mt-1">{s.receipt.header}</div> : null}
           </div>
         </header>

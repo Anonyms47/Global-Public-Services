@@ -27,6 +27,7 @@ import { computeMetrics, metricDetail, previousPeriod, change } from "@/server/d
 import { addLateDemoProducts, purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { buildOrderMessage } from "@/lib/whatsapp";
+import { renderTemplate, defaultTemplates } from "@/lib/templates";
 
 let db: Db;
 let manager: { id: string; name: string };
@@ -681,6 +682,33 @@ describe("Droits, clients, rapports, démonstration", () => {
     await dismissRequest(db, owner, r3.id, "Doublon");
     expect((await getRequest(db, r3.id))?.status).toBe("dismissed");
     await expect(createRequest(db, { ...input, name: " " })).rejects.toThrow(/nom/);
+  });
+
+  it("configuration : modèles WhatsApp, immatriculations, moyens de paiement", async () => {
+    const txt = renderTemplate(defaultTemplates.readyPickup, {
+      prenom: "Awa",
+      reference: "GPS-1",
+      horaires: "",
+      reste: "",
+    });
+    expect(txt).toBe("Bonjour Awa, votre commande GPS-1 est prête. Vous pouvez venir la retirer en boutique.");
+    const conf = renderTemplate(defaultTemplates.confirmation, {
+      prenom: "Awa",
+      reference: "GPS-1",
+      articles: "• A × 1",
+      total: "10 FCFA",
+      livraison: "",
+      reception: "retrait en boutique",
+      reste: "Reste à régler : 5 FCFA.",
+    });
+    expect(conf.split("\n")).toContain("Reste à régler : 5 FCFA.");
+    expect(conf).not.toMatch(/\{|\n\n/);
+    const s = await getSettings(db);
+    expect(s.company.timezone).toBe("Africa/Dakar");
+    expect(s.payments.methods).toContain("wave");
+    expect(s.messages.balance).toBe(defaultTemplates.balance);
+    const { legalIds } = await import("@/server/domain/settings");
+    expect(legalIds({ ...s.company, ninea: "123", rccm: "SN-DKR-1", legalId: "" })).toBe("NINEA 123 · RCCM SN-DKR-1");
   });
 
   it("la purge de démonstration conserve la configuration", async () => {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { siteContext } from "@/server/context";
+import { legalIds } from "@/server/domain/settings";
 import { ToConfirm } from "@/components/site/PageHeader";
 import { LegalDoc } from "@/components/site/LegalDoc";
 
@@ -9,7 +10,8 @@ export default async function CgvPage() {
   const { settings } = await siteContext();
   const p = settings.policies;
   const c = settings.company;
-  const missing = !c.legalName || !c.legalId || !c.address;
+  const ids = legalIds(c);
+  const missing = !c.legalName || !ids || !c.address;
   return (
     <LegalDoc
       title="Conditions de vente"
@@ -23,7 +25,7 @@ export default async function CgvPage() {
           body: (
             <p>
               GPS — Global Public Services. {c.legalName ? `${c.legalName}. ` : null}
-              {c.legalId ? `Immatriculation : ${c.legalId}. ` : null}
+              {ids ? `Immatriculation : ${ids}. ` : null}
               {[c.address, c.city].filter(Boolean).join(", ") || null}
               {missing ? (
                 <>
