@@ -471,3 +471,185 @@
   padding: 0 6px;
   font-size: 12px;
 }
+
+/* ——— Panier ——— */
+.cart-line {
+  animation: rise 360ms var(--ease-out-gps) both;
+}
+.step-dot {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-gps-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+.steps-bar {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-line);
+  overflow: hidden;
+  position: relative;
+}
+.steps-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-gps-red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 500ms var(--ease-out-gps);
+}
+.steps-item[data-state="done"] .steps-bar::after {
+  transform: scaleX(1);
+  background: var(--color-gps-blue);
+}
+.steps-item[data-state="current"] .steps-bar::after {
+  transform: scaleX(0.5);
+}
+.steps-item {
+  color: var(--color-ink-mute);
+}
+.steps-item[data-state="current"],
+.steps-item[data-state="done"] {
+  color: var(--color-ink);
+}
+.steps-num {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-line);
+  color: var(--color-ink-soft);
+  font-size: 11px;
+}
+.steps-item[data-state="current"] .steps-num {
+  background: var(--color-gps-red);
+  color: #fff;
+}
+.steps-item[data-state="done"] .steps-num {
+  background: var(--color-gps-blue);
+  color: #fff;
+}
+
+.reception-tile {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-line);
+  background: #fff;
+  padding: 14px;
+  transition:
+    border-color 160ms,
+    background-color 160ms,
+    transform 160ms var(--ease-out-gps);
+}
+.reception-tile:hover {
+  border-color: var(--color-gps-blue);
+}
+.reception-tile:active {
+  transform: scale(0.98);
+}
+.reception-tile.is-on {
+  border-color: var(--color-gps-blue);
+  background: var(--color-gps-blue-soft);
+  box-shadow: 0 0 0 3px rgb(49 39 127 / 0.12);
+}
+.reception-tile:has(input:focus-visible) {
+  outline: 3px solid var(--color-gps-blue);
+  outline-offset: 2px;
+}
+.reception-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-line);
+  color: transparent;
+  transition: all 160ms;
+}
+.reception-tile.is-on .reception-check {
+  border-color: var(--color-gps-blue);
+  background: var(--color-gps-blue);
+  color: #fff;
+}
+.zone-row {
+  display: flex;
+  min-height: 48px;
+  cursor: pointer;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-line);
+  background: #fff;
+  padding: 0 14px;
+  transition:
+    border-color 160ms,
+    background-color 160ms;
+}
+.zone-row.is-on {
+  border-color: var(--color-gps-blue);
+  background: var(--color-gps-blue-soft);
+}
+
+.wa-chat {
+  background:
+    radial-gradient(circle at 20% 20%, rgb(255 255 255 / 0.5) 0 1px, transparent 2px) 0 0 / 18px 18px,
+    #e7ddd3;
+}
+.wa-bubble {
+  display: block;
+  width: 100%;
+  resize: none;
+  border: 0;
+  border-radius: 12px 0 12px 12px;
+  background: #d9fdd3;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #111b21;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.12);
+}
+.wa-bubble:focus {
+  outline: 2px solid var(--color-wa);
+}
+
+.cart-bar {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 18px;
+  border: 1px solid var(--color-line);
+  background: rgb(255 253 248 / 0.94);
+  backdrop-filter: blur(10px);
+  padding: 10px 10px 10px 16px;
+  box-shadow: 0 18px 40px -18px rgb(20 16 57 / 0.5);
+  transition:
+    transform 320ms var(--ease-out-gps),
+    opacity 220ms;
+}
+.cart-bar.is-hidden {
+  transform: translateY(140%);
+  opacity: 0;
+  pointer-events: none;
+}

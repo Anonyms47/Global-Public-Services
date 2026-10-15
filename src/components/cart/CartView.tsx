@@ -11,6 +11,8 @@ import { TO_CONFIRM, buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
 import { cart, cartCount, useCart, useCartReady, type CartItem } from "./cart-store";
 import {
   IconAlert,
+  IconArrowRight,
+  IconBag,
   IconCheck,
   IconCopy,
   IconInfo,
@@ -269,26 +271,45 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
     }
   };
 
+  const hasItems = items.length > 0;
+  const formRef = useRef<HTMLElement>(null);
+  const [formVisible, setFormVisible] = useState(false);
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setFormVisible(e.isIntersecting), {
+      rootMargin: "0px 0px -35% 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ready, hasItems]);
+
   if (!ready) {
     return (
-      <div className="mt-8 grid gap-4" aria-busy="true" aria-label="Chargement du panier">
-        <div className="skeleton h-28" />
-        <div className="skeleton h-28" />
+      <div className="mt-8 grid gap-3" aria-busy="true" aria-label="Chargement du panier">
+        <div className="skeleton h-12 w-2/3" />
+        <div className="skeleton h-32 rounded-[14px]" />
+        <div className="skeleton h-32 rounded-[14px]" />
       </div>
     );
   }
 
-  if (!items.length) {
+  if (!hasItems) {
     return (
-      <div className="mt-8">
+      <div className="mt-6">
+        <CartTitle count={0} />
         {undo ? <UndoBar undo={undo} onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))} /> : null}
-        <div className="rounded-[6px] border border-line bg-card px-6 py-14 text-center">
-          <p className="font-display text-4xl font-bold uppercase">Votre panier est vide</p>
-          <p className="mx-auto mt-3 max-w-md text-ink-soft">
+        <div className="animate-rise relative mt-6 overflow-hidden rounded-[20px] bg-gps-blue-night px-6 py-14 text-center text-white">
+          <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-gps-red/25 blur-3xl" />
+          <span className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/10">
+            <IconBag size={36} />
+          </span>
+          <p className="relative mt-5 font-display text-4xl font-extrabold uppercase">Votre panier est vide</p>
+          <p className="relative mx-auto mt-3 max-w-sm text-white/75">
             Ajoutez des articles depuis la boutique. Le panier reste enregistré sur cet appareil.
           </p>
-          <Link href="/boutique" className="btn btn-primary mt-6">
-            Découvrir la boutique
+          <Link href="/boutique" className="btn btn-primary relative mt-7">
+            Découvrir la boutique <IconArrowRight size={18} />
           </Link>
         </div>
       </div>
@@ -297,384 +318,528 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
 
   const waUrl = message ? whatsappLink(whatsapp, message) : null;
   const errorList = Object.values(errors).filter(Boolean);
+  const count = cartCount(items);
+  const step = message ? 3 : form.reception ? 2 : 1;
+  const total = deliveryFee !== null ? subtotal + deliveryFee : subtotal;
 
   return (
-    <div className="mt-8 grid gap-10 lg:grid-cols-12">
-      <section className="lg:col-span-7" aria-labelledby="titre-articles">
-        <h2 id="titre-articles" className="sr-only">
-          Articles
-        </h2>
-        {undo ? <UndoBar undo={undo} onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))} /> : null}
+    <div className="mt-6 pb-24 lg:pb-0">
+      <CartTitle count={count} />
+      <Steps current={step} done={!!message} />
 
-        <div ref={errorRef} tabIndex={-1} className="outline-none">
-          {checkError ? (
-            <div
-              role="alert"
-              className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[6px] bg-gps-red-soft p-4 text-gps-red-ink"
-            >
-              <p className="flex items-center gap-2 font-semibold">
-                <IconAlert /> {checkError}
-              </p>
-              <button type="button" className="btn btn-danger btn-sm" onClick={() => verify(items)}>
-                Réessayer
-              </button>
-            </div>
-          ) : null}
-          {notices.length ? (
-            <div role="status" className="mb-4 rounded-[6px] border-[1.5px] border-warn/40 bg-warn-soft p-4">
-              <p className="flex items-center gap-2 font-bold text-warn">
-                <IconInfo /> Votre panier a été mis à jour
-              </p>
-              <ul className="mt-2 space-y-1 text-[15px]">
-                {notices.map((n, i) => (
-                  <li key={i}>
-                    <strong>{n.name}</strong> —{" "}
-                    <span className={n.tone === "error" ? "font-semibold text-gps-red-ink" : ""}>{n.text}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {unavailable.size ? (
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    onClick={() => [...unavailable].forEach(remove)}
-                  >
-                    Retirer les articles indisponibles
-                  </button>
-                ) : null}
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNotices([])}>
-                  J&apos;ai compris
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <ul className="divide-y divide-line border-y border-line">
-          {items.map((i) => {
-            const out = unavailable.has(i.variantId);
-            return (
-              <li
-                key={i.variantId}
-                className={`grid grid-cols-[88px_1fr] gap-4 py-4 sm:grid-cols-[112px_1fr] ${out ? "opacity-70" : ""}`}
-              >
-                <Link
-                  href={`/produits/${i.slug}`}
-                  className="block overflow-hidden rounded-[4px] bg-paper-deep"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                >
-                  {i.image ? (
-                    <Image
-                      src={i.image}
-                      alt=""
-                      width={224}
-                      height={280}
-                      unoptimized={i.image.endsWith(".svg")}
-                      className="aspect-[4/5] w-full object-cover"
-                    />
-                  ) : null}
-                </Link>
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-                    <div>
-                      <Link href={`/produits/${i.slug}`} className="font-bold hover:underline">
-                        {i.name}
-                      </Link>
-                      {i.optionsLabel ? <p className="text-[14px] text-ink-soft">{i.optionsLabel}</p> : null}
-                      <p className="text-[13px] text-ink-mute">Réf. {i.sku}</p>
-                    </div>
-                    <p className="text-right font-extrabold tabular">
-                      {fcfa(i.unitPrice * i.quantity)}
-                      {i.quantity > 1 ? (
-                        <span className="block text-[13px] font-semibold text-ink-mute">
-                          {fcfa(i.unitPrice)} l&apos;unité
-                        </span>
-                      ) : null}
-                    </p>
-                  </div>
-                  {out ? (
-                    <p className="text-[14px] font-bold text-gps-red-ink">
-                      Indisponible — non inclus dans la commande.
-                    </p>
-                  ) : null}
-                  <div className="mt-auto flex items-center justify-between gap-3">
-                    <div
-                      className="flex items-center rounded-[6px] border-[1.5px] border-line bg-white"
-                      role="group"
-                      aria-label={`Quantité pour ${i.name}`}
-                    >
-                      <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center disabled:opacity-40"
-                        disabled={i.quantity <= 1 || out}
-                        onClick={() => cart.setQuantity(i.variantId, i.quantity - 1)}
-                        aria-label="Diminuer"
-                      >
-                        <IconMinus size={18} />
-                      </button>
-                      <output className="w-8 text-center font-bold tabular" aria-live="polite">
-                        {i.quantity}
-                      </output>
-                      <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center disabled:opacity-40"
-                        disabled={out || i.quantity >= 99}
-                        onClick={() => cart.setQuantity(i.variantId, i.quantity + 1)}
-                        aria-label="Augmenter"
-                      >
-                        <IconPlus size={18} />
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm text-ink-soft"
-                      onClick={() => remove(i.variantId)}
-                      aria-label={`Retirer ${i.name} du panier`}
-                    >
-                      <IconTrash size={18} /> Retirer
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="hint mt-3">
-          {cartCount(items)} article{cartCount(items) > 1 ? "s" : ""} · panier conservé sur cet appareil. Les quantités
-          seront vérifiées par GPS ; le panier ne réserve rien.
-        </p>
-      </section>
-
-      <section className="lg:col-span-5" aria-labelledby="titre-preparer">
-        <div className="rounded-[6px] border border-line bg-card p-5 md:p-6 lg:sticky lg:top-28">
-          <h2 id="titre-preparer" className="font-display text-3xl font-bold uppercase">
-            Préparer la commande
+      <div className="mt-8 grid gap-10 lg:grid-cols-12">
+        <section className="lg:col-span-7" aria-labelledby="titre-articles">
+          <h2 id="titre-articles" className="sr-only">
+            Articles
           </h2>
+          {undo ? <UndoBar undo={undo} onUndo={() => (cart.restore(undo.item, undo.index), setUndo(null))} /> : null}
 
-          <form
-            noValidate
-            onSubmit={(e) => {
-              e.preventDefault();
-              void prepare();
-            }}
-            className="mt-5 grid gap-5"
-          >
-            {errorList.length ? (
+          <div ref={errorRef} tabIndex={-1} className="outline-none">
+            {checkError ? (
               <div
                 role="alert"
-                className="rounded-[6px] bg-gps-red-soft p-3 text-[14px] font-semibold text-gps-red-ink"
+                className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-gps-red-soft p-4 text-gps-red-ink"
               >
-                {errorList.length === 1 ? errorList[0] : `${errorList.length} informations manquent : voir ci-dessous.`}
-              </div>
-            ) : null}
-
-            <fieldset>
-              <legend className="label">Réception</legend>
-              {options.length === 0 ? (
-                <p className="text-[15px] text-ink-soft">Modes de réception : {TO_CONFIRM.toLowerCase()}.</p>
-              ) : (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {options.map((o) => (
-                    <label
-                      key={o}
-                      className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-[6px] border-[1.5px] px-3 ${form.reception === o ? "border-gps-blue bg-gps-blue-soft" : "border-line bg-white"}`}
-                    >
-                      <input
-                        type="radio"
-                        name="reception"
-                        value={o}
-                        checked={form.reception === o}
-                        onChange={() => setForm({ ...form, reception: o })}
-                        className="h-5 w-5 accent-[#31277f]"
-                      />
-                      {o === "pickup" ? <IconStore size={18} /> : <IconTruck size={18} />}
-                      <span className="font-semibold">{o === "pickup" ? "Retrait en boutique" : "Livraison"}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {errors.reception ? <p className="error-text">{errors.reception}</p> : null}
-              {form.reception === "pickup" ? (
-                <p className="hint">
-                  {reception.pickupDetails || `Lieu et horaires de retrait : ${TO_CONFIRM.toLowerCase()}.`}
+                <p className="flex items-center gap-2 font-semibold">
+                  <IconAlert /> {checkError}
                 </p>
-              ) : null}
-              {form.reception === "delivery" && reception.deliveryDetails ? (
-                <p className="hint">{reception.deliveryDetails}</p>
-              ) : null}
-            </fieldset>
-
-            {form.reception === "delivery" && reception.zones.length ? (
-              <div>
-                <label className="label" htmlFor="c-zone">
-                  Zone de livraison
-                </label>
-                <select
-                  id="c-zone"
-                  className="field"
-                  value={form.zone}
-                  onChange={(e) => setForm({ ...form, zone: e.target.value })}
-                  aria-invalid={!!errors.zone}
-                >
-                  <option value="">Choisir…</option>
-                  {reception.zones.map((z) => (
-                    <option key={z.name} value={z.name}>
-                      {z.name} — {z.fee === null ? TO_CONFIRM : fcfa(z.fee)}
-                    </option>
-                  ))}
-                </select>
-                {errors.zone ? <p className="error-text">{errors.zone}</p> : null}
-              </div>
-            ) : null}
-            {form.reception === "delivery" ? (
-              <div>
-                <label className="label" htmlFor="c-adresse">
-                  Adresse ou point de repère
-                </label>
-                <textarea
-                  id="c-adresse"
-                  className="field"
-                  rows={2}
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  aria-invalid={!!errors.address}
-                  autoComplete="street-address"
-                />
-                {errors.address ? <p className="error-text">{errors.address}</p> : null}
-              </div>
-            ) : null}
-
-            <div>
-              <label className="label" htmlFor="c-nom">
-                Votre nom
-              </label>
-              <input
-                id="c-nom"
-                className="field"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                aria-invalid={!!errors.name}
-                autoComplete="name"
-              />
-              {errors.name ? <p className="error-text">{errors.name}</p> : null}
-            </div>
-            <div>
-              <label className="label" htmlFor="c-tel">
-                Téléphone <span className="font-normal text-ink-mute">(facultatif)</span>
-              </label>
-              <input
-                id="c-tel"
-                className="field"
-                inputMode="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                aria-invalid={!!errors.phone}
-                autoComplete="tel"
-              />
-              <p className="hint">Seulement s&apos;il diffère de votre numéro WhatsApp.</p>
-              {errors.phone ? <p className="error-text">{errors.phone}</p> : null}
-            </div>
-            <div>
-              <label className="label" htmlFor="c-note">
-                Précision <span className="font-normal text-ink-mute">(facultatif)</span>
-              </label>
-              <input
-                id="c-note"
-                className="field"
-                value={form.note}
-                onChange={(e) => setForm({ ...form, note: e.target.value })}
-                maxLength={200}
-              />
-            </div>
-
-            <dl className="grid gap-2 border-t border-line pt-4 text-[15px]">
-              <div className="flex justify-between">
-                <dt>Total des produits</dt>
-                <dd className="font-extrabold tabular">{fcfa(subtotal)}</dd>
-              </div>
-              {form.reception === "delivery" ? (
-                <div className="flex justify-between gap-4">
-                  <dt>Frais de livraison</dt>
-                  <dd className="text-right font-semibold tabular">
-                    {deliveryFee === null ? TO_CONFIRM : fcfa(deliveryFee)}
-                  </dd>
-                </div>
-              ) : null}
-              {form.reception === "delivery" && deliveryFee !== null ? (
-                <div className="flex justify-between text-lg">
-                  <dt className="font-bold">Total</dt>
-                  <dd className="font-extrabold tabular">{fcfa(subtotal + deliveryFee)}</dd>
-                </div>
-              ) : null}
-            </dl>
-
-            <button type="submit" className="btn btn-ink w-full" disabled={checking}>
-              {checking ? "Vérification des prix et du stock…" : "Préparer mon récapitulatif"}
-            </button>
-          </form>
-
-          {message ? (
-            <div
-              ref={recapRef}
-              tabIndex={-1}
-              className="animate-rise mt-6 border-t border-line pt-6 outline-none"
-              aria-labelledby="titre-recap"
-            >
-              <h3 id="titre-recap" className="flex items-center gap-2 text-lg font-extrabold">
-                <IconCheck className="text-wa" /> Récapitulatif prêt
-              </h3>
-              <label htmlFor="recap-message" className="sr-only">
-                Message de commande
-              </label>
-              <textarea
-                id="recap-message"
-                readOnly
-                value={message}
-                rows={Math.min(26, message.split("\n").length + 3)}
-                className="field mt-3 font-mono text-[13px] leading-relaxed"
-              />
-              <div className="mt-3 grid gap-2">
-                {waUrl ? (
-                  <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn btn-wa w-full text-base">
-                    <IconWhatsApp /> Envoyer ma commande sur WhatsApp
-                  </a>
-                ) : (
-                  <div className="rounded-[6px] border-[1.5px] border-dashed border-wa/50 bg-wa-soft p-3 text-[14px]">
-                    <button type="button" disabled className="btn btn-wa w-full text-base">
-                      <IconWhatsApp /> Envoyer ma commande sur WhatsApp
-                    </button>
-                    <p className="mt-2 text-wa-ink">
-                      <strong>Mode démonstration :</strong> le numéro WhatsApp de GPS n&apos;est pas encore renseigné.
-                      Le message peut être prévisualisé et copié, mais aucun numéro n&apos;est contacté.
-                    </p>
-                  </div>
-                )}
-                <button type="button" className="btn btn-outline w-full" onClick={copy}>
-                  <IconCopy size={18} /> {copied ? "Récapitulatif copié" : "Copier le récapitulatif"}
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => verify(items)}>
+                  Réessayer
                 </button>
               </div>
-              <div className="mt-4 rounded-[6px] bg-gps-blue-soft p-3 text-[14px] leading-relaxed text-gps-blue-deep">
-                <p className="font-bold">Ce qui se passe ensuite</p>
-                <ol className="mt-1 list-decimal space-y-1 pl-5">
-                  <li>WhatsApp s&apos;ouvre avec ce message : envoyez-le vous-même.</li>
-                  <li>
-                    GPS vérifie la disponibilité, confirme le total
-                    {form.reception === "delivery" ? " et les frais de livraison" : ""}.
-                  </li>
-                  <li>La commande n&apos;est confirmée qu&apos;après la réponse de GPS.</li>
-                </ol>
-                <p className="mt-2">
-                  L&apos;ouverture de WhatsApp ne garantit ni l&apos;envoi du message, ni la confirmation de la
-                  commande, ni la réservation des articles.
+            ) : null}
+            {notices.length ? (
+              <div role="status" className="mb-4 rounded-[14px] border-[1.5px] border-warn/40 bg-warn-soft p-4">
+                <p className="flex items-center gap-2 font-bold text-warn">
+                  <IconInfo /> Votre panier a été mis à jour
                 </p>
+                <ul className="mt-2 space-y-1 text-[15px]">
+                  {notices.map((n, i) => (
+                    <li key={i}>
+                      <strong>{n.name}</strong> —{" "}
+                      <span className={n.tone === "error" ? "font-semibold text-gps-red-ink" : ""}>{n.text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {unavailable.size ? (
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={() => [...unavailable].forEach(remove)}
+                    >
+                      Retirer les articles indisponibles
+                    </button>
+                  ) : null}
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNotices([])}>
+                    J&apos;ai compris
+                  </button>
+                </div>
               </div>
+            ) : null}
+          </div>
+
+          <ul className="grid gap-3">
+            {items.map((i, idx) => {
+              const out = unavailable.has(i.variantId);
+              return (
+                <li
+                  key={i.variantId}
+                  className={`cart-line grid grid-cols-[84px_1fr] gap-4 rounded-[16px] border border-line-soft bg-card p-3 shadow-[0_1px_0_rgb(18_19_24/0.04)] sm:grid-cols-[110px_1fr] ${out ? "opacity-70" : ""}`}
+                  style={{ animationDelay: `${idx * 50}ms` }}
+                >
+                  <Link
+                    href={`/produits/${i.slug}`}
+                    className="block overflow-hidden rounded-[12px] bg-paper-deep"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  >
+                    {i.image ? (
+                      <Image
+                        src={i.image}
+                        alt=""
+                        width={224}
+                        height={280}
+                        unoptimized={i.image.endsWith(".svg")}
+                        className="aspect-[4/5] h-full w-full object-cover"
+                      />
+                    ) : null}
+                  </Link>
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link href={`/produits/${i.slug}`} className="leading-tight font-bold hover:underline">
+                          {i.name}
+                        </Link>
+                        {i.optionsLabel ? (
+                          <p className="mt-1 flex flex-wrap gap-1">
+                            {i.optionsLabel.split(" · ").map((o) => (
+                              <span
+                                key={o}
+                                className="rounded-full bg-paper-deep px-2 py-0.5 text-[12px] font-semibold text-ink-soft"
+                              >
+                                {o.replace(/^[^:]+ : /, "")}
+                              </span>
+                            ))}
+                          </p>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        className="-mt-1 -mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-mute transition-colors hover:bg-gps-red-soft hover:text-gps-red-ink"
+                        onClick={() => remove(i.variantId)}
+                        aria-label={`Retirer ${i.name} du panier`}
+                      >
+                        <IconTrash size={18} />
+                      </button>
+                    </div>
+                    {out ? (
+                      <p className="text-[14px] font-bold text-gps-red-ink">
+                        Indisponible — non inclus dans la commande.
+                      </p>
+                    ) : null}
+                    <div className="mt-auto flex items-end justify-between gap-3">
+                      <div
+                        className="flex items-center rounded-full bg-paper-deep p-1"
+                        role="group"
+                        aria-label={`Quantité pour ${i.name}`}
+                      >
+                        <button
+                          type="button"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-transform active:scale-90 disabled:opacity-40"
+                          disabled={i.quantity <= 1 || out}
+                          onClick={() => cart.setQuantity(i.variantId, i.quantity - 1)}
+                          aria-label="Diminuer"
+                        >
+                          <IconMinus size={16} />
+                        </button>
+                        <output className="w-9 text-center font-extrabold tabular" aria-live="polite">
+                          {i.quantity}
+                        </output>
+                        <button
+                          type="button"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-transform active:scale-90 disabled:opacity-40"
+                          disabled={out || i.quantity >= 99}
+                          onClick={() => cart.setQuantity(i.variantId, i.quantity + 1)}
+                          aria-label="Augmenter"
+                        >
+                          <IconPlus size={16} />
+                        </button>
+                      </div>
+                      <p className="text-right font-display text-xl leading-none font-extrabold tabular">
+                        {fcfa(i.unitPrice * i.quantity)}
+                        {i.quantity > 1 ? (
+                          <span className="mt-1 block font-sans text-[12px] font-semibold text-ink-mute">
+                            {fcfa(i.unitPrice)} l&apos;unité
+                          </span>
+                        ) : null}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-[12px] leading-tight font-semibold text-ink-soft sm:text-[13px]">
+            <li className="flex flex-col items-center gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
+              <IconCheck size={18} className="text-gps-blue" /> Aucun paiement en ligne
+            </li>
+            <li className="flex flex-col items-center gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
+              <IconWhatsApp className="text-wa" /> Confirmé sur WhatsApp
+            </li>
+            <li className="flex flex-col items-center gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
+              <IconStore size={18} className="text-gps-blue" /> Retrait ou livraison
+            </li>
+          </ul>
+          <p className="hint mt-3">
+            {count} article{count > 1 ? "s" : ""} · panier conservé sur cet appareil. Les quantités seront vérifiées par
+            GPS ; le panier ne réserve rien.
+          </p>
+        </section>
+
+        <section ref={formRef} id="commande" className="scroll-mt-24 lg:col-span-5" aria-labelledby="titre-preparer">
+          <div className="overflow-hidden rounded-[20px] border border-line-soft bg-card shadow-[0_18px_40px_-28px_rgb(20_16_57/0.45)] lg:sticky lg:top-28">
+            <div className="bg-gps-blue-night px-5 py-4 text-white md:px-6">
+              <h2 id="titre-preparer" className="font-display text-3xl font-extrabold uppercase">
+                Préparer la commande
+              </h2>
+              <p className="text-[14px] text-white/70">Deux minutes, puis vous envoyez tout sur WhatsApp.</p>
             </div>
-          ) : null}
+
+            <form
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                void prepare();
+              }}
+              className="grid gap-6 p-5 md:p-6"
+            >
+              {errorList.length ? (
+                <div
+                  role="alert"
+                  className="rounded-[12px] bg-gps-red-soft p-3 text-[14px] font-semibold text-gps-red-ink"
+                >
+                  {errorList.length === 1
+                    ? errorList[0]
+                    : `${errorList.length} informations manquent : voir ci-dessous.`}
+                </div>
+              ) : null}
+
+              <fieldset>
+                <legend className="mb-3 flex items-center gap-2 font-bold">
+                  <span className="step-dot">1</span> Réception
+                </legend>
+                {options.length === 0 ? (
+                  <p className="text-[15px] text-ink-soft">Modes de réception : {TO_CONFIRM.toLowerCase()}.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {options.map((o) => {
+                      const on = form.reception === o;
+                      return (
+                        <label key={o} className={`reception-tile ${on ? "is-on" : ""}`}>
+                          <input
+                            type="radio"
+                            name="reception"
+                            value={o}
+                            checked={on}
+                            onChange={() => setForm({ ...form, reception: o })}
+                            className="absolute inset-0 z-10 m-0 h-full w-full cursor-pointer appearance-none rounded-[14px] opacity-0"
+                          />
+                          <span className="reception-check" aria-hidden="true">
+                            <IconCheck size={14} />
+                          </span>
+                          {o === "pickup" ? <IconStore size={26} /> : <IconTruck size={26} />}
+                          <span className="mt-2 block leading-tight font-bold">
+                            {o === "pickup" ? "Retrait en boutique" : "Livraison"}
+                          </span>
+                          <span className="block text-[12px] text-ink-mute">
+                            {o === "pickup" ? "Au comptoir GPS" : "Selon votre zone"}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {errors.reception ? <p className="error-text">{errors.reception}</p> : null}
+                {form.reception === "pickup" ? (
+                  <p className="hint">
+                    {reception.pickupDetails || `Lieu et horaires de retrait : ${TO_CONFIRM.toLowerCase()}.`}
+                  </p>
+                ) : null}
+                {form.reception === "delivery" && reception.deliveryDetails ? (
+                  <p className="hint">{reception.deliveryDetails}</p>
+                ) : null}
+              </fieldset>
+
+              {form.reception === "delivery" && reception.zones.length ? (
+                <fieldset className="animate-rise">
+                  <legend className="label">Zone de livraison</legend>
+                  <div className="grid gap-2" aria-invalid={!!errors.zone}>
+                    {reception.zones.map((z) => {
+                      const on = form.zone === z.name;
+                      return (
+                        <label key={z.name} className={`zone-row ${on ? "is-on" : ""}`}>
+                          <input
+                            type="radio"
+                            name="zone"
+                            value={z.name}
+                            checked={on}
+                            onChange={() => setForm({ ...form, zone: z.name })}
+                            className="h-4 w-4 accent-[#31277f]"
+                          />
+                          <span className="flex-1 text-[14px] font-semibold">{z.name}</span>
+                          <span className="text-[14px] font-extrabold tabular">
+                            {z.fee === null ? TO_CONFIRM : fcfa(z.fee)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {errors.zone ? <p className="error-text">{errors.zone}</p> : null}
+                </fieldset>
+              ) : null}
+              {form.reception === "delivery" ? (
+                <div className="animate-rise">
+                  <label className="label" htmlFor="c-adresse">
+                    Adresse ou point de repère
+                  </label>
+                  <textarea
+                    id="c-adresse"
+                    className="field"
+                    rows={2}
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    aria-invalid={!!errors.address}
+                    autoComplete="street-address"
+                    placeholder="Quartier, rue, repère connu…"
+                  />
+                  {errors.address ? <p className="error-text">{errors.address}</p> : null}
+                </div>
+              ) : null}
+
+              <fieldset className="grid gap-4">
+                <legend className="mb-3 flex items-center gap-2 font-bold">
+                  <span className="step-dot">2</span> Vos coordonnées
+                </legend>
+                <div>
+                  <label className="label" htmlFor="c-nom">
+                    Votre nom
+                  </label>
+                  <input
+                    id="c-nom"
+                    className="field"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    aria-invalid={!!errors.name}
+                    autoComplete="name"
+                  />
+                  {errors.name ? <p className="error-text">{errors.name}</p> : null}
+                </div>
+                <div>
+                  <label className="label" htmlFor="c-tel">
+                    Téléphone <span className="font-normal text-ink-mute">(facultatif)</span>
+                  </label>
+                  <input
+                    id="c-tel"
+                    className="field"
+                    inputMode="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    aria-invalid={!!errors.phone}
+                    autoComplete="tel"
+                  />
+                  <p className="hint">Seulement s&apos;il diffère de votre numéro WhatsApp.</p>
+                  {errors.phone ? <p className="error-text">{errors.phone}</p> : null}
+                </div>
+                <div>
+                  <label className="label" htmlFor="c-note">
+                    Précision <span className="font-normal text-ink-mute">(facultatif)</span>
+                  </label>
+                  <input
+                    id="c-note"
+                    className="field"
+                    value={form.note}
+                    onChange={(e) => setForm({ ...form, note: e.target.value })}
+                    maxLength={200}
+                  />
+                </div>
+              </fieldset>
+
+              <dl className="grid gap-2 rounded-[14px] bg-paper p-4 text-[15px]">
+                <div className="flex justify-between">
+                  <dt className="text-ink-soft">Total des produits</dt>
+                  <dd className="font-bold tabular">{fcfa(subtotal)}</dd>
+                </div>
+                {form.reception === "delivery" ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-ink-soft">Frais de livraison</dt>
+                    <dd className="text-right font-semibold tabular">
+                      {deliveryFee === null ? TO_CONFIRM : fcfa(deliveryFee)}
+                    </dd>
+                  </div>
+                ) : null}
+                <div className="mt-1 flex items-baseline justify-between border-t border-line pt-3">
+                  <dt className="font-bold">Total</dt>
+                  <dd className="font-display text-3xl leading-none font-extrabold tabular">
+                    {fcfa(total)}
+                    {deliveryFee === null ? (
+                      <span className="block text-right font-sans text-[12px] font-semibold text-ink-mute">
+                        + livraison à confirmer
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
+              </dl>
+
+              <button type="submit" className="btn btn-ink h-14 w-full text-base" disabled={checking}>
+                {checking ? "Vérification des prix et du stock…" : "Préparer mon récapitulatif"}
+              </button>
+            </form>
+
+            {message ? (
+              <div
+                ref={recapRef}
+                tabIndex={-1}
+                className="animate-rise border-t border-line p-5 outline-none md:p-6"
+                aria-labelledby="titre-recap"
+              >
+                <h3 id="titre-recap" className="flex items-center gap-2 text-lg font-extrabold">
+                  <span className="step-dot" style={{ background: "var(--color-wa)" }}>
+                    3
+                  </span>{" "}
+                  Récapitulatif prêt
+                </h3>
+                <div className="wa-chat mt-4 overflow-hidden rounded-[16px]">
+                  <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-display text-sm font-extrabold text-gps-red">
+                      GPS
+                    </span>
+                    <span>
+                      <span className="block text-[15px] leading-tight font-bold">GPS — Global Public Services</span>
+                      <span className="block text-[12px] text-white/75">Votre message, prêt à partir</span>
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <label htmlFor="recap-message" className="sr-only">
+                      Message de commande
+                    </label>
+                    <textarea
+                      id="recap-message"
+                      readOnly
+                      value={message}
+                      rows={Math.min(26, message.split("\n").length + 1)}
+                      className="wa-bubble"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {waUrl ? (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-wa h-14 w-full text-base"
+                    >
+                      <IconWhatsApp /> Envoyer ma commande sur WhatsApp
+                    </a>
+                  ) : (
+                    <div className="rounded-[14px] border-[1.5px] border-dashed border-wa/50 bg-wa-soft p-3 text-[14px]">
+                      <button type="button" disabled className="btn btn-wa h-14 w-full text-base">
+                        <IconWhatsApp /> Envoyer ma commande sur WhatsApp
+                      </button>
+                      <p className="mt-2 text-wa-ink">
+                        <strong>Numéro WhatsApp bientôt disponible :</strong> le numéro de GPS n&apos;est pas encore
+                        renseigné. Copiez le récapitulatif pour le garder ; aucun numéro n&apos;est contacté.
+                      </p>
+                    </div>
+                  )}
+                  <button type="button" className="btn btn-outline w-full" onClick={copy}>
+                    <IconCopy size={18} /> {copied ? "Récapitulatif copié" : "Copier le récapitulatif"}
+                  </button>
+                </div>
+                <div className="mt-4 rounded-[14px] bg-gps-blue-soft p-4 text-[14px] leading-relaxed text-gps-blue-deep">
+                  <p className="font-bold">Ce qui se passe ensuite</p>
+                  <ol className="mt-2 grid gap-2">
+                    {[
+                      "WhatsApp s'ouvre avec ce message : envoyez-le vous-même.",
+                      `GPS vérifie la disponibilité, confirme le total${form.reception === "delivery" ? " et les frais de livraison" : ""}.`,
+                      "La commande n'est confirmée qu'après la réponse de GPS.",
+                    ].map((t, n) => (
+                      <li key={n} className="flex gap-2">
+                        <span className="step-dot h-6 w-6 text-[12px]">{n + 1}</span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-3 text-[13px]">
+                    L&apos;ouverture de WhatsApp ne garantit ni l&apos;envoi du message, ni la confirmation de la
+                    commande, ni la réservation des articles.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
+
+      {/* Barre de total collante sur mobile, masquée quand le formulaire est à l'écran */}
+      <div className={`cart-bar lg:hidden ${formVisible || message ? "is-hidden" : ""}`} aria-hidden={formVisible}>
+        <div>
+          <p className="text-[12px] font-semibold text-ink-mute">
+            {count} article{count > 1 ? "s" : ""}
+          </p>
+          <p className="font-display text-2xl leading-none font-extrabold tabular">{fcfa(subtotal)}</p>
         </div>
-      </section>
+        <a href="#commande" className="btn btn-ink" tabIndex={formVisible ? -1 : undefined}>
+          Commander <IconArrowRight size={18} />
+        </a>
+      </div>
     </div>
+  );
+}
+
+function CartTitle({ count }: { count: number }) {
+  return (
+    <div className="flex items-end justify-between gap-4">
+      <div>
+        <p className="eyebrow text-gps-red-ink">Commande WhatsApp</p>
+        <h1 className="mt-2 font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-[80px]">
+          Votre panier
+        </h1>
+      </div>
+      {count ? (
+        <span className="mb-1 inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-gps-red px-3 font-display text-xl font-extrabold text-white tabular">
+          {count}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function Steps({ current, done }: { current: number; done: boolean }) {
+  const steps = ["Panier", "Réception", "WhatsApp"];
+  return (
+    <ol className="mt-6 grid grid-cols-3 gap-2" aria-label="Étapes de la commande">
+      {steps.map((label, i) => {
+        const n = i + 1;
+        const state = n < current || (done && n === current) ? "done" : n === current ? "current" : "todo";
+        return (
+          <li
+            key={label}
+            className="steps-item"
+            data-state={state}
+            aria-current={state === "current" ? "step" : undefined}
+          >
+            <span className="steps-bar" />
+            <span className="mt-2 flex items-center gap-1.5 text-[13px] font-bold">
+              <span className="steps-num">{state === "done" ? <IconCheck size={12} /> : n}</span>
+              {label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -682,7 +847,7 @@ function UndoBar({ undo, onUndo }: { undo: { item: CartItem }; onUndo: () => voi
   return (
     <div
       role="status"
-      className="animate-rise mb-4 flex items-center justify-between gap-3 rounded-[6px] bg-ink px-4 py-3 text-white"
+      className="animate-rise mb-4 flex items-center justify-between gap-3 rounded-[14px] bg-ink px-4 py-3 text-white"
     >
       <p className="text-[15px]">
         <strong>{undo.item.name}</strong> retiré du panier.
