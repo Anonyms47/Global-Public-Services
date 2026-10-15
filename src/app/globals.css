@@ -835,3 +835,81 @@
 #recherche-globale::-webkit-search-cancel-button {
   appearance: none;
 }
+
+/* ——— Accueil ——— */
+.hero-line {
+  animation: hero-line 800ms var(--ease-out-gps) both;
+}
+@keyframes hero-line {
+  from {
+    opacity: 0;
+    transform: translateY(40%);
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 -10% 0);
+  }
+}
+.hero-fade {
+  animation: rise 700ms 420ms var(--ease-out-gps) both;
+}
+.hero-visual {
+  animation: hero-visual 1000ms 150ms var(--ease-out-gps) both;
+}
+@keyframes hero-visual {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.marquee {
+  overflow: hidden;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 700ms var(--ease-out-gps),
+    transform 700ms var(--ease-out-gps);
+}
+.reveal-ready [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+.reveal-ready .steps-flow[data-reveal] > li {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 600ms var(--ease-out-gps),
+    transform 600ms var(--ease-out-gps);
+}
+.reveal-ready .steps-flow[data-reveal].is-in > li {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
