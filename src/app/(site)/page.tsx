@@ -8,7 +8,18 @@ import { BrandPanel } from "@/components/brand/BrandPanel";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductImage } from "@/components/shop/ProductImage";
 import { Price } from "@/components/shop/Price";
-import { IconArrowRight, IconClock, IconPhone, IconPin, IconWhatsApp, IconSwap } from "@/components/ui/icons";
+import {
+  IconArrowRight,
+  IconBag,
+  IconCheck,
+  IconClock,
+  IconPhone,
+  IconPin,
+  IconStore,
+  IconSwap,
+  IconWhatsApp,
+} from "@/components/ui/icons";
+import { RevealOnScroll } from "@/components/site/RevealOnScroll";
 import { whatsappLink } from "@/lib/whatsapp";
 
 function SectionHead({
@@ -78,14 +89,21 @@ export default async function HomePage() {
               id="titre-vitrine"
               className="mt-4 font-display text-[56px] leading-[0.88] font-extrabold uppercase sm:text-[72px] xl:text-[96px]"
             >
-              La bonne adresse.
-              <span className="block text-gps-red">Le bon produit.</span>
+              <span className="hero-line block" style={{ animationDelay: "60ms" }}>
+                La bonne
+              </span>
+              <span className="hero-line block" style={{ animationDelay: "160ms" }}>
+                adresse.
+              </span>
+              <span className="hero-line block text-gps-red" style={{ animationDelay: "260ms" }}>
+                Le bon produit.
+              </span>
             </h1>
-            <p className="mt-6 max-w-[46ch] text-[17px] leading-relaxed text-ink-soft">
+            <p className="hero-fade mt-6 max-w-[46ch] text-[17px] leading-relaxed text-ink-soft">
               Téléphones, écouteurs, casques, chargeurs, accessoires, lunettes, chaussures et services de transfert
               d&apos;argent. Choisissez en ligne, envoyez votre commande sur WhatsApp, GPS vous confirme.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="hero-fade mt-8 flex flex-wrap gap-3">
               <Link href="/boutique" className="btn btn-primary">
                 Voir la boutique <IconArrowRight size={18} />
               </Link>
@@ -93,17 +111,34 @@ export default async function HomePage() {
                 Transfert d&apos;argent
               </Link>
             </div>
+            <ul className="hero-fade mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[14px] font-semibold text-ink-soft">
+              {[
+                [IconCheck, "Aucun paiement en ligne"],
+                [IconWhatsApp, "Confirmé sur WhatsApp"],
+                [IconStore, "Retrait ou livraison"],
+              ].map(([Icon, label]) => {
+                const I = Icon as typeof IconCheck;
+                return (
+                  <li key={label as string} className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gps-blue-soft text-gps-blue">
+                      <I size={15} />
+                    </span>
+                    {label as string}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           {hero ? (
-            <div className="relative order-2 lg:col-span-7">
+            <div className="hero-visual relative order-2 lg:col-span-7">
               <Ribbon
                 className="pointer-events-none absolute bottom-16 -left-[12%] z-10 h-[40%] w-[124%] md:-bottom-6"
                 width={7}
               />
               <Link
                 href={`/produits/${hero.slug}`}
-                className="group relative block overflow-hidden rounded-[6px] bg-paper-deep"
+                className="group relative block overflow-hidden rounded-[20px] bg-paper-deep shadow-[0_30px_60px_-35px_rgb(20_16_57/0.55)]"
                 aria-label={`${hero.name}, ${hero.brand} — voir l'article`}
               >
                 {heroImage ? (
@@ -115,10 +150,10 @@ export default async function HomePage() {
                     priority
                     unoptimized={heroImage.url.endsWith(".svg")}
                     sizes="(max-width: 1024px) 100vw, 60vw"
-                    className="aspect-[4/3] w-full object-cover object-[50%_40%] sm:aspect-[16/11] lg:aspect-[4/4.2]"
+                    className="aspect-[4/3] w-full object-cover object-[50%_40%] transition-transform duration-700 group-hover:scale-[1.04] sm:aspect-[16/11] lg:aspect-[4/4.2]"
                   />
                 ) : null}
-                <div className="flex flex-wrap items-end justify-between gap-3 bg-card p-4 md:absolute md:bottom-6 md:left-6 md:max-w-sm md:rounded-[6px] md:bg-paper/95">
+                <div className="flex flex-wrap items-end justify-between gap-3 bg-card p-4 md:absolute md:bottom-6 md:left-6 md:max-w-sm md:rounded-[16px] md:bg-paper/90 md:shadow-xl md:backdrop-blur">
                   <div>
                     <p className="eyebrow text-gps-red-ink">En vitrine</p>
                     <p className="mt-1 font-display text-[28px] leading-none font-bold uppercase">{hero.name}</p>
@@ -150,6 +185,27 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ——— Bandeau défilant ——— */}
+      {univers.length ? (
+        <div className="marquee border-y border-gps-blue-night bg-gps-blue-night py-4 text-white" aria-hidden="true">
+          <div className="marquee-track">
+            {[0, 1].map((k) => (
+              <span key={k} className="flex shrink-0 items-center">
+                {[...univers.map((u) => u.name), "Transfert d'argent", "Le service qui rassure"].map((t) => (
+                  <span
+                    key={t}
+                    className="flex items-center font-display text-2xl font-extrabold uppercase md:text-3xl"
+                  >
+                    <span className="px-6">{t}</span>
+                    <span className="h-2 w-2 rounded-full bg-gps-red" />
+                  </span>
+                ))}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* ——— 01 Univers ——— */}
       {univers.length ? (
         <section aria-labelledby="titre-univers" className="border-t border-line">
@@ -160,48 +216,49 @@ export default async function HomePage() {
                 Du téléphone à la paire de baskets : choisissez un univers pour voir les articles disponibles.
               </p>
             </div>
-            <ol className="lg:col-span-8" id="titre-univers-liste">
-              <span id="titre-univers" className="sr-only">
-                Univers produits
-              </span>
+            <h2 id="titre-univers" className="sr-only">
+              Univers produits
+            </h2>
+            <ul className="grid grid-cols-2 gap-3 md:gap-4 lg:col-span-8 lg:grid-cols-3" data-reveal>
               {univers.map((cat, i) => {
                 const sample = products.find((p) => p.categorySlug === cat.slug);
+                const img = sample?.images[0];
                 return (
-                  <li key={cat.id} className="border-b border-line first:border-t">
+                  <li key={cat.id} className={i === 0 ? "col-span-2 lg:col-span-1 lg:row-span-2" : ""}>
                     <Link
                       href={`/categories/${cat.slug}`}
-                      className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3 md:gap-8 md:py-4"
+                      className="univers-tile group relative flex h-full min-h-[170px] flex-col justify-end overflow-hidden rounded-[18px] bg-gps-blue-night p-4 text-white md:min-h-[210px]"
                     >
-                      <span className="w-8 text-[13px] font-bold text-ink-mute tabular">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span>
-                        <span className="block font-display text-[30px] leading-none font-bold uppercase transition-colors group-hover:text-gps-blue md:text-[44px]">
-                          {cat.name}
+                      {img ? (
+                        <Image
+                          src={img.url}
+                          alt=""
+                          fill
+                          sizes="(max-width: 1024px) 50vw, 25vw"
+                          unoptimized={img.url.endsWith(".svg")}
+                          className="object-cover opacity-80 transition-transform duration-700 group-hover:scale-110"
+                        />
+                      ) : null}
+                      <span className="absolute inset-0 bg-gradient-to-t from-gps-blue-night via-gps-blue-night/40 to-transparent" />
+                      <span className="relative flex items-end justify-between gap-2">
+                        <span>
+                          <span className="block text-[12px] font-bold text-white/70 tabular">
+                            {String(i + 1).padStart(2, "0")} · {cat.product_count} article
+                            {cat.product_count > 1 ? "s" : ""}
+                          </span>
+                          <span className="mt-1 block font-display text-[26px] leading-none font-extrabold uppercase md:text-[32px]">
+                            {cat.name}
+                          </span>
                         </span>
-                        <span className="mt-1 block text-[13px] text-ink-mute">
-                          {cat.product_count} article
-                          {cat.product_count > 1 ? "s" : ""}
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-gps-blue-night transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-gps-red group-hover:text-white">
+                          <IconArrowRight size={18} />
                         </span>
-                      </span>
-                      <span className="flex items-center gap-4">
-                        {sample?.images[0] ? (
-                          <Image
-                            src={sample.images[0].url}
-                            alt=""
-                            width={96}
-                            height={120}
-                            unoptimized={sample.images[0].url.endsWith(".svg")}
-                            className="h-[60px] w-12 rounded-[4px] object-cover md:h-[90px] md:w-[72px]"
-                          />
-                        ) : null}
-                        <IconArrowRight className="hidden text-gps-red transition-transform group-hover:translate-x-1 md:block" />
                       </span>
                     </Link>
                   </li>
                 );
               })}
-            </ol>
+            </ul>
           </div>
         </section>
       ) : null}
@@ -218,7 +275,7 @@ export default async function HomePage() {
             <h2 id="titre-selection" className="sr-only">
               Sélection GPS
             </h2>
-            <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-12">
+            <div data-reveal className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-12">
               <div className="col-span-2 lg:col-span-6 lg:row-span-2">
                 <ProductCard
                   product={selection[0]}
@@ -239,7 +296,10 @@ export default async function HomePage() {
       {/* ——— 03 Focus ——— */}
       {focus ? (
         <section aria-labelledby="titre-focus" className="border-t border-line">
-          <div className="container-site grid gap-8 py-16 md:py-24 lg:grid-cols-12 lg:items-center lg:gap-16">
+          <div
+            data-reveal
+            className="container-site grid gap-8 py-16 md:py-24 lg:grid-cols-12 lg:items-center lg:gap-16"
+          >
             <div className="relative lg:order-2 lg:col-span-7">
               <div className="grid grid-cols-5 gap-3">
                 <div className="col-span-3 overflow-hidden rounded-[6px]">
@@ -303,7 +363,7 @@ export default async function HomePage() {
           className="pointer-events-none absolute -right-10 bottom-0 h-[70%] w-[80%] opacity-30"
           width={5}
         />
-        <div className="relative container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
+        <div data-reveal className="relative container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <p className="eyebrow flex items-center gap-3 text-white/80">
               <span className="text-white tabular">04</span>
@@ -357,7 +417,7 @@ export default async function HomePage() {
 
       {/* ——— 05 Boutique physique ——— */}
       <section aria-labelledby="titre-boutique">
-        <div className="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12 lg:items-end">
+        <div data-reveal className="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7">
             {c.storePhotoUrl ? (
               <Image
@@ -396,21 +456,40 @@ export default async function HomePage() {
             Informations pratiques
           </h2>
           <div className="mt-10 grid gap-10 lg:grid-cols-12">
-            <ol className="grid gap-6 sm:grid-cols-3 lg:col-span-7">
+            <ol className="steps-flow grid gap-4 sm:grid-cols-3 lg:col-span-7" data-reveal>
               {[
                 [
+                  IconBag,
                   "Choisissez",
                   "Variante, quantité : constituez votre panier sur le site. Rien n'est réservé à ce stade.",
                 ],
-                ["Envoyez", "Le site prépare un récapitulatif. Vous l'envoyez vous-même sur WhatsApp."],
-                ["GPS confirme", "GPS vérifie la disponibilité, confirme le total et les modalités de réception."],
-              ].map(([t, d], i) => (
-                <li key={t} className="border-t-[3px] border-gps-red pt-4">
-                  <p className="font-display text-[40px] leading-none font-bold text-gps-blue tabular">{i + 1}</p>
-                  <p className="mt-2 text-lg font-extrabold">{t}</p>
-                  <p className="mt-1 text-[15px] leading-relaxed text-ink-soft">{d}</p>
-                </li>
-              ))}
+                [IconWhatsApp, "Envoyez", "Le site prépare un récapitulatif. Vous l'envoyez vous-même sur WhatsApp."],
+                [
+                  IconCheck,
+                  "GPS confirme",
+                  "GPS vérifie la disponibilité, confirme le total et les modalités de réception.",
+                ],
+              ].map(([Icon, t, d], i) => {
+                const I = Icon as typeof IconBag;
+                return (
+                  <li
+                    key={t as string}
+                    className="relative rounded-[18px] border border-line-soft bg-paper p-5"
+                    style={{ transitionDelay: `${i * 90}ms` }}
+                  >
+                    <span className="flex items-center justify-between">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gps-blue text-white">
+                        <I size={22} />
+                      </span>
+                      <span className="font-display text-[44px] leading-none font-extrabold text-gps-red/20 tabular">
+                        {i + 1}
+                      </span>
+                    </span>
+                    <p className="mt-4 text-lg font-extrabold">{t as string}</p>
+                    <p className="mt-1 text-[15px] leading-relaxed text-ink-soft">{d as string}</p>
+                  </li>
+                );
+              })}
             </ol>
             <dl className="grid gap-5 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
               {[
@@ -437,6 +516,42 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ——— Appel final ——— */}
+      <section aria-labelledby="titre-cta" className="container-site py-16 md:py-24">
+        <div
+          data-reveal
+          className="relative overflow-hidden rounded-[28px] bg-gps-red px-6 py-14 text-center text-white md:px-12 md:py-20"
+        >
+          <Ribbon
+            tone="white"
+            className="pointer-events-none absolute -bottom-6 left-0 h-[70%] w-full opacity-30"
+            width={6}
+          />
+          <p className="eyebrow relative text-white/80">Le service qui rassure</p>
+          <h2
+            id="titre-cta"
+            className="relative mx-auto mt-3 max-w-3xl font-display text-[48px] leading-[0.9] font-extrabold uppercase md:text-[84px]"
+          >
+            Votre prochain article est chez GPS.
+          </h2>
+          <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+            <Link href="/boutique" className="btn btn-light">
+              Explorer la boutique <IconArrowRight size={18} />
+            </Link>
+            {waGeneral ? (
+              <a href={waGeneral} className="btn btn-wa" target="_blank" rel="noopener noreferrer">
+                <IconWhatsApp /> Écrire à GPS
+              </a>
+            ) : (
+              <Link href="/contact" className="btn btn-ink">
+                Nous contacter
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+      <RevealOnScroll />
     </>
   );
 }
