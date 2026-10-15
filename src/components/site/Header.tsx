@@ -12,7 +12,13 @@ export const mainNav = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function Header({ company }: { company: Settings["company"] }) {
+export function Header({
+  company,
+  categories,
+}: {
+  company: Settings["company"];
+  categories: { slug: string; name: string }[];
+}) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/85">
       <a
@@ -36,7 +42,7 @@ export function Header({ company }: { company: Settings["company"] }) {
             ))}
           </ul>
         </nav>
-        <HeaderActions />
+        <HeaderActions categories={categories} />
       </div>
     </header>
   );

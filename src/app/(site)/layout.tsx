@@ -14,7 +14,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
   const categories = (await listCategories(db)).filter((c) => c.product_count > 0);
   return (
     <>
-      <Header company={settings.company} />
+      <Header company={settings.company} categories={categories} />
       <main id="contenu">{children}</main>
       <Footer settings={settings} categories={categories} />
     </>

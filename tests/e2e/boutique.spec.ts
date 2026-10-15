@@ -62,6 +62,30 @@ test.describe("Boutique et commande WhatsApp", () => {
     await expect(page.getByRole("link", { name: "Sonna Buds Air" })).toBeVisible();
   });
 
+  test("recherche instantanée : résultats pendant la saisie, clavier, page de résultats", async ({ page }) => {
+    await page.goto("/");
+    await page
+      .getByRole("button", { name: /Rechercher/ })
+      .first()
+      .click();
+    const box = page.getByRole("combobox", { name: /Rechercher un produit/ });
+    await box.fill("orbis");
+    const options = page.getByRole("option");
+    await expect(options.first()).toBeVisible();
+    await expect(page.getByText(/articles? pour « orbis »/)).toBeVisible();
+    await box.press("ArrowDown");
+    await expect(options.first()).toHaveAttribute("aria-selected", "true");
+    await box.press("Enter");
+    await expect(page).toHaveURL(/\/produits\//);
+
+    await page.keyboard.press("/");
+    await page.getByRole("combobox", { name: /Rechercher un produit/ }).fill("zzzz");
+    await expect(page.getByText("Aucun article trouvé")).toBeVisible();
+    await page.getByRole("combobox", { name: /Rechercher un produit/ }).fill("chargeur");
+    await page.getByRole("combobox", { name: /Rechercher un produit/ }).press("Enter");
+    await expect(page).toHaveURL(/\/boutique\?q=chargeur/);
+  });
+
   test("recherche, filtres partageables et retour aux résultats", async ({ page }) => {
     await page.goto("/boutique?q=orbis&tri=prix-asc");
     await expect(page.getByText(/^4 articles/)).toBeVisible();

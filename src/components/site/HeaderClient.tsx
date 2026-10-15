@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { cartCount, useCart } from "../cart/cart-store";
-import { IconBag, IconSearch } from "../ui/icons";
-import { Sheet } from "../ui/Sheet";
+import { IconBag } from "../ui/icons";
+import { SearchOverlay } from "./SearchOverlay";
 
 export function NavLink({ href, children }: { href: string; children: ReactNode }) {
   const pathname = usePathname();
@@ -22,54 +22,6 @@ export function NavLink({ href, children }: { href: string; children: ReactNode 
     >
       {children}
     </Link>
-  );
-}
-
-function SearchForm({ autoFocus, onDone }: { autoFocus?: boolean; onDone?: () => void }) {
-  const router = useRouter();
-  const params = useSearchParams();
-  const pathname = usePathname();
-  const current = pathname === "/boutique" ? (params.get("q") ?? "") : "";
-  const [q, setQ] = useState(current);
-  const [seen, setSeen] = useState(current);
-  if (seen !== current) {
-    setSeen(current);
-    setQ(current);
-  }
-  return (
-    <form
-      role="search"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const next = new URLSearchParams(pathname === "/boutique" ? params.toString() : "");
-        if (q.trim()) next.set("q", q.trim());
-        else next.delete("q");
-        router.push(`/boutique${next.size ? `?${next}` : ""}`);
-        onDone?.();
-      }}
-      className="relative w-full"
-    >
-      <label htmlFor={autoFocus ? "recherche-mobile" : "recherche"} className="sr-only">
-        Rechercher un produit, une marque ou une référence
-      </label>
-      <input
-        id={autoFocus ? "recherche-mobile" : "recherche"}
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        autoFocus={autoFocus}
-        placeholder="Produit, marque, référence…"
-        className="field h-11 min-h-11 rounded-[6px] border-line bg-white pr-12 text-[15px]"
-        enterKeyHint="search"
-      />
-      <button
-        type="submit"
-        className="absolute top-0 right-0 inline-flex h-11 w-11 items-center justify-center text-ink-soft hover:text-gps-blue"
-        aria-label="Lancer la recherche"
-      >
-        <IconSearch />
-      </button>
-    </form>
   );
 }
 
@@ -93,30 +45,11 @@ function CartButton() {
   );
 }
 
-export function HeaderActions() {
-  const [searchOpen, setSearchOpen] = useState(false);
+export function HeaderActions({ categories }: { categories: { slug: string; name: string }[] }) {
   return (
     <div className="ml-auto flex items-center gap-1 md:gap-3">
-      <div className="hidden w-[min(28vw,340px)] md:block">
-        <Suspense fallback={<div className="h-11 w-full rounded-[6px] border border-line bg-white" />}>
-          <SearchForm />
-        </Suspense>
-      </div>
-      <button
-        type="button"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-[6px] hover:bg-ink/5 md:hidden"
-        aria-label="Rechercher"
-        onClick={() => setSearchOpen(true)}
-      >
-        <IconSearch size={22} />
-      </button>
+      <SearchOverlay categories={categories} />
       <CartButton />
-      <Sheet open={searchOpen} onClose={() => setSearchOpen(false)} title="Rechercher" side="bottom">
-        <Suspense>
-          <SearchForm autoFocus onDone={() => setSearchOpen(false)} />
-        </Suspense>
-        <p className="hint">Exemples : téléphone, écouteurs, une marque ou une référence.</p>
-      </Sheet>
     </div>
   );
 }
