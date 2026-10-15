@@ -1,82 +1,130 @@
 import Link from "next/link";
 import type { Settings } from "@/server/domain/settings";
 import { Logo } from "../brand/Logo";
-import { Ribbon } from "../brand/Ribbon";
 
-function Info({ label, value }: { label: string; value: string }) {
+/** Ligne de ticket : libellé, points de conduite, valeur. */
+function Line({ label, value, href }: { label: string; value: string; href?: string }) {
   return (
-    <div>
-      <dt className="text-[13px] font-semibold text-white/60">{label}</dt>
-      <dd className="mt-0.5">{value || <span className="text-white/70 italic">À confirmer</span>}</dd>
+    <div className="receipt-line">
+      <dt>{label}</dt>
+      <span aria-hidden="true" className="receipt-dots" />
+      <dd>
+        {value ? (
+          href ? (
+            <a href={href} className="underline-offset-2 hover:underline">
+              {value}
+            </a>
+          ) : (
+            value
+          )
+        ) : (
+          <span className="text-ink-mute italic">à confirmer</span>
+        )}
+      </dd>
     </div>
   );
 }
 
+const pages: [string, string][] = [
+  ["/boutique", "Boutique"],
+  ["/services", "Transfert d'argent"],
+  ["/a-propos", "À propos"],
+  ["/contact", "Contact"],
+  ["/faq", "Questions fréquentes"],
+];
+
+const legal: [string, string][] = [
+  ["/conditions-de-vente", "Conditions de vente"],
+  ["/confidentialite", "Confidentialité"],
+];
+
 export function Footer({ settings, categories }: { settings: Settings; categories: { slug: string; name: string }[] }) {
   const c = settings.company;
+  const wa = c.whatsapp.replace(/\D/g, "");
+  const tel = c.phone.replace(/[^\d+]/g, "");
   return (
-    <footer className="relative mt-24 overflow-hidden bg-gps-blue-deep text-white">
-      <Ribbon tone="white" className="pointer-events-none absolute -top-20 right-0 h-32 w-[70%] opacity-25" />
-      <div className="relative container-site grid gap-12 py-16 md:grid-cols-12">
-        <div className="md:col-span-4">
-          <div className="inline-block rounded-[6px] bg-white p-3">
-            <Logo className="h-20 w-auto" />
+    <footer className="mt-24 text-ink">
+      <div aria-hidden="true" className="receipt-edge" />
+      <div className="bg-paper-deep">
+        <div className="container-site pt-12 pb-8 md:pt-16">
+          <div className="grid gap-12 md:grid-cols-12">
+            <div className="md:col-span-5">
+              <Logo className="h-16 w-auto" />
+              <p className="mt-5 max-w-sm text-[16px] leading-relaxed text-ink-soft">
+                Téléphones, accessoires, chaussures, lunettes… et le transfert d&apos;argent, au même comptoir.
+              </p>
+              {categories.length ? (
+                <p className="mt-5 max-w-md text-[14.5px] leading-7 text-ink-soft">
+                  <span className="font-semibold text-ink">Les rayons : </span>
+                  {categories.slice(0, 10).map((cat, i) => (
+                    <span key={cat.slug}>
+                      {i ? ", " : ""}
+                      <Link
+                        href={`/categories/${cat.slug}`}
+                        className="underline decoration-ink/25 underline-offset-4 hover:decoration-gps-red"
+                      >
+                        {cat.name}
+                      </Link>
+                    </span>
+                  ))}
+                  .
+                </p>
+              ) : null}
+            </div>
+
+            <div className="md:col-span-4">
+              <p className="receipt-title">Au comptoir</p>
+              <dl className="mt-3 grid gap-2.5">
+                <Line
+                  label="Adresse"
+                  value={[c.address, c.city].filter(Boolean).join(", ")}
+                  href={c.mapsUrl || undefined}
+                />
+                <Line label="Horaires" value={c.hours} />
+                <Line label="Téléphone" value={c.phone} href={tel ? `tel:${tel}` : undefined} />
+                <Line label="WhatsApp" value={wa ? `+${wa}` : ""} href={wa ? `https://wa.me/${wa}` : undefined} />
+              </dl>
+            </div>
+
+            <nav aria-label="Pied de page" className="md:col-span-3">
+              <p className="receipt-title">Plan du site</p>
+              <ul className="mt-3 grid gap-1.5 text-[15px]">
+                {pages.map(([href, label]) => (
+                  <li key={href}>
+                    <Link className="footer-link" href={href}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <ul className="mt-5 grid gap-1.5 text-[14px] text-ink-soft">
+                {legal.map(([href, label]) => (
+                  <li key={href}>
+                    <Link className="footer-link" href={href}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
-          <p className="mt-6 font-display text-4xl leading-none font-bold uppercase">
-            Le service
-            <br />
-            qui rassure.
+
+          <div className="receipt-tear mt-12 pt-6 text-center">
+            <p className="receipt-mono text-[13px] tracking-[0.2em] uppercase">Merci de votre visite</p>
+            <p className="mt-1 text-[13px] text-ink-mute">
+              Commandes confirmées sur WhatsApp — aucun paiement en ligne.
+            </p>
+          </div>
+
+          <p className="mt-8 flex flex-wrap justify-between gap-x-6 gap-y-1 text-[12.5px] text-ink-mute">
+            <span>
+              © {new Date().getFullYear()} GPS — Global Public Services
+              {c.legalName ? ` · ${c.legalName}` : ""}
+              {c.legalId ? ` · ${c.legalId}` : ""}
+            </span>
+            <span>Le service qui rassure</span>
           </p>
         </div>
-        <nav aria-label="Pied de page" className="grid grid-cols-2 gap-8 md:col-span-5">
-          <div>
-            <p className="eyebrow mb-3 text-white/60">Boutique</p>
-            <ul className="space-y-2">
-              {categories.slice(0, 8).map((cat) => (
-                <li key={cat.slug}>
-                  <Link className="hover:underline" href={`/categories/${cat.slug}`}>
-                    {cat.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="eyebrow mb-3 text-white/60">GPS</p>
-            <ul className="space-y-2">
-              {[
-                ["/services", "Transfert d'argent"],
-                ["/a-propos", "À propos"],
-                ["/contact", "Contact"],
-                ["/faq", "Questions fréquentes"],
-                ["/conditions-de-vente", "Conditions de vente"],
-                ["/confidentialite", "Confidentialité"],
-              ].map(([href, label]) => (
-                <li key={href}>
-                  <Link className="hover:underline" href={href}>
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </nav>
-        <dl className="grid gap-4 text-[15px] md:col-span-3">
-          <Info label="Adresse" value={[c.address, c.city].filter(Boolean).join(", ")} />
-          <Info label="Horaires" value={c.hours} />
-          <Info label="Téléphone" value={c.phone} />
-          <Info label="WhatsApp" value={c.whatsapp ? `+${c.whatsapp.replace(/\D/g, "")}` : ""} />
-        </dl>
-      </div>
-      <div className="border-t border-white/15">
-        <p className="container-site flex flex-wrap justify-between gap-2 py-5 text-[13px] text-white/70">
-          <span>
-            © {new Date().getFullYear()} GPS — Global Public Services
-            {c.legalName ? ` · ${c.legalName}` : ""}
-            {c.legalId ? ` · ${c.legalId}` : ""}
-          </span>
-          <span>Commandes préparées sur WhatsApp · aucun paiement en ligne</span>
-        </p>
       </div>
     </footer>
   );
