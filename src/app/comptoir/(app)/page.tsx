@@ -62,25 +62,25 @@ export default async function TodayPage({ searchParams }: PageProps<"/comptoir">
       href: "/comptoir/vente",
       label: "Nouvelle vente",
       icon: IconPlus,
-      ok: can(user.role, "sales.quick"),
+      ok: can(user, "sales.quick"),
     },
     {
       href: "/comptoir/commandes/nouvelle",
       label: "Enregistrer une commande",
       icon: IconBag,
-      ok: can(user.role, "orders.create"),
+      ok: can(user, "orders.create"),
     },
     {
       href: "/comptoir/catalogue/nouveau",
       label: "Ajouter un produit",
       icon: IconGrid,
-      ok: can(user.role, "catalog.edit"),
+      ok: can(user, "catalog.edit"),
     },
     {
       href: "/comptoir/stock/reapprovisionner",
       label: "Réapprovisionner",
       icon: IconList,
-      ok: can(user.role, "stock.restock"),
+      ok: can(user, "stock.restock"),
     },
   ].filter((s) => s.ok);
 

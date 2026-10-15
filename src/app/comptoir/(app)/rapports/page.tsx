@@ -25,7 +25,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
     from: str("du"),
     to: str("au"),
   });
-  const withMargin = can(user.role, "reports.margin");
+  const withMargin = can(user, "reports.margin");
   const r = await report(db, period, { withMargin });
   const payments = r.cashflow.filter((c) => c.kind === "payment");
   const maxBest = Math.max(1, ...r.best.map((b) => b.amount));

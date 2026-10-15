@@ -13,9 +13,9 @@ export const metadata: Metadata = { title: "Produit" };
 export default async function EditProductPage({ params }: PageProps<"/comptoir/catalogue/[id]">) {
   const { db, user, allowed } = await requirePage("catalog.view");
   if (!allowed) return <Forbidden />;
-  const canEdit = can(user.role, "catalog.edit");
+  const canEdit = can(user, "catalog.edit");
   const p = await productForEdit(db, (await params).id, {
-    withCosts: can(user.role, "catalog.costs"),
+    withCosts: can(user, "catalog.costs"),
   });
   if (!p) notFound();
   const categories = await listCategories(db);
@@ -44,7 +44,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
       {canEdit ? (
         <ProductFormClient
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-          canCosts={can(user.role, "catalog.costs")}
+          canCosts={can(user, "catalog.costs")}
           initial={{
             id: p.id,
             updatedAt: p.updatedAt,

@@ -52,7 +52,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
         eyebrow="Suivi"
         title="Commandes"
         actions={
-          can(user.role, "orders.create") ? (
+          can(user, "orders.create") ? (
             <Link href="/comptoir/commandes/nouvelle" className="btn btn-blue">
               <IconPlus size={18} /> Enregistrer une commande
             </Link>

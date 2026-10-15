@@ -10,6 +10,16 @@ export function isDemoMode() {
   return !process.env.DATABASE_URL;
 }
 
+/**
+ * Démonstration protégée : sur un déploiement Vercel, les comptes de
+ * démonstration sont bridés (ni paramètres, ni équipe, ni purge, ni export)
+ * et refusés dès qu'un propriétaire réel existe. GPS_PROTECT_DEMO force le choix.
+ */
+export function isDemoProtected() {
+  if (process.env.GPS_PROTECT_DEMO) return process.env.GPS_PROTECT_DEMO === "true";
+  return !!process.env.VERCEL;
+}
+
 const g = globalThis as unknown as { __gpsDb?: Promise<Db> };
 
 async function init(): Promise<Db> {

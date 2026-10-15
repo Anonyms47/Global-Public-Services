@@ -71,7 +71,7 @@ const productSchema = z.object({
 export async function saveProductAction(input: unknown) {
   return guarded("catalog.edit", async ({ db, user }) => {
     const { expectedUpdatedAt, ...data } = parse(productSchema, input);
-    const withCosts = can(user.role, "catalog.costs");
+    const withCosts = can(user, "catalog.costs");
     return saveProduct(
       db,
       { ...data, isDemo: data.id ? undefined : isDemoMode() },

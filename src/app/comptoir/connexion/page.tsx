@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { isDemoMode } from "@/server/db";
+import Link from "next/link";
+import { getDb } from "@/server/db";
+import { demoAccess } from "@/server/admin";
+import { hasRealOwner } from "@/server/domain/auth";
 import { DEMO_PASSWORD, demoAccounts } from "@/server/demo/seed";
 import { roleLabels } from "@/lib/permissions";
 import { Logo } from "@/components/brand/Logo";
@@ -12,7 +15,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/comptoir/c
   const sp = await searchParams;
   const suite = typeof sp.suite === "string" ? sp.suite : "";
   const expired = sp.expiree === "1";
-  const demo = isDemoMode();
+  const db = await getDb();
+  const access = await demoAccess(db);
+  const demo = access.allowDemo;
+  const installable = !!process.env.COMPTOIR_SETUP_CODE && !(await hasRealOwner(db));
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-gps-blue-deep p-12 text-white lg:flex lg:flex-col lg:justify-between">
@@ -53,10 +59,18 @@ export default async function LoginPage({ searchParams }: PageProps<"/comptoir/c
               <h2 id="titre-demo" className="font-bold text-gps-blue-deep">
                 Comptes de démonstration
               </h2>
-              <p className="mt-1 text-[14px] text-gps-blue-deep">
-                Isolés des données réelles, désactivés automatiquement hors mode démonstration. Mot de passe :{" "}
-                <code className="font-bold">{DEMO_PASSWORD}</code>
-              </p>
+              {access.restricted ? (
+                <p className="mt-1 text-[14px] text-gps-blue-deep">
+                  Démonstration protégée : ces comptes consultent et testent les opérations sur les données
+                  d&apos;exemple, sans accès aux paramètres, à l&apos;équipe, aux exports ni à la purge. Ils sont
+                  refusés dès qu&apos;un propriétaire réel est créé.
+                </p>
+              ) : (
+                <p className="mt-1 text-[14px] text-gps-blue-deep">
+                  Isolés des données réelles, désactivés automatiquement hors mode démonstration. Mot de passe local :{" "}
+                  <code className="font-bold">{DEMO_PASSWORD}</code>
+                </p>
+              )}
               <ul className="mt-3 grid gap-1 text-[14px]">
                 {demoAccounts.map((a) => (
                   <li key={a.email} className="flex flex-wrap justify-between gap-2">
@@ -66,6 +80,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/comptoir/c
                 ))}
               </ul>
             </section>
+          ) : null}
+          {installable ? (
+            <p className="mt-6 text-[14px] text-ink-soft">
+              Première mise en service ?{" "}
+              <Link
+                href="/comptoir/installation"
+                className="font-bold text-gps-blue underline-offset-2 hover:underline"
+              >
+                Créer le compte du propriétaire
+              </Link>
+            </p>
           ) : null}
         </div>
       </main>

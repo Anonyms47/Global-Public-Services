@@ -93,7 +93,7 @@ export default async function CustomerPage({ params }: PageProps<"/comptoir/clie
         <div className="lg:col-span-5">
           <CustomerEditForm
             id={c.id}
-            canEdit={can(user.role, "customers.edit")}
+            canEdit={can(user, "customers.edit")}
             initial={{
               name: c.name,
               phone: c.phone,

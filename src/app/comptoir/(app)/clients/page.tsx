@@ -22,13 +22,13 @@ export default async function CustomersPage({ searchParams }: PageProps<"/compto
         title="Clients"
         actions={
           <>
-            {can(user.role, "customers.export") ? (
+            {can(user, "customers.export") ? (
               // Téléchargement de fichier : un lien simple, pas une navigation applicative.
               <a href="/comptoir/clients/export" download className="btn btn-outline">
                 <IconDownload size={18} /> Exporter (CSV)
               </a>
             ) : null}
-            {can(user.role, "customers.edit") ? <NewCustomerButton /> : null}
+            {can(user, "customers.edit") ? <NewCustomerButton /> : null}
           </>
         }
       >

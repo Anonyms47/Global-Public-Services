@@ -15,7 +15,8 @@ import {
 import { restock, applyInventory, inventoryPreview, adjustStock } from "@/server/domain/stock";
 import { publishedProducts, saveProduct, productForEdit, filterProducts } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
-import { assertCan, login, userFromToken } from "@/server/domain/auth";
+import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
+import { can } from "@/lib/permissions";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
 import { addLateDemoProducts, purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
@@ -406,6 +407,33 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(await userFromToken(db, token, { allowDemo: true })).not.toBeNull();
     expect(await userFromToken(db, token, { allowDemo: false })).toBeNull();
     await expect(login(db, "vente@demo.gps", "mauvais", { allowDemo: true })).rejects.toThrow(/incorrect/);
+  });
+
+  it("démonstration protégée : comptes d'exemple bridés, puis propriétaire réel par code d'installation", async () => {
+    const owner = await userByRole(db, "owner");
+    expect(can(owner, "settings.edit")).toBe(true);
+    const bridled = { ...owner, restricted: true };
+    for (const p of ["settings.edit", "team.manage", "demo.purge", "customers.export"] as const) {
+      expect(() => assertCan(bridled, p)).toThrow(/droits/);
+    }
+    expect(() => assertCan(bridled, "orders.view")).not.toThrow();
+
+    const code = "code-installation-test-1234";
+    const input = { code, name: "Propriétaire réel", email: "reel@exemple.test", password: "un-mot-de-passe-solide" };
+    expect(await hasRealOwner(db)).toBe(false);
+    await expect(claimOwner(db, undefined, input)).rejects.toThrow(/pas ouverte/);
+    await expect(claimOwner(db, "court", input)).rejects.toThrow(/pas ouverte/);
+    await expect(claimOwner(db, code, { ...input, code: "mauvais" })).rejects.toThrow(/incorrect/);
+    await expect(claimOwner(db, code, { ...input, password: "court" })).rejects.toThrow(/12/);
+    await claimOwner(db, code, input);
+    expect(await hasRealOwner(db)).toBe(true);
+    const real = await db.one<{ is_demo: boolean; role: string }>("select is_demo, role from users where email = $1", [
+      input.email,
+    ]);
+    expect(real).toEqual({ is_demo: false, role: "owner" });
+    await expect(claimOwner(db, code, { ...input, email: "autre@exemple.test" })).rejects.toThrow(/existe déjà/);
+    // Remise à l'état initial pour les autres tests.
+    await db.query("delete from users where email = $1", [input.email]);
   });
 
   it("signale un numéro déjà connu avant de créer un doublon", async () => {

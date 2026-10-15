@@ -17,11 +17,7 @@ export default async function NewOrderPage() {
         Pour une commande confirmée avec le client (WhatsApp, téléphone). Les articles sont réservés à
         l&apos;enregistrement.
       </PageTitle>
-      <OrderComposerClient
-        mode="order"
-        canEditPrice={can(user.role, "orders.correct")}
-        zones={settings.reception.zones}
-      />
+      <OrderComposerClient mode="order" canEditPrice={can(user, "orders.correct")} zones={settings.reception.zones} />
     </>
   );
 }

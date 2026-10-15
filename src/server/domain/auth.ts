@@ -15,6 +15,8 @@ export interface User {
   role: Role;
   active: boolean;
   is_demo: boolean;
+  /** Compte de démonstration bridé (démonstration protégée en production). */
+  restricted?: boolean;
 }
 
 export async function hashPassword(password: string) {
@@ -73,9 +75,42 @@ export async function userFromToken(db: Db, token: string | undefined, opts: { a
 /** Vérifie un droit pour un utilisateur déjà authentifié. */
 export function assertCan(user: User | null, permission: Permission): asserts user is User {
   if (!user) throw new AppError("session_expired", "Votre session a expiré. Reconnectez-vous pour continuer.");
-  if (!can(user.role, permission)) {
+  if (!can(user, permission)) {
     throw new AppError("forbidden", "Vous n'avez pas les droits nécessaires pour cette action.");
   }
+}
+
+/** Un propriétaire réel (hors démonstration) et actif existe-t-il ? */
+export async function hasRealOwner(db: Db) {
+  const row = await db.one<{ ok: boolean }>(
+    "select exists (select 1 from users where role = 'owner' and active and not is_demo) as ok",
+  );
+  return !!row?.ok;
+}
+
+/**
+ * Crée le premier propriétaire réel à l'aide du code d'installation défini
+ * côté serveur. Refusé dès qu'un propriétaire réel existe.
+ */
+export async function claimOwner(
+  db: Db,
+  setupCode: string | undefined,
+  input: { code: string; name: string; email: string; password: string },
+) {
+  if (!setupCode || setupCode.length < 16) {
+    fail("forbidden", "L'installation n'est pas ouverte sur ce serveur.");
+  }
+  const a = createHash("sha256").update(String(input.code)).digest();
+  const b = createHash("sha256").update(setupCode!).digest();
+  if (!timingSafeEqual(a, b)) fail("validation", "Code d'installation incorrect.", { code: "Code incorrect." });
+  if (input.password.length < 12) {
+    fail("validation", "12 caractères minimum.", { password: "12 caractères minimum." });
+  }
+  return db.tx(async (tx) => {
+    await tx.query("select pg_advisory_xact_lock(4747001)");
+    if (await hasRealOwner(tx)) fail("conflict", "Un propriétaire existe déjà : connectez-vous avec son compte.");
+    return createUser(tx, { ...input, role: "owner", isDemo: false });
+  });
 }
 
 // ——— Équipe ———

@@ -20,9 +20,8 @@ Sans `DATABASE_URL`, une base PostgreSQL intégrée (PGlite) est créée dans `.
 | Propriétaire (tous les droits)          | `proprietaire@demo.gps`        |
 | Gestionnaire (sans coûts ni paramètres) | `gestion@demo.gps`             |
 | Vendeur (vente, commandes, clients)     | `vente@demo.gps`               |
-| Mot de passe des comptes de démo        | `demo-gps-2026`                |
 
-Les comptes de démonstration n'existent que dans les données d'exemple, et **ne peuvent se connecter que si le mode démonstration est actif**.
+Le mot de passe local des comptes de démonstration s'affiche sur la page de connexion **en local uniquement**. Les comptes de démonstration n'existent que dans les données d'exemple et **ne peuvent se connecter que si le mode démonstration est actif**. Sur Vercel, la démonstration est protégée : ces comptes n'ont accès ni aux paramètres, ni à l'équipe, ni aux exports, ni à la purge, et ils sont refusés dès qu'un propriétaire réel existe.
 
 ## Ce que fait le site
 
@@ -71,7 +70,7 @@ La base Supabase et le projet Vercel sont déjà créés : voir [`docs/mise-en-l
 
 1. Créer une base PostgreSQL gérée (Supabase, Neon…) et renseigner `DATABASE_URL`. Le schéma est créé au démarrage.
 2. Mettre `DEMO_MODE=false` : aucune donnée d'exemple n'est chargée et les comptes de démonstration ne peuvent pas se connecter.
-3. Créer le premier propriétaire : `DATABASE_URL=… npm run admin:create -- "Nom" email@domaine`.
+3. Créer le premier propriétaire : définir `COMPTOIR_SETUP_CODE` (16 caractères minimum, gardé secret) dans l'hébergeur, puis ouvrir `/comptoir/installation`. Alternative en ligne de commande : `DATABASE_URL=… npm run admin:create -- "Nom" email@domaine`.
 4. Dans **Paramètres**, renseigner coordonnées, numéro WhatsApp (format international), réception, frais, garantie, retours et paiement.
 5. Saisir le vrai catalogue, puis mettre `SITE_INDEXABLE=true` et `NEXT_PUBLIC_SITE_URL`.
 6. Déployer (Vercel ou serveur Node). Sauvegardes automatiques de la base à activer chez l'hébergeur.

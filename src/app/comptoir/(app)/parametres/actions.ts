@@ -102,7 +102,7 @@ export async function saveSettingsAction(input: unknown) {
 export async function createUserAction(input: unknown) {
   return guarded(
     "team.manage",
-    ({ db }) => {
+    ({ db, user }) => {
       const d = parse(
         z.object({
           name: z.string(),
@@ -112,7 +112,8 @@ export async function createUserAction(input: unknown) {
         }),
         input,
       );
-      return createUser(db, { ...d, isDemo: isDemoMode() });
+      // Un compte créé par un compte réel est réel, même en mode démonstration.
+      return createUser(db, { ...d, isDemo: user.is_demo && isDemoMode() });
     },
     { message: "Compte créé." },
   );
