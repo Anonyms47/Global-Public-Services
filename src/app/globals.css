@@ -1321,3 +1321,124 @@
   background: var(--color-gps-red-soft);
   color: var(--color-gps-red-ink);
 }
+
+/* ——— FAQ ——— */
+.faq-item {
+  border-radius: 18px;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  transition:
+    border-color 200ms,
+    box-shadow 250ms var(--ease-out-gps);
+}
+.faq-item:hover {
+  border-color: var(--color-gps-blue);
+}
+.faq-item[open] {
+  border-color: var(--color-gps-blue);
+  box-shadow: 0 16px 30px -24px rgb(20 16 57 / 0.55);
+}
+.faq-item summary:focus-visible {
+  outline: 3px solid var(--color-gps-blue);
+  outline-offset: 2px;
+  border-radius: 18px;
+}
+.faq-plus {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--color-gps-red-soft);
+  transition:
+    background-color 200ms,
+    transform 300ms var(--ease-out-gps);
+}
+.faq-plus span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 2px;
+  margin: -1px 0 0 -6px;
+  border-radius: 2px;
+  background: var(--color-gps-red-ink);
+}
+.faq-plus span:last-child {
+  transform: rotate(90deg);
+}
+.faq-item[open] .faq-plus {
+  background: var(--color-gps-red);
+  transform: rotate(45deg);
+}
+.faq-item[open] .faq-plus span {
+  background: #fff;
+}
+
+/* ——— Pages légales ——— */
+.legal-sheet {
+  border-radius: 24px;
+  border: 1px solid var(--color-line);
+  background: #fff;
+  padding: 8px 20px;
+  box-shadow: 0 24px 50px -40px rgb(20 16 57 / 0.5);
+}
+@media (width >= 48rem) {
+  .legal-sheet {
+    padding: 12px 40px;
+  }
+}
+.legal-section {
+  scroll-margin-top: 110px;
+  padding-block: 28px;
+}
+.legal-section + .legal-section {
+  border-top: 2px dashed color-mix(in oklab, var(--color-ink) 14%, transparent);
+}
+.legal-toc {
+  display: flex;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin-inline: -10px;
+  font-weight: 600;
+  transition: background-color 150ms;
+}
+.legal-toc:hover {
+  background: var(--color-paper-deep);
+}
+
+/* ——— 404 ——— */
+.ticket-404 {
+  position: relative;
+  max-width: 400px;
+  margin-inline: auto;
+  background: #fff;
+  padding: 26px 24px 30px;
+  box-shadow: 0 30px 50px -34px rgb(20 16 57 / 0.55);
+  transform: rotate(1.5deg);
+  -webkit-mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 16px 51% repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 51% repeat-x;
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 16px 51% repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 51% repeat-x;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket-404 {
+    transform: none;
+  }
+}
+.ticket-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-inline: -10px;
+  font-weight: 700;
+  transition: background-color 150ms;
+}
+.ticket-link:hover {
+  background: var(--color-paper);
+}
