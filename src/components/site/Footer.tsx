@@ -46,7 +46,7 @@ export function Footer({ settings, categories }: { settings: Settings; categorie
             <ul className="space-y-2">
               {[
                 ["/services", "Transfert d'argent"],
-                ["/a-propos", "La boutique"],
+                ["/a-propos", "À propos"],
                 ["/contact", "Contact"],
                 ["/faq", "Questions fréquentes"],
                 ["/conditions-de-vente", "Conditions de vente"],

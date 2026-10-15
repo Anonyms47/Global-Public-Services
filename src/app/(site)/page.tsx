@@ -451,7 +451,7 @@ export default async function HomePage() {
             )}
           </div>
           <div className="lg:col-span-5">
-            <SectionHead index="05" eyebrow="La boutique" title="Passez au comptoir" />
+            <SectionHead index="05" eyebrow="À propos" title="Passez au comptoir" />
             <h2 id="titre-boutique" className="sr-only">
               La boutique physique
             </h2>

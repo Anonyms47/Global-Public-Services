@@ -8,7 +8,7 @@ export const mainNav = [
   { href: "/boutique", label: "Boutique" },
   { href: "/categories", label: "Univers" },
   { href: "/services", label: "Transfert d'argent" },
-  { href: "/a-propos", label: "La boutique" },
+  { href: "/a-propos", label: "À propos" },
   { href: "/contact", label: "Contact" },
 ];
 
