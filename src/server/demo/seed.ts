@@ -86,9 +86,14 @@ const categories = [
     description: "Baskets et chaussures de ville.",
   },
   {
+    slug: "montres",
+    name: "Montres",
+    description: "Montres classiques et connectées.",
+  },
+  {
     slug: "autres-articles",
     name: "Autres articles",
-    description: "Montres et objets du quotidien.",
+    description: "Objets du quotidien.",
   },
 ];
 
@@ -428,7 +433,7 @@ const products: DemoProduct[] = [
   {
     name: "Orbis Fit",
     brand: "Orbis",
-    category: "autres-articles",
+    category: "montres",
     ageDays: 15,
     condition: "Neuf",
     description: "Montre connectée pour suivre ses pas et recevoir ses notifications. Bracelet souple.",

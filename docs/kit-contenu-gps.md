@@ -16,7 +16,7 @@ Les textes du site s'appliquent en un clic dans **Le Comptoir** : bouton **« Ut
 
 > GPS — Global Public Services est né d'une idée simple : réunir au même endroit les produits du quotidien et les services dont on a besoin, avec un accueil qui rassure.
 >
-> Téléphones, écouteurs, casques, chargeurs, accessoires, lunettes, chaussures : nous choisissons des articles que nous pouvons expliquer et défendre. Au comptoir, vous trouvez aussi nos services de transfert d'argent.
+> Téléphones, écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures : nous choisissons des articles que nous pouvons expliquer et défendre. Au comptoir, vous trouvez aussi nos services de transfert d'argent.
 >
 > Notre promesse tient en une phrase, notre slogan : le service qui rassure. Une réponse claire, un prix annoncé, une commande confirmée avant d'être préparée.
 
@@ -103,7 +103,7 @@ Le Comptoir prépare aussi ces messages depuis chaque fiche commande (bloc « Pr
 
 **Description (750 caractères max.)**
 
-> GPS — Global Public Services, le service qui rassure. Au comptoir, retrouvez téléphones, AirPods et écouteurs, casques, chargeurs, accessoires, lunettes, chaussures et d'autres articles du quotidien, ainsi que nos services de transfert d'argent. Choisissez en ligne sur notre site et envoyez votre commande sur WhatsApp : nous vous confirmons la disponibilité, le prix et les modalités de retrait ou de livraison. Ou passez directement nous voir pour être conseillé.
+> GPS — Global Public Services, le service qui rassure. Au comptoir, retrouvez téléphones, AirPods et écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures et d'autres articles du quotidien, ainsi que nos services de transfert d'argent. Choisissez en ligne sur notre site et envoyez votre commande sur WhatsApp : nous vous confirmons la disponibilité, le prix et les modalités de retrait ou de livraison. Ou passez directement nous voir pour être conseillé.
 
 ---
 

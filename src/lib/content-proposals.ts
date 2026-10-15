@@ -7,7 +7,7 @@ export const proposals = {
   storeText:
     "Au comptoir GPS, on prend le temps. Vous voyez les produits en vrai, on vous conseille sur le bon modèle, la bonne capacité ou la bonne pointure, et vous repartez avec un article vérifié devant vous. C'est aussi là que vous retirez vos commandes confirmées et que vous utilisez nos services de transfert d'argent.",
   aboutText:
-    "GPS — Global Public Services est né d'une idée simple : réunir au même endroit les produits du quotidien et les services dont on a besoin, avec un accueil qui rassure.\n\nTéléphones, écouteurs, casques, chargeurs, accessoires, lunettes, chaussures : nous choisissons des articles que nous pouvons expliquer et défendre. Au comptoir, vous trouvez aussi nos services de transfert d'argent.\n\nNotre promesse tient en une phrase, notre slogan : le service qui rassure. Une réponse claire, un prix annoncé, une commande confirmée avant d'être préparée.",
+    "GPS — Global Public Services est né d'une idée simple : réunir au même endroit les produits du quotidien et les services dont on a besoin, avec un accueil qui rassure.\n\nTéléphones, écouteurs, casques, chargeurs, accessoires, montres, lunettes, chaussures : nous choisissons des articles que nous pouvons expliquer et défendre. Au comptoir, vous trouvez aussi nos services de transfert d'argent.\n\nNotre promesse tient en une phrase, notre slogan : le service qui rassure. Une réponse claire, un prix annoncé, une commande confirmée avant d'être préparée.",
   focusText:
     "Notre coup de cœur du moment : un article choisi au comptoir pour son rapport qualité-prix. Choisissez votre option, envoyez votre commande sur WhatsApp, GPS vous confirme la disponibilité.",
   pickupDetails:
