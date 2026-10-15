@@ -91,6 +91,11 @@ const categories = [
     description: "Montres classiques et connectées.",
   },
   {
+    slug: "parfumerie",
+    name: "Parfumerie",
+    description: "Parfums et eaux de toilette.",
+  },
+  {
     slug: "autres-articles",
     name: "Autres articles",
     description: "Objets du quotidien.",
@@ -449,6 +454,28 @@ const products: DemoProduct[] = [
     ],
     stock: { "ORB-FIT-NO": 3, "ORB-FIT-VE": 3 },
   },
+  {
+    name: "Nuance Ambre",
+    brand: "Nuance",
+    category: "parfumerie",
+    ageDays: 3,
+    condition: "Neuf",
+    description: "Eau de parfum aux notes ambrées et florales. Flacon en verre, vaporisateur.",
+    specs: [
+      { label: "Type", value: "Eau de parfum" },
+      { label: "Notes", value: "Ambre, fleurs blanches" },
+    ],
+    axes: ["Contenance"],
+    images: [
+      photo("1541643600914-78b084683601", "Flacon d'eau de parfum Nuance Ambre (photo d'exemple)"),
+      photo("1592945403244-b3fbafd7f539", "Flacon de parfum parmi des fleurs (photo d'exemple)"),
+    ],
+    variants: [
+      { sku: "NUA-AMB-50", options: { Contenance: "50 ml" }, price: 18000 },
+      { sku: "NUA-AMB-100", options: { Contenance: "100 ml" }, price: 28000 },
+    ],
+    stock: { "NUA-AMB-50": 4, "NUA-AMB-100": 2 },
+  },
 ];
 
 /**
@@ -471,6 +498,54 @@ export async function refreshDemoImages(db: Db) {
         [newId(), row.id, im.url, im.alt, im.color ?? null, i],
       );
     }
+  }
+}
+
+/** Produits d'exemple ajoutés après le premier amorçage (nouvelles catégories). */
+const LATE_DEMO_PRODUCTS = ["Nuance Ambre"];
+
+/**
+ * Sur une base déjà amorcée (et non purgée), ajoute les produits d'exemple
+ * arrivés depuis, avec leur catégorie si elle manque. Sans effet après la purge.
+ */
+export async function addLateDemoProducts(db: Db) {
+  if (!(await hasDemoData(db))) return;
+  const owner = await db.one<{ id: string }>("select id from users where email = $1", [demoAccounts[0].email]);
+  if (!owner) return;
+  for (const name of LATE_DEMO_PRODUCTS) {
+    const p = products.find((x) => x.name === name);
+    if (!p) continue;
+    // Déjà présent (même renommé depuis le Comptoir) : on n'y touche pas.
+    const skus = p.variants.map((v) => v.sku);
+    if (await db.one("select 1 from variants where sku = any($1::text[])", [skus])) continue;
+    let cat = await db.one<{ id: string }>("select id from categories where slug = $1", [p.category]);
+    if (!cat) {
+      const c = categories.find((x) => x.slug === p.category)!;
+      const pos = await db.one<{ n: number }>("select coalesce(max(position), 0)::int + 1 as n from categories");
+      cat = { id: newId() };
+      await db.query(
+        "insert into categories (id, slug, name, description, position, is_demo) values ($1,$2,$3,$4,$5,true)",
+        [cat.id, c.slug, c.name, c.description, pos!.n],
+      );
+    }
+    await saveProduct(
+      db,
+      {
+        name: p.name,
+        brand: p.brand,
+        categoryId: cat.id,
+        description: p.description,
+        specs: p.specs,
+        condition: p.condition,
+        axes: p.axes,
+        images: p.images,
+        status: "published",
+        featured: false,
+        isDemo: true,
+        variants: p.variants.map((v) => ({ ...v, initialStock: p.stock[v.sku] ?? 0, costPrice: null })),
+      },
+      { userId: owner.id, withCosts: true },
+    );
   }
 }
 

@@ -18,7 +18,7 @@ import { checkCart } from "@/server/domain/cart";
 import { assertCan, login, userFromToken } from "@/server/domain/auth";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
-import { purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
+import { addLateDemoProducts, purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { buildOrderMessage } from "@/lib/whatsapp";
 
@@ -467,5 +467,24 @@ describe("Démonstration déjà en ligne", () => {
     expect(novaUrls.length).toBeGreaterThan(0);
     expect(novaUrls.every((u) => u.startsWith("https://images.unsplash.com/"))).toBe(true);
     expect((await urls(fit.id)).every((u) => u === "/media/photo-gps")).toBe(true);
+  });
+
+  it("ajoute une seule fois les produits d'exemple arrivés après l'amorçage", async () => {
+    const db = await demoDb();
+    // Base amorcée avant l'arrivée du parfum : on le retire de la base de test.
+    const old = (await db.one<{ id: string }>("select id from products where name = 'Nuance Ambre'"))!;
+    await db.query("update products set name = 'Ancien parfum' where id = $1", [old.id]);
+    await db.query("update variants set sku = sku || '-ANCIEN' where product_id = $1", [old.id]);
+    await addLateDemoProducts(db);
+    await addLateDemoProducts(db);
+    const n = await db.one<{ n: number }>("select count(*)::int as n from products where name = 'Nuance Ambre'");
+    expect(n!.n).toBe(1);
+    const cats = await db.one<{ n: number }>("select count(*)::int as n from categories where slug = 'parfumerie'");
+    expect(cats!.n).toBe(1);
+    // Renommé depuis le Comptoir : reconnu par sa référence, pas recréé.
+    await db.query("update products set name = 'Mon parfum' where name = 'Nuance Ambre'");
+    await addLateDemoProducts(db);
+    const again = await db.one<{ n: number }>("select count(*)::int as n from products where name = 'Nuance Ambre'");
+    expect(again!.n).toBe(0);
   });
 });
