@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct, PublicVariant } from "@/server/domain/catalog";
 import { optionsLabel } from "@/lib/format";
 import { productQuestionMessage, whatsappLink } from "@/lib/whatsapp";
@@ -16,6 +16,7 @@ import {
   IconInfo,
   IconMinus,
   IconPlus,
+  IconStore,
   IconWhatsApp,
   IconZoom,
 } from "../ui/icons";
@@ -86,6 +87,29 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
     setActive(0);
   }
   const current = images[Math.min(active, images.length - 1)];
+  const track = useRef<HTMLDivElement>(null);
+  const goTo = (i: number) => {
+    const t = track.current;
+    setActive(i);
+    if (!t) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    t.scrollTo({ left: i * t.clientWidth, behavior: reduce ? "auto" : "smooth" });
+  };
+  useEffect(() => {
+    track.current?.scrollTo({ left: 0 });
+  }, [imagesKey]);
+
+  // Barre d'achat mobile : visible une fois le bouton principal dépassé.
+  const buyRow = useRef<HTMLDivElement>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const [barVisible, setBarVisible] = useState(false);
+  useEffect(() => {
+    const el = buyRow.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setBarVisible(!e.isIntersecting && e.boundingClientRect.top < 0));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const priceShown = variant?.price ?? product.minPrice;
   const baseShown = variant?.basePrice ?? product.minBasePrice;
@@ -149,54 +173,91 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
     <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
       {/* Galerie */}
       <div className="lg:col-span-7">
-        <div className="grid gap-3 md:grid-cols-[88px_1fr] md:gap-4">
-          <div className="relative order-1 overflow-hidden rounded-[6px] bg-paper-deep md:order-2">
-            {current ? (
-              <button
-                type="button"
-                onClick={() => setZoom(true)}
-                className="group block w-full cursor-zoom-in"
-                aria-label={`Agrandir la photo : ${current.alt}`}
+        <div className="grid gap-3 md:grid-cols-[84px_1fr] md:gap-4">
+          <div className="pdp-media relative order-1 overflow-hidden rounded-[24px] bg-paper-deep md:order-2">
+            {images.length ? (
+              <div
+                ref={track}
+                className="pdp-track flex snap-x snap-mandatory overflow-x-auto"
+                onScroll={(e) => {
+                  const t = e.currentTarget;
+                  const i = Math.round(t.scrollLeft / Math.max(1, t.clientWidth));
+                  if (i !== active) setActive(i);
+                }}
+                aria-label="Photos du produit, faire glisser pour changer"
               >
-                <Image
-                  key={current.url}
-                  src={current.url}
-                  alt={current.alt}
-                  width={1200}
-                  height={1500}
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 55vw"
-                  unoptimized={current.url.endsWith(".svg")}
-                  className="animate-rise aspect-[4/5] w-full object-cover"
-                />
-                <span className="absolute right-3 bottom-3 inline-flex h-11 w-11 items-center justify-center rounded-[6px] bg-paper/90 text-ink">
-                  <IconZoom />
-                </span>
-              </button>
+                {images.map((img, i) => (
+                  <button
+                    key={img.url}
+                    type="button"
+                    onClick={() => {
+                      setActive(i);
+                      setZoom(true);
+                    }}
+                    className="group block w-full shrink-0 cursor-zoom-in snap-center"
+                    aria-label={`Agrandir la photo ${i + 1} : ${img.alt}`}
+                  >
+                    <Image
+                      src={img.url}
+                      alt={img.alt}
+                      width={1200}
+                      height={1500}
+                      priority={i === 0}
+                      sizes="(max-width: 1024px) 100vw, 55vw"
+                      unoptimized={img.url.endsWith(".svg")}
+                      className="aspect-[4/5] w-full object-cover transition-transform duration-700 ease-out md:group-hover:scale-[1.03]"
+                    />
+                  </button>
+                ))}
+              </div>
             ) : (
               <div className="flex aspect-[4/5] items-center justify-center text-ink-mute">Photo à venir</div>
             )}
-            {product.isDemo ? (
-              <span className="absolute top-3 right-3 rounded-[4px] bg-ink/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
-                Illustration
+            <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+              <span className="flex flex-wrap gap-1.5">
+                {product.promo ? <span className="card-pill card-pill-red">{product.promo.label}</span> : null}
+                {product.condition && product.condition !== "Neuf" ? (
+                  <span className="card-pill">{product.condition.split(" —")[0]}</span>
+                ) : null}
+              </span>
+              {product.isDemo ? (
+                <span className="rounded-full bg-ink/60 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase backdrop-blur-sm">
+                  Illustration
+                </span>
+              ) : null}
+            </div>
+            {current ? (
+              <span
+                aria-hidden="true"
+                className="card-go pointer-events-none absolute right-3 bottom-3 !h-11 !w-11 !rotate-0"
+              >
+                <IconZoom size={20} />
               </span>
             ) : null}
-            {product.promo ? (
-              <span className="absolute top-3 left-3 rounded-[4px] bg-gps-red px-2 py-1 text-[13px] font-extrabold text-white">
-                {product.promo.label}
-              </span>
+            {images.length > 1 ? (
+              <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-ink/45 px-2.5 py-1.5 backdrop-blur-sm md:hidden">
+                {images.map((img, i) => (
+                  <span
+                    key={img.url}
+                    className={`h-1.5 rounded-full bg-white transition-all duration-300 ${i === active ? "w-5" : "w-1.5 opacity-50"}`}
+                  />
+                ))}
+                <span className="sr-only">
+                  Photo {active + 1} sur {images.length}
+                </span>
+              </div>
             ) : null}
           </div>
           {images.length > 1 ? (
-            <ul className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col" aria-label="Photos du produit">
+            <ul className="order-2 hidden gap-2 md:order-1 md:flex md:flex-col" aria-label="Miniatures">
               {images.map((img, i) => (
                 <li key={img.url} className="shrink-0">
                   <button
                     type="button"
-                    onClick={() => setActive(i)}
+                    onClick={() => goTo(i)}
                     aria-label={`Photo ${i + 1} : ${img.alt}`}
                     aria-current={i === active}
-                    className={`block w-[72px] overflow-hidden rounded-[4px] border-2 md:w-[88px] ${i === active ? "border-gps-blue" : "border-transparent"}`}
+                    className={`block w-[84px] overflow-hidden rounded-[14px] border-2 transition-[border-color,opacity] ${i === active ? "border-gps-blue" : "border-transparent opacity-70 hover:opacity-100"}`}
                   >
                     <Image
                       src={img.url}
@@ -217,7 +278,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
       {/* Achat */}
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-28">
-          <p className="text-[14px] font-semibold text-ink-mute">
+          <p className="flex flex-wrap items-center gap-x-2 text-[12.5px] font-bold tracking-[0.08em] text-ink-mute uppercase">
             {product.brand}
             {product.categoryName ? (
               <>
@@ -228,11 +289,11 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
               </>
             ) : null}
           </p>
-          <h1 className="mt-2 font-display text-[44px] leading-[0.92] font-extrabold uppercase md:text-[56px]">
+          <h1 className="hero-line mt-2 font-display text-[44px] leading-[0.92] font-extrabold uppercase md:text-[60px]">
             {product.name}
           </h1>
           {product.condition ? (
-            <p className="mt-3 inline-flex rounded-[4px] bg-gps-blue-soft px-2 py-1 text-[13px] font-bold text-gps-blue">
+            <p className="mt-3 inline-flex rounded-full bg-gps-blue-soft px-3 py-1 text-[13px] font-bold text-gps-blue">
               État : {product.condition}
             </p>
           ) : null}
@@ -252,48 +313,50 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
             ) : null}
           </div>
 
-          {axes.map((axis) => (
-            <fieldset key={axis} className="mt-6">
-              <legend className="mb-2 flex w-full justify-between text-[15px] font-bold">
-                <span>
-                  {axis}
-                  {sel[axis] ? <span className="font-semibold text-ink-soft"> : {sel[axis]}</span> : null}
-                </span>
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {values[axis].map((val) => {
-                  const st = optionState(axis, val);
-                  const on = sel[axis] === val;
-                  return (
-                    <button
-                      key={val}
-                      type="button"
-                      aria-pressed={on}
-                      aria-label={`${axis} ${val}${st === "out" ? ", épuisé" : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
-                      onClick={() => {
-                        setSel((s) => ({
-                          ...s,
-                          [axis]: on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
-                        }));
-                        setShowMissing(false);
-                      }}
-                      className={`relative min-h-12 min-w-12 rounded-full border-[1.5px] px-5 text-[15px] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-95 ${
-                        on
-                          ? "border-gps-blue bg-gps-blue text-white shadow-[0_6px_14px_-8px_rgb(49_39_127/0.8)]"
-                          : "border-line bg-white hover:border-gps-blue hover:text-gps-blue"
-                      } ${st !== "ok" ? "text-ink-mute line-through decoration-gps-red decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
-                    >
-                      {val}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-          ))}
+          <div ref={optionsRef} className="scroll-mt-28">
+            {axes.map((axis) => (
+              <fieldset key={axis} className="mt-6">
+                <legend className="mb-2 flex w-full justify-between text-[15px] font-bold">
+                  <span>
+                    {axis}
+                    {sel[axis] ? <span className="font-semibold text-ink-soft"> : {sel[axis]}</span> : null}
+                  </span>
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {values[axis].map((val) => {
+                    const st = optionState(axis, val);
+                    const on = sel[axis] === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        aria-pressed={on}
+                        aria-label={`${axis} ${val}${st === "out" ? ", épuisé" : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
+                        onClick={() => {
+                          setSel((s) => ({
+                            ...s,
+                            [axis]: on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
+                          }));
+                          setShowMissing(false);
+                        }}
+                        className={`relative min-h-12 min-w-12 rounded-full border-[1.5px] px-5 text-[15px] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-95 ${
+                          on
+                            ? "border-gps-blue bg-gps-blue text-white shadow-[0_6px_14px_-8px_rgb(49_39_127/0.8)]"
+                            : "border-line bg-white hover:border-gps-blue hover:text-gps-blue"
+                        } ${st !== "ok" ? "text-ink-mute line-through decoration-gps-red decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
+                      >
+                        {val}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ))}
+          </div>
 
           <p
             role="status"
-            className={`mt-5 flex items-start gap-2 rounded-[6px] px-3 py-2.5 text-[15px] font-semibold ${
+            className={`mt-5 flex items-start gap-2 rounded-[14px] px-3.5 py-3 text-[15px] font-semibold ${
               status.tone === "ok"
                 ? "bg-wa-soft text-wa-ink"
                 : status.tone === "low"
@@ -312,7 +375,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
             </span>
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div ref={buyRow} className="mt-5 flex flex-wrap gap-3">
             <div
               className="flex items-center rounded-full border-[1.5px] border-line bg-white"
               role="group"
@@ -363,7 +426,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
               ref={confirmRef}
               tabIndex={-1}
               role="status"
-              className="animate-rise mt-4 rounded-[6px] border-[1.5px] border-wa bg-wa-soft p-4 outline-none"
+              className="animate-rise mt-4 rounded-[18px] border-[1.5px] border-wa bg-wa-soft p-4 outline-none"
             >
               <p className="flex items-center gap-2 font-bold text-wa-ink">
                 <IconCheck /> Ajouté au panier
@@ -384,7 +447,22 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
             </div>
           ) : null}
 
-          <div className="mt-6 border-t border-line pt-5">
+          <ul className="mt-6 grid grid-cols-3 gap-2 text-center text-[12.5px] leading-tight font-semibold text-ink-soft">
+            <li className="pdp-trust">
+              <IconCheck size={18} className="text-gps-blue" />
+              Aucun paiement en ligne
+            </li>
+            <li className="pdp-trust">
+              <IconWhatsApp size={18} className="text-wa-ink" />
+              Confirmé sur WhatsApp
+            </li>
+            <li className="pdp-trust">
+              <IconStore size={18} className="text-gps-blue" />
+              Retrait ou livraison
+            </li>
+          </ul>
+
+          <div className="mt-5">
             {question ? (
               <a
                 href={question}
@@ -395,17 +473,46 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
                 <IconWhatsApp /> Poser une question sur WhatsApp
               </a>
             ) : (
-              <div className="rounded-[6px] border border-dashed border-line p-3 text-[14px] text-ink-soft">
+              <div className="rounded-[18px] border border-dashed border-line p-3.5 text-[14px] text-ink-soft">
                 <p className="flex items-center gap-2 font-bold text-ink">
                   <IconWhatsApp className="text-wa" /> Question sur WhatsApp
                 </p>
-                <p className="mt-1">
-                  Disponible dès que le numéro WhatsApp de GPS sera renseigné (mode démonstration).
-                </p>
+                <p className="mt-1">Disponible dès que le numéro WhatsApp de GPS sera renseigné.</p>
               </div>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Barre d'achat mobile */}
+      <div
+        className={`cart-bar lg:hidden ${barVisible ? "" : "is-hidden"}`}
+        aria-hidden={!barVisible}
+        inert={!barVisible}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold text-ink-soft">{product.name}</p>
+          <Price
+            price={priceShown}
+            basePrice={product.promo ? baseShown : undefined}
+            from={!variant && new Set(product.variants.map((v) => v.price)).size > 1}
+            size="sm"
+          />
+        </div>
+        <button
+          type="button"
+          className={`btn btn-primary btn-sm shrink-0 ${variant && variant.available === 0 ? "opacity-55" : ""}`}
+          aria-label="Ajout rapide au panier"
+          onClick={() => {
+            if (canAdd) add();
+            else {
+              setShowMissing(true);
+              optionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }}
+        >
+          <IconBag size={18} /> {missing.length ? "Choisir" : "Ajouter"}
+        </button>
       </div>
 
       <Sheet open={zoom} onClose={() => setZoom(false)} title={product.name} side="center" wide>
