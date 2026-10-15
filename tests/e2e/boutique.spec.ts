@@ -30,7 +30,7 @@ test.describe("Boutique et commande WhatsApp", () => {
     expect(message).toContain("Nom : Client Test");
     // Mode démonstration : aucun numéro contacté, copie possible.
     await expect(page.getByRole("button", { name: "Envoyer ma commande sur WhatsApp" })).toBeDisabled();
-    await expect(page.getByText("Mode démonstration")).toBeVisible();
+    await expect(page.getByText("Numéro WhatsApp bientôt disponible")).toBeVisible();
     await expect(page.getByText(/ne garantit ni l'envoi du message/)).toBeVisible();
   });
 
