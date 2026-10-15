@@ -30,6 +30,7 @@ const EXPECTED_TABLES = [
   "services",
   "queue_items",
   "order_requests",
+  "product_versions",
   "audit_log",
 ];
 

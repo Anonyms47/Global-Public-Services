@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   duplicateProductAction,
-  removeProductAction,
+  trashProductAction,
   saveProductAction,
   uploadImageAction,
 } from "@/app/comptoir/(app)/catalogue/actions";
@@ -44,6 +44,8 @@ export interface ProductState {
   status: "draft" | "published" | "archived";
   featured: boolean;
   hasSales?: boolean;
+  /** Publication programmée (ISO), brouillons uniquement. */
+  publishAt?: string | null;
 }
 
 const AXIS_PRESETS = ["Couleur", "Capacité", "Pointure", "Taille", "Monture", "Contenu"];
@@ -57,6 +59,13 @@ function snapshot(s: ProductState) {
 }
 
 const noop = () => () => {};
+
+/** ISO → valeur d'un champ datetime-local (heure locale de l'appareil). */
+function toLocalInput(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 /** Le brouillon local est lu dans le navigateur : rendu après hydratation. */
 export function ProductFormClient(props: Parameters<typeof ProductForm>[0]) {
@@ -161,9 +170,15 @@ function ProductForm({
       })),
       status,
       featured: status === "published" ? state.featured : false,
+      publishAt: status === "draft" ? (state.publishAt ?? null) : null,
     };
     run(() => saveProductAction(payload), {
-      successMessage: status === "published" ? "Produit enregistré et publié." : "Brouillon enregistré.",
+      successMessage:
+        status === "published"
+          ? "Produit enregistré et publié."
+          : payload.publishAt
+            ? `Publication programmée le ${new Date(payload.publishAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}.`
+            : "Brouillon enregistré.",
       onSuccess: (r) => {
         const next = {
           ...state,
@@ -801,6 +816,24 @@ function ProductForm({
               />{" "}
               Mettre dans la Sélection GPS (accueil)
             </label>
+            {state.status !== "published" ? (
+              <div className="mt-4 border-t border-line pt-4">
+                <label className="label" htmlFor="p-publish-at">
+                  Programmer la publication (facultatif)
+                </label>
+                <input
+                  id="p-publish-at"
+                  type="datetime-local"
+                  className="field"
+                  value={state.publishAt ? toLocalInput(state.publishAt) : ""}
+                  onChange={(e) => set({ publishAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                />
+                <p className="hint">
+                  Le brouillon sera publié automatiquement à cette heure, si les vérifications sont toujours bonnes.
+                  Enregistrez le brouillon pour valider la programmation.
+                </p>
+              </div>
+            ) : null}
           </section>
           {state.id ? <SecondaryActions id={state.id} hasSales={!!state.hasSales} /> : null}
         </div>
@@ -884,16 +917,16 @@ function SecondaryActions({ id, hasSales }: { id: string; hasSales: boolean }) {
           disabled={pending}
           onClick={() => {
             const msg = hasSales
-              ? "Ce produit a déjà été vendu : il sera archivé (retiré du site et de la vente, historique conservé). Continuer ?"
-              : "Supprimer définitivement ce produit jamais vendu ?";
+              ? "Mettre ce produit à la corbeille ? Il sera retiré du site et de la vente ; déjà vendu, il ne pourra pas être supprimé définitivement."
+              : "Mettre ce produit à la corbeille ? Il sera retiré du site et de la vente, et restera restaurable.";
             if (confirm(msg))
-              run(() => removeProductAction(id), {
-                onSuccess: (r) => (r === "deleted" ? router.push("/comptoir/catalogue") : undefined),
-                successMessage: hasSales ? "Produit archivé." : undefined,
+              run(() => trashProductAction(id), {
+                refresh: false,
+                onSuccess: () => router.push("/comptoir/catalogue?statut=corbeille"),
               });
           }}
         >
-          {hasSales ? "Archiver" : "Supprimer"}
+          Mettre à la corbeille
         </button>
       </div>
       <div className="mt-3">
