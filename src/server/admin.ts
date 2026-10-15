@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { connection } from "next/server";
-import { getDb, isDemoMode } from "./db";
-import { userFromToken, assertCan, type User } from "./domain/auth";
+import { getDb, isDemoMode, isDemoProtected } from "./db";
+import { userFromToken, assertCan, hasRealOwner, type User } from "./domain/auth";
 import { AppError } from "./domain/errors";
 import type { Db } from "./db/client";
 import { can, type Permission } from "@/lib/permissions";
@@ -13,11 +13,27 @@ import type { ActionResult } from "@/lib/action-result";
 
 export const SESSION_COOKIE = "gps_comptoir";
 
+/**
+ * Politique des comptes de démonstration pour cette requête :
+ * - hors mode démonstration : refusés ;
+ * - démonstration protégée (production) : bridés, puis refusés dès qu'un
+ *   propriétaire réel existe ;
+ * - en local : libres.
+ */
+export const demoAccess = cache(async (db: Db) => {
+  if (!isDemoMode()) return { allowDemo: false, restricted: false };
+  if (!isDemoProtected()) return { allowDemo: true, restricted: false };
+  return { allowDemo: !(await hasRealOwner(db)), restricted: true };
+});
+
 export const currentUser = cache(async (): Promise<User | null> => {
   await connection();
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  return userFromToken(await getDb(), token, { allowDemo: isDemoMode() });
+  const db = await getDb();
+  const access = await demoAccess(db);
+  const user = await userFromToken(db, token, { allowDemo: access.allowDemo });
+  return user && user.is_demo && access.restricted ? { ...user, restricted: true } : user;
 });
 
 /** Pour les pages : redirige vers la connexion, ou signale les droits insuffisants. */
@@ -25,7 +41,7 @@ export async function requirePage(permission?: Permission) {
   const user = await currentUser();
   if (!user) redirect("/comptoir/connexion");
   const db = await getDb();
-  return { db, user, allowed: permission ? can(user.role, permission) : true };
+  return { db, user, allowed: permission ? can(user, permission) : true };
 }
 
 /**

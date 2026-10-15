@@ -65,7 +65,7 @@ export const adminNav: {
 ];
 
 export function Shell({ user, demo, children }: { user: User; demo: boolean; children: ReactNode }) {
-  const nav = adminNav.filter((n) => can(user.role, n.perm));
+  const nav = adminNav.filter((n) => can(user, n.perm));
   const sidebar = (
     <div className="flex h-full flex-col">
       <Link href="/comptoir" className="flex items-center gap-3 px-5 pt-5 pb-6">
@@ -116,7 +116,9 @@ export function Shell({ user, demo, children }: { user: User; demo: boolean; chi
         <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
           {demo ? (
             <p className="bg-gps-blue-night px-4 py-1 text-center text-[12px] font-semibold text-white">
-              Démonstration — données d&apos;exemple isolées, purge possible avant lancement (Paramètres).
+              {user.restricted
+                ? "Démonstration protégée — compte d'exemple sans accès aux paramètres, à l'équipe, aux exports ni à la purge."
+                : "Démonstration — données d'exemple isolées, purge possible avant lancement (Paramètres)."}
             </p>
           ) : null}
           <div className="flex h-16 items-center gap-2 px-4 md:px-8">

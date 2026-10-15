@@ -109,7 +109,7 @@ export async function createOrderAction(input: unknown) {
   return guarded("orders.create", async ({ db, user }) => {
     const data = parse(orderSchema, input);
     // Un prix différent du catalogue n'est accepté que pour les rôles autorisés à corriger.
-    const lines = data.lines.map((l) => (can(user.role, "orders.correct") ? l : { ...l, unitPrice: undefined }));
+    const lines = data.lines.map((l) => (can(user, "orders.correct") ? l : { ...l, unitPrice: undefined }));
     return createOrder(db, user, {
       ...data,
       lines,
@@ -122,7 +122,7 @@ export async function createOrderAction(input: unknown) {
 export async function quickSaleAction(input: unknown) {
   return guarded("sales.quick", async ({ db, user }) => {
     const data = parse(orderSchema, input);
-    const lines = data.lines.map((l) => (can(user.role, "orders.correct") ? l : { ...l, unitPrice: undefined }));
+    const lines = data.lines.map((l) => (can(user, "orders.correct") ? l : { ...l, unitPrice: undefined }));
     return createOrder(db, user, {
       ...data,
       channel: "boutique",

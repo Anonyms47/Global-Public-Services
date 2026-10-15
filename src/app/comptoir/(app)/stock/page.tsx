@@ -41,12 +41,12 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
             <Link href="/comptoir/stock/mouvements" className="btn btn-outline">
               Mouvements
             </Link>
-            {can(user.role, "stock.inventory") ? (
+            {can(user, "stock.inventory") ? (
               <Link href="/comptoir/stock/inventaire" className="btn btn-outline">
                 Inventaire
               </Link>
             ) : null}
-            {can(user.role, "stock.restock") ? (
+            {can(user, "stock.restock") ? (
               <Link href="/comptoir/stock/reapprovisionner" className="btn btn-blue">
                 Réapprovisionner
               </Link>
@@ -135,7 +135,7 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
                       >
                         Historique
                       </Link>
-                      {can(user.role, "stock.inventory") ? (
+                      {can(user, "stock.inventory") ? (
                         <AdjustButton
                           variantId={r.variant_id}
                           label={`${r.product_name} ${optionsLabel(r.options)}`}

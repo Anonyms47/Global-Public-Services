@@ -14,7 +14,7 @@ const cell = (v: unknown) => {
 export async function GET() {
   const user = await currentUser();
   if (!user) return new Response("Session expirée", { status: 401 });
-  if (!can(user.role, "customers.export")) return new Response("Droits insuffisants", { status: 403 });
+  if (!can(user, "customers.export")) return new Response("Droits insuffisants", { status: 403 });
   const rows = await allCustomersForExport(await getDb());
   const header = ["Nom", "Téléphone", "E-mail", "Adresse", "Commandes", "Créé le", "Exemple"];
   const csv = [

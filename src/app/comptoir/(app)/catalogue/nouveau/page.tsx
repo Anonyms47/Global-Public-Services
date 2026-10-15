@@ -18,7 +18,7 @@ export default async function NewProductPage() {
       </PageTitle>
       <ProductFormClient
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-        canCosts={can(user.role, "catalog.costs")}
+        canCosts={can(user, "catalog.costs")}
         initial={{
           name: "",
           brand: "",

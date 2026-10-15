@@ -40,6 +40,18 @@ export const permissions = {
 
 export type Permission = keyof typeof permissions;
 
-export function can(role: Role | undefined | null, permission: Permission) {
-  return !!role && (permissions[permission] as readonly Role[]).includes(role);
+/**
+ * Droits retirés aux comptes de démonstration quand la démonstration est
+ * protégée (production) : tout ce qui touche aux coordonnées publiques,
+ * à l'équipe, aux exports de données et au mode de la boutique.
+ */
+export const demoRestricted: readonly Permission[] = ["settings.edit", "team.manage", "demo.purge", "customers.export"];
+
+type Who = Role | { role: Role; restricted?: boolean } | undefined | null;
+
+export function can(who: Who, permission: Permission) {
+  if (!who) return false;
+  const role = typeof who === "string" ? who : who.role;
+  if (typeof who !== "string" && who.restricted && demoRestricted.includes(permission)) return false;
+  return (permissions[permission] as readonly Role[]).includes(role);
 }

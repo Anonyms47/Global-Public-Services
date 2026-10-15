@@ -42,7 +42,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
         eyebrow="Produits"
         title="Catalogue"
         actions={
-          can(user.role, "catalog.edit") ? (
+          can(user, "catalog.edit") ? (
             <>
               <Link href="/comptoir/catalogue/categories" className="btn btn-outline">
                 Catégories
@@ -122,8 +122,8 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
           grille: href({ vue: "grille" }),
           liste: href({ vue: "liste" }),
         }}
-        canBulk={can(user.role, "catalog.bulk")}
-        canEdit={can(user.role, "catalog.edit")}
+        canBulk={can(user, "catalog.bulk")}
+        canEdit={can(user, "catalog.edit")}
         emptyHint={q ? `Aucun produit pour « ${q} ».` : "Aucun produit dans cette vue."}
       />
     </>

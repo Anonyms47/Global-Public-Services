@@ -34,7 +34,7 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
   if (!o) notFound();
   const settings = await getSettings(db);
   const step = nextStep(o);
-  const showCost = can(user.role, "catalog.costs");
+  const showCost = can(user, "catalog.costs");
   const reversed = new Set(o.payments.filter((p) => p.reverses_id).map((p) => p.reverses_id));
 
   const linesText = o.lines
@@ -87,7 +87,7 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
           </div>
         </div>
         <div className="flex flex-wrap items-start gap-2">
-          {step && can(user.role, "orders.progress") ? (
+          {step && can(user, "orders.progress") ? (
             <NextStepButton orderId={o.id} to={step.to} label={step.label} />
           ) : null}
           <Link href={`/comptoir/recus/${o.id}`} className="btn btn-outline">
@@ -209,7 +209,7 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
                         {formatDateTime(p.created_at)} · {p.user_name ?? "—"}
                         {p.note ? ` · ${p.note}` : ""}
                       </p>
-                      {p.kind === "payment" && !reversed.has(p.id) && can(user.role, "orders.correct") ? (
+                      {p.kind === "payment" && !reversed.has(p.id) && can(user, "orders.correct") ? (
                         <ReversePaymentButton paymentId={p.id} />
                       ) : null}
                     </div>
@@ -289,25 +289,25 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
             </dl>
           </Panel>
 
-          {o.status !== "cancelled" && o.balance > 0 && can(user.role, "payments.record") ? (
+          {o.status !== "cancelled" && o.balance > 0 && can(user, "payments.record") ? (
             <PaymentForm orderId={o.id} balance={o.balance} feeUnknown={o.feeUnknown} />
           ) : null}
-          {o.status !== "cancelled" && o.feeUnknown && o.balance === 0 && can(user.role, "payments.record") ? (
+          {o.status !== "cancelled" && o.feeUnknown && o.balance === 0 && can(user, "payments.record") ? (
             <PaymentForm orderId={o.id} balance={0} feeUnknown />
           ) : null}
           {o.customer_phone || o.customer_name ? (
             <WhatsAppMessages phone={o.customer_phone} templates={templates} />
           ) : null}
-          {o.reception === "delivery" && o.status !== "cancelled" && can(user.role, "orders.correct") ? (
+          {o.reception === "delivery" && o.status !== "cancelled" && can(user, "orders.correct") ? (
             <FeeForm orderId={o.id} current={o.delivery_fee} />
           ) : null}
-          {o.status === "completed" && can(user.role, "returns.process") ? (
+          {o.status === "completed" && can(user, "returns.process") ? (
             <ReturnForm orderId={o.id} lines={o.lines} net={o.net} />
           ) : null}
-          {o.net > 0 && can(user.role, "payments.refund") ? (
+          {o.net > 0 && can(user, "payments.refund") ? (
             <RefundForm orderId={o.id} net={o.net} suggested={Math.max(0, -o.balance)} />
           ) : null}
-          {o.status === "confirmed" && can(user.role, "orders.cancel") ? <CancelForm orderId={o.id} /> : null}
+          {o.status === "confirmed" && can(user, "orders.cancel") ? <CancelForm orderId={o.id} /> : null}
         </div>
       </div>
     </>

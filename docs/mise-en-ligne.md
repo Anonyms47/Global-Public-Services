@@ -21,7 +21,7 @@ Si le journal Vercel affiche une erreur de certificat (`self-signed certificate`
 ## Passage en production réelle
 
 1. Comptoir → **Paramètres** : coordonnées, numéro WhatsApp, réception, frais, textes (bouton « Utiliser la proposition GPS »), raison sociale.
-2. Créer le compte du propriétaire réel : `DATABASE_URL=… npm run admin:create -- "Nom" email@domaine` (depuis un ordinateur avec le projet).
+2. Créer le compte du propriétaire réel : dans Vercel → Settings → Environment Variables, ajouter `COMPTOIR_SETUP_CODE` (un code de 16 caractères minimum, choisi par vous, à ne communiquer à personne), redéployer, puis ouvrir `/comptoir/installation`. Dès que ce compte existe, les comptes de démonstration ne peuvent plus se connecter en production. Vous pouvez ensuite supprimer la variable.
 3. Comptoir → Paramètres → **PURGER** les données d'exemple, puis dans Vercel `DEMO_MODE=false`.
 4. Saisir le vrai catalogue avec les vraies photos, puis `SITE_INDEXABLE=true` et, si besoin, un nom de domaine (Vercel → Settings → Domains) en mettant à jour `NEXT_PUBLIC_SITE_URL`.
 5. Supabase → **Database → Backups** : vérifier les sauvegardes (quotidiennes sur les offres payantes ; exporter régulièrement sur l'offre gratuite).
