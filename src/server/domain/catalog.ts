@@ -188,7 +188,20 @@ const productSelect = `
          p.created_at, p.is_demo
     from products p left join categories c on c.id = p.category_id`;
 
+/**
+ * Publie les brouillons programmés dont l'heure est passée. Appelée à la
+ * lecture du catalogue : aucune tâche planifiée n'est nécessaire.
+ */
+export async function applySchedules(db: Db, now = new Date()) {
+  await db.query(
+    `update products set status = 'published', published_at = coalesce(published_at, publish_at), publish_at = null, updated_at = now()
+      where status = 'draft' and publish_at is not null and publish_at <= $1 and deleted_at is null`,
+    [now],
+  );
+}
+
 export async function publishedProducts(db: Db, now = new Date()) {
+  await applySchedules(db, now);
   const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' order by p.created_at desc`);
   return hydrate(db, rows, now);
 }
@@ -200,6 +213,7 @@ export async function sellableProducts(db: Db, now = new Date()) {
 }
 
 export async function publishedProductBySlug(db: Db, slug: string, now = new Date()) {
+  await applySchedules(db, now);
   const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' and p.slug = $1`, [slug]);
   return (await hydrate(db, rows, now))[0] ?? null;
 }
@@ -302,6 +316,8 @@ export interface AdminProductRow {
   featured: boolean;
   updated_at: Date;
   is_demo: boolean;
+  publish_at: Date | null;
+  deleted_at: Date | null;
   image: string | null;
   variant_count: number;
   min_price: number | null;
@@ -314,11 +330,15 @@ export interface AdminProductRow {
 export async function adminProducts(db: Db, opts: { q?: string; status?: string; category?: string } = {}) {
   const params: unknown[] = [];
   const where: string[] = [];
-  if (opts.status && opts.status !== "all") {
-    params.push(opts.status);
-    where.push(`p.status = $${params.length}`);
-  } else where.push("p.status <> 'archived'");
-  if (opts.status === "all") where.pop();
+  await applySchedules(db);
+  if (opts.status === "trash") where.push("p.deleted_at is not null");
+  else {
+    where.push("p.deleted_at is null");
+    if (opts.status && opts.status !== "all") {
+      params.push(opts.status);
+      where.push(`p.status = $${params.length}`);
+    } else if (opts.status !== "all") where.push("p.status <> 'archived'");
+  }
   if (opts.category) {
     params.push(opts.category);
     where.push(`p.category_id = $${params.length}`);
@@ -331,7 +351,7 @@ export async function adminProducts(db: Db, opts: { q?: string; status?: string;
   }
   return db.query<AdminProductRow>(
     `select p.id, p.slug, p.name, p.brand, p.category_id, c.name as category_name, p.status, p.featured,
-            p.updated_at, p.is_demo,
+            p.updated_at, p.is_demo, p.publish_at, p.deleted_at,
             (select url from product_images i where i.product_id = p.id order by position limit 1) as image,
             (select count(*)::int from variants v where v.product_id = p.id and v.active) as variant_count,
             (select min(price) from variants v where v.product_id = p.id and v.active) as min_price,
@@ -371,12 +391,15 @@ export interface ProductInput {
   status: ProductStatus;
   featured: boolean;
   isDemo?: boolean;
+  /** Publication programmée (brouillon publié automatiquement à cette date). */
+  publishAt?: string | null;
 }
 
 export interface EditableProduct extends ProductInput {
   id: string;
   slug: string;
   updatedAt: string;
+  deletedAt: string | null;
   hasSales: boolean;
   variants: (VariantInput & {
     id: string;
@@ -421,6 +444,8 @@ export async function productForEdit(
     featured: p.featured as boolean,
     isDemo: p.is_demo as boolean,
     updatedAt: new Date(p.updated_at as Date).toISOString(),
+    publishAt: p.publish_at ? new Date(p.publish_at as Date).toISOString() : null,
+    deletedAt: p.deleted_at ? new Date(p.deleted_at as Date).toISOString() : null,
     hasSales: (sales?.n ?? 0) > 0,
     variants: variants.map((v) => ({
       id: v.id as string,
@@ -453,10 +478,17 @@ export async function saveProduct(
     fail("validation", "Le nom du produit est obligatoire.", {
       name: "Obligatoire.",
     });
-  if (input.status === "published") {
+  if (input.status === "published" || (input.status === "draft" && input.publishAt)) {
     const issues = publicationIssues(input);
-    if (issues.length) fail("validation", `Publication impossible : ${issues.join(" ")}`);
+    if (issues.length) {
+      fail(
+        "validation",
+        `${input.status === "published" ? "Publication" : "Programmation"} impossible : ${issues.join(" ")}`,
+      );
+    }
   }
+  const publishAt = input.status === "draft" && input.publishAt ? new Date(input.publishAt) : null;
+  if (publishAt && Number.isNaN(publishAt.getTime())) fail("validation", "Date de publication invalide.");
   for (const v of input.variants) {
     if (!v.sku.trim()) fail("validation", "Chaque variante doit avoir une référence.");
     if (!Number.isInteger(v.price) || v.price < 0) fail("validation", `Prix invalide pour ${v.sku}.`);
@@ -472,6 +504,23 @@ export async function saveProduct(
         }>("select updated_at, slug, published_at, is_demo from products where id = $1 for update", [input.id])
       : null;
     if (input.id && !existing) fail("not_found", "Ce produit n'existe plus.");
+    if (existing) {
+      // Version précédente conservée avant toute modification.
+      const before = await productForEdit(tx, id, { withCosts: true });
+      if (before) {
+        await tx.query("insert into product_versions (id, product_id, snapshot, user_id) values ($1,$2,$3,$4)", [
+          newId(),
+          id,
+          JSON.stringify(before),
+          ctx.userId,
+        ]);
+        await tx.query(
+          `delete from product_versions where product_id = $1 and id not in
+             (select id from product_versions where product_id = $1 order by created_at desc limit 30)`,
+          [id],
+        );
+      }
+    }
     if (existing && ctx.expectedUpdatedAt && new Date(existing.updated_at).toISOString() !== ctx.expectedUpdatedAt) {
       fail(
         "conflict",
@@ -488,7 +537,7 @@ export async function saveProduct(
     if (existing) {
       await tx.query(
         `update products set name=$2, slug=$3, brand=$4, category_id=$5, description=$6, specs=$7, condition=$8,
-                axes=$9, status=$10, featured=$11, published_at=$12, updated_at=now() where id=$1`,
+                axes=$9, status=$10, featured=$11, published_at=$12, publish_at=$13, updated_at=now() where id=$1`,
         [
           id,
           input.name.trim(),
@@ -502,12 +551,13 @@ export async function saveProduct(
           input.status,
           input.featured,
           publishedAt,
+          publishAt,
         ],
       );
     } else {
       await tx.query(
-        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
         [
           id,
           input.name.trim(),
@@ -522,6 +572,7 @@ export async function saveProduct(
           input.featured,
           publishedAt,
           !!input.isDemo,
+          publishAt,
         ],
       );
     }
@@ -625,6 +676,87 @@ export async function duplicateProduct(db: Db, id: string, userId: string | null
       })),
     },
     { userId, withCosts: true },
+  );
+}
+
+/** Met le produit à la corbeille : retiré du site et du comptoir, restaurable. */
+export async function trashProduct(db: Db, id: string) {
+  const r = await db.one(
+    `update products set status = 'archived', featured = false, publish_at = null, deleted_at = now(), updated_at = now()
+      where id = $1 and deleted_at is null returning id`,
+    [id],
+  );
+  if (!r) fail("not_found", "Produit introuvable ou déjà à la corbeille.");
+}
+
+/** Sort le produit de la corbeille, en brouillon : à relire avant de republier. */
+export async function restoreProduct(db: Db, id: string) {
+  const r = await db.one(
+    "update products set deleted_at = null, status = 'draft', updated_at = now() where id = $1 and deleted_at is not null returning id",
+    [id],
+  );
+  if (!r) fail("not_found", "Ce produit n'est pas à la corbeille.");
+}
+
+/** Suppression définitive : seulement depuis la corbeille et jamais pour un produit déjà vendu. */
+export async function purgeProduct(db: Db, id: string) {
+  const p = await db.one<{ deleted_at: Date | null }>("select deleted_at from products where id = $1", [id]);
+  if (!p) return fail("not_found", "Produit introuvable.");
+  if (!p.deleted_at) fail("conflict", "Mettez d'abord le produit à la corbeille.");
+  const sales = await db.one<{ n: number }>("select count(*)::int as n from order_lines where product_id = $1", [id]);
+  if (sales?.n) fail("conflict", "Ce produit figure dans des commandes : il reste archivé pour l'historique.");
+  await db.query("delete from products where id = $1", [id]);
+}
+
+export async function listVersions(db: Db, productId: string) {
+  return db.query<{ id: string; created_at: Date; user_name: string | null; name: string; status: string }>(
+    `select v.id, v.created_at, u.name as user_name, v.snapshot->>'name' as name, v.snapshot->>'status' as status
+       from product_versions v left join users u on u.id = v.user_id
+      where v.product_id = $1 order by v.created_at desc limit 30`,
+    [productId],
+  );
+}
+
+/**
+ * Restaure le contenu d'une version (textes, photos, caractéristiques, prix et
+ * options des variantes encore actives). Le stock, le statut et les variantes
+ * ajoutées depuis ne sont pas touchés. La version actuelle est elle-même conservée.
+ */
+export async function restoreVersion(db: Db, versionId: string, ctx: { userId: string | null; withCosts: boolean }) {
+  const v = await db.one<{ product_id: string; snapshot: EditableProduct }>(
+    "select product_id, snapshot from product_versions where id = $1",
+    [versionId],
+  );
+  if (!v) return fail("not_found", "Version introuvable.");
+  const current = await productForEdit(db, v.product_id, { withCosts: ctx.withCosts });
+  if (!current) return fail("not_found", "Ce produit n'existe plus.");
+  const old = v.snapshot;
+  return saveProduct(
+    db,
+    {
+      ...current,
+      name: old.name,
+      brand: old.brand,
+      categoryId: old.categoryId,
+      description: old.description,
+      specs: old.specs,
+      condition: old.condition,
+      axes: old.axes,
+      images: old.images,
+      variants: current.variants.map((cv) => {
+        const ov = old.variants.find((x) => x.id === cv.id);
+        return ov
+          ? {
+              ...cv,
+              sku: ov.sku,
+              options: ov.options,
+              price: ov.price,
+              ...(ctx.withCosts ? { costPrice: ov.costPrice } : {}),
+            }
+          : cv;
+      }),
+    },
+    { ...ctx, expectedUpdatedAt: current.updatedAt },
   );
 }
 

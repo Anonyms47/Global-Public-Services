@@ -305,6 +305,18 @@ do $$ begin
   end if;
 end $$;
 
+-- Catalogue : corbeille (restaurable), publication programmée, historique des versions.
+alter table products add column if not exists deleted_at timestamptz;
+alter table products add column if not exists publish_at timestamptz;
+create table if not exists product_versions (
+  id text primary key,
+  product_id text not null references products (id) on delete cascade,
+  snapshot jsonb not null,
+  user_id text references users (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists product_versions_product on product_versions (product_id, created_at);
+
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
 -- des tables, n'est pas concernée.
@@ -328,4 +340,5 @@ alter table services enable row level security;
 alter table queue_items enable row level security;
 alter table audit_log enable row level security;
 alter table order_requests enable row level security;
+alter table product_versions enable row level security;
 `;

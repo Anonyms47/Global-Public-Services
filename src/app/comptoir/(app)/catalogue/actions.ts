@@ -9,6 +9,10 @@ import {
   deleteCategory,
   deleteOrArchiveProduct,
   duplicateProduct,
+  purgeProduct,
+  restoreProduct,
+  restoreVersion,
+  trashProduct,
   moveCategory,
   previewPriceChange,
   saveCategory,
@@ -66,6 +70,7 @@ const productSchema = z.object({
     .max(120),
   status: z.enum(["draft", "published", "archived"]),
   featured: z.boolean(),
+  publishAt: z.string().max(40).nullable().optional(),
 });
 
 export async function saveProductAction(input: unknown) {
@@ -199,4 +204,30 @@ export async function stopPromotionAction(id: string) {
   return guarded("catalog.edit", ({ db }) => stopPromotion(db, String(id)), {
     message: "Promotion arrêtée.",
   });
+}
+
+export async function trashProductAction(id: string) {
+  return guarded("catalog.edit", ({ db }) => trashProduct(db, String(id)), {
+    message: "Produit mis à la corbeille. Il reste restaurable.",
+  });
+}
+
+export async function restoreProductAction(id: string) {
+  return guarded("catalog.edit", ({ db }) => restoreProduct(db, String(id)), {
+    message: "Produit restauré en brouillon.",
+  });
+}
+
+export async function purgeProductAction(id: string) {
+  return guarded("catalog.bulk", ({ db }) => purgeProduct(db, String(id)), {
+    message: "Produit supprimé définitivement.",
+  });
+}
+
+export async function restoreVersionAction(versionId: string) {
+  return guarded(
+    "catalog.edit",
+    ({ db, user }) => restoreVersion(db, String(versionId), { userId: user.id, withCosts: can(user, "catalog.costs") }),
+    { message: "Version restaurée. La version remplacée reste dans l'historique." },
+  );
 }

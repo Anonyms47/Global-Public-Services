@@ -13,7 +13,18 @@ import {
   correctDeliveryFee,
 } from "@/server/domain/orders";
 import { restock, applyInventory, inventoryPreview, adjustStock, moveUnsellable } from "@/server/domain/stock";
-import { publishedProducts, saveProduct, productForEdit, filterProducts } from "@/server/domain/catalog";
+import {
+  publishedProducts,
+  saveProduct,
+  productForEdit,
+  filterProducts,
+  trashProduct,
+  restoreProduct,
+  purgeProduct,
+  listVersions,
+  restoreVersion,
+  adminProducts,
+} from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
 import { can } from "@/lib/permissions";
@@ -457,6 +468,60 @@ describe("Catalogue, panier et promotions", () => {
     );
     expect(draft.id).toBeTruthy();
     expect(filterProducts(await publishedProducts(db), { q: "Brouillon" })).toHaveLength(0);
+  });
+
+  it("catalogue : corbeille restaurable, suppression définitive encadrée, programmation, versions", async () => {
+    const owner = await userByRole(db, "owner");
+    const ctx = { userId: owner.id, withCosts: true };
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const created = await saveProduct(
+      db,
+      {
+        ...base,
+        id: undefined,
+        slug: undefined,
+        name: "Produit Corbeille",
+        status: "draft",
+        featured: false,
+        variants: [{ sku: "CORB-1", options: {}, price: 1000, initialStock: 0 }],
+        axes: [],
+      },
+      ctx,
+    );
+    // Versions : chaque modification conserve l'état précédent.
+    const p1 = (await productForEdit(db, created.id, { withCosts: true }))!;
+    await saveProduct(db, { ...p1, name: "Produit Corbeille v2" }, { ...ctx, expectedUpdatedAt: p1.updatedAt });
+    await expect(
+      saveProduct(db, { ...p1, name: "Conflit" }, { ...ctx, expectedUpdatedAt: p1.updatedAt }),
+    ).rejects.toThrow(/modifié par ailleurs/);
+    const versions = await listVersions(db, created.id);
+    expect(versions[0].name).toBe("Produit Corbeille");
+    await restoreVersion(db, versions[0].id, ctx);
+    expect((await productForEdit(db, created.id, { withCosts: true }))!.name).toBe("Produit Corbeille");
+
+    // Programmation : publié automatiquement une fois l'heure passée.
+    const p2 = (await productForEdit(db, created.id, { withCosts: true }))!;
+    await saveProduct(db, { ...p2, publishAt: new Date(Date.now() - 1000).toISOString() }, ctx);
+    expect((await publishedProducts(db)).some((p) => p.id === created.id)).toBe(true);
+
+    // Corbeille : retiré du site, restaurable en brouillon, supprimable seulement depuis la corbeille.
+    await expect(purgeProduct(db, created.id)).rejects.toThrow(/corbeille/);
+    await trashProduct(db, created.id);
+    expect((await publishedProducts(db)).some((p) => p.id === created.id)).toBe(false);
+    expect((await adminProducts(db, { status: "trash" })).map((r) => r.id)).toContain(created.id);
+    expect((await adminProducts(db, { status: "all" })).map((r) => r.id)).not.toContain(created.id);
+    await restoreProduct(db, created.id);
+    expect((await productForEdit(db, created.id, { withCosts: false }))!.status).toBe("draft");
+    await trashProduct(db, created.id);
+    await purgeProduct(db, created.id);
+    expect(await productForEdit(db, created.id, { withCosts: false })).toBeNull();
+
+    // Un produit déjà vendu ne peut pas être supprimé définitivement.
+    const sold = await db.one<{ product_id: string }>("select product_id from order_lines limit 1");
+    await trashProduct(db, sold!.product_id);
+    await expect(purgeProduct(db, sold!.product_id)).rejects.toThrow(/commandes/);
+    await restoreProduct(db, sold!.product_id);
+    await db.query("update products set status = 'published' where id = $1", [sold!.product_id]);
   });
 
   it("recherche par référence et par catégorie", async () => {

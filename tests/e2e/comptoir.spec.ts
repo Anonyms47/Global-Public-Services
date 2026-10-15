@@ -199,4 +199,22 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/sante");
     await expect(page.getByText("Configuration modifiée")).toBeVisible();
   });
+
+  test("catalogue : corbeille puis restauration, historique des versions", async ({ page }) => {
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue?statut=tous&vue=liste&q=Nuance");
+    await page
+      .getByRole("link", { name: /Nuance Ambre/ })
+      .first()
+      .click();
+    await expect(page.getByRole("heading", { name: "Historique des versions" })).toBeVisible();
+    await page.getByRole("button", { name: /3\s*Publier/ }).click();
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: "Mettre à la corbeille" }).click();
+    await expect(page).toHaveURL(/statut=corbeille/);
+    const row = page.locator("li", { hasText: "Nuance Ambre" });
+    await row.getByRole("button", { name: "Restaurer" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+    await expect(page.getByText("Brouillon").first()).toBeVisible();
+  });
 });
