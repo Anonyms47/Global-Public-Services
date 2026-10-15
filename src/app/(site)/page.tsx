@@ -219,41 +219,59 @@ export default async function HomePage() {
             <h2 id="titre-univers" className="sr-only">
               Univers produits
             </h2>
-            <ul className="grid grid-cols-2 gap-3 md:gap-4 lg:col-span-8 lg:grid-cols-3" data-reveal>
+            <ul className="univers-grid grid grid-cols-2 gap-3 md:gap-4 lg:col-span-8 lg:grid-cols-3">
               {univers.map((cat, i) => {
                 const sample = products.find((p) => p.categorySlug === cat.slug);
                 const img = sample?.images[0];
+                const first = i === 0;
+                // Nombre impair de tuiles après la grande : la dernière prend toute la ligne sur mobile.
+                const wide = !first && i === univers.length - 1 && univers.length % 2 === 0;
                 return (
-                  <li key={cat.id} className={i === 0 ? "col-span-2 lg:col-span-1 lg:row-span-2" : ""}>
+                  <li
+                    key={cat.id}
+                    data-reveal
+                    style={{ transitionDelay: `${Math.min(i, 6) * 70}ms` }}
+                    className={
+                      first ? "col-span-2 lg:col-span-1 lg:row-span-2" : wide ? "col-span-2 lg:col-span-1" : ""
+                    }
+                  >
                     <Link
                       href={`/categories/${cat.slug}`}
-                      className="univers-tile group relative flex h-full min-h-[170px] flex-col justify-end overflow-hidden rounded-[18px] bg-gps-blue-night p-4 text-white md:min-h-[210px]"
+                      className={`univers-tile group relative flex h-full flex-col justify-end overflow-hidden rounded-[22px] bg-gps-blue-night p-4 text-white md:p-5 ${
+                        first || wide ? "aspect-[16/10] lg:aspect-auto" : "aspect-[4/5] lg:aspect-auto"
+                      } lg:min-h-[230px]`}
                     >
                       {img ? (
                         <Image
                           src={img.url}
                           alt=""
                           fill
-                          sizes="(max-width: 1024px) 50vw, 25vw"
+                          sizes={first || wide ? "(max-width: 1024px) 100vw, 25vw" : "(max-width: 1024px) 50vw, 25vw"}
                           unoptimized={img.url.endsWith(".svg")}
-                          className="object-cover opacity-80 transition-transform duration-700 group-hover:scale-110"
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                         />
                       ) : null}
-                      <span className="absolute inset-0 bg-gradient-to-t from-gps-blue-night via-gps-blue-night/40 to-transparent" />
-                      <span className="relative flex items-end justify-between gap-2">
-                        <span>
-                          <span className="block text-[12px] font-bold text-white/70 tabular">
-                            {String(i + 1).padStart(2, "0")} · {cat.product_count} article
-                            {cat.product_count > 1 ? "s" : ""}
-                          </span>
-                          <span className="mt-1 block font-display text-[26px] leading-none font-extrabold uppercase md:text-[32px]">
-                            {cat.name}
-                          </span>
-                        </span>
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-gps-blue-night transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-gps-red group-hover:text-white">
-                          <IconArrowRight size={18} />
-                        </span>
+                      <span aria-hidden="true" className="univers-shade absolute inset-0" />
+                      <span className="univers-count absolute top-3 left-3 tabular md:top-4 md:left-4">
+                        {String(i + 1).padStart(2, "0")}
+                        <span className="text-white/60"> · </span>
+                        {cat.product_count} article{cat.product_count > 1 ? "s" : ""}
                       </span>
+                      <span
+                        aria-hidden="true"
+                        className="univers-arrow absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full md:top-4 md:right-4 md:h-10 md:w-10"
+                      >
+                        <IconArrowRight size={17} />
+                      </span>
+                      <span
+                        lang="fr"
+                        className={`relative block font-display leading-[0.95] font-extrabold break-words hyphens-auto uppercase ${
+                          first ? "text-[34px] md:text-[44px]" : "text-[22px] sm:text-[26px] md:text-[30px]"
+                        }`}
+                      >
+                        {cat.name}
+                      </span>
+                      <span className="univers-bar relative mt-3 block h-[3px] w-8 rounded-full bg-gps-red transition-[width] duration-500 group-hover:w-16" />
                     </Link>
                   </li>
                 );

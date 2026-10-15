@@ -913,3 +913,60 @@
     animation: none;
   }
 }
+
+/* ——— Accueil : tuiles univers ——— */
+.univers-shade {
+  background: linear-gradient(
+    to top,
+    rgb(10 12 32 / 0.92) 0%,
+    rgb(10 12 32 / 0.55) 32%,
+    rgb(10 12 32 / 0.05) 62%,
+    rgb(10 12 32 / 0.25) 100%
+  );
+}
+.univers-count {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: rgb(255 255 255 / 0.16);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.univers-arrow {
+  color: #fff;
+  background: rgb(255 255 255 / 0.16);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition:
+    background-color 250ms var(--ease-out-gps),
+    transform 300ms var(--ease-out-gps),
+    border-color 250ms;
+}
+.univers-tile:hover .univers-arrow,
+.univers-tile:focus-visible .univers-arrow {
+  background: var(--color-gps-red);
+  border-color: var(--color-gps-red);
+  transform: rotate(-45deg);
+}
+.univers-tile {
+  box-shadow: 0 10px 30px -18px rgb(10 12 32 / 0.6);
+  transition:
+    transform 300ms var(--ease-out-gps),
+    box-shadow 300ms var(--ease-out-gps);
+}
+.univers-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 40px -20px rgb(10 12 32 / 0.7);
+}
+.univers-tile:active {
+  transform: scale(0.98);
+}
+.univers-tile:focus-visible {
+  outline: 3px solid var(--color-gps-blue);
+  outline-offset: 3px;
+}
