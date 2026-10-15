@@ -28,6 +28,7 @@ test.describe("Boutique et commande WhatsApp", () => {
     expect(message).toMatch(/Total des produits : 311\s000\sFCFA/);
     expect(message).toContain("Frais de livraison : À confirmer avec GPS");
     expect(message).toContain("Nom : Client Test");
+    expect(message).toMatch(/^Bonjour GPS.*\nDemande GPS-R-\d{4,}\n/);
     // Mode démonstration : aucun numéro contacté, copie possible.
     await expect(page.getByRole("button", { name: "Envoyer ma commande sur WhatsApp" })).toBeDisabled();
     await expect(page.getByText("Numéro WhatsApp bientôt disponible")).toBeVisible();

@@ -57,6 +57,13 @@ export const adminNavGroups: NavGroup[] = [
         icon: "sale",
         keywords: "caisse encaisser",
       },
+      {
+        href: "/comptoir/demandes",
+        label: "Demandes WhatsApp",
+        perm: "orders.view",
+        icon: "request",
+        keywords: "panier site GPS-R",
+      },
       { href: "/comptoir/commandes", label: "Commandes", perm: "orders.view", icon: "orders", keywords: "whatsapp" },
       { href: "/comptoir/stock", label: "Stock", perm: "stock.view", icon: "stock", keywords: "inventaire" },
       { href: "/comptoir/clients", label: "Clients", perm: "customers.view", icon: "customers" },

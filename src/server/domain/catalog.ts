@@ -116,6 +116,7 @@ interface VariantRow {
   price: number;
   on_hand: number;
   reserved: number;
+  unsellable: number;
 }
 
 async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicProduct[]> {
@@ -123,7 +124,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
   const ids = rows.map((r) => r.id);
   const [variants, images, promos] = await Promise.all([
     db.query<VariantRow>(
-      `select id, product_id, sku, options, price, on_hand, reserved from variants
+      `select id, product_id, sku, options, price, on_hand, reserved, unsellable from variants
         where product_id = any($1) and active order by position, price`,
       [ids],
     ),
@@ -147,7 +148,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         options: v.options,
         basePrice: v.price,
         price: promo ? discounted(v.price, promo) : v.price,
-        available: Math.max(0, v.on_hand - v.reserved),
+        available: Math.max(0, v.on_hand - v.reserved - v.unsellable),
       }));
       return {
         id: r.id,
@@ -336,7 +337,7 @@ export async function adminProducts(db: Db, opts: { q?: string; status?: string;
             (select min(price) from variants v where v.product_id = p.id and v.active) as min_price,
             (select max(price) from variants v where v.product_id = p.id and v.active) as max_price,
             (select coalesce(sum(on_hand), 0)::int from variants v where v.product_id = p.id and v.active) as on_hand,
-            (select coalesce(sum(on_hand - reserved), 0)::int from variants v where v.product_id = p.id and v.active) as available,
+            (select coalesce(sum(on_hand - reserved - unsellable), 0)::int from variants v where v.product_id = p.id and v.active) as available,
             exists (select 1 from order_lines l where l.product_id = p.id) as has_sales
        from products p left join categories c on c.id = p.category_id
       ${where.length ? `where ${where.join(" and ")}` : ""}
@@ -381,6 +382,7 @@ export interface EditableProduct extends ProductInput {
     id: string;
     onHand: number;
     reserved: number;
+    unsellable: number;
     hasSales: boolean;
   })[];
 }
@@ -429,6 +431,7 @@ export async function productForEdit(
       lowStockThreshold: (v.low_stock_threshold as number) ?? null,
       onHand: v.on_hand as number,
       reserved: v.reserved as number,
+      unsellable: (v.unsellable as number) ?? 0,
       hasSales: v.has_sales as boolean,
     })),
   };

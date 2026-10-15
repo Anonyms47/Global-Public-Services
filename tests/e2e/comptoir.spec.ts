@@ -161,6 +161,13 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/file?vue=resolues");
     await expect(page.getByText("Tâche E2E")).toBeVisible();
 
+    await page.goto("/comptoir/demandes");
+    const req = page.locator("li", { hasText: "Client Test" }).first();
+    await expect(req.getByText(/GPS-R-\d+/)).toBeVisible();
+    await req.getByRole("button", { name: "Confirmer : créer la commande" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/commandes\/[0-9a-f-]{36}$/);
+    await expect(page.getByText(/Créée depuis la demande GPS-R-/)).toBeVisible();
+
     await page.goto("/comptoir/lancement");
     await expect(page.getByText("Compte du propriétaire réel")).toBeVisible();
     await expect(page.getByRole("link", { name: /Corriger/ }).first()).toBeVisible();

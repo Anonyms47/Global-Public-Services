@@ -21,7 +21,7 @@ import {
 import { can } from "@/lib/permissions";
 import { optionsLabel } from "@/lib/format";
 
-const method = z.enum(["cash", "mobile_money", "card", "bank_transfer", "other"]);
+const method = z.enum(["cash", "wave", "orange_money", "mobile_money", "card", "bank_transfer", "other"]);
 const money = z.coerce.number().int("Montant entier attendu.").min(0);
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
@@ -103,6 +103,10 @@ const orderSchema = z.object({
   notes: z.string().max(1000).optional(),
   lines: z.array(lineSchema).min(1, "Ajoutez au moins un article."),
   payment: z.object({ method, amount: money, note: z.string().max(200).optional() }).nullish(),
+  payments: z
+    .array(z.object({ method, amount: money, note: z.string().max(200).optional() }))
+    .max(4)
+    .optional(),
 });
 
 export async function createOrderAction(input: unknown) {

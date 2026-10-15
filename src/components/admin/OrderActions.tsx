@@ -13,17 +13,12 @@ import {
 } from "@/app/comptoir/(app)/commandes/actions";
 import type { Fulfillment } from "@/server/domain/orders";
 import { fcfa } from "@/lib/format";
+import { paymentMethods } from "@/lib/payment-methods";
 import { whatsappLink } from "@/lib/whatsapp";
 import { ActionFeedback, useAction } from "./useAction";
 import { IconCopy, IconWhatsApp } from "../ui/icons";
 
-const methods = [
-  ["cash", "Espèces"],
-  ["mobile_money", "Mobile money"],
-  ["card", "Carte"],
-  ["bank_transfer", "Virement"],
-  ["other", "Autre"],
-] as const;
+const methods = paymentMethods;
 
 export function NextStepButton({ orderId, to, label }: { orderId: string; to: Fulfillment; label: string }) {
   const { run, pending, failure, success } = useAction();

@@ -14,6 +14,7 @@ import {
   IconInbox,
   IconRocket,
   IconHeart,
+  IconWhatsApp,
   IconMenu,
   IconSearch,
   IconGrid,
@@ -43,6 +44,7 @@ const icons: Record<string, typeof IconMenu> = {
   inbox: IconInbox,
   launch: IconRocket,
   health: IconHeart,
+  request: IconWhatsApp,
 };
 
 export function AdminNavLink({ href, icon, children }: { href: string; icon: string; children: ReactNode }) {
@@ -184,6 +186,14 @@ export function CommandPalette({ commands }: { commands: Command[] }) {
             sub: [p.brand, p.sku, p.status === "archived" ? "archivé" : p.status === "draft" ? "brouillon" : ""]
               .filter(Boolean)
               .join(" · "),
+          })),
+        },
+        {
+          label: "Demandes WhatsApp",
+          rows: (data.requests ?? []).map((r) => ({
+            href: `/comptoir/demandes?etat=${r.status}#${r.reference}`,
+            title: r.reference,
+            sub: r.customer_name,
           })),
         },
         {

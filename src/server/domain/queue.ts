@@ -9,9 +9,11 @@ import { fcfa } from "@/lib/format";
  * l'état qui les a fait naître, donc un élément résolu revient si la situation
  * change (nouveau solde, nouveau seuil…). Les éléments manuels sont libres.
  */
-export type QueueKind = "prepare" | "pickup" | "delivery" | "balance" | "refund" | "fee" | "stock" | "manual";
+export type QueueKind =
+  "request" | "prepare" | "pickup" | "delivery" | "balance" | "refund" | "fee" | "stock" | "manual";
 
 export const queueKindLabels: Record<QueueKind, string> = {
+  request: "Demande WhatsApp",
   prepare: "À préparer",
   pickup: "Retrait",
   delivery: "Livraison",
@@ -44,14 +46,34 @@ export async function derivedItems(db: Db, lowThreshold: number): Promise<Derive
   const [open, low] = await Promise.all([
     listOrders(db, { limit: 500 }).then((r) => r.filter((o) => o.status !== "cancelled")),
     db.query<{ id: string; name: string; sku: string; product_id: string; available: number }>(
-      `select v.id, p.name, v.sku, p.id as product_id, (v.on_hand - v.reserved)::int as available
+      `select v.id, p.name, v.sku, p.id as product_id, (v.on_hand - v.reserved - v.unsellable)::int as available
          from variants v join products p on p.id = v.product_id
-        where v.active and p.status = 'published' and (v.on_hand - v.reserved) <= coalesce(v.low_stock_threshold, $1)
+        where v.active and p.status = 'published' and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)
         order by available, p.name`,
       [lowThreshold],
     ),
   ]);
   const out: Derived[] = [];
+  const requests = await db.query<{
+    id: string;
+    reference: string;
+    customer_name: string;
+    subtotal: number;
+    created_at: Date;
+  }>(
+    "select id, reference, customer_name, subtotal, created_at from order_requests where status = 'new' order by created_at",
+  );
+  for (const r of requests) {
+    out.push({
+      key: `request:${r.id}`,
+      kind: "request",
+      title: `Répondre à la demande ${r.reference}`,
+      detail: `${r.customer_name} · ${fcfa(r.subtotal)}`,
+      href: `/comptoir/demandes#${r.reference}`,
+      at: r.created_at,
+      priority: 1,
+    });
+  }
   for (const o of open) {
     const who = o.customer_name || "Vente au comptoir";
     const href = `/comptoir/commandes/${o.id}`;
