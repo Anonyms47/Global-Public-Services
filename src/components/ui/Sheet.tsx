@@ -26,16 +26,27 @@ export function Sheet({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const opener = useRef<Element | null>(null);
+  const openedAt = useRef(0);
 
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (open && !d.open) {
       opener.current = document.activeElement;
-      d.showModal();
+      openedAt.current = Date.now();
+      // Navigateurs anciens (ou intégrés à une application) sans <dialog> modal :
+      // ouverture simple, positionnée en plein écran par la classe sheet-fallback.
+      try {
+        d.showModal();
+      } catch {
+        d.setAttribute("open", "");
+        d.classList.add("sheet-fallback");
+      }
       document.documentElement.style.overflow = "hidden";
     } else if (!open && d.open) {
-      d.close();
+      if (typeof d.close === "function") d.close();
+      else d.removeAttribute("open");
+      d.classList.remove("sheet-fallback");
     }
     return () => {
       document.documentElement.style.overflow = "";
@@ -65,7 +76,8 @@ export function Sheet({
         onClose();
       }}
       onClick={(e) => {
-        if (e.target === ref.current) onClose();
+        // Un appui fantôme juste après l'ouverture (fréquent sur mobile) ne doit pas refermer le panneau.
+        if (e.target === ref.current && Date.now() - openedAt.current > 400) onClose();
       }}
       className={`${placement} open:animate-rise flex-col overflow-hidden bg-paper p-0 text-ink open:flex`}
       style={side === "center" ? { width: `min(100vw - 32px, ${wide ? 960 : 560}px)` } : undefined}
