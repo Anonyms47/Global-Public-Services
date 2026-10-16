@@ -1,6 +1,7 @@
 import type { Db } from "../db/client";
 import { fail, newId } from "./errors";
 import { slugify } from "@/lib/format";
+import { normalizeBarcode, suggestSku } from "@/lib/sku";
 
 // ——— Types ———
 
@@ -42,6 +43,8 @@ export interface PublicProduct {
   description: string;
   specs: Spec[];
   condition: string | null;
+  /** Garantie propre au produit, vide sinon. */
+  warranty: string;
   axes: string[];
   featured: boolean;
   featuredPosition: number;
@@ -107,6 +110,7 @@ interface ProductRow {
   description: string;
   specs: Spec[];
   condition: string | null;
+  warranty: string | null;
   axes: string[];
   featured: boolean;
   featured_position: number;
@@ -169,6 +173,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         description: r.description,
         specs: r.specs ?? [],
         condition: r.condition,
+        warranty: r.warranty ?? "",
         axes: r.axes ?? [],
         featured: r.featured,
         featuredPosition: r.featured_position,
@@ -196,7 +201,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
 
 const productSelect = `
   select p.id, p.slug, p.name, p.brand, c.slug as category_slug, c.name as category_name,
-         p.description, p.specs, p.condition, p.axes, p.featured, p.featured_position,
+         p.description, p.specs, p.condition, p.warranty, p.axes, p.featured, p.featured_position,
          p.created_at, p.is_demo
     from products p left join categories c on c.id = p.category_id`;
 
@@ -387,7 +392,7 @@ export async function adminProducts(db: Db, opts: { q?: string; status?: string;
   if (opts.q) {
     params.push(`%${opts.q.trim()}%`);
     where.push(
-      `(p.name ilike $${params.length} or p.brand ilike $${params.length} or exists (select 1 from variants v where v.product_id = p.id and v.sku ilike $${params.length}))`,
+      `(p.name ilike $${params.length} or p.brand ilike $${params.length} or exists (select 1 from variants v where v.product_id = p.id and (v.sku ilike $${params.length} or v.barcode ilike $${params.length})))`,
     );
   }
   return db.query<AdminProductRow>(
@@ -415,10 +420,17 @@ export interface VariantInput {
   costPrice?: number | null;
   initialStock?: number;
   lowStockThreshold?: number | null;
+  /** Code-barres (EAN, UPC ou code interne), unique s'il est renseigné. */
+  barcode?: string | null;
 }
 
 export interface ProductInput {
   id?: string;
+  /**
+   * Identifiant choisi par le formulaire pour une création : un second envoi
+   * (double clic, réseau lent) renvoie le produit déjà créé au lieu d'un doublon.
+   */
+  createId?: string;
   name: string;
   slug?: string;
   brand: string;
@@ -426,6 +438,8 @@ export interface ProductInput {
   description: string;
   specs: Spec[];
   condition: string | null;
+  /** Garantie propre au produit (sinon, la garantie générale de GPS s'applique). */
+  warranty?: string;
   axes: string[];
   images: { url: string; alt: string; color?: string | null; kind?: "image" | "video" }[];
   variants: VariantInput[];
@@ -481,6 +495,7 @@ export async function productForEdit(
     description: p.description as string,
     specs: (p.specs as Spec[]) ?? [],
     condition: (p.condition as string) ?? null,
+    warranty: (p.warranty as string) ?? "",
     axes: (p.axes as string[]) ?? [],
     images,
     status: p.status as ProductStatus,
@@ -498,6 +513,7 @@ export async function productForEdit(
       price: v.price as number,
       costPrice: opts.withCosts ? ((v.cost_price as number) ?? null) : undefined,
       lowStockThreshold: (v.low_stock_threshold as number) ?? null,
+      barcode: (v.barcode as string) ?? null,
       onHand: v.on_hand as number,
       reserved: v.reserved as number,
       unsellable: (v.unsellable as number) ?? 0,
@@ -507,6 +523,32 @@ export async function productForEdit(
 }
 
 export { publicationIssues } from "@/lib/publication";
+
+/**
+ * Références et codes-barres déjà pris par un autre produit : vérifiés pendant
+ * la saisie, avant l'enregistrement (qui les refuse de toute façon).
+ */
+export async function codeClashes(db: Db, codes: { skus: string[]; barcodes: string[] }, productId: string | null) {
+  const skus = [...new Set(codes.skus.map((s) => s.trim().toUpperCase()).filter(Boolean))].slice(0, 200);
+  const barcodes = [...new Set(codes.barcodes.map(normalizeBarcode).filter(Boolean))].slice(0, 200);
+  const [s, b] = await Promise.all([
+    skus.length
+      ? db.query<{ code: string; name: string }>(
+          `select upper(v.sku) as code, p.name from variants v join products p on p.id = v.product_id
+            where upper(v.sku) = any($1) and v.product_id <> $2`,
+          [skus, productId ?? ""],
+        )
+      : [],
+    barcodes.length
+      ? db.query<{ code: string; name: string }>(
+          `select v.barcode as code, p.name from variants v join products p on p.id = v.product_id
+            where v.barcode = any($1) and v.product_id <> $2`,
+          [barcodes, productId ?? ""],
+        )
+      : [],
+  ]);
+  return { skus: s, barcodes: b };
+}
 import { publicationIssues } from "@/lib/publication";
 
 export async function saveProduct(
@@ -542,11 +584,18 @@ export async function saveProduct(
     });
   }
   for (const v of input.variants) {
-    if (!v.sku.trim()) fail("validation", "Chaque variante doit avoir une référence.");
-    if (!Number.isInteger(v.price) || v.price < 0) fail("validation", `Prix invalide pour ${v.sku}.`);
+    if (!Number.isInteger(v.price) || v.price < 0) fail("validation", `Prix invalide pour ${v.sku || "une variante"}.`);
   }
   return db.tx(async (tx) => {
-    const id = input.id ?? newId();
+    if (!input.id && input.createId) {
+      // Second envoi d'une même création : on renvoie le produit déjà créé.
+      const done = await tx.one<{ slug: string; updated_at: Date }>(
+        "select slug, updated_at from products where id = $1",
+        [input.createId],
+      );
+      if (done) return { id: input.createId, slug: done.slug, updatedAt: new Date(done.updated_at).toISOString() };
+    }
+    const id = input.id ?? input.createId ?? newId();
     const existing = input.id
       ? await tx.one<{
           updated_at: Date;
@@ -589,7 +638,8 @@ export async function saveProduct(
     if (existing) {
       await tx.query(
         `update products set name=$2, slug=$3, brand=$4, category_id=$5, description=$6, specs=$7, condition=$8,
-                axes=$9, status=$10, featured=$11, published_at=$12, publish_at=$13, unpublish_at=$14, updated_at=now() where id=$1`,
+                axes=$9, status=$10, featured=$11, published_at=$12, publish_at=$13, unpublish_at=$14, warranty=$15,
+                updated_at=now() where id=$1`,
         [
           id,
           input.name.trim(),
@@ -605,12 +655,13 @@ export async function saveProduct(
           publishedAt,
           publishAt,
           unpublishAt,
+          (input.warranty ?? "").trim(),
         ],
       );
     } else {
       await tx.query(
-        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at, warranty)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
         [
           id,
           input.name.trim(),
@@ -627,6 +678,7 @@ export async function saveProduct(
           !!input.isDemo,
           publishAt,
           unpublishAt,
+          (input.warranty ?? "").trim(),
         ],
       );
     }
@@ -651,14 +703,29 @@ export async function saveProduct(
       if (v.has_sales) await tx.query("update variants set active = false where id = $1", [v.id]);
       else await tx.query("delete from variants where id = $1", [v.id]);
     }
+    const taken = new Set(input.variants.map((v) => v.sku.trim().toUpperCase()).filter(Boolean));
     for (const [i, v] of input.variants.entries()) {
-      const sku = v.sku.trim().toUpperCase();
+      let sku = v.sku.trim().toUpperCase();
+      if (!sku) {
+        // Référence vide : proposée à partir du nom et des options, rendue unique.
+        const base = suggestSku(input.name, input.axes, v.options);
+        sku = base;
+        for (let n = 2; taken.has(sku) || (await tx.one("select 1 from variants where upper(sku) = $1", [sku])); n++) {
+          sku = `${base}-${n}`;
+        }
+        taken.add(sku);
+      }
       const skuClash = await tx.one("select 1 from variants where upper(sku) = $1 and id <> $2", [sku, v.id ?? ""]);
       if (skuClash) fail("conflict", `La référence ${sku} est déjà utilisée par un autre article.`);
+      const barcode = normalizeBarcode(v.barcode) || null;
+      if (barcode) {
+        const clash = await tx.one("select 1 from variants where barcode = $1 and id <> $2", [barcode, v.id ?? ""]);
+        if (clash) fail("conflict", `Le code-barres ${barcode} est déjà utilisé par un autre article.`);
+      }
       if (v.id && current.some((c) => c.id === v.id)) {
         await tx.query(
-          `update variants set sku=$2, options=$3, price=$4, low_stock_threshold=$5, position=$6
-             ${ctx.withCosts ? ", cost_price=$7" : ""} where id=$1`,
+          `update variants set sku=$2, options=$3, price=$4, low_stock_threshold=$5, position=$6, barcode=$7
+             ${ctx.withCosts ? ", cost_price=$8" : ""} where id=$1`,
           [
             v.id,
             sku,
@@ -666,6 +733,7 @@ export async function saveProduct(
             v.price,
             v.lowStockThreshold ?? null,
             i,
+            barcode,
             ...(ctx.withCosts ? [v.costPrice ?? null] : []),
           ],
         );
@@ -673,8 +741,8 @@ export async function saveProduct(
         const vid = newId();
         const initial = Math.max(0, Math.floor(v.initialStock ?? 0));
         await tx.query(
-          `insert into variants (id, product_id, sku, options, price, cost_price, on_hand, low_stock_threshold, position)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          `insert into variants (id, product_id, sku, options, price, cost_price, on_hand, low_stock_threshold, position, barcode)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
           [
             vid,
             id,
@@ -685,6 +753,7 @@ export async function saveProduct(
             initial,
             v.lowStockThreshold ?? null,
             i,
+            barcode,
           ],
         );
         if (initial > 0) {
@@ -726,6 +795,7 @@ export async function duplicateProduct(db: Db, id: string, userId: string | null
         ...v,
         id: undefined,
         sku: `${v.sku}-${suffix}`,
+        barcode: null,
         initialStock: 0,
       })),
     },
@@ -795,6 +865,7 @@ export async function restoreVersion(db: Db, versionId: string, ctx: { userId: s
       description: old.description,
       specs: old.specs,
       condition: old.condition,
+      warranty: old.warranty ?? current.warranty,
       axes: old.axes,
       images: old.images,
       variants: current.variants.map((cv) => {

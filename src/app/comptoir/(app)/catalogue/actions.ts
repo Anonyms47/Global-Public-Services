@@ -7,11 +7,11 @@ import { isDemoMode } from "@/server/db";
 import { AppError } from "@/server/domain/errors";
 import {
   applyPriceChange,
+  codeClashes,
   archiveCategory,
   deleteCategory,
   restoreCategory,
   deleteOrArchiveProduct,
-  duplicateProduct,
   purgeProduct,
   restoreProduct,
   restoreVersion,
@@ -41,6 +41,13 @@ function parse<T>(schema: z.ZodType<T>, input: unknown): T {
 
 const productSchema = z.object({
   id: z.string().optional(),
+  createId: z.string().uuid().optional(),
+  slug: z
+    .string()
+    .max(80)
+    .regex(/^[a-z0-9-]*$/, "Adresse : lettres minuscules, chiffres et tirets.")
+    .optional(),
+  warranty: z.string().max(200).optional(),
   expectedUpdatedAt: z.string().optional(),
   name: z.string().max(120),
   brand: z.string().max(60),
@@ -69,6 +76,12 @@ const productSchema = z.object({
         costPrice: z.coerce.number().int().min(0).nullable().optional(),
         initialStock: z.coerce.number().int().min(0).max(100000).optional(),
         lowStockThreshold: z.coerce.number().int().min(0).nullable().optional(),
+        barcode: z
+          .string()
+          .max(40)
+          .regex(/^[\w\s.-]*$/, "Code-barres : chiffres, lettres et tirets seulement.")
+          .nullable()
+          .optional(),
       }),
     )
     .max(120),
@@ -80,19 +93,41 @@ const productSchema = z.object({
 
 export async function saveProductAction(input: unknown) {
   return guarded("catalog.edit", async ({ db, user }) => {
-    const { expectedUpdatedAt, ...data } = parse(productSchema, input);
+    const { expectedUpdatedAt, slug, ...data } = parse(productSchema, input);
     const withCosts = can(user, "catalog.costs");
-    return saveProduct(
+    const before = data.id
+      ? await db.one<{ status: string }>("select status from products where id = $1", [data.id])
+      : null;
+    const r = await saveProduct(
       db,
-      { ...data, isDemo: data.id ? undefined : isDemoMode() },
+      { ...data, slug: slug || undefined, isDemo: data.id ? undefined : isDemoMode() },
       { userId: user.id, withCosts, expectedUpdatedAt },
     );
+    // Journal : création, publication et retrait (le détail des prix et coûts est dans l'historique des versions).
+    const action = !data.id
+      ? "product.create"
+      : before?.status !== data.status && data.status === "published"
+        ? "product.publish"
+        : before?.status === "published" && data.status !== "published"
+          ? "product.unpublish"
+          : "product.update";
+    await audit(db, user.is_demo ? null : user.id, action, data.name, { id: r.id, status: data.status });
+    return r;
   });
 }
 
-export async function duplicateProductAction(id: string) {
-  return guarded("catalog.edit", ({ db, user }) => duplicateProduct(db, String(id), user.id), {
-    message: "Copie créée en brouillon.",
+/** Références et codes-barres déjà utilisés par un autre produit (contrôle pendant la saisie). */
+export async function checkCodesAction(input: unknown) {
+  return guarded("catalog.edit", ({ db }) => {
+    const d = parse(
+      z.object({
+        productId: z.string().nullable(),
+        skus: z.array(z.string().max(40)).max(200),
+        barcodes: z.array(z.string().max(40)).max(200),
+      }),
+      input,
+    );
+    return codeClashes(db, d, d.productId);
   });
 }
 

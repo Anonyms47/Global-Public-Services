@@ -110,4 +110,65 @@ test.describe("Parcours mobile et clavier", () => {
     await expect(page.locator("article")).toContainText(/Monnaie rendue 5\s000\sFCFA/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+  test("saisie produit sur téléphone : photos, envoi en erreur, enregistrer et ajouter un autre, fiche publiée", async ({
+    page,
+  }) => {
+    const fs = await import("node:fs");
+    await page.goto("/comptoir/connexion");
+    await page.getByLabel("Identifiant ou e-mail").fill("gestion@demo.gps");
+    await page.getByLabel("Mot de passe").fill(DEMO_PASSWORD);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(page).toHaveURL(/\/comptoir$/);
+    await page.goto("/comptoir/catalogue/nouveau");
+    // Gestionnaire : ni coût ni marge.
+    await expect(page.locator("#p-cost")).toHaveCount(0);
+    await expect(page.locator("#p-price")).toHaveAttribute("inputmode", "numeric");
+    await page.locator("#p-name").fill("Mobile E2E Un");
+    await page.locator("#p-cat").selectOption({ index: 1 });
+    const category = await page.locator("#p-cat").inputValue();
+    await page.locator("#p-price").fill("15000");
+    await page.locator("#p-stock").fill("2");
+    await page.getByTestId("media-input").setInputFiles([
+      { name: "face.png", mimeType: "image/png", buffer: fs.readFileSync("public/brand/logo-gps-mark.png") },
+      { name: "dos.png", mimeType: "image/png", buffer: fs.readFileSync("public/brand/logo-gps.png") },
+      { name: "faux.png", mimeType: "image/png", buffer: Buffer.from("pas une image") },
+    ]);
+    const uploads = page.getByRole("list", { name: "Envois en cours" });
+    await expect(uploads.getByText("Envoyé")).toHaveCount(2, { timeout: 30_000 });
+    const bad = uploads.locator("li", { hasText: "faux.png" });
+    await expect(bad.getByText(/Format non pris en charge/)).toBeVisible();
+    await bad.getByRole("button", { name: "Réessayer" }).click();
+    await expect(bad.getByText(/Format non pris en charge/)).toBeVisible();
+    await bad.getByRole("button", { name: "Retirer" }).click();
+    await expect(page.getByTestId("media-item")).toHaveCount(2);
+    // Photo principale au choix.
+    await page.getByTestId("media-item").nth(1).getByRole("button", { name: "Définir comme photo principale" }).click();
+    await expect(page.getByTestId("media-item").nth(0).getByText("Principale")).toBeVisible();
+
+    const width = page.viewportSize()!.width;
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    await expect(page.getByRole("button", { name: "Enregistrer et rester sur la fiche" })).toBeInViewport();
+    await expect(page.getByRole("main")).not.toContainText(/démonstration|fictif/i);
+
+    await page.locator("label", { hasText: "Visible dès l'enregistrement" }).click();
+    await page.getByRole("button", { name: "Enregistrer et ajouter un autre produit" }).click();
+    await expect(page.getByText("« Mobile E2E Un » enregistré et publié.")).toBeVisible();
+    // Fiche vierge : catégorie gardée, valeurs uniques remises à zéro.
+    await expect(page.locator("#p-name")).toHaveValue("");
+    await expect(page.locator("#p-cat")).toHaveValue(category);
+    await expect(page.locator("#p-price")).toHaveValue("");
+    await expect(page.locator("#p-stock")).toHaveValue("");
+    await expect(page.getByTestId("media-item")).toHaveCount(0);
+
+    // Incomplet : enregistré en brouillon, jamais publié.
+    await page.locator("#p-name").fill("Mobile E2E Brouillon");
+    await page.getByRole("button", { name: "Enregistrer et ajouter un autre produit" }).click();
+    await expect(page.getByText("« Mobile E2E Brouillon » enregistré en brouillon.")).toBeVisible();
+    await expect(page.getByText("2 produits saisis à la suite.")).toBeVisible();
+
+    const published = await page.request.get("/produits/mobile-e2e-un");
+    expect(published.status()).toBe(200);
+    expect(await published.text()).toContain("Mobile E2E Un");
+    expect((await page.request.get("/produits/mobile-e2e-brouillon")).status()).toBe(404);
+  });
 });

@@ -6,10 +6,17 @@ import { ActionFeedback, useAction } from "./useAction";
 
 const local = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-export function PromotionForm({ products }: { products: { id: string; name: string }[] }) {
+export function PromotionForm({
+  products,
+  defaultProductId = "",
+}: {
+  products: { id: string; name: string }[];
+  /** Produit choisi d'avance (lien « Créer une promotion » depuis la fiche). */
+  defaultProductId?: string;
+}) {
   const [f, setF] = useState(() => ({
     name: "",
-    productId: "",
+    productId: defaultProductId,
     kind: "percent" as "percent" | "amount",
     value: "",
     startsAt: local(new Date()),

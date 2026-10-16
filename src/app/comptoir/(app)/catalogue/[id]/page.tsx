@@ -61,6 +61,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
       ) : null}
       {canEdit && !p.deletedAt ? (
         <ProductFormClient
+          key={p.updatedAt}
           videoMaxMb={videoMaxMb()}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           canCosts={can(user, "catalog.costs")}
@@ -73,6 +74,8 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
             description: p.description,
             specs: p.specs,
             condition: p.condition,
+            warranty: p.warranty ?? "",
+            slug: p.slug,
             axes: p.axes,
             axisValues: {},
             images: p.images,
