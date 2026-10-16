@@ -1,21 +1,24 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/server/db";
 import { login, logout } from "@/server/domain/auth";
 import { AppError } from "@/server/domain/errors";
-import { SESSION_COOKIE, demoAccess } from "@/server/admin";
+import { SESSION_COOKIE, demoAccess, requestOrigin } from "@/server/admin";
 
 export async function loginAction(_prev: { error?: string; email?: string } | null, formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const suite = String(formData.get("suite") ?? "");
+  let mustChange = false;
   try {
     const db = await getDb();
-    const { token, expires } = await login(db, email, password, {
+    const { token, expires, mustChangePassword } = await login(db, email, password, {
       allowDemo: (await demoAccess(db)).allowDemo,
+      ...requestOrigin(await headers()),
     });
+    mustChange = mustChangePassword;
     (await cookies()).set(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: "lax",
@@ -28,6 +31,7 @@ export async function loginAction(_prev: { error?: string; email?: string } | nu
     console.error(error);
     return { error: "Connexion impossible pour le moment. Réessayez.", email };
   }
+  if (mustChange) redirect("/comptoir/mon-compte?provisoire=1");
   redirect(suite.startsWith("/comptoir") && !suite.startsWith("/comptoir/connexion") ? suite : "/comptoir");
 }
 

@@ -1,11 +1,11 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/server/db";
-import { claimOwner, login } from "@/server/domain/auth";
+import { assertNotThrottled, claimOwner, login, recordAttempt } from "@/server/domain/auth";
 import { AppError } from "@/server/domain/errors";
-import { SESSION_COOKIE } from "@/server/admin";
+import { SESSION_COOKIE, requestOrigin } from "@/server/admin";
 
 type State = { error?: string; fieldErrors?: Record<string, string>; name?: string; email?: string } | null;
 
@@ -24,10 +24,19 @@ export async function installAction(_prev: State, formData: FormData): Promise<S
       email: input.email,
     };
   }
+  const origin = requestOrigin(await headers());
   try {
     const db = await getDb();
-    await claimOwner(db, process.env.COMPTOIR_SETUP_CODE, input);
-    const { token, expires } = await login(db, input.email, input.password, { allowDemo: false });
+    // Essais de code limités comme les connexions (par adresse IP).
+    await assertNotThrottled(db, "installation", origin.ip);
+    try {
+      await claimOwner(db, process.env.COMPTOIR_SETUP_CODE, input);
+    } catch (error) {
+      if (error instanceof AppError && error.fieldErrors?.code)
+        await recordAttempt(db, "installation", origin.ip, false);
+      throw error;
+    }
+    const { token, expires } = await login(db, input.email, input.password, { allowDemo: false, ...origin });
     (await cookies()).set(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: "lax",

@@ -21,7 +21,7 @@ async function main() {
   rl.close();
   const db = await openDb({ url: process.env.DATABASE_URL, dataDir: process.env.PGLITE_DIR ?? ".data/pglite" });
   await ensureBaseSettings(db);
-  await createUser(db, { name, email, role: "owner", password });
+  await createUser(db, { name, email, role: "owner", password, temporary: false });
   console.log(`Compte propriétaire créé pour ${email}.`);
   process.exit(0);
 }

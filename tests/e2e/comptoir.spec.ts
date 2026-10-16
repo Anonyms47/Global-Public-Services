@@ -23,6 +23,34 @@ test.describe("Le Comptoir", () => {
     await expect(page.getByRole("navigation", { name: "Comptoir" }).getByText("Rapports")).toHaveCount(0);
   });
 
+  test("équipe : mot de passe provisoire à changer à la première connexion", async ({ page, context }) => {
+    await login(page, "proprietaire@demo.gps");
+    await page.goto("/comptoir/parametres/equipe");
+    await page.getByLabel("Nom").fill("Recette vendeuse");
+    await page.getByLabel("Identifiant de connexion").fill("recette.vendeuse");
+    await page.getByLabel("Mot de passe provisoire").fill("provisoire-2026");
+    await page.getByRole("button", { name: "Créer le compte" }).click();
+    await expect(page.getByText("Recette vendeuse")).toBeVisible();
+    await expect(page.getByText("Mot de passe provisoire").first()).toBeVisible();
+
+    await context.clearCookies();
+    await page.goto("/comptoir/connexion");
+    await page.getByLabel("Identifiant ou e-mail").fill("recette.vendeuse");
+    await page.getByLabel("Mot de passe").fill("provisoire-2026");
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/mon-compte\?provisoire=1/);
+    // Aucune autre page tant que le mot de passe provisoire n'est pas changé.
+    await page.goto("/comptoir/commandes");
+    await expect(page).toHaveURL(/\/comptoir\/mon-compte/);
+    await page.getByLabel("Mot de passe actuel").fill("provisoire-2026");
+    await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("mon-propre-mdp-1");
+    await page.getByLabel("Confirmer le nouveau mot de passe").fill("mon-propre-mdp-1");
+    await page.getByRole("button", { name: "Changer le mot de passe" }).click();
+    await expect(page).toHaveURL(/\/comptoir$/);
+    await page.goto("/comptoir/commandes");
+    await expect(page).toHaveURL(/\/comptoir\/commandes/);
+  });
+
   test("commande : réservation, paiement partiel, solde, remise", async ({ page }) => {
     await login(page, "gestion@demo.gps");
     const before = await availability(page, "LUM-RIV-EC");

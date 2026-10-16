@@ -55,6 +55,12 @@ export function Shell({ user, demo, children }: { user: User; demo: boolean; chi
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
+            href="/comptoir/mon-compte"
+            className="inline-flex min-h-9 items-center rounded-[6px] px-2 text-[13px] text-white/80 underline-offset-2 hover:underline"
+          >
+            Mon compte
+          </Link>
+          <Link
             href="/"
             target="_blank"
             className="inline-flex min-h-9 items-center rounded-[6px] px-2 text-[13px] text-white/80 underline-offset-2 hover:underline"

@@ -12,6 +12,19 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // En-têtes de sécurité pour tout le site : pas d'intégration dans un cadre étranger
+        // (le Comptoir peut s'afficher lui-même en aperçu), types de fichiers stricts.
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'; base-uri 'self'; form-action 'self'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+        ],
+      },
+      {
         source: "/comptoir/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },

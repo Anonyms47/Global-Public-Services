@@ -32,5 +32,7 @@ export const auditLabels: Record<string, string> = {
   "settings.update": "Configuration modifiée",
   "team.create": "Compte créé",
   "team.update": "Compte modifié",
+  "account.password": "Mot de passe changé (par son titulaire)",
+  "account.sessions": "Autres appareils déconnectés",
   "demo.purge": "Données d'exemple purgées",
 };

@@ -673,6 +673,91 @@ describe("Droits, clients, rapports, démonstration", () => {
     await db.query("delete from users where email = $1", [input.email]);
   });
 
+  it("sécurité : limitation des connexions, mot de passe provisoire, révocation, inactivité, empreintes", async () => {
+    const auth = await import("@/server/domain/auth");
+    const owner = await userByRole(db, "owner");
+    const pw = "provisoire-1234";
+    // Compte créé par un tiers : mot de passe provisoire, changement exigé.
+    const id = await auth.createUser(db, { name: "Fatou", email: "fatou.test", role: "seller", password: pw });
+    const first = await auth.login(db, "fatou.test", pw, { allowDemo: false, ip: "10.0.0.1" });
+    expect(first.mustChangePassword).toBe(true);
+    const fatou = (await auth.userFromToken(db, first.token, { allowDemo: false }))!;
+    expect(fatou.must_change_password).toBe(true);
+    // Changement : ancien mot de passe exigé, nouveau différent, autres appareils déconnectés.
+    const second = await auth.login(db, "fatou.test", pw, { allowDemo: false, ip: "10.0.0.2" });
+    await expect(
+      auth.changeOwnPassword(db, fatou, first.token, {
+        current: "faux",
+        password: "nouveau-mdp-1",
+        confirm: "nouveau-mdp-1",
+      }),
+    ).rejects.toThrow(/actuel incorrect/);
+    await expect(
+      auth.changeOwnPassword(db, fatou, first.token, { current: pw, password: pw, confirm: pw }),
+    ).rejects.toThrow(/différent/);
+    await auth.changeOwnPassword(db, fatou, first.token, {
+      current: pw,
+      password: "nouveau-mdp-1",
+      confirm: "nouveau-mdp-1",
+    });
+    expect((await auth.userFromToken(db, first.token, { allowDemo: false }))?.must_change_password).toBe(false);
+    expect(await auth.userFromToken(db, second.token, { allowDemo: false })).toBeNull();
+
+    // Limitation : 5 échecs pour un identifiant bloquent même le bon mot de passe.
+    for (let i = 0; i < 5; i++) {
+      await expect(auth.login(db, "fatou.test", "faux", { allowDemo: false, ip: "10.0.0.3" })).rejects.toThrow(
+        /incorrect/,
+      );
+    }
+    await expect(auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.4" })).rejects.toThrow(
+      /Trop de tentatives/,
+    );
+    // … et 20 échecs depuis une même adresse IP bloquent tous les identifiants.
+    for (let i = 0; i < 20; i++) {
+      await expect(auth.login(db, `inconnu${i}`, "faux", { allowDemo: false, ip: "10.9.9.9" })).rejects.toThrow(
+        /incorrect/,
+      );
+    }
+    await expect(auth.login(db, "personne", "faux", { allowDemo: false, ip: "10.9.9.9" })).rejects.toThrow(
+      /Trop de tentatives/,
+    );
+    // La fenêtre passée, la connexion redevient possible et remet le compteur à zéro.
+    await db.query("update login_attempts set created_at = now() - interval '16 minutes'");
+    const third = await auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.4" });
+    expect(third.mustChangePassword).toBe(false);
+
+    // Inactivité : une session sans activité depuis plus de 2 h est refusée.
+    await db.query("update sessions set last_seen_at = now() - interval '3 hours' where user_id = $1", [id]);
+    expect(await auth.userFromToken(db, third.token, { allowDemo: false })).toBeNull();
+
+    // Réinitialisation par le propriétaire : provisoire à nouveau, sessions fermées.
+    const fourth = await auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false });
+    await auth.updateUser(db, { ...owner, role: "owner" } as never, id, { password: "remise-a-zero-1" });
+    expect(await auth.userFromToken(db, fourth.token, { allowDemo: false })).toBeNull();
+    expect((await auth.login(db, "fatou.test", "remise-a-zero-1", { allowDemo: false })).mustChangePassword).toBe(true);
+    await expect(
+      auth.updateUser(db, { ...owner, role: "owner" } as never, owner.id, { password: "x".repeat(12) }),
+    ).rejects.toThrow(/Mon compte/);
+    // Désactivation : accès révoqué immédiatement.
+    const fifth = await auth.login(db, "fatou.test", "remise-a-zero-1", { allowDemo: false });
+    await auth.updateUser(db, { ...owner, role: "owner" } as never, id, { active: false });
+    expect(await auth.userFromToken(db, fifth.token, { allowDemo: false })).toBeNull();
+
+    // Empreintes : paramètres scrypt renforcés, ancien format accepté puis mis à niveau à la connexion.
+    expect((await auth.hashPassword("x")).split("$")).toHaveLength(6);
+    const { scryptSync, randomBytes } = await import("node:crypto");
+    const salt = randomBytes(16);
+    const legacy = `scrypt$${salt.toString("hex")}$${scryptSync("ancien-format-1", salt, 64).toString("hex")}`;
+    expect(await auth.verifyPassword("ancien-format-1", legacy)).toBe(true);
+    await db.query("update users set password_hash = $2, active = true where id = $1", [id, legacy]);
+    await auth.login(db, "fatou.test", "ancien-format-1", { allowDemo: false });
+    const upgraded = await db.one<{ password_hash: string }>("select password_hash from users where id = $1", [id]);
+    expect(auth.needsRehash(upgraded!.password_hash)).toBe(false);
+
+    await db.query("delete from users where id = $1", [id]);
+    await db.query("delete from login_attempts");
+  });
+
   it("signale un numéro déjà connu avant de créer un doublon", async () => {
     expect((await phoneMatches(db, "+000 00 00 00 01")).length).toBeGreaterThan(0);
     await expect(createCustomer(db, { name: "Doublon", phone: "00 00 00 01" })).rejects.toThrow(/correspond/);

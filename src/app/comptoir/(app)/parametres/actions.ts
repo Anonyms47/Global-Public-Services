@@ -147,7 +147,7 @@ export async function createUserAction(input: unknown) {
         input,
       );
       // Un compte créé par un compte réel est réel, même en mode démonstration.
-      const id = await createUser(db, { ...d, isDemo: user.is_demo && isDemoMode() });
+      const id = await createUser(db, { ...d, isDemo: user.is_demo && isDemoMode(), temporary: true });
       await audit(db, user.id, "team.create", d.email.trim().toLowerCase(), { role: d.role });
       return id;
     },

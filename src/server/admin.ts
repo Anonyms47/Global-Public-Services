@@ -40,6 +40,8 @@ export const currentUser = cache(async (): Promise<User | null> => {
 export async function requirePage(permission?: Permission) {
   const user = await currentUser();
   if (!user) redirect("/comptoir/connexion");
+  // Mot de passe provisoire : aucune page avant de l'avoir changé.
+  if (user.must_change_password) redirect("/comptoir/mon-compte?provisoire=1");
   const db = await getDb();
   return { db, user, allowed: permission ? can(user, permission) : true };
 }
@@ -52,11 +54,14 @@ export async function requirePage(permission?: Permission) {
 export async function guarded<T>(
   permission: Permission,
   fn: (ctx: { db: Db; user: User }) => Promise<T>,
-  opts: { message?: string } = {},
+  opts: { message?: string; allowTemporary?: boolean } = {},
 ): Promise<ActionResult<T>> {
   try {
     const user = await currentUser();
     assertCan(user, permission);
+    if (user.must_change_password && !opts.allowTemporary) {
+      throw new AppError("forbidden", "Changez d'abord votre mot de passe provisoire (Mon compte).");
+    }
     const db = await getDb();
     const data = await fn({ db, user });
     revalidatePath("/", "layout");
@@ -78,6 +83,12 @@ export async function guarded<T>(
         : "L'enregistrement a échoué. Votre saisie est conservée : réessayez dans un instant.";
     return { ok: false, code: "internal", error: msg };
   }
+}
+
+/** Adresse IP (première de X-Forwarded-For, fournie par l'hébergeur) et navigateur, pour la limitation des connexions. */
+export function requestOrigin(h: Headers) {
+  const ip = (h.get("x-forwarded-for") ?? h.get("x-real-ip") ?? "").split(",")[0].trim().slice(0, 64);
+  return { ip, userAgent: (h.get("user-agent") ?? "").slice(0, 200) };
 }
 
 /** Configuration du serveur, sans aucun secret. */

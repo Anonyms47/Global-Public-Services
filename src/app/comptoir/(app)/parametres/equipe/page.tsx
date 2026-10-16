@@ -37,6 +37,7 @@ export default async function TeamPage() {
           role: u.role,
           active: u.active,
           isDemo: u.is_demo,
+          temporary: !!u.must_change_password,
         }))}
       />
     </>
