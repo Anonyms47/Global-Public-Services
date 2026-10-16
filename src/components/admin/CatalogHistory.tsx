@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import { purgeProductAction, restoreProductAction, restoreVersionAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { ActionFeedback, useAction } from "./useAction";
@@ -57,9 +58,7 @@ export function VersionList({
         {versions.map((v) => (
           <li key={v.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <span>
-              <span className="font-semibold">
-                {new Date(v.at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
-              </span>{" "}
+              <span className="font-semibold">{formatDateTime(v.at)}</span>{" "}
               <span className="text-ink-mute">
                 · {v.who} · « {v.name} »
               </span>

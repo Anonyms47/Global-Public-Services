@@ -283,6 +283,7 @@ export async function mediaFile(db: Db, id: string): Promise<MediaFile | null> {
               exists (select 1 from product_images i join products p on p.id = i.product_id
                        where i.url = '/media/' || m.id and p.status = 'published' and p.deleted_at is null)
               or exists (select 1 from settings s where strpos(s.value::text, '/media/' || m.id) > 0)
+              or exists (select 1 from categories c where c.image_url = '/media/' || m.id and c.visible and c.archived_at is null)
             )) as public
        from media m where m.id = $1 and m.status = 'ready'`,
     [id],
@@ -325,7 +326,8 @@ export async function listMedia(db: Db, opts: { view: "all" | "unused" | "trash"
   const rows = await db.query<MediaRow>(
     `select m.id, m.mime, m.name, m.size, m.alt, m.created_at, m.deleted_at, m.storage_backend, u.name as uploader,
             (select count(distinct i.product_id)::int from product_images i where i.url = '/media/' || m.id)
-              + (select count(*)::int from settings s where strpos(s.value::text, '/media/' || m.id) > 0) as used_by,
+              + (select count(*)::int from settings s where strpos(s.value::text, '/media/' || m.id) > 0)
+              + (select count(*)::int from categories c where c.image_url = '/media/' || m.id) as used_by,
             coalesce((select array_agg(distinct p.name) from product_images i join products p on p.id = i.product_id
                        where i.url = '/media/' || m.id), '{}') as products
        from media m left join users u on u.id = m.uploaded_by
@@ -340,7 +342,8 @@ async function usage(db: Db, id: string) {
   const url = `/media/${id}`;
   const r = await db.one<{ products: number; settings: number }>(
     `select (select count(*)::int from product_images where url = $1) as products,
-            (select count(*)::int from settings where strpos(value::text, $1) > 0) as settings`,
+            (select count(*)::int from settings where strpos(value::text, $1) > 0)
+              + (select count(*)::int from categories where image_url = $1) as settings`,
     [url],
   );
   return { products: r?.products ?? 0, settings: r?.settings ?? 0, total: (r?.products ?? 0) + (r?.settings ?? 0) };
@@ -349,7 +352,7 @@ async function usage(db: Db, id: string) {
 const usageMessage = (u: { products: number; settings: number }) =>
   u.products
     ? "Ce fichier est utilisé par une fiche produit : retirez-le d'abord de la fiche."
-    : "Ce fichier est utilisé par la vitrine ou la configuration : remplacez-le d'abord.";
+    : "Ce fichier est utilisé par la vitrine, une catégorie ou la configuration : remplacez-le d'abord.";
 
 export async function trashMedia(db: Db, id: string) {
   const u = await usage(db, id);

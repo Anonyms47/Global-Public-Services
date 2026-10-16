@@ -341,9 +341,14 @@ export function CatalogBrowser({
           title="Aucun produit"
           action={
             canEdit ? (
-              <Link href="/comptoir/catalogue/nouveau" className="btn btn-blue btn-sm">
-                Ajouter un produit
-              </Link>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link href="/comptoir/catalogue/nouveau" className="btn btn-blue btn-sm">
+                  Ajouter le premier produit
+                </Link>
+                <Link href="/comptoir/catalogue/import" className="btn btn-outline btn-sm">
+                  Importer un catalogue
+                </Link>
+              </div>
             ) : null
           }
         >

@@ -9,11 +9,17 @@ export function formatNumber(n: number) {
   return nf.format(n);
 }
 
+// Dates du Comptoir et du site : jj/mm/aaaa, heure de Dakar (UTC toute l'année).
+const TZ = "Africa/Dakar";
 const df = new Intl.DateTimeFormat("fr-FR", {
-  dateStyle: "medium",
-  timeStyle: "short",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: TZ,
 });
-const dOnly = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
+const dOnly = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: TZ });
 
 export function formatDateTime(d: Date | string) {
   return df.format(new Date(d));

@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { duplicateProductAction, trashProductAction, saveProductAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { publicationIssues } from "@/lib/publication";
-import { fcfa, slugify } from "@/lib/format";
+import { fcfa, formatDateTime, slugify } from "@/lib/format";
 import { ActionFeedback, useAction } from "./useAction";
 import { MediaPicker } from "./MediaLibrary";
+import { saveCategoryAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { UploadList, useUploadQueue } from "./UploadQueue";
 import { Badge } from "./ui";
 import { IconCheck, IconDown, IconPlus, IconTrash, IconUp, IconUpload, IconAlert } from "../ui/icons";
@@ -82,7 +83,7 @@ export function ProductFormClient(props: Parameters<typeof ProductForm>[0]) {
 
 function ProductForm({
   initial,
-  categories,
+  categories: initialCategories,
   canCosts,
   videoMaxMb = 4,
 }: {
@@ -95,6 +96,10 @@ function ProductForm({
   const router = useRouter();
   const draftKey = `gps-produit-${initial.id ?? "nouveau"}`;
   const [state, setState] = useState<ProductState>(initial);
+  // Catégorie créée sur place : ajoutée à la liste et choisie, la saisie en cours est conservée.
+  const [categories, setCategories] = useState(initialCategories);
+  const [newCat, setNewCat] = useState<string | null>(null);
+  const catAction = useAction();
   const [saved, setSaved] = useState(() => snapshot(initial));
   const [step, setStep] = useState(0);
   const [localDraft, setLocalDraft] = useState<ProductState | null>(() => {
@@ -189,7 +194,7 @@ function ProductForm({
         status === "published"
           ? "Produit enregistré et publié."
           : payload.publishAt
-            ? `Publication programmée le ${new Date(payload.publishAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}.`
+            ? `Publication programmée le ${formatDateTime(payload.publishAt)}.`
             : "Brouillon enregistré.",
       onSuccess: (r) => {
         const next = {
@@ -357,6 +362,55 @@ function ProductForm({
                     </option>
                   ))}
                 </select>
+                {newCat === null ? (
+                  <button
+                    type="button"
+                    className="mt-1 text-[13px] font-semibold text-gps-blue underline underline-offset-2"
+                    onClick={() => setNewCat("")}
+                  >
+                    + Nouvelle catégorie
+                  </button>
+                ) : (
+                  <div className="mt-2 flex flex-wrap items-end gap-2">
+                    <div className="min-w-0 flex-1">
+                      <label className="label text-[13px]" htmlFor="p-newcat">
+                        Nom de la nouvelle catégorie
+                      </label>
+                      <input
+                        id="p-newcat"
+                        className="field h-10 min-h-10"
+                        value={newCat}
+                        maxLength={60}
+                        onChange={(e) => setNewCat(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+                      />
+                    </div>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewCat(null)}>
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-blue btn-sm"
+                      disabled={!newCat.trim() || catAction.pending}
+                      onClick={() =>
+                        catAction.run(() => saveCategoryAction({ name: newCat, description: "" }), {
+                          refresh: false,
+                          onSuccess: (r) => {
+                            const id = (r as { id: string }).id;
+                            setCategories((list) => [...list, { id, name: newCat.trim() }]);
+                            set({ categoryId: id });
+                            setNewCat(null);
+                          },
+                        })
+                      }
+                    >
+                      Créer
+                    </button>
+                    <div className="w-full">
+                      <ActionFeedback failure={catAction.failure} success={null} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div>

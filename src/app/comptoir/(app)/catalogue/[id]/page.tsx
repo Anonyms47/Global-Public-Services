@@ -9,6 +9,7 @@ import { Badge, Forbidden, PageTitle, Panel } from "@/components/admin/ui";
 import { ProductFormClient } from "@/components/admin/ProductForm";
 import { videoMaxMb } from "@/server/domain/media";
 import { IconArrowLeft } from "@/components/ui/icons";
+import { formatDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Produit" };
 
@@ -20,7 +21,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
     withCosts: can(user, "catalog.costs"),
   });
   if (!p) notFound();
-  const [categories, versions] = await Promise.all([listCategories(db), listVersions(db, p.id)]);
+  const [categories, versions] = await Promise.all([listCategories(db, { scope: "active" }), listVersions(db, p.id)]);
   return (
     <>
       <Link
@@ -53,8 +54,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
       {p.deletedAt ? (
         <div className="mb-6 flex flex-wrap items-start justify-between gap-3 rounded-[6px] border-[1.5px] border-gps-red/30 bg-gps-red-soft p-4">
           <p className="font-semibold text-gps-red-ink">
-            À la corbeille depuis le {new Date(p.deletedAt).toLocaleDateString("fr-FR", { dateStyle: "long" })} : retiré
-            du site et de la vente.
+            À la corbeille depuis le {formatDate(p.deletedAt)} : retiré du site et de la vente.
           </p>
           {canEdit ? <TrashActions id={p.id} canPurge={can(user, "catalog.bulk")} hasSales={p.hasSales} /> : null}
         </div>

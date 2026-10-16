@@ -317,7 +317,7 @@ test.describe("Le Comptoir", () => {
     await expect(page.getByText("À compléter")).toBeVisible();
     await page.getByLabel("Prix de vente *").selectOption({ label: "Montant" });
     await page.getByRole("button", { name: "Appliquer et vérifier à nouveau" }).click();
-    await expect(page.getByText("E2E-MAP-1")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "E2E-MAP-1" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Importer 1 produit/ })).toBeEnabled();
 
     await page.goto("/comptoir/mediatheque");

@@ -27,17 +27,9 @@ import { methodLabels, type PaymentMethod } from "@/server/domain/orders";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
-const order: MetricKey[] = [
-  "ca",
-  "encaissements",
-  "reste",
-  "montant",
-  "commandes",
-  "finalisees",
-  "panier",
-  "remboursements",
-  "annulees",
-];
+// Les quatre indicateurs principaux d'abord (vus en premier sur téléphone), puis les secondaires, compacts.
+const primary: MetricKey[] = ["ca", "encaissements", "commandes", "reste"];
+const order: MetricKey[] = [...primary, "montant", "finalisees", "panier", "remboursements", "annulees"];
 
 export default async function DashboardPage({ searchParams }: PageProps<"/comptoir/tableau-de-bord">) {
   const { db, user } = await requirePage();
@@ -82,84 +74,99 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
   return (
     <>
       <PageTitle eyebrow="Piloter" title="Tableau de bord">
-        {period.label} · du {formatDate(period.from)} au {formatDate(new Date(period.to.getTime() - 86400000))}.
-        Comparaison avec la période précédente de même durée. Touchez un chiffre pour voir les opérations qui le
-        composent.
+        {period.label} · {formatDate(period.from)} – {formatDate(new Date(period.to.getTime() - 86400000))}
+        <span className="hidden md:inline"> · touchez un chiffre pour son détail</span>
       </PageTitle>
-      <div className="mb-6 grid gap-3">
-        <PeriodPicker base="/comptoir/tableau-de-bord" period={period} extra={scope.includeDemo ? { demo: "1" } : {}} />
-        <ScopeFilter
-          includeDemo={scope.includeDemo}
-          demoCount={demoCount}
-          toggleHref={qs(detailAllowed || marginOpen ? { detail: str("detail")! } : {}, !scope.includeDemo)}
-        />
-      </div>
+      <div className="flex flex-col gap-3">
+        <div className="order-2 grid gap-3 md:order-1">
+          <PeriodPicker
+            base="/comptoir/tableau-de-bord"
+            period={period}
+            extra={scope.includeDemo ? { demo: "1" } : {}}
+          />
+          <ScopeFilter
+            includeDemo={scope.includeDemo}
+            demoCount={demoCount}
+            toggleHref={qs(detailAllowed || marginOpen ? { detail: str("detail")! } : {}, !scope.includeDemo)}
+          />
+        </div>
 
-      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
-        {visible.map((k) => {
-          const d = change(now[k], before[k]);
-          return (
-            <li key={k}>
-              <Link
-                href={`${qs({ detail: k })}#detail`}
-                className="kpi-card"
-                aria-current={detailAllowed === k ? "true" : undefined}
-              >
-                <span className="text-[12.5px] font-bold tracking-wide text-ink-mute uppercase">
-                  {metricDefs[k].label}
-                </span>
-                <span className="kpi-value">{fmt(k, now[k])}</span>
-                <span className="mt-auto pt-3 text-[13px] text-ink-mute">
-                  {d === null ? (
-                    "Pas de comparaison"
+        {[visible.filter((k) => primary.includes(k)), visible.filter((k) => !primary.includes(k))].map((group, g) => (
+          <ul
+            key={g}
+            aria-label={g === 0 ? "Indicateurs principaux" : "Autres indicateurs"}
+            className={
+              g === 0
+                ? "order-1 grid grid-cols-2 gap-3 md:order-2 lg:grid-cols-4"
+                : "order-3 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6"
+            }
+          >
+            {group.map((k) => {
+              const d = change(now[k], before[k]);
+              return (
+                <li key={k}>
+                  <Link
+                    href={`${qs({ detail: k })}#detail`}
+                    className={g === 0 ? "kpi-card" : "kpi-card kpi-compact"}
+                    aria-current={detailAllowed === k ? "true" : undefined}
+                  >
+                    <span className="text-[12.5px] font-bold tracking-wide text-ink-mute uppercase">
+                      {metricDefs[k].label}
+                    </span>
+                    <span className="kpi-value">{fmt(k, now[k])}</span>
+                    <span className={`mt-auto text-ink-mute ${g === 0 ? "pt-3 text-[13px]" : "pt-1 text-[12px]"}`}>
+                      {d === null ? (
+                        "Pas de comparaison"
+                      ) : (
+                        <>
+                          <span className={`font-bold ${d > 0 ? "text-wa-ink" : d < 0 ? "text-gps-red-ink" : ""}`}>
+                            {d > 0 ? "+" : ""}
+                            {d} %
+                          </span>{" "}
+                          vs {fmt(k, before[k])}
+                        </>
+                      )}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+            {g === 1 && margin ? (
+              <li>
+                <Link
+                  href={`${qs({ detail: "marge" })}#detail`}
+                  className="kpi-card kpi-compact"
+                  aria-current={marginOpen ? "true" : undefined}
+                >
+                  <span className="text-[12.5px] font-bold tracking-wide text-ink-mute uppercase">Marge brute</span>
+                  {margin.available ? (
+                    <span className="kpi-value">
+                      <Money value={margin.value} />
+                    </span>
                   ) : (
-                    <>
-                      <span className={`font-bold ${d > 0 ? "text-wa-ink" : d < 0 ? "text-gps-red-ink" : ""}`}>
-                        {d > 0 ? "+" : ""}
-                        {d} %
-                      </span>{" "}
-                      vs {fmt(k, before[k])}
-                    </>
+                    <span className="mt-2 text-[14px] text-ink-soft">{margin.reason}</span>
                   )}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-        {margin ? (
-          <li>
-            <Link
-              href={`${qs({ detail: "marge" })}#detail`}
-              className="kpi-card"
-              aria-current={marginOpen ? "true" : undefined}
-            >
-              <span className="text-[12.5px] font-bold tracking-wide text-ink-mute uppercase">Marge brute</span>
-              {margin.available ? (
-                <span className="kpi-value">
-                  <Money value={margin.value} />
-                </span>
-              ) : (
-                <span className="mt-2 text-[14px] text-ink-soft">{margin.reason}</span>
-              )}
-              <span className="mt-auto pt-3 text-[13px] text-ink-mute">
-                {marginChange !== null && marginBefore?.available ? (
-                  <>
-                    <span
-                      className={`font-bold ${marginChange > 0 ? "text-wa-ink" : marginChange < 0 ? "text-gps-red-ink" : ""}`}
-                    >
-                      {marginChange > 0 ? "+" : ""}
-                      {marginChange} %
-                    </span>{" "}
-                    vs {fcfa(marginBefore.value)} · propriétaire
-                  </>
-                ) : (
-                  "Propriétaire uniquement"
-                )}
-              </span>
-            </Link>
-          </li>
-        ) : null}
-      </ul>
+                  <span className="mt-auto pt-1 text-[12px] text-ink-mute">
+                    {marginChange !== null && marginBefore?.available ? (
+                      <>
+                        <span
+                          className={`font-bold ${marginChange > 0 ? "text-wa-ink" : marginChange < 0 ? "text-gps-red-ink" : ""}`}
+                        >
+                          {marginChange > 0 ? "+" : ""}
+                          {marginChange} %
+                        </span>{" "}
+                        vs {fcfa(marginBefore.value)} · propriétaire
+                      </>
+                    ) : (
+                      "Propriétaire uniquement"
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ) : null}
+          </ul>
+        ))}
+      </div>
       {!finance ? (
         <p className="mt-3 flex gap-2 text-[14px] text-ink-mute">
           <IconInfo size={18} className="shrink-0" /> Les montants sont réservés au propriétaire et aux gestionnaires.

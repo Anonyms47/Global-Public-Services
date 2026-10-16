@@ -799,7 +799,7 @@ describe("Catalogue, panier et promotions", () => {
     const company = (await getSettings(db)).company;
     await saveSettingsSection(db, "company", { ...company, storePhotoUrl: storePhoto.url });
     expect((await listMedia(db, { view: "all" })).find((m) => m.id === storePhoto.id)?.used_by).toBe(1);
-    await expect(trashMedia(db, storePhoto.id)).rejects.toThrow(/vitrine ou la configuration/);
+    await expect(trashMedia(db, storePhoto.id)).rejects.toThrow(/vitrine, une catégorie ou la configuration/);
     await saveSettingsSection(db, "company", company);
     await trashMedia(db, storePhoto.id);
 
@@ -1034,6 +1034,85 @@ describe("Catalogue, panier et promotions", () => {
     expect(err).toMatch(/envoi impossible \(403\)/);
     expect(err).not.toContain("cle-secrete-test");
     expect(calls.every((c) => c.headers.apikey === "cle-secrete-test")).toBe(true);
+  });
+
+  it("catégories : création, adresse unique, masquage, accueil, ordre, archivage avec déplacement, restauration", async () => {
+    const cat = await import("@/server/domain/catalog");
+    const owner = await userByRole(db, "owner");
+    const id = await cat.saveCategory(db, { name: "Tablettes & liseuses", description: "" });
+    const created = (await cat.listCategories(db, { scope: "all" })).find((c) => c.id === id)!;
+    expect(created).toMatchObject({ slug: "tablettes-liseuses", visible: true, featured: false });
+    await expect(cat.saveCategory(db, { name: "Autre", description: "", slug: "tablettes-liseuses" })).rejects.toThrow(
+      /adresse/,
+    );
+    await expect(cat.saveCategory(db, { name: " ", description: "" })).rejects.toThrow(/obligatoire/);
+    // Vide : jamais affichée sur le site public, même publiée.
+    const pub = async () => (await cat.listCategories(db)).filter((c) => c.product_count > 0).map((c) => c.id);
+    expect(await pub()).not.toContain(id);
+    // Un produit publié dans la nouvelle catégorie : présente sur le site, la recherche et l'import.
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const p = await saveProduct(
+      db,
+      {
+        ...base,
+        id: undefined,
+        slug: undefined,
+        name: "Liseuse Test",
+        categoryId: id,
+        status: "published",
+        featured: false,
+        axes: [],
+        variants: [{ sku: "LIS-1", options: {}, price: 70000, initialStock: 2 }],
+      },
+      { userId: owner.id, withCosts: true },
+    );
+    expect(await pub()).toContain(id);
+    expect(
+      (await filterProducts(await publishedProducts(db), { categorie: "tablettes-liseuses" })).map((x) => x.id),
+    ).toContain(p.id);
+    expect(
+      (await previewImport(db, "nom;reference;prix;categorie\nX;LIS-CSV;1000;Tablettes & liseuses")).errors,
+    ).toEqual([]);
+    // Renommer, nouvelle adresse, masquer, mettre en avant.
+    await cat.saveCategory(db, {
+      id,
+      name: "Liseuses",
+      description: "Lire partout",
+      slug: "liseuses",
+      visible: false,
+      featured: true,
+    });
+    expect(await cat.categoryBySlug(db, "liseuses")).toBeNull();
+    expect(await pub()).not.toContain(id);
+    await cat.saveCategory(db, {
+      id,
+      name: "Liseuses",
+      description: "",
+      slug: "liseuses",
+      visible: true,
+      featured: true,
+    });
+    expect((await cat.categoryBySlug(db, "liseuses"))?.featured).toBe(true);
+    // Réorganiser.
+    const order = async () => (await cat.listCategories(db, { scope: "active" })).map((c) => c.id);
+    const pos = (await order()).indexOf(id);
+    await cat.moveCategory(db, id, -1);
+    expect((await order()).indexOf(id)).toBe(pos - 1);
+    // Archivage : refusé tant qu'il reste des produits, sauf en les déplaçant ; suppression seulement archivée et vide.
+    await expect(cat.archiveCategory(db, id)).rejects.toThrow(/1 produit/);
+    await expect(cat.deleteCategory(db, id)).rejects.toThrow(/produit/);
+    const other = (await cat.listCategories(db, { scope: "active" })).find((c) => c.id !== id)!;
+    await cat.archiveCategory(db, id, { moveTo: other.id });
+    expect((await productForEdit(db, p.id, { withCosts: false }))!.categoryId).toBe(other.id);
+    expect((await cat.listCategories(db, { scope: "active" })).map((c) => c.id)).not.toContain(id);
+    await cat.restoreCategory(db, id);
+    expect((await cat.listCategories(db, { scope: "active" })).map((c) => c.id)).toContain(id);
+    await expect(cat.deleteCategory(db, id)).rejects.toThrow(/Archivez/);
+    await cat.archiveCategory(db, id);
+    await cat.deleteCategory(db, id);
+    expect((await cat.listCategories(db, { scope: "all" })).map((c) => c.id)).not.toContain(id);
+    await trashProduct(db, p.id);
+    await purgeProduct(db, p.id);
   });
 
   it("import CSV : aperçu, erreurs par ligne, regroupement en variantes, tout ou rien", async () => {
@@ -1749,7 +1828,35 @@ describe("Droits, clients, rapports, démonstration", () => {
     // En mode démonstration, les opérations saisies sont marquées comme données d'exemple.
     await db.query("update orders set is_demo = true");
     await db.query("update customers set is_demo = true");
-    await purgeDemo(db);
+    // Essai à blanc : compte rendu exact, rien ne bouge.
+    const dry = await purgeDemo(db, { dryRun: true });
+    expect(dry.dryRun).toBe(true);
+    expect(dry.before.demo.products).toBeGreaterThan(0);
+    expect(dry.after.demo.products).toBe(0);
+    expect((await db.one<{ n: number }>("select count(*)::int as n from products where is_demo"))!.n).toBe(
+      dry.before.demo.products,
+    );
+    expect((await db.one<{ n: number }>("select count(*)::int as n from data_backups"))!.n).toBe(0);
+    const catsBefore = (await db.one<{ n: number }>("select count(*)::int as n from categories"))!.n;
+    // Purge réelle : sauvegarde datée d'abord, puis suppression ; relançable sans erreur.
+    const done = await purgeDemo(db);
+    expect(done.backup?.label).toMatch(/^demo-\d{4}-/);
+    const saved = await db.one<{ counts: Record<string, number>; payload: Record<string, unknown[]> }>(
+      "select counts, payload from data_backups where id = $1",
+      [done.backup!.id],
+    );
+    expect(saved!.counts.products).toBe(dry.before.demo.products);
+    expect(saved!.payload.orders.length).toBe(dry.before.demo.orders);
+    expect(JSON.stringify(saved!.payload.users)).not.toContain("password");
+    expect(Object.values(done.after.demo).every((v) => v === 0)).toBe(true);
+    const again = await purgeDemo(db);
+    expect(Object.values(again.before.demo).every((v) => v === 0)).toBe(true);
+    // Catégories utiles conservées, devenues réelles ; tableau de bord et rapports à zéro.
+    expect((await db.one<{ n: number }>("select count(*)::int as n from categories"))!.n).toBe(catsBefore);
+    expect((await db.one<{ n: number }>("select count(*)::int as n from categories where is_demo"))!.n).toBe(0);
+    const zero = await computeMetrics(db, periodFromKey("30j"), all);
+    expect([zero.ca, zero.commandes, zero.encaissements, zero.reste]).toEqual([0, 0, 0, 0]);
+    expect((await report(db, periodFromKey("30j"), { withMargin: true, scope: all })).best).toEqual([]);
     const n = await db.one<{ n: number }>("select count(*)::int as n from products where is_demo");
     expect(n!.n).toBe(0);
     expect((await db.one<{ n: number }>("select count(*)::int as n from users where is_demo"))!.n).toBe(0);

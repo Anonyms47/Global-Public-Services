@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Catégories" };
 export default async function CategoriesAdminPage() {
   const { db, allowed } = await requirePage("catalog.edit");
   if (!allowed) return <Forbidden />;
-  const cats = await listCategories(db);
+  const cats = await listCategories(db, { scope: "all" });
   return (
     <>
       <Link
@@ -21,14 +21,21 @@ export default async function CategoriesAdminPage() {
         <IconArrowLeft size={18} /> Catalogue
       </Link>
       <PageTitle eyebrow="Catalogue" title="Catégories">
-        L&apos;ordre ci-dessous est celui de l&apos;accueil, du menu et de la boutique.
+        L&apos;ordre ci-dessous est celui de l&apos;accueil, du menu et de la boutique. Une catégorie vide
+        n&apos;apparaît pas sur le site.
       </PageTitle>
       <CategoryManager
         categories={cats.map((c) => ({
           id: c.id,
           name: c.name,
+          slug: c.slug,
           description: c.description,
-          count: c.product_count,
+          imageUrl: c.image_url,
+          visible: c.visible,
+          featured: c.featured,
+          archived: !!c.archived_at,
+          published: c.product_count,
+          total: c.total_count,
         }))}
       />
     </>

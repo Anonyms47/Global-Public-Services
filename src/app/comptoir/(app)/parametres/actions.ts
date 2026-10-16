@@ -8,6 +8,7 @@ import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { clearLoginLock, createUser, updateUser } from "@/server/domain/auth";
 import { purgeDemo } from "@/server/demo/seed";
 import { audit } from "@/server/domain/audit";
+import { mediaStorage } from "@/server/storage";
 import { templateKeys, type TemplateKey } from "@/lib/templates";
 import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
 
@@ -196,20 +197,36 @@ export async function unlockLoginAction(kind: string, value: string) {
   );
 }
 
-export async function purgeDemoAction(confirmText: string) {
+/**
+ * Purge des données d'exemple (propriétaire). « dryRun » : essai à blanc, rien
+ * n'est modifié. Sinon : sauvegarde datée, suppression transactionnelle, puis
+ * retrait des fichiers d'exemple du stockage ; compte rendu avant/après journalisé.
+ */
+export async function purgeDemoAction(confirmText: string, opts: { dryRun?: boolean } = {}) {
   return guarded(
     "demo.purge",
     async ({ db, user }) => {
-      if (confirmText !== "PURGER") throw new AppError("validation", "Tapez PURGER pour confirmer.");
+      if (!opts.dryRun && confirmText !== "PURGER") throw new AppError("validation", "Tapez PURGER pour confirmer.");
       try {
-        await purgeDemo(db);
-        await audit(db, user.is_demo ? null : user.id, "demo.purge");
+        const r = await purgeDemo(db, { dryRun: !!opts.dryRun, userId: user.is_demo ? null : user.id });
+        if (!r.dryRun) {
+          const store = mediaStorage().store;
+          if (store && r.mediaPaths.length) await store.remove(r.mediaPaths).catch(() => undefined);
+          await audit(db, user.is_demo ? null : user.id, "demo.purge", r.backup?.label ?? "", {
+            before: r.before.demo,
+            after: r.after.demo,
+            media: r.mediaPaths.length,
+          });
+        }
+        return { before: r.before, after: r.after, backup: r.backup, dryRun: r.dryRun };
       } catch (e) {
         throw new AppError("conflict", e instanceof Error ? e.message : "Purge impossible.");
       }
     },
     {
-      message: "Données d'exemple supprimées. La configuration est conservée.",
+      message: opts.dryRun
+        ? "Essai à blanc terminé : rien n'a été modifié."
+        : "Données d'exemple supprimées après sauvegarde.",
     },
   );
 }

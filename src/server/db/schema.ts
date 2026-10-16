@@ -309,6 +309,11 @@ end $$;
 alter table products add column if not exists deleted_at timestamptz;
 alter table products add column if not exists publish_at timestamptz;
 alter table products add column if not exists unpublish_at timestamptz;
+-- Catégories gérées depuis le Comptoir : couverture, visibilité, mise en avant, archivage (structure plate).
+alter table categories add column if not exists image_url text;
+alter table categories add column if not exists visible boolean not null default true;
+alter table categories add column if not exists featured boolean not null default false;
+alter table categories add column if not exists archived_at timestamptz;
 -- Fiches produits : vidéos courtes à côté des photos (la première image reste la photo principale).
 alter table product_images add column if not exists kind text not null default 'image';
 create table if not exists product_versions (
@@ -360,6 +365,16 @@ alter table login_attempts add column if not exists reason text not null default
 alter table login_attempts add column if not exists cleared boolean not null default false;
 alter table login_attempts add column if not exists user_agent text not null default '';
 
+-- Sauvegardes datées (ex. données d'exemple avant purge), restaurables (docs/purge-demo.md).
+create table if not exists data_backups (
+  id text primary key,
+  label text not null,
+  payload jsonb not null,
+  counts jsonb not null default '{}',
+  created_by text references users (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
 -- des tables, n'est pas concernée.
@@ -385,4 +400,5 @@ alter table audit_log enable row level security;
 alter table order_requests enable row level security;
 alter table product_versions enable row level security;
 alter table login_attempts enable row level security;
+alter table data_backups enable row level security;
 `;

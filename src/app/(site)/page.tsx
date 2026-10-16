@@ -74,7 +74,9 @@ export default async function HomePage() {
     .sort((a, b) => a.featuredPosition - b.featuredPosition)
     .slice(0, 5);
   const focus = products.find((p) => p.id === settings.storefront.focusProductId) ?? selection[selection.length - 1];
-  const univers = categories.filter((cat) => cat.product_count > 0);
+  // Tuiles d'univers : catégories mises en avant si le Comptoir en a choisi, sinon toutes celles qui ont des produits.
+  const withProducts = categories.filter((cat) => cat.product_count > 0);
+  const univers = withProducts.some((c) => c.featured) ? withProducts.filter((c) => c.featured) : withProducts;
   const waGeneral = whatsappLink(c.whatsapp, "Bonjour GPS, j'ai une question.");
   const heroImage = hero?.images[0];
 
@@ -222,7 +224,7 @@ export default async function HomePage() {
             <ul className="univers-grid grid grid-cols-2 gap-3 md:gap-4 lg:col-span-8 lg:grid-cols-3">
               {univers.map((cat, i) => {
                 const sample = products.find((p) => p.categorySlug === cat.slug);
-                const img = sample?.images[0];
+                const img = cat.image_url ? { url: cat.image_url } : sample?.images[0];
                 const first = i === 0;
                 // Nombre impair de tuiles après la grande : la dernière prend toute la ligne sur mobile.
                 const wide = !first && i === univers.length - 1 && univers.length % 2 === 0;

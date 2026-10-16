@@ -37,4 +37,9 @@ export const auditLabels: Record<string, string> = {
   "demo.purge": "Données d'exemple purgées",
   "auth.lockout": "Connexions bloquées (trop d'échecs)",
   "auth.unlock": "Connexions débloquées",
+  "category.create": "Catégorie créée",
+  "category.update": "Catégorie modifiée",
+  "category.archive": "Catégorie archivée",
+  "category.delete": "Catégorie supprimée",
+  "demo.backup": "Sauvegarde des données d'exemple",
 };
