@@ -444,7 +444,7 @@ export function InventoryForm({
           onChange={(e) => setQ(e.target.value)}
         />
         <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
-          <table className="w-full min-w-[560px] text-[14px]">
+          <table className="w-full text-[14px] md:min-w-[560px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
                 <th className="px-3 py-2 font-bold">Article</th>
@@ -471,7 +471,8 @@ export function InventoryForm({
                       id={`inv-${r.id}`}
                       type="number"
                       min={0}
-                      className="field ml-auto h-10 min-h-10 w-24 text-right"
+                      inputMode="numeric"
+                      className="field ml-auto h-10 min-h-10 w-20 text-right md:w-24"
                       value={counts[r.id] ?? ""}
                       onChange={(e) => (
                         setCounts({ ...counts, [r.id]: e.target.value }),

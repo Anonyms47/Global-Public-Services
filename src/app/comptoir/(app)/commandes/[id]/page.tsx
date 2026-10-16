@@ -102,7 +102,7 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="grid content-start gap-6 lg:col-span-7">
           <Panel title="Articles (prix enregistrés)" id="t-articles">
-            <div className="-mx-4 overflow-x-auto md:-mx-5">
+            <div className="rtable rtable-3 -mx-4 overflow-x-auto md:-mx-5">
               <table className="w-full min-w-[520px] text-[14px]">
                 <thead>
                   <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -124,16 +124,18 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
                         </div>
                         {l.returned_quantity ? <Badge tone="warn">{l.returned_quantity} retourné(s)</Badge> : null}
                       </td>
-                      <td className="py-2 text-right tabular">{l.quantity}</td>
-                      <td className="py-2 text-right">
+                      <td className="py-2 text-right tabular" data-label="Qté">
+                        {l.quantity}
+                      </td>
+                      <td className="py-2 text-right" data-label="P.U.">
                         <Money value={l.unit_price} />
                       </td>
                       {showCost ? (
-                        <td className="py-2 text-right text-ink-mute">
+                        <td className="py-2 text-right text-ink-mute" data-label="Coût">
                           {l.cost_price == null ? "—" : <Money value={l.cost_price} />}
                         </td>
                       ) : null}
-                      <td className="px-4 py-2 text-right font-bold md:px-5">
+                      <td className="px-4 py-2 text-right font-bold md:px-5" data-label="Total">
                         <Money value={l.unit_price * l.quantity} />
                       </td>
                     </tr>

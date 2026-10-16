@@ -89,9 +89,9 @@ function Row({ item, team }: { item: QueueRow; team: { id: string; name: string 
             >
               <IconCheck size={16} /> Fait
             </button>
-            <details className="relative">
+            <details className="relative open:basis-full md:open:basis-auto">
               <summary className="btn btn-outline btn-sm list-none">Plus</summary>
-              <div className="absolute right-0 z-20 mt-2 grid w-72 gap-3 rounded-[6px] border border-line bg-card p-3 shadow-lg">
+              <div className="z-20 mt-2 grid gap-3 rounded-[6px] border border-line bg-card p-3 shadow-lg md:absolute md:right-0 md:w-72">
                 <label className="grid gap-1 text-[13px] font-bold">
                   Assigner à
                   <select

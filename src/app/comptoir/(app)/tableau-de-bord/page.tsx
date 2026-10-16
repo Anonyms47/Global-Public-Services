@@ -142,7 +142,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
           {detail.length === 0 ? (
             <p className="text-ink-mute">Aucune opération sur la période.</p>
           ) : (
-            <div className="-mx-4 overflow-x-auto md:mx-0">
+            <div className="rtable -mx-4 overflow-x-auto md:mx-0">
               <table className="w-full min-w-[520px] text-[14px]">
                 <thead>
                   <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -158,14 +158,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
                   {detail.map((r, i) => (
                     <tr key={i}>
                       <td className="px-4 py-2 whitespace-nowrap text-ink-mute md:px-0">{formatDateTime(r.at)}</td>
-                      <td className="py-2">
+                      <td className="py-2" data-label="Référence">
                         <Link href={r.href} className="font-semibold text-gps-blue hover:underline">
                           {r.reference}
                         </Link>
                       </td>
-                      <td className="py-2 text-ink-soft">{r.label}</td>
+                      <td className="rt-full py-2 text-ink-soft" data-label="Détail">
+                        {r.label}
+                      </td>
                       {metricDefs[detailAllowed].finance ? (
-                        <td className="py-2 pr-4 text-right font-bold md:pr-0">
+                        <td className="py-2 pr-4 text-right font-bold md:pr-0" data-label="Montant">
                           {r.amount === null ? "—" : fcfa(r.amount)}
                         </td>
                       ) : null}
@@ -194,7 +196,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
         </dl>
         <Link
           href="/comptoir/rapports"
-          className="mt-4 inline-flex items-center gap-1 text-[14px] font-semibold text-gps-blue hover:underline"
+          className="mt-4 inline-flex min-h-10 items-center gap-1 text-[14px] font-semibold text-gps-blue hover:underline"
         >
           Rapports détaillés <IconArrowRight size={16} />
         </Link>

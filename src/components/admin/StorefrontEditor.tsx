@@ -375,7 +375,7 @@ function UseProposal({ value, proposal, onUse }: { value: string; proposal: stri
   return (
     <button
       type="button"
-      className="mt-1 text-[13px] font-bold text-gps-blue underline underline-offset-2"
+      className="mt-1 inline-flex min-h-10 items-center text-[13px] font-bold text-gps-blue underline underline-offset-2"
       onClick={() => {
         if (!value.trim() || confirm("Remplacer le texte actuel par la proposition GPS ?")) onUse(proposal);
       }}
