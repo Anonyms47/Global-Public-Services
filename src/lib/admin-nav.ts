@@ -75,6 +75,13 @@ export const adminNavGroups: NavGroup[] = [
     items: [
       { href: "/comptoir/catalogue", label: "Catalogue", perm: "catalog.view", icon: "catalog", keywords: "produits" },
       {
+        href: "/comptoir/mediatheque",
+        label: "Médiathèque",
+        perm: "catalog.view",
+        icon: "media",
+        keywords: "photos vidéos images",
+      },
+      {
         href: "/comptoir/vitrine",
         label: "Vitrine & services",
         perm: "storefront.edit",
@@ -125,6 +132,12 @@ export const quickActions: QuickAction[] = [
   { href: "/comptoir/catalogue/nouveau", label: "Ajouter un produit", perm: "catalog.edit" },
   { href: "/comptoir/stock/reapprovisionner", label: "Réapprovisionner", perm: "stock.restock", keywords: "arrivage" },
   { href: "/comptoir/stock/inventaire", label: "Faire un inventaire", perm: "stock.inventory" },
+  {
+    href: "/comptoir/catalogue/import",
+    label: "Importer des produits (CSV)",
+    perm: "catalog.bulk",
+    keywords: "tableur excel",
+  },
   { href: "/comptoir/commandes?vue=a-preparer", label: "Voir les commandes à préparer", perm: "orders.view" },
   { href: "/comptoir/file", label: "Ajouter une tâche à la file", perm: "queue.manage", keywords: "rappel" },
 ];

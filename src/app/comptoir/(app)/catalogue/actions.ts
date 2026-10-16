@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { guarded } from "@/server/admin";
 import { isDemoMode } from "@/server/db";
-import { AppError, newId } from "@/server/domain/errors";
+import { AppError } from "@/server/domain/errors";
+import { MEDIA_MAX_BYTES, storeMedia } from "@/server/domain/media";
 import {
   applyPriceChange,
   deleteCategory,
@@ -119,27 +120,20 @@ export async function priceApplyAction(productIds: string[], percent: number) {
   );
 }
 
-const MAX_BYTES = 3 * 1024 * 1024;
-function sniff(bytes: Uint8Array) {
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
-  if (String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP")
-    return "image/webp";
-  return null;
-}
-
 /** Téléversement de photo : JPEG, PNG ou WebP, 3 Mo au plus, type vérifié sur le contenu. */
 export async function uploadImageAction(formData: FormData) {
-  return guarded("catalog.edit", async ({ db }) => {
+  return guarded("catalog.edit", async ({ db, user }) => {
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) throw new AppError("validation", "Aucun fichier reçu.");
-    if (file.size > MAX_BYTES) throw new AppError("validation", "Photo trop lourde (3 Mo maximum).");
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const mime = sniff(bytes);
-    if (!mime) throw new AppError("validation", "Format non pris en charge : utilisez JPEG, PNG ou WebP.");
-    const id = newId();
-    await db.query("insert into media (id, mime, data) values ($1, $2, $3)", [id, mime, bytes]);
-    return { url: `/media/${id}` };
+    if (file.size > MEDIA_MAX_BYTES) throw new AppError("validation", "Photo trop lourde (3 Mo maximum).");
+    const r = await storeMedia(db, {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      name: file.name,
+      userId: user.id,
+      isDemo: isDemoMode(),
+      imagesOnly: true,
+    });
+    return { url: r.url };
   });
 }
 

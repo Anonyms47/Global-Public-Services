@@ -217,4 +217,34 @@ test.describe("Le Comptoir", () => {
     await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
     await expect(page.getByText("Brouillon").first()).toBeVisible();
   });
+
+  test("import CSV avec aperçu, puis médiathèque", async ({ page }) => {
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue/import");
+    await page.getByText("Ou coller le contenu du fichier").click();
+    await page
+      .getByLabel("Contenu CSV")
+      .fill(
+        "nom;reference;prix;stock;options\nImport E2E;E2E-IMP-1;5000;2;Couleur=Noir\nImport E2E;E2E-IMP-1;5000;1;Couleur=Bleu",
+      );
+    await page.getByRole("button", { name: "Vérifier le fichier" }).click();
+    await expect(page.getByText(/Ligne 3 : .*double/)).toBeVisible();
+    await expect(page.getByRole("button", { name: /Importer 1 produit/ })).toBeDisabled();
+    await page
+      .getByLabel("Contenu CSV")
+      .fill(
+        "nom;reference;prix;stock;options\nImport E2E;E2E-IMP-1;5000;2;Couleur=Noir\nImport E2E;E2E-IMP-2;5000;1;Couleur=Bleu",
+      );
+    await page.getByRole("button", { name: "Vérifier le fichier" }).click();
+    await page.getByRole("button", { name: /Importer 1 produit/ }).click();
+    await expect(page.getByText(/Import terminé/)).toBeVisible();
+    expect((await availability(page, "E2E-IMP-1")).onHand).toBe(2);
+
+    await page.goto("/comptoir/mediatheque");
+    await expect(page.getByText(/Déposez vos fichiers/)).toBeVisible();
+    await page.locator('input[type="file"]').setInputFiles("public/brand/logo-gps-mark.png");
+    await expect(page.getByText("Envoyé")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("logo-gps-mark.png")).toBeVisible();
+  });
 });
