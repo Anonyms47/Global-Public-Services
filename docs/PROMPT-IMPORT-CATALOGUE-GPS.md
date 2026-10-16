@@ -451,4 +451,3 @@ Vérifier :
 - lien direct vers chaque brouillon dans le Comptoir.
 
 Ne déclare jamais la mission terminée si le formulaire réel n’a pas été vérifié en production avec le compte propriétaire. Si tu ne disposes pas des identifiants, indique clairement `vérification humaine en production restante`.
-
