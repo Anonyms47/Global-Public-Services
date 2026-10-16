@@ -526,4 +526,35 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/stock?q=Doublon%20E2E");
     await expect(page.locator("tbody tr", { hasText: "Doublon E2E" })).toHaveCount(3);
   });
+  test("catalogue de la boutique : simulation, import en brouillons par le propriétaire, sans doublon", async ({
+    page,
+    request,
+  }) => {
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue/import/boutique");
+    await expect(page.getByText("Droits insuffisants")).toBeVisible();
+
+    await login(page, "proprietaire@demo.gps");
+    await page.goto("/comptoir/catalogue/import");
+    await page.getByRole("link", { name: /Catalogue relevé en boutique/ }).click();
+    await expect(page.getByRole("heading", { name: "Catalogue de la boutique" })).toBeVisible();
+    const products = page.getByRole("list", { name: "Produits du manifeste" });
+    await expect(products.getByText("Oraimo PowerBox 600 — 60 000 mAh (OPB-P600Q)")).toBeVisible();
+    const button = page.getByRole("button", { name: /Importer \d+ brouillons/ });
+    await expect(button).toBeDisabled();
+    await page.getByLabel("Tapez IMPORTER pour confirmer").fill("importer");
+    await button.click();
+    const report = page.getByRole("status", { name: "Rapport d'import" });
+    await expect(report).toContainText(/\d+ brouillons créés · 0 ignoré · 0 erreur/, { timeout: 30_000 });
+    await report.getByRole("link", { name: "Oraimo Watch 5 Lite (OSW-804)" }).click();
+    await expect(page.getByText(/Fiche importée du relevé de la boutique/)).toBeVisible();
+    await expect(
+      page.getByText("☐ Résolution (240 × 296 ou 240 × 280 selon les sources) : relever sur la boîte"),
+    ).toBeVisible();
+    // Brouillon : invisible sur le site public.
+    expect((await request.get("/produits/oraimo-watch-5-lite-osw-804")).status()).toBe(404);
+    // Relancer : rien à créer.
+    await page.goto("/comptoir/catalogue/import/boutique");
+    await expect(page.getByText("Tout le manifeste est déjà importé.")).toBeVisible();
+  });
 });

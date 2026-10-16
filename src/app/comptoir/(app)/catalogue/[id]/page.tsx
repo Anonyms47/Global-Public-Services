@@ -8,6 +8,7 @@ import { can } from "@/lib/permissions";
 import { Badge, Forbidden, PageTitle, Panel } from "@/components/admin/ui";
 import { ProductFormClient } from "@/components/admin/ProductForm";
 import { videoMaxMb } from "@/server/domain/media";
+import { importedInfo } from "@/server/domain/catalog-import-gps";
 import { IconArrowLeft } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
 
@@ -21,7 +22,11 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
     withCosts: can(user, "catalog.costs"),
   });
   if (!p) notFound();
-  const [categories, versions] = await Promise.all([listCategories(db, { scope: "active" }), listVersions(db, p.id)]);
+  const [categories, versions, imported] = await Promise.all([
+    listCategories(db, { scope: "active" }),
+    listVersions(db, p.id),
+    importedInfo(db, p.id),
+  ]);
   return (
     <>
       <Link
@@ -51,6 +56,37 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
         {p.isDemo ? <Badge>Exemple</Badge> : null}{" "}
         {p.hasSales ? "Déjà vendu : les variantes retirées seront désactivées, l'historique est conservé." : null}
       </PageTitle>
+      {imported && canEdit ? (
+        <details
+          className="mb-6 rounded-[6px] border-[1.5px] border-warn/40 bg-warn-soft p-4"
+          open={p.status !== "published"}
+        >
+          <summary className="cursor-pointer font-bold text-warn">
+            Fiche importée du relevé de la boutique : {imported.humanChecks.length} vérifications avant publication
+          </summary>
+          <ul className="mt-2 grid gap-1 text-[14px]">
+            {imported.humanChecks.map((c) => (
+              <li key={c}>☐ {c}</li>
+            ))}
+          </ul>
+          {imported.notes ? <p className="mt-2 text-[14px] text-ink-soft">Note : {imported.notes}</p> : null}
+          <p className="mt-2 text-[13px] text-ink-mute">
+            Référence : {imported.model} · Sources :{" "}
+            {imported.sources.map((s, i) => (
+              <span key={s.id + i}>
+                {i ? " · " : ""}
+                {s.url && /^https:\/\//.test(s.url) ? (
+                  <a href={s.url} target="_blank" rel="noreferrer" className="underline">
+                    {s.kind}
+                  </a>
+                ) : (
+                  s.kind
+                )}
+              </span>
+            ))}
+          </p>
+        </details>
+      ) : null}
       {p.deletedAt ? (
         <div className="mb-6 flex flex-wrap items-start justify-between gap-3 rounded-[6px] border-[1.5px] border-gps-red/30 bg-gps-red-soft p-4">
           <p className="font-semibold text-gps-red-ink">
