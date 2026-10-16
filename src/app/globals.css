@@ -1583,3 +1583,11 @@ a.kpi-card:hover {
     justify-content: flex-start;
   }
 }
+
+/* Repli quand le navigateur ne sait pas ouvrir la boîte de dialogue en modal (voir Sheet). */
+dialog.sheet-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  box-shadow: 0 0 0 100vmax rgb(14 16 32 / 0.5);
+}

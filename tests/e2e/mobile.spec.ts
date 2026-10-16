@@ -68,4 +68,22 @@ test.describe("Parcours mobile et clavier", () => {
     await sheet.getByRole("link", { name: "Nouvelle vente" }).click();
     await expect(page).toHaveURL(/\/comptoir\/vente$/);
   });
+
+  test("Comptoir mobile : actions rapides visibles même sans boîte de dialogue native", async ({ page }) => {
+    // Certains navigateurs mobiles (anciens ou intégrés à une application) n'ouvrent pas <dialog> en modal.
+    await page.addInitScript(() => {
+      Object.defineProperty(HTMLDialogElement.prototype, "showModal", { value: undefined });
+    });
+    await page.goto("/comptoir/connexion");
+    await page.getByLabel("Identifiant ou e-mail").fill("gestion@demo.gps");
+    await page.getByLabel("Mot de passe").fill(DEMO_PASSWORD);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(page).toHaveURL(/\/comptoir$/);
+    await page.mouse.wheel(0, 600);
+    await page.getByRole("button", { name: "Actions rapides" }).click();
+    const sheet = page.getByRole("dialog", { name: "Actions rapides" });
+    await expect(sheet).toBeInViewport();
+    await sheet.getByRole("button", { name: "Fermer" }).click();
+    await expect(sheet).toBeHidden();
+  });
 });
