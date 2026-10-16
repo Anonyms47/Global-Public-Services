@@ -805,7 +805,8 @@ describe("Catalogue, panier et promotions", () => {
     const ok =
       "nom;marque;reference;prix;cout;stock;options\nImport Test;GPS;IMP-OK-1;2000;1200;4;Couleur=Noir\nImport Test;GPS;IMP-OK-2;2000;1200;2;Couleur=Blanc\n";
     const r = await applyImport(db, ok, { userId: owner.id, withCosts: true, isDemo: true });
-    expect(r).toEqual({ products: 1, variants: 2 });
+    expect(r).toMatchObject({ products: 1, variants: 2, skipped: [] });
+    expect(r.created).toEqual([{ id: expect.any(String), name: "Import Test", variants: 2 }]);
     const v = await variantBySku(db, "IMP-OK-1");
     expect(v.on_hand).toBe(4);
     const prod = await db.one<{ status: string; axes: string[] }>(
@@ -814,6 +815,48 @@ describe("Catalogue, panier et promotions", () => {
     );
     expect(prod).toEqual({ status: "draft", axes: ["Couleur"] });
     await expect(applyImport(db, ok, { userId: owner.id, withCosts: true, isDemo: true })).rejects.toThrow(/erreur/);
+  });
+
+  it("import CSV : association des colonnes, doublons, import partiel et rapport", async () => {
+    const owner = await userByRole(db, "owner");
+    const ctx = { userId: owner.id, withCosts: true, isDemo: true };
+    // Intitulés d'un autre logiciel : reconnus automatiquement (désignation, code, prix de vente, quantité).
+    const other = "Désignation;Code;Prix de vente;Quantité\nCâble Recette;REC-CAB-1;2500;7\n";
+    const auto = await previewImport(db, other);
+    expect(auto.missing).toEqual([]);
+    expect(auto.products[0]).toMatchObject({ name: "Câble Recette" });
+    expect(auto.products[0].variants[0]).toMatchObject({ sku: "REC-CAB-1", price: 2500, stock: 7 });
+    // Intitulés inconnus : l'aperçu demande l'association, puis l'applique.
+    const odd = "A;B;C\nCâble Recette 2;REC-CAB-2;3000\n";
+    const ask = await previewImport(db, odd);
+    expect(ask.missing).toEqual(["nom", "reference", "prix"]);
+    expect(ask.headers).toEqual(["A", "B", "C"]);
+    await expect(applyImport(db, odd, ctx)).rejects.toThrow(/Associez/);
+    const mapped = await previewImport(db, odd, { nom: 0, reference: 1, prix: 2 });
+    expect(mapped.missing).toEqual([]);
+    expect(mapped.products[0].variants[0]).toMatchObject({ sku: "REC-CAB-2", price: 3000 });
+    // Doublons : mêmes options dans un produit ; produit déjà présent au catalogue signalé.
+    const dup = [
+      "nom;reference;prix;options",
+      "Câble Recette;REC-CAB-3;1000;Longueur=1 m",
+      "Câble Recette;REC-CAB-4;1000;Longueur=1 m",
+      "Câble Recette;;1000;Longueur=2 m",
+      "Câble Recette;REC-CAB-5;1200;Longueur=2 m",
+    ].join("\n");
+    const pd = await previewImport(db, dup);
+    expect(pd.errors.map((e) => [e.line, /double|manquante/.test(e.message)])).toEqual([
+      [3, true],
+      [4, true],
+    ]);
+    expect(pd.errors[0].raw).toEqual(["Câble Recette", "REC-CAB-4", "1000", "Longueur=1 m"]);
+    await applyImport(db, other, ctx);
+    expect((await previewImport(db, dup)).warnings[0]).toMatch(/existe déjà/);
+    // Import partiel : lignes valides importées, lignes en erreur rendues dans le rapport.
+    await expect(applyImport(db, dup, ctx)).rejects.toThrow(/erreur/);
+    const rep = await applyImport(db, dup, ctx, { partial: true });
+    expect(rep).toMatchObject({ products: 1, variants: 2 });
+    expect(rep.skipped.map((e) => e.line)).toEqual([3, 4]);
+    expect((await variantBySku(db, "REC-CAB-5")).price).toBe(1200);
   });
 
   it("recherche par référence et par catégorie", async () => {

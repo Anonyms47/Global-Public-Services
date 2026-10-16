@@ -282,15 +282,26 @@ test.describe("Le Comptoir", () => {
     await page.getByRole("button", { name: "Vérifier le fichier" }).click();
     await expect(page.getByText(/Ligne 3 : .*double/)).toBeVisible();
     await expect(page.getByRole("button", { name: /Importer 1 produit/ })).toBeDisabled();
-    await page
-      .getByLabel("Contenu CSV")
-      .fill(
-        "nom;reference;prix;stock;options\nImport E2E;E2E-IMP-1;5000;2;Couleur=Noir\nImport E2E;E2E-IMP-2;5000;1;Couleur=Bleu",
-      );
-    await page.getByRole("button", { name: "Vérifier le fichier" }).click();
+    // Import partiel : seules les lignes valides, rapport final avec la ligne ignorée.
+    await page.getByText("Importer seulement les lignes valides").click();
     await page.getByRole("button", { name: /Importer 1 produit/ }).click();
-    await expect(page.getByText(/Import terminé/)).toBeVisible();
+    const report = page.getByRole("region", { name: /Rapport d.import/ });
+    await expect(report).toContainText("1 produit créé");
+    await expect(report).toContainText("1 ligne ignorée");
+    await expect(report.getByRole("link", { name: "Import E2E" })).toBeVisible();
+    await expect(report.getByRole("button", { name: /Télécharger les lignes ignorées/ })).toBeVisible();
     expect((await availability(page, "E2E-IMP-1")).onHand).toBe(2);
+
+    // Intitulés inconnus : association manuelle des colonnes.
+    await page.goto("/comptoir/catalogue/import");
+    await page.getByText("Ou coller le contenu du fichier").click();
+    await page.getByLabel("Contenu CSV").fill("Article;Code;Montant\nImport E2E Assoc;E2E-MAP-1;4000");
+    await page.getByRole("button", { name: "Vérifier le fichier" }).click();
+    await expect(page.getByText("À compléter")).toBeVisible();
+    await page.getByLabel("Prix de vente *").selectOption({ label: "Montant" });
+    await page.getByRole("button", { name: "Appliquer et vérifier à nouveau" }).click();
+    await expect(page.getByText("E2E-MAP-1")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Importer 1 produit/ })).toBeEnabled();
 
     await page.goto("/comptoir/mediatheque");
     await expect(page.getByText(/Déposez vos fichiers/)).toBeVisible();
