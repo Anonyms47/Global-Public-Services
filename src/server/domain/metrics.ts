@@ -61,6 +61,27 @@ export const metricDefs = {
   },
 } as const;
 
+/**
+ * Périmètre des indicateurs. Par défaut, les données de démonstration sont
+ * exclues : une commande est « de démonstration » si elle est marquée comme
+ * telle ou si elle contient un produit d'exemple. Ses paiements, remboursements
+ * et lignes suivent la commande.
+ */
+export interface Scope {
+  includeDemo: boolean;
+}
+export const realOnly: Scope = { includeDemo: false };
+
+export const demoOrderSql = (alias = "o") =>
+  `(${alias}.is_demo or exists (select 1 from order_lines dl join products dp on dp.id = dl.product_id
+     where dl.order_id = ${alias}.id and dp.is_demo))`;
+
+/** Condition SQL à ajouter (« and … ») pour respecter le périmètre. */
+export const scopeSql = (scope: Scope, alias = "o") => (scope.includeDemo ? "" : ` and not ${demoOrderSql(alias)}`);
+
+/** Lit le filtre « Inclure la démonstration » d'une adresse (?demo=1). Désactivé par défaut. */
+export const scopeFromParam = (value: unknown): Scope => ({ includeDemo: value === "1" });
+
 export type MetricKey = keyof typeof metricDefs;
 export const metricKeys = Object.keys(metricDefs) as MetricKey[];
 
@@ -76,15 +97,15 @@ export interface Metrics {
   annulees: number;
 }
 
-async function ordersCreatedIn(db: Db, period: Period) {
+async function ordersCreatedIn(db: Db, period: Period, scope: Scope) {
   const rows = await db.query<OrderSummary>(
-    `${summarySelect} where o.created_at >= $1 and o.created_at < $2 order by o.created_at desc`,
+    `${summarySelect} where o.created_at >= $1 and o.created_at < $2${scopeSql(scope)} order by o.created_at desc`,
     [period.from, period.to],
   );
   return rows.map((r) => ({ ...r, ...money(r) }));
 }
 
-async function paymentsIn(db: Db, period: Period) {
+async function paymentsIn(db: Db, period: Period, scope: Scope) {
   return db.query<{
     id: string;
     order_id: string;
@@ -96,21 +117,23 @@ async function paymentsIn(db: Db, period: Period) {
   }>(
     `select p.id, p.order_id, o.reference, p.kind, p.method, p.amount, p.created_at
        from payments p join orders o on o.id = p.order_id
-      where p.created_at >= $1 and p.created_at < $2 order by p.created_at desc`,
+      where p.created_at >= $1 and p.created_at < $2${scopeSql(scope)} order by p.created_at desc`,
     [period.from, period.to],
   );
 }
 
-export async function computeMetrics(db: Db, period: Period): Promise<Metrics> {
+export async function computeMetrics(db: Db, period: Period, scope: Scope = realOnly): Promise<Metrics> {
   const [orders, payments, done, cancelled] = await Promise.all([
-    ordersCreatedIn(db, period),
-    paymentsIn(db, period),
+    ordersCreatedIn(db, period, scope),
+    paymentsIn(db, period, scope),
     db.one<{ n: number }>(
-      "select count(*)::int as n from orders where status = 'completed' and completed_at >= $1 and completed_at < $2",
+      `select count(*)::int as n from orders o
+        where o.status = 'completed' and o.completed_at >= $1 and o.completed_at < $2${scopeSql(scope)}`,
       [period.from, period.to],
     ),
     db.one<{ n: number }>(
-      "select count(*)::int as n from orders where status = 'cancelled' and cancelled_at >= $1 and cancelled_at < $2",
+      `select count(*)::int as n from orders o
+        where o.status = 'cancelled' and o.cancelled_at >= $1 and o.cancelled_at < $2${scopeSql(scope)}`,
       [period.from, period.to],
     ),
   ]);
@@ -151,7 +174,12 @@ export type DetailRow = {
 };
 
 /** Les opérations qui composent un indicateur. */
-export async function metricDetail(db: Db, key: MetricKey, period: Period): Promise<DetailRow[]> {
+export async function metricDetail(
+  db: Db,
+  key: MetricKey,
+  period: Period,
+  scope: Scope = realOnly,
+): Promise<DetailRow[]> {
   const orderRow = (o: Awaited<ReturnType<typeof ordersCreatedIn>>[number], amount: number | null): DetailRow => ({
     at: o.created_at,
     href: `/comptoir/commandes/${o.id}`,
@@ -160,7 +188,7 @@ export async function metricDetail(db: Db, key: MetricKey, period: Period): Prom
     amount,
   });
   if (["ca", "montant", "reste", "commandes", "panier"].includes(key)) {
-    const live = (await ordersCreatedIn(db, period)).filter((o) => o.status !== "cancelled");
+    const live = (await ordersCreatedIn(db, period, scope)).filter((o) => o.status !== "cancelled");
     if (key === "reste") return live.filter((o) => o.balance > 0).map((o) => orderRow(o, o.balance));
     if (key === "montant") return live.map((o) => orderRow(o, o.due));
     return live.map((o) => orderRow(o, o.subtotal - o.returned_value));
@@ -169,8 +197,8 @@ export async function metricDetail(db: Db, key: MetricKey, period: Period): Prom
     const col = key === "finalisees" ? "completed_at" : "cancelled_at";
     const status = key === "finalisees" ? "completed" : "cancelled";
     const rows = await db.query<{ id: string; reference: string; customer_name: string; at: Date }>(
-      `select id, reference, customer_name, ${col} as at from orders
-        where status = $3 and ${col} >= $1 and ${col} < $2 order by ${col} desc`,
+      `select o.id, o.reference, o.customer_name, o.${col} as at from orders o
+        where o.status = $3 and o.${col} >= $1 and o.${col} < $2${scopeSql(scope)} order by o.${col} desc`,
       [period.from, period.to, status],
     );
     // Indicateurs de nombre : pas de montant dans le détail.
@@ -182,7 +210,7 @@ export async function metricDetail(db: Db, key: MetricKey, period: Period): Prom
       amount: null,
     }));
   }
-  const payments = await paymentsIn(db, period);
+  const payments = await paymentsIn(db, period, scope);
   const kinds = key === "remboursements" ? ["refund"] : ["payment", "reversal"];
   return payments
     .filter((p) => kinds.includes(p.kind))
@@ -213,7 +241,7 @@ export interface MarginRow {
  * retours) × prix enregistré, moins le coût d'achat enregistré à la vente.
  * Une ligne sans coût rend la marge de sa commande inconnue (null).
  */
-export async function marginDetail(db: Db, period: Period): Promise<MarginRow[]> {
+export async function marginDetail(db: Db, period: Period, scope: Scope = realOnly): Promise<MarginRow[]> {
   const rows = await db.query<{
     id: string;
     reference: string;
@@ -228,7 +256,7 @@ export async function marginDetail(db: Db, period: Period): Promise<MarginRow[]>
             coalesce(sum((l.quantity - l.returned_quantity) * l.cost_price), 0)::int as cost,
             count(*) filter (where l.cost_price is null)::int as missing
        from orders o join order_lines l on l.order_id = o.id
-      where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2
+      where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2${scopeSql(scope)}
       group by o.id order by o.created_at desc`,
     [period.from, period.to],
   );
@@ -258,7 +286,7 @@ export interface SeriesPoint {
  * jusqu'à 92 jours, par semaine au-delà. Mêmes règles que les indicateurs :
  * la somme des tranches est égale au chiffre affiché.
  */
-export async function metricSeries(db: Db, period: Period): Promise<SeriesPoint[]> {
+export async function metricSeries(db: Db, period: Period, scope: Scope = realOnly): Promise<SeriesPoint[]> {
   const span = period.to.getTime() - period.from.getTime();
   const step = span <= 2 * 86400_000 ? 3600_000 : span <= 92 * 86400_000 ? 86400_000 : 7 * 86400_000;
   const points: SeriesPoint[] = [];
@@ -271,7 +299,7 @@ export async function metricSeries(db: Db, period: Period): Promise<SeriesPoint[
     points.push({ start: d, label, ca: 0, encaissements: 0 });
   }
   const at = (date: Date) => Math.floor((new Date(date).getTime() - period.from.getTime()) / step);
-  const [orders, payments] = await Promise.all([ordersCreatedIn(db, period), paymentsIn(db, period)]);
+  const [orders, payments] = await Promise.all([ordersCreatedIn(db, period, scope), paymentsIn(db, period, scope)]);
   for (const o of orders) {
     if (o.status === "cancelled") continue;
     const i = at(o.created_at);
@@ -287,8 +315,8 @@ export async function metricSeries(db: Db, period: Period): Promise<SeriesPoint[
 }
 
 /** Encaissements nets de la période par moyen de paiement (corrections déduites). */
-export async function paymentsByMethod(db: Db, period: Period) {
-  const payments = await paymentsIn(db, period);
+export async function paymentsByMethod(db: Db, period: Period, scope: Scope = realOnly) {
+  const payments = await paymentsIn(db, period, scope);
   const by = new Map<string, number>();
   for (const p of payments) {
     if (p.kind === "refund") continue;
@@ -297,10 +325,10 @@ export async function paymentsByMethod(db: Db, period: Period) {
   return [...by.entries()].map(([method, amount]) => ({ method, amount })).sort((a, b) => b.amount - a.amount);
 }
 
-/** Nombre de commandes d'exemple comprises dans la période (signalées tant qu'elles ne sont pas purgées). */
+/** Nombre de commandes de démonstration de la période (exclues ou incluses selon le périmètre). */
 export async function demoOrdersIn(db: Db, period: Period) {
   const row = await db.one<{ n: number }>(
-    "select count(*)::int as n from orders where is_demo and created_at >= $1 and created_at < $2",
+    `select count(*)::int as n from orders o where o.created_at >= $1 and o.created_at < $2 and ${demoOrderSql()}`,
     [period.from, period.to],
   );
   return row?.n ?? 0;

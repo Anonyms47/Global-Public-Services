@@ -141,10 +141,12 @@ export async function stockList(db: Db, opts: { q?: string; low?: boolean; defau
   return opts.low ? rows.filter((r) => r.low) : rows;
 }
 
-export async function lowStockCount(db: Db, defaultThreshold: number) {
+/** Variantes publiées en stock faible (indicateur : produits d'exemple exclus sauf demande). */
+export async function lowStockCount(db: Db, defaultThreshold: number, opts: { includeDemo?: boolean } = {}) {
   const r = await db.one<{ n: number }>(
     `select count(*)::int as n from variants v join products p on p.id = v.product_id
-      where v.active and p.status = 'published' and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)`,
+      where v.active and p.status = 'published' and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)
+        ${opts.includeDemo ? "" : "and not p.is_demo"}`,
     [defaultThreshold],
   );
   return r?.n ?? 0;

@@ -13,8 +13,10 @@ import {
   metricDetail,
   metricKeys,
   previousPeriod,
+  scopeFromParam,
   type MetricKey,
 } from "@/server/domain/metrics";
+import { ScopeFilter } from "@/components/admin/ScopeFilter";
 import { can } from "@/lib/permissions";
 import { fcfa, formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { PeriodPicker } from "@/components/admin/PeriodPicker";
@@ -49,22 +51,24 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
   const detailAllowed = detailKey && (finance || !metricDefs[detailKey].finance) ? detailKey : null;
   const canMargin = can(user, "reports.margin");
   const marginOpen = canMargin && str("detail") === "marge";
+  const scope = scopeFromParam(str("demo"));
 
   const [now, before, detail, margin, marginBefore, marginRows, series, byMethod, demoCount] = await Promise.all([
-    computeMetrics(db, period),
-    computeMetrics(db, prev),
-    detailAllowed ? metricDetail(db, detailAllowed, period) : Promise.resolve([]),
-    canMargin ? report(db, period, { withMargin: true }).then((r) => r.margin) : null,
-    canMargin ? report(db, prev, { withMargin: true }).then((r) => r.margin) : null,
-    marginOpen ? marginDetail(db, period) : Promise.resolve([]),
-    finance ? metricSeries(db, period) : Promise.resolve([]),
-    finance ? paymentsByMethod(db, period) : Promise.resolve([]),
+    computeMetrics(db, period, scope),
+    computeMetrics(db, prev, scope),
+    detailAllowed ? metricDetail(db, detailAllowed, period, scope) : Promise.resolve([]),
+    canMargin ? report(db, period, { withMargin: true, scope }).then((r) => r.margin) : null,
+    canMargin ? report(db, prev, { withMargin: true, scope }).then((r) => r.margin) : null,
+    marginOpen ? marginDetail(db, period, scope) : Promise.resolve([]),
+    finance ? metricSeries(db, period, scope) : Promise.resolve([]),
+    finance ? paymentsByMethod(db, period, scope) : Promise.resolve([]),
     demoOrdersIn(db, period),
   ]);
   const marginChange = margin?.available && marginBefore?.available ? change(margin.value, marginBefore.value) : null;
-  const qs = (extra: Record<string, string>) => {
+  const qs = (extra: Record<string, string>, includeDemo = scope.includeDemo) => {
     const p = new URLSearchParams();
     p.set("periode", period.key);
+    if (includeDemo) p.set("demo", "1");
     if (period.key === "perso") {
       p.set("du", period.from.toISOString().slice(0, 10));
       p.set("au", new Date(period.to.getTime() - 86400000).toISOString().slice(0, 10));
@@ -82,8 +86,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
         Comparaison avec la période précédente de même durée. Touchez un chiffre pour voir les opérations qui le
         composent.
       </PageTitle>
-      <div className="mb-6">
-        <PeriodPicker base="/comptoir/tableau-de-bord" period={period} />
+      <div className="mb-6 grid gap-3">
+        <PeriodPicker base="/comptoir/tableau-de-bord" period={period} extra={scope.includeDemo ? { demo: "1" } : {}} />
+        <ScopeFilter
+          includeDemo={scope.includeDemo}
+          demoCount={demoCount}
+          toggleHref={qs(detailAllowed || marginOpen ? { detail: str("detail")! } : {}, !scope.includeDemo)}
+        />
       </div>
 
       <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
@@ -154,12 +163,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
       {!finance ? (
         <p className="mt-3 flex gap-2 text-[14px] text-ink-mute">
           <IconInfo size={18} className="shrink-0" /> Les montants sont réservés au propriétaire et aux gestionnaires.
-        </p>
-      ) : null}
-      {demoCount ? (
-        <p className="mt-3 flex gap-2 text-[14px] text-ink-mute">
-          <IconInfo size={18} className="shrink-0" /> Comprend {demoCount} commande{demoCount > 1 ? "s" : ""}{" "}
-          d&apos;exemple, supprimée{demoCount > 1 ? "s" : ""} avec les données de démonstration avant le lancement.
         </p>
       ) : null}
 
@@ -308,6 +311,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
               <dd className="text-ink-soft">{metricDefs[k].formula}</dd>
             </div>
           ))}
+          <div>
+            <dt className="font-bold">Données de démonstration</dt>
+            <dd className="text-ink-soft">
+              Exclues par défaut : commandes d&apos;exemple et commandes contenant un produit d&apos;exemple, avec leurs
+              paiements, remboursements et retours. Le filtre « Inclure la démonstration » les ajoute.
+            </dd>
+          </div>
           <div>
             <dt className="font-bold">Transferts d&apos;argent</dt>
             <dd className="text-ink-soft">Jamais comptés : leurs fonds restent séparés des ventes.</dd>

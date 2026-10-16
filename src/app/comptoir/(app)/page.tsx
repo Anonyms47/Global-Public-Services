@@ -20,7 +20,8 @@ export default async function TodayPage() {
   const finance = can(user, "dashboard.finance");
   const [counts, low, m, queue] = await Promise.all([
     todayCounts(db),
-    lowStockCount(db, settings.stock.defaultLowThreshold),
+    // Tâche opérationnelle : elle renvoie à la liste du stock, produits d'exemple compris.
+    lowStockCount(db, settings.stock.defaultLowThreshold, { includeDemo: true }),
     computeMetrics(db, periodFromKey("jour")),
     listQueue(db, { view: "a-faire", userId: user.id, lowThreshold: settings.stock.defaultLowThreshold }),
   ]);
@@ -206,7 +207,10 @@ export default async function TodayPage() {
               </div>
             ))}
           </dl>
-          <p className="hint mt-3">Transferts d&apos;argent exclus : leurs fonds restent séparés des ventes.</p>
+          <p className="hint mt-3">
+            Périmètre : données réelles uniquement (démonstration exclue). Transferts d&apos;argent exclus : leurs fonds
+            restent séparés des ventes.
+          </p>
         </Panel>
       </div>
     </>

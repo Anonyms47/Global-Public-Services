@@ -59,6 +59,7 @@ import { buildOrderMessage } from "@/lib/whatsapp";
 import { renderTemplate, defaultTemplates } from "@/lib/templates";
 
 let db: Db;
+const all = { includeDemo: true };
 let manager: { id: string; name: string };
 const key = () => crypto.randomUUID();
 
@@ -1118,21 +1119,23 @@ describe("Droits, clients, rapports, démonstration", () => {
     ).resolves.toBeTruthy();
   });
 
+  // Ces scénarios portent sur le catalogue d'exemple : périmètre « démonstration incluse ».
   it("rapports : ventes, encaissements, remboursements et marge seulement si coûts complets", async () => {
-    const r = await report(db, periodFromKey("jour"), { withMargin: true });
+    const r = await report(db, periodFromKey("jour"), { withMargin: true, scope: all });
     expect(r.sales.count).toBeGreaterThan(0);
     expect(r.encaissements).toBeGreaterThan(0);
     expect(r.remboursements).toBeGreaterThan(0);
     expect(r.margin.available).toBe(false);
     const hidden = await report(db, periodFromKey("jour"), {
       withMargin: false,
+      scope: all,
     });
     expect(hidden.margin.available).toBe(false);
   });
 
   it("tableau de bord : formules centralisées et détail de chaque chiffre", async () => {
     const period = periodFromKey("jour");
-    const before = await computeMetrics(db, period);
+    const before = await computeMetrics(db, period, all);
     const v = await variantBySku(db, "SON-ST2-NO");
     const o = await createOrder(db, manager, {
       idempotencyKey: key(),
@@ -1143,17 +1146,17 @@ describe("Droits, clients, rapports, démonstration", () => {
       lines: [{ variantId: v.id, quantity: 1 }],
     });
     await recordPayment(db, manager, o.id, { method: "cash", amount: 10000 });
-    const after = await computeMetrics(db, period);
+    const after = await computeMetrics(db, period, all);
     expect(after.commandes - before.commandes).toBe(1);
     expect(after.ca - before.ca).toBe(v.price);
     expect(after.encaissements - before.encaissements).toBe(10000);
     expect(after.reste - before.reste).toBe(v.price - 10000);
     expect(after.panier).toBe(Math.round(after.ca / after.commandes));
-    const rows = await metricDetail(db, "reste", period);
+    const rows = await metricDetail(db, "reste", period, all);
     expect(rows.find((r) => r.reference === o.reference)?.amount).toBe(v.price - 10000);
     // Le détail retombe exactement sur le chiffre affiché.
-    expect((await metricDetail(db, "ca", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(after.ca);
-    expect((await metricDetail(db, "encaissements", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
+    expect((await metricDetail(db, "ca", period, all)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(after.ca);
+    expect((await metricDetail(db, "encaissements", period, all)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
       after.encaissements,
     );
     const prev = previousPeriod(period);
@@ -1165,7 +1168,7 @@ describe("Droits, clients, rapports, démonstration", () => {
 
   it("tableau de bord : montant, remboursements, annulations, graphiques et marge détaillée", async () => {
     const period = periodFromKey("jour");
-    const before = await computeMetrics(db, period);
+    const before = await computeMetrics(db, period, all);
     const v = await variantBySku(db, "SON-ST2-NO");
     // Vente payée puis remboursée en partie ; commande annulée.
     const sale = await createOrder(db, manager, {
@@ -1185,33 +1188,146 @@ describe("Droits, clients, rapports, démonstration", () => {
       lines: [{ variantId: v.id, quantity: 1 }],
     });
     await cancelOrder(db, manager, cancelled.id, "test");
-    const after = await computeMetrics(db, period);
+    const after = await computeMetrics(db, period, all);
     expect(after.montant - before.montant).toBe(v.price);
     expect(after.remboursements - before.remboursements).toBe(1000);
     expect(after.annulees - before.annulees).toBe(1);
     expect(after.finalisees - before.finalisees).toBe(1);
     // Indicateurs de nombre : pas de montant dans le détail ; le détail des remboursements retombe sur le chiffre.
-    expect((await metricDetail(db, "annulees", period)).every((r) => r.amount === null)).toBe(true);
-    expect((await metricDetail(db, "remboursements", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
+    expect((await metricDetail(db, "annulees", period, all)).every((r) => r.amount === null)).toBe(true);
+    expect((await metricDetail(db, "remboursements", period, all)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
       after.remboursements,
     );
     // Graphique : la somme des tranches est égale aux chiffres affichés.
-    const series = await metricSeries(db, period);
+    const series = await metricSeries(db, period, all);
     expect(series).toHaveLength(24);
     expect(series.reduce((s, p) => s + p.ca, 0)).toBe(after.ca);
     expect(series.reduce((s, p) => s + p.encaissements, 0)).toBe(after.encaissements);
-    expect(await metricSeries(db, periodFromKey("30j"))).toHaveLength(30);
-    expect((await paymentsByMethod(db, period)).reduce((s, m) => s + m.amount, 0)).toBe(after.encaissements);
+    expect(await metricSeries(db, periodFromKey("30j"), all)).toHaveLength(30);
+    expect((await paymentsByMethod(db, period, all)).reduce((s, m) => s + m.amount, 0)).toBe(after.encaissements);
     // Marge par commande : connue seulement si chaque ligne a un coût d'achat.
     await db.query("update order_lines set cost_price = unit_price - 2000 where order_id = $1", [sale.id]);
-    const m = (await marginDetail(db, period)).find((r) => r.reference.length && r.href.endsWith(sale.id))!;
+    const m = (await marginDetail(db, period, all)).find((r) => r.reference.length && r.href.endsWith(sale.id))!;
     expect(m).toMatchObject({ revenue: v.price, cost: v.price - 2000, margin: 2000, missing: 0 });
     await db.query("update order_lines set cost_price = null where order_id = $1", [sale.id]);
-    expect((await marginDetail(db, period)).find((r) => r.href.endsWith(sale.id))).toMatchObject({
+    expect((await marginDetail(db, period, all)).find((r) => r.href.endsWith(sale.id))).toMatchObject({
       margin: null,
       missing: 1,
     });
     expect(await demoOrdersIn(db, periodFromKey("30j"))).toBeGreaterThanOrEqual(0);
+  });
+
+  it("démonstration exclue par défaut de tous les indicateurs, incluse sur demande", async () => {
+    const owner = await userByRole(db, "owner");
+    const period = periodFromKey("jour");
+    const [realBefore, allBefore, demoBefore] = await Promise.all([
+      computeMetrics(db, period),
+      computeMetrics(db, period, all),
+      demoOrdersIn(db, period),
+    ]);
+    // Un produit réel (hors démonstration) et une vente réelle.
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const real = await saveProduct(
+      db,
+      {
+        ...base,
+        id: undefined,
+        slug: undefined,
+        name: "Produit réel de contrôle",
+        status: "published",
+        featured: false,
+        isDemo: false,
+        axes: [],
+        variants: [{ sku: "REEL-CTRL-1", options: {}, price: 20000, costPrice: 15000, initialStock: 5 }],
+      },
+      { userId: owner.id, withCosts: true },
+    );
+    const rv = await variantBySku(db, "REEL-CTRL-1");
+    const realSale = await createOrder(db, owner, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: rv.id, quantity: 1 }],
+      payment: { method: "cash", amount: 20000 },
+    });
+    await refund(db, owner, realSale.id, { method: "cash", amount: 500, note: "contrôle" });
+    // Une vente sur un produit d'exemple (commande non marquée, mais produit de démonstration) …
+    const dv = await variantBySku(db, "SON-ST2-NO");
+    const startedAt = new Date();
+    const demoSale = await createOrder(db, owner, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: dv.id, quantity: 1 }],
+      payment: { method: "wave", amount: dv.price },
+    });
+    // … et une commande marquée démonstration contenant le produit réel.
+    const flagged = await createOrder(db, owner, {
+      idempotencyKey: key(),
+      channel: "whatsapp",
+      reception: "pickup",
+      customerName: "Exemple",
+      customerPhone: "000",
+      lines: [{ variantId: rv.id, quantity: 1 }],
+      isDemo: true,
+    });
+    await recordPayment(db, owner, flagged.id, { method: "cash", amount: 5000 });
+
+    const realNow = await computeMetrics(db, period);
+    const allNow = await computeMetrics(db, period, all);
+    // Périmètre réel : seule la vente réelle compte (CA, montant, encaissements, remboursements, panier, soldes).
+    expect(realNow.ca - realBefore.ca).toBe(20000);
+    expect(realNow.montant - realBefore.montant).toBe(20000);
+    expect(realNow.encaissements - realBefore.encaissements).toBe(20000);
+    expect(realNow.remboursements - realBefore.remboursements).toBe(500);
+    expect(realNow.commandes - realBefore.commandes).toBe(1);
+    // Remboursement après paiement complet : 500 FCFA restent dus au solde.
+    expect(realNow.reste - realBefore.reste).toBe(500);
+    // Démonstration incluse : les trois commandes.
+    expect(allNow.commandes - allBefore.commandes).toBe(3);
+    expect(allNow.ca - allBefore.ca).toBe(20000 + dv.price + 20000);
+    expect(allNow.encaissements - allBefore.encaissements).toBe(20000 + dv.price + 5000);
+    expect(allNow.reste - allBefore.reste).toBe(500 + 15000);
+    expect(await demoOrdersIn(db, period)).toBe(demoBefore + 2);
+    // Détails, graphiques et moyens de paiement suivent le même périmètre.
+    const refs = (await metricDetail(db, "ca", period)).map((r) => r.reference);
+    expect(refs).toContain(realSale.reference);
+    expect(refs).not.toContain(demoSale.reference);
+    expect(refs).not.toContain(flagged.reference);
+    const series = await metricSeries(db, period);
+    expect(series.reduce((t, p) => t + p.ca, 0)).toBe(realNow.ca);
+    expect((await paymentsByMethod(db, period)).find((m) => m.method === "wave")?.amount ?? 0).toBe(
+      (await paymentsByMethod(db, periodFromKey("jour"))).find((m) => m.method === "wave")?.amount ?? 0,
+    );
+    expect((await paymentsByMethod(db, period)).reduce((t, m) => t + m.amount, 0)).toBe(realNow.encaissements);
+    // Marge et meilleurs produits : uniquement le réel.
+    const margins = await marginDetail(db, period);
+    expect(margins.map((m) => m.reference)).toEqual([realSale.reference]);
+    expect(margins[0]).toMatchObject({ revenue: 20000, cost: 15000, margin: 5000 });
+    const r = await report(db, period, { withMargin: true });
+    expect(r.best.map((b) => b.sku)).toEqual(["REEL-CTRL-1"]);
+    expect(r.margin).toMatchObject({ available: true, value: 5000 });
+    expect(r.encaissements).toBe(realNow.encaissements);
+    expect(r.remboursements).toBe(realNow.remboursements);
+    expect(r.openBalances.map((o) => o.reference)).not.toContain(flagged.reference);
+    const withDemo = await report(db, period, { withMargin: true, scope: all });
+    expect(withDemo.best.map((b) => b.sku)).toEqual(expect.arrayContaining(["REEL-CTRL-1", "SON-ST2-NO"]));
+    expect(withDemo.openBalances.map((o) => o.reference)).toContain(flagged.reference);
+    // Comparaisons : la période précédente applique le même périmètre.
+    expect((await computeMetrics(db, previousPeriod(period))).commandes).toBe(0);
+    // Stock commercial : seul le produit réel (4 en stock après la vente, 1 réservé par la commande d'exemple).
+    const { stockSummary } = await import("@/server/domain/reports");
+    const stock = await stockSummary(db, { withCost: true, defaultThreshold: 2 });
+    expect(stock).toMatchObject({ variants: 1, units: 4, available: 3, saleValue: 80000, costValue: 60000 });
+    const stockAll = await stockSummary(db, { withCost: true, defaultThreshold: 2, scope: all });
+    expect(stockAll.variants).toBeGreaterThan(1);
+
+    // Nettoyage : commandes de contrôle retirées, stock d'exemple remis tel quel.
+    await db.query("delete from stock_movements where variant_id = $1 and created_at >= $2", [dv.id, startedAt]);
+    await db.query("update variants set on_hand = $2, reserved = $3 where id = $1", [dv.id, dv.on_hand, dv.reserved]);
+    for (const o of [realSale, demoSale, flagged]) await db.query("delete from orders where id = $1", [o.id]);
+    await db.query("delete from stock_movements where variant_id = $1", [rv.id]);
+    await db.query("delete from products where id = $1", [real.id]);
   });
 
   it("File GPS : éléments dérivés, attribution, report, résolution et tâche manuelle", async () => {
