@@ -26,12 +26,14 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
     "Le service qui rassure",
     [c.address, c.city].filter(Boolean).join(", "),
     c.phone && `Tél. ${c.phone}`,
+    c.whatsapp && `WhatsApp +${c.whatsapp}`,
+    c.email,
     [c.legalName, legalIds(c)].filter(Boolean).join(" · "),
     s.receipt.header,
     "",
     `Reçu ${o.reference} — ${formatDateTime(o.created_at)}`,
     o.customer_name && `Client : ${o.customer_name}`,
-    `Réception : ${receptionLabels[o.reception]}`,
+    `Réception : ${receptionLabels[o.reception]}${o.store_name ? ` — ${o.store_name}` : ""}`,
     "",
     ...o.lines.map(
       (l) =>
@@ -40,7 +42,9 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
     "",
     `Total articles : ${fcfa(o.subtotal)}`,
     o.returned_value ? `Retours : -${fcfa(o.returned_value)}` : "",
-    o.reception === "delivery" ? `Livraison : ${o.delivery_fee === null ? "à confirmer" : fcfa(o.delivery_fee)}` : "",
+    o.reception === "delivery"
+      ? `Livraison : ${o.delivery_fee === null ? "précisée par GPS" : fcfa(o.delivery_fee)}`
+      : "",
     `Montant dû : ${fcfa(o.due)}`,
     ...payments.map(
       (p) =>
@@ -77,8 +81,10 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
             <Logo className="h-16 w-auto" />
           </div>
           <div className="text-right text-[13px] text-ink-soft">
-            {[c.address, c.city].filter(Boolean).join(", ") || "Adresse à confirmer"}
+            {[c.address, c.city].filter(Boolean).join(", ")}
             {c.phone ? <div>Tél. {c.phone}</div> : null}
+            {c.whatsapp ? <div>WhatsApp +{c.whatsapp}</div> : null}
+            {c.email ? <div>{c.email}</div> : null}
             {c.legalName || legalIds(c) ? <div>{[c.legalName, legalIds(c)].filter(Boolean).join(" · ")}</div> : null}
             {s.receipt.header ? <div className="mt-1">{s.receipt.header}</div> : null}
           </div>
@@ -91,7 +97,10 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
           <div className="text-right">
             <p>{formatDateTime(o.created_at)}</p>
             {o.customer_name ? <p>Client : {o.customer_name}</p> : null}
-            <p>{receptionLabels[o.reception]}</p>
+            <p>
+              {receptionLabels[o.reception]}
+              {o.store_name ? ` · ${o.store_name}` : ""}
+            </p>
           </div>
         </div>
         <table className="mt-6 w-full">
@@ -135,7 +144,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
           {o.reception === "delivery" ? (
             <div className="flex justify-between">
               <dt>Livraison</dt>
-              <dd>{o.delivery_fee === null ? "à confirmer" : fcfa(o.delivery_fee)}</dd>
+              <dd>{o.delivery_fee === null ? "précisée par GPS" : fcfa(o.delivery_fee)}</dd>
             </div>
           ) : null}
           <div className="flex justify-between border-t border-ink pt-1 font-bold">

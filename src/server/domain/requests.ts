@@ -1,4 +1,5 @@
 import type { Db } from "../db/client";
+import { assertPickupStore, pickupStores } from "./stores";
 import { fail, newId } from "./errors";
 import { checkCart } from "./cart";
 import { createOrder, event } from "./orders";
@@ -38,6 +39,8 @@ export interface RequestInput {
   note?: string;
   /** Demande précédente du même panier (identifiant non devinable), remplacée par celle-ci. */
   replacesId?: string;
+  /** Point de retrait choisi (obligatoire pour un retrait quand des points de vente sont publiés). */
+  storeId?: string | null;
 }
 
 /** Garde-fou contre les envois en rafale depuis le site public. */
@@ -68,14 +71,23 @@ export async function createRequest(db: Db, input: RequestInput) {
     fail("conflict", "Beaucoup de demandes en ce moment : réessayez dans un instant.");
   const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
   const isDemo = checked.some((c) => c.isDemo);
+  let storeId: string | null = null;
+  if (input.reception === "pickup") {
+    const stores = await pickupStores(db);
+    if (stores.length) {
+      if (!input.storeId)
+        fail("validation", "Choisissez le point de vente pour le retrait.", { store: "Obligatoire." });
+      storeId = await assertPickupStore(db, input.storeId);
+    }
+  }
   return db.tx(async (tx) => {
     const seq = await tx.one<{ n: string }>("select nextval('request_number_seq')::text as n");
     const reference = `GPS-R-${seq!.n}`;
     const id = newId();
     await tx.query(
       `insert into order_requests (id, reference, customer_name, customer_phone, reception, delivery_zone, delivery_address,
-                                   delivery_fee, note, lines, subtotal, is_demo)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                                   delivery_fee, note, lines, subtotal, is_demo, store_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
       [
         id,
         reference,
@@ -95,6 +107,7 @@ export async function createRequest(db: Db, input: RequestInput) {
         JSON.stringify(lines),
         subtotal,
         isDemo,
+        storeId,
       ],
     );
     if (input.replacesId) {
@@ -128,10 +141,13 @@ export interface OrderRequest {
   created_at: Date;
   updated_at: Date;
   is_demo: boolean;
+  store_id: string | null;
+  store_name: string | null;
 }
 
-const select = `select r.*, o.reference as order_reference, u.name as handled_by_name
-                  from order_requests r left join orders o on o.id = r.order_id left join users u on u.id = r.handled_by`;
+const select = `select r.*, o.reference as order_reference, u.name as handled_by_name, st.name as store_name
+                  from order_requests r left join orders o on o.id = r.order_id left join users u on u.id = r.handled_by
+                  left join stores st on st.id = r.store_id`;
 
 export async function listRequests(db: Db, opts: { status?: RequestStatus; q?: string; limit?: number } = {}) {
   const where: string[] = [];
@@ -193,6 +209,7 @@ export async function convertRequest(db: Db, actor: Actor, id: string, opts: { i
       notes: [r.note, `Demande ${r.reference}`].filter(Boolean).join(" · "),
       lines: r.lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
       isDemo: opts.isDemo || r.is_demo,
+      storeId: r.store_id,
     });
     await event(tx, order.id, "request", `Créée depuis la demande ${r.reference} reçue sur WhatsApp.`, actor.id);
     await tx.query(

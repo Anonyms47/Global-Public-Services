@@ -14,20 +14,10 @@ export function ContactActions({
 }) {
   const wa = whatsappLink(company.whatsapp, text);
   const tel = company.phone.replace(/[^\d+]/g, "");
-  const maps =
-    company.mapsUrl ||
-    (company.address
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([company.address, company.city].filter(Boolean).join(", "))}`
-      : "");
-  const off = (label: string, Icon: typeof IconPhone, why: string) => (
-    <span
-      className={`btn cursor-not-allowed border-[1.5px] border-dashed ${dark ? "border-white/40 text-white/70" : "border-line text-ink-mute"}`}
-      aria-disabled="true"
-      title={why}
-    >
-      <Icon size={18} /> {label} <span className="sr-only">— {why}</span>
-    </span>
-  );
+  // Itinéraire général seulement s'il est renseigné ; sinon chaque point de vente a le sien.
+  const maps = company.mapsUrl;
+  // Coordonnée absente : le bouton est simplement masqué.
+  const off = (..._args: unknown[]) => null;
   return (
     <div className="flex flex-wrap gap-3">
       {wa ? (

@@ -10,13 +10,17 @@ export function ScopeFilter({
   demoCount,
   toggleHref,
   what = "commande",
+  demoMode = true,
 }: {
   includeDemo: boolean;
   /** Commandes d'exemple de la période (incluses ou exclues). */
   demoCount: number;
   toggleHref: string;
   what?: string;
+  /** Hors démonstration et sans donnée d'exemple, le filtre n'a pas lieu d'être : rien n'est affiché. */
+  demoMode?: boolean;
 }) {
+  if (!demoMode && !includeDemo && demoCount === 0) return null;
   const plural = demoCount > 1 ? "s" : "";
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[6px] border border-line bg-card px-3 py-2 text-[14px]">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
+import { listStores } from "@/server/domain/stores";
 import { listOrders, type OrderView } from "@/server/domain/orders";
 import { can } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
@@ -31,14 +32,17 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
   const view = (typeof sp.vue === "string" ? sp.vue : "a-preparer") as OrderView;
   const q = typeof sp.q === "string" ? sp.q : "";
   const channel = typeof sp.canal === "string" ? sp.canal : "";
+  const store = typeof sp.boutique === "string" ? sp.boutique : "";
+  const stores = await listStores(db);
   const [orders, ...counts] = await Promise.all([
-    listOrders(db, { view, q, channel: channel || undefined }),
+    listOrders(db, { view, q, channel: channel || undefined, store: store || undefined }),
     ...views.map((v) => listOrders(db, { view: v.key, limit: 1000 }).then((r) => r.length)),
   ]);
   const qs = (patch: Record<string, string>) => {
     const p = new URLSearchParams({
       ...(q ? { q } : {}),
       ...(channel ? { canal: channel } : {}),
+      ...(store ? { boutique: store } : {}),
       vue: view,
       ...patch,
     });
@@ -100,6 +104,21 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
           <option value="telephone">Téléphone</option>
           <option value="autre">Autre</option>
         </select>
+        {stores.length ? (
+          <>
+            <label htmlFor="boutique" className="sr-only">
+              Point de vente
+            </label>
+            <select id="boutique" name="boutique" defaultValue={store} className="field w-auto">
+              <option value="">Tous les points de vente</option>
+              {stores.map((st) => (
+                <option key={st.id} value={st.id}>
+                  {st.name}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : null}
         <button className="btn btn-ink" type="submit">
           <IconSearch size={18} /> Filtrer
         </button>
@@ -146,6 +165,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
                   <td className="py-3" data-label="Client">
                     <div className="font-semibold">{o.customer_name || "Client de passage"}</div>
                     <ChannelLabel c={o.channel} r={o.reception} />
+                    {o.store_name ? <span className="text-[12px] text-ink-mute"> · {o.store_name}</span> : null}
                   </td>
                   <td className="py-3" data-label="Étape">
                     <div className="flex flex-wrap gap-1">

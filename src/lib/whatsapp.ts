@@ -30,7 +30,8 @@ export interface OrderMessageInput {
   reference?: string;
 }
 
-export const TO_CONFIRM = "À confirmer avec GPS";
+/** Information précisée par GPS au cas par cas (jamais « à confirmer » affiché publiquement). */
+export const TO_CONFIRM = "Précisé par GPS sur WhatsApp";
 
 export function orderSubtotal(lines: MessageLine[]) {
   return lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);

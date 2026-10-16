@@ -14,7 +14,7 @@ export function LegalDoc({
 }: {
   title: string;
   intro: ReactNode;
-  notice: ReactNode;
+  notice?: ReactNode;
   sections: LegalSection[];
   other: { href: string; label: string };
 }) {
@@ -27,10 +27,12 @@ export function LegalDoc({
           <span className="text-gps-red">.</span>
         </h1>
         <div className="mt-5 max-w-2xl text-[17px] leading-relaxed text-ink-soft">{intro}</div>
-        <p className="mt-6 flex max-w-2xl gap-3 rounded-[16px] border border-warn/30 bg-warn-soft p-4 text-[15px] text-warn">
-          <IconInfo className="mt-0.5 shrink-0" size={18} />
-          <span>{notice}</span>
-        </p>
+        {notice ? (
+          <p className="mt-6 flex max-w-2xl gap-3 rounded-[16px] border border-warn/30 bg-warn-soft p-4 text-[15px] text-warn">
+            <IconInfo className="mt-0.5 shrink-0" size={18} />
+            <span>{notice}</span>
+          </p>
+        ) : null}
       </div>
 
       <div className="container-site grid gap-10 pb-16 lg:grid-cols-12">

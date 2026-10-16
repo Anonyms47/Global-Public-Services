@@ -40,7 +40,7 @@ export default async function FaqPage() {
           q: "Combien coûte la livraison ?",
           a: settings.reception.zones.some((z) => z.fee !== null)
             ? "Les frais dépendent de la zone ; ils sont indiqués lors de la préparation de la commande."
-            : `Les frais de livraison sont ${toConfirm} au moment de la commande.`,
+            : "Les frais de livraison sont précisés par GPS au moment de la commande.",
         },
       ],
     },

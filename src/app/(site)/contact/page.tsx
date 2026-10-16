@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { siteContext } from "@/server/context";
-import { ToConfirm } from "@/components/site/PageHeader";
+import { StoreList } from "@/components/site/StoreList";
 import { Logo } from "@/components/brand/Logo";
 import { IconArrowRight, IconPhone, IconPin, IconWhatsApp } from "@/components/ui/icons";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -19,7 +19,7 @@ const quickQuestions = [
 ];
 
 export default async function ContactPage() {
-  const { settings } = await siteContext();
+  const { settings, stores } = await siteContext();
   const c = settings.company;
   const wa = whatsappLink(c.whatsapp, "Bonjour GPS, j'ai une question.");
   const waNumber = c.whatsapp.replace(/\D/g, "");
@@ -51,9 +51,9 @@ export default async function ContactPage() {
       Icon: IconPin,
       title: "Passer au comptoir",
       text: "Voir les produits, retirer une commande confirmée, faire un transfert.",
-      value: address,
-      href: maps,
-      external: true,
+      value: stores.length > 1 ? `${stores.length} points de vente` : address,
+      href: stores.length ? "#points-de-vente" : maps,
+      external: !stores.length,
       tone: "red",
     },
   ] as const;
@@ -98,26 +98,28 @@ export default async function ContactPage() {
                   ["Téléphone", c.phone],
                   ["WhatsApp", waNumber ? `+${waNumber}` : ""],
                   ["E-mail", c.email],
+                  ["RCCM", c.rccm],
+                  ["NINEA", c.ninea],
                 ] as const
-              ).map(([label, value]) => (
-                <div key={label} className="receipt-line">
-                  <dt>{label}</dt>
-                  <span aria-hidden="true" className="receipt-dots" />
-                  <dd>
-                    {value ? (
-                      label === "E-mail" ? (
-                        <a href={`mailto:${value}`} className="underline-offset-2 hover:underline">
-                          {value}
-                        </a>
-                      ) : (
-                        value
-                      )
-                    ) : (
-                      <ToConfirm />
-                    )}
-                  </dd>
-                </div>
-              ))}
+              )
+                .filter(([, value]) => value)
+                .map(([label, value]) => (
+                  <div key={label} className="receipt-line">
+                    <dt>{label}</dt>
+                    <span aria-hidden="true" className="receipt-dots" />
+                    <dd>
+                      {value ? (
+                        label === "E-mail" ? (
+                          <a href={`mailto:${value}`} className="underline-offset-2 hover:underline">
+                            {value}
+                          </a>
+                        ) : (
+                          value
+                        )
+                      ) : null}
+                    </dd>
+                  </div>
+                ))}
             </dl>
           </div>
         </div>
@@ -204,6 +206,12 @@ export default async function ContactPage() {
               );
             })}
           </ul>
+          {stores.length ? (
+            <div id="points-de-vente" className="scroll-mt-24 lg:col-span-12">
+              <h2 className="mb-3 font-display text-2xl font-bold uppercase">Nos points de vente à Petit Mbao</h2>
+              <StoreList stores={stores} />
+            </div>
+          ) : null}
           <p className="text-[14px] text-ink-mute lg:col-span-8 lg:col-start-5">
             Vous cherchez une réponse rapide ?{" "}
             <Link href="/faq" className="font-semibold text-gps-blue underline-offset-2 hover:underline">

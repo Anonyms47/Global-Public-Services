@@ -93,6 +93,9 @@ export function OrderComposerClient(props: {
   zones: DeliveryZone[];
   /** Moyens de paiement activés dans la configuration. */
   enabledMethods?: PaymentMethodKey[];
+  /** Points de vente (vente au comptoir ou retrait) et point habituel de l'utilisateur. */
+  stores?: { id: string; name: string; counter: boolean; pickup: boolean }[];
+  defaultStoreId?: string | null;
 }) {
   const ready = useSyncExternalStore(
     noop,
@@ -115,12 +118,22 @@ function OrderComposer({
   canEditPrice,
   zones,
   enabledMethods,
+  stores = [],
+  defaultStoreId = null,
 }: {
   mode: "order" | "sale";
   canEditPrice: boolean;
   zones: DeliveryZone[];
   enabledMethods?: PaymentMethodKey[];
+  stores?: { id: string; name: string; counter: boolean; pickup: boolean }[];
+  defaultStoreId?: string | null;
 }) {
+  // Point de vente : prérempli avec le point habituel, modifiable avant confirmation.
+  const storeChoices = stores.filter((st) => (mode === "sale" ? st.counter : st.pickup));
+  const [storeId, setStoreId] = useState<string>(
+    () =>
+      storeChoices.find((st) => st.id === defaultStoreId)?.id ?? (storeChoices.length === 1 ? storeChoices[0].id : ""),
+  );
   const storageKey = `gps-brouillon-${mode}`;
   const router = useRouter();
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -292,6 +305,7 @@ function OrderComposer({
         needsCustomer && !draft.customerId && draft.newCustomer.name.trim()
           ? { ...draft.newCustomer, allowDuplicate: draft.allowDuplicate }
           : null,
+      storeId: mode === "sale" || draft.reception === "pickup" ? storeId || null : null,
       deliveryAddress: draft.address,
       deliveryZone: draft.zone,
       deliveryFee: mode === "order" && draft.reception === "delivery" ? (draft.feeUnknown ? null : fee) : null,
@@ -519,6 +533,27 @@ function OrderComposer({
   const salePane = (
     <section aria-labelledby="titre-vente" className={`${tab === "vente" ? "" : "hidden"} lg:block`}>
       <div className="rounded-[6px] border border-line bg-card lg:sticky lg:top-24">
+        {storeChoices.length && (mode === "sale" || draft.reception === "pickup") ? (
+          <div className="border-b border-line px-4 py-2">
+            <label className="label text-[13px]" htmlFor="o-store">
+              {mode === "sale" ? "Point de vente" : "Point de retrait"}
+            </label>
+            <select
+              id="o-store"
+              className="field h-10 min-h-10"
+              value={storeId}
+              onChange={(e) => setStoreId(e.target.value)}
+            >
+              {mode === "order" ? <option value="">À attribuer</option> : null}
+              {mode === "sale" && !storeId ? <option value="">Choisir…</option> : null}
+              {storeChoices.map((st) => (
+                <option key={st.id} value={st.id}>
+                  {st.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <h2 id="titre-vente" className="text-[15px] font-extrabold tracking-wide uppercase">
             {mode === "sale" ? "Vente en cours" : "Commande"}

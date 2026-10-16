@@ -26,7 +26,7 @@ test.describe("Boutique et commande WhatsApp", () => {
     expect(message).toMatch(/Réf\. PAS-URB-NO-41 · Qté 3 × 32\s000\sFCFA = 96\s000\sFCFA/);
     expect(message).toContain("Orbis Nova 12 — Capacité : 256 Go · Couleur : Graphite");
     expect(message).toMatch(/Total des produits : 311\s000\sFCFA/);
-    expect(message).toContain("Frais de livraison : À confirmer avec GPS");
+    expect(message).toContain("Frais de livraison : Précisé par GPS sur WhatsApp");
     expect(message).toContain("Nom : Client Test");
     expect(message).toMatch(/^Bonjour GPS.*\nDemande GPS-R-\d{4,}\n/);
     // Mode démonstration : aucun numéro contacté, copie possible.

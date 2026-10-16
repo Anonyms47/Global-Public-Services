@@ -42,4 +42,6 @@ export const auditLabels: Record<string, string> = {
   "category.archive": "Catégorie archivée",
   "category.delete": "Catégorie supprimée",
   "demo.backup": "Sauvegarde des données d'exemple",
+  "store.create": "Point de vente créé",
+  "store.update": "Point de vente modifié",
 };

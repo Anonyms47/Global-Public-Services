@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
-import { periodFromKey, report, stockSummary } from "@/server/domain/reports";
+import { isDemoMode } from "@/server/db";
+import { periodFromKey, report, stockSummary, storeReport } from "@/server/domain/reports";
 import { demoOrdersIn, scopeFromParam } from "@/server/domain/metrics";
 import { getSettings } from "@/server/domain/settings";
 import { PeriodPicker } from "@/components/admin/PeriodPicker";
@@ -25,10 +26,11 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
   const withMargin = can(user, "reports.margin");
   const scope = scopeFromParam(str("demo"));
   const settings = await getSettings(db);
-  const [r, demoCount, stock] = await Promise.all([
+  const [r, demoCount, stock, byStore] = await Promise.all([
     report(db, period, { withMargin, scope }),
     demoOrdersIn(db, period),
     stockSummary(db, { scope, withCost: withMargin, defaultThreshold: settings.stock.defaultLowThreshold }),
+    storeReport(db, period, { scope }),
   ]);
   const toggle = new URLSearchParams({ periode: period.key });
   if (period.key === "perso") {
@@ -51,6 +53,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
         <ScopeFilter
           includeDemo={scope.includeDemo}
           demoCount={demoCount}
+          demoMode={isDemoMode()}
           toggleHref={`/comptoir/rapports?${toggle.toString()}`}
         />
       </div>
@@ -160,6 +163,52 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
           )}
         </Panel>
 
+        {byStore.length ? (
+          <Panel title="Par point de vente" id="t-boutiques" className="lg:col-span-2">
+            <p className="hint mb-3">Ventes réparties par boutique ; le stock reste commun à toutes les boutiques.</p>
+            <div className="rtable -mx-4 overflow-x-auto md:mx-0">
+              <table className="w-full min-w-[640px] text-[14px]">
+                <thead>
+                  <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
+                    <th className="px-4 py-2 md:px-0">Point de vente</th>
+                    <th className="py-2 text-right">Chiffre d&apos;affaires</th>
+                    <th className="py-2 text-right">Encaissements</th>
+                    <th className="py-2 text-right">Commandes</th>
+                    <th className="py-2 text-right">Au comptoir</th>
+                    <th className="py-2 text-right">Panier moyen</th>
+                    <th className="py-2 pr-4 md:pr-0">Vendeurs</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line-soft">
+                  {byStore.map((b) => (
+                    <tr key={b.id ?? "none"}>
+                      <td className="px-4 py-2 font-semibold md:px-0">{b.name}</td>
+                      <td className="py-2 text-right" data-label="Chiffre d'affaires">
+                        <Money value={b.ca} />
+                      </td>
+                      <td className="py-2 text-right" data-label="Encaissements">
+                        <Money value={b.encaissements} />
+                      </td>
+                      <td className="py-2 text-right tabular" data-label="Commandes">
+                        {b.orders}
+                      </td>
+                      <td className="py-2 text-right tabular" data-label="Au comptoir">
+                        {b.counter}
+                      </td>
+                      <td className="py-2 text-right" data-label="Panier moyen">
+                        {b.basket === null ? "—" : <Money value={b.basket} />}
+                      </td>
+                      <td className="py-2 pr-4 text-ink-soft md:pr-0" data-label="Vendeurs">
+                        {b.sellers.join(", ") || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        ) : null}
+
         <Panel title="Stock commercial" id="t-stock">
           <dl className="grid grid-cols-2 gap-3 text-[14px]">
             <div>
@@ -190,7 +239,11 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
             {stock.costValue !== null && stock.missingCost
               ? ` · ${stock.missingCost} sans coût d'achat (non comptée(s) dans la valeur au coût)`
               : ""}
-            . Hors stock non vendable ; {scope.includeDemo ? "produits d'exemple inclus" : "produits d'exemple exclus"}.
+            . Hors stock non vendable
+            {isDemoMode() || demoCount
+              ? `, ${scope.includeDemo ? "produits d'exemple inclus" : "produits d'exemple exclus"}`
+              : ""}
+            .
           </p>
         </Panel>
 
