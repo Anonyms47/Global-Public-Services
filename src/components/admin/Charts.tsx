@@ -29,7 +29,9 @@ const short = (v: number) =>
 
 export function SeriesChart({ points, title }: { points: Point[]; title: string }) {
   const n = points.length;
-  const W = Math.max(560, n * 26);
+  // Largeur logique proportionnée au nombre de tranches : le graphique tient toujours dans
+  // son cadre (pas de défilement qui cacherait les derniers jours), textes lisibles une fois mis à l'échelle.
+  const W = Math.max(320, n * 12 + 52);
   const H = 220;
   const pad = { l: 44, r: 8, t: 10, b: 26 };
   const max = niceMax(Math.max(0, ...points.flatMap((p) => [p.ca, p.encaissements])));
@@ -38,7 +40,7 @@ export function SeriesChart({ points, title }: { points: Point[]; title: string 
   const y = (v: number) => pad.t + ((max - v) / range) * (H - pad.t - pad.b);
   const slot = (W - pad.l - pad.r) / n;
   const bar = Math.max(2, Math.min(18, (slot - 6) / 2));
-  const every = Math.ceil(n / Math.floor((W - pad.l) / 44));
+  const every = Math.ceil(n / Math.floor((W - pad.l) / 40));
   const totals = {
     ca: points.reduce((s, p) => s + p.ca, 0),
     encaissements: points.reduce((s, p) => s + p.encaissements, 0),
@@ -57,10 +59,10 @@ export function SeriesChart({ points, title }: { points: Point[]; title: string 
       {empty ? (
         <p className="rounded-[6px] bg-paper p-4 text-[14px] text-ink-mute">Aucune opération sur la période.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div>
           <svg
             viewBox={`0 0 ${W} ${H}`}
-            style={{ width: "100%", minWidth: Math.min(W, n * 14 + pad.l) }}
+            style={{ width: "100%", height: "auto", maxHeight: 320 }}
             role="img"
             aria-label={`${title} : ${SERIES.map((s) => `${s.label} ${fcfa(totals[s.key])}`).join(", ")}. Données détaillées dans le tableau qui suit.`}
           >

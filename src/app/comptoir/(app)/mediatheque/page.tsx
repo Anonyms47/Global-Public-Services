@@ -61,8 +61,9 @@ export default async function MediaPage({ searchParams }: PageProps<"/comptoir/m
         }))}
       />
       <p className="hint mt-6">
-        Limites : 3 Mo par fichier. Les photos sont stockées dans la base de données ; pour de nombreuses vidéos, un
-        stockage de fichiers dédié sera préférable.
+        Limites : photos de 3 Mo après réduction automatique (côté le plus long ramené à 2 000 px), vidéos de 4 Mo. Les
+        fichiers sont stockés dans la base de données ; pour de nombreuses vidéos, un stockage de fichiers dédié sera
+        préférable.
       </p>
     </>
   );

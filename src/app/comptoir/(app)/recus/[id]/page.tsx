@@ -98,9 +98,9 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
           <thead>
             <tr className="border-b border-ink text-left text-[12px] uppercase">
               <th className="py-1">Article</th>
-              <th className="py-1 text-right">Qté</th>
-              <th className="py-1 text-right">P.U.</th>
-              <th className="py-1 text-right">Total</th>
+              <th className="py-1 pl-3 text-right">Qté</th>
+              <th className="py-1 pl-3 text-right">P.U.</th>
+              <th className="py-1 pl-3 text-right">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -114,9 +114,9 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
                     {l.returned_quantity ? ` · retour : ${l.returned_quantity}` : ""}
                   </div>
                 </td>
-                <td className="py-2 text-right tabular">{l.quantity}</td>
-                <td className="py-2 text-right whitespace-nowrap tabular">{fcfa(l.unit_price)}</td>
-                <td className="py-2 text-right whitespace-nowrap tabular">{fcfa(l.unit_price * l.quantity)}</td>
+                <td className="py-2 pl-3 text-right tabular">{l.quantity}</td>
+                <td className="py-2 pl-3 text-right whitespace-nowrap tabular">{fcfa(l.unit_price)}</td>
+                <td className="py-2 pl-3 text-right whitespace-nowrap tabular">{fcfa(l.unit_price * l.quantity)}</td>
               </tr>
             ))}
           </tbody>
