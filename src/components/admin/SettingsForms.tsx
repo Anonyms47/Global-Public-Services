@@ -499,6 +499,27 @@ interface U {
   isDemo: boolean;
 }
 
+const roleSummary: Record<Role, string> = {
+  owner: "Accès complet : marges, paramètres, équipe.",
+  manager: "Catalogue, stock, commandes, vitrine, rapports sans marge.",
+  seller: "Ventes, commandes, encaissements et clients.",
+};
+
+const roleAvatar: Record<Role, string> = {
+  owner: "bg-gps-blue text-white",
+  manager: "bg-ink text-white",
+  seller: "bg-gps-red-soft text-gps-red-ink",
+};
+
+function initials(name: string) {
+  const words = name
+    .replace(/\(.*?\)/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "?";
+}
+
 export function TeamManager({ users, me }: { users: U[]; me: string }) {
   const [f, setF] = useState({
     name: "",
@@ -513,95 +534,119 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
       <div>
-        <div className="rtable overflow-x-auto rounded-[6px] border border-line bg-card">
-          <table className="w-full min-w-[620px] text-[14px]">
-            <thead>
-              <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
-                <th className="px-3 py-3 font-bold">Membre</th>
-                <th className="py-3 font-bold">Rôle</th>
-                <th className="py-3 font-bold">État</th>
-                <th className="px-3 py-3 text-right font-bold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line-soft">
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-3 py-2">
-                    <div className="font-semibold">
-                      {u.name} {u.id === me ? <Badge tone="blue">vous</Badge> : null}{" "}
+        <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-1" aria-label="Membres de l'équipe">
+          {users.map((u) => {
+            const self = u.id === me;
+            return (
+              <li
+                key={u.id}
+                className={`grid content-start gap-4 rounded-[6px] border-[1.5px] bg-card p-4 ${self ? "border-gps-blue" : "border-line"}`}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    aria-hidden="true"
+                    className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[17px] font-extrabold ${u.active ? roleAvatar[u.role] : "bg-paper-deep text-ink-mute"}`}
+                  >
+                    {initials(u.name)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[16px] font-bold">{u.name}</p>
+                    <p className="truncate text-[13px] text-ink-mute">{u.email}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {u.active ? <Badge tone="green">Actif</Badge> : <Badge tone="red">Désactivé</Badge>}
+                      {self ? <Badge tone="blue">Vous</Badge> : null}
                       {u.isDemo ? <Badge>Exemple</Badge> : null}
                     </div>
-                    <div className="text-[13px] text-ink-mute">{u.email}</div>
-                  </td>
-                  <td className="py-2" data-label="Rôle">
-                    <label className="sr-only" htmlFor={`role-${u.id}`}>
-                      Rôle de {u.name}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label" htmlFor={`role-${u.id}`}>
+                    Rôle
+                  </label>
+                  <select
+                    id={`role-${u.id}`}
+                    className="field lg:max-w-md"
+                    value={u.role}
+                    disabled={update.pending || self}
+                    aria-describedby={`role-${u.id}-aide`}
+                    onChange={(e) => update.run(() => updateUserAction(u.id, { role: e.target.value }))}
+                  >
+                    {(Object.keys(roleLabels) as Role[]).map((r) => (
+                      <option key={r} value={r}>
+                        {roleLabels[r]}
+                      </option>
+                    ))}
+                  </select>
+                  <p id={`role-${u.id}-aide`} className="hint mt-1">
+                    {self ? "Votre propre rôle ne peut pas être modifié ici." : roleSummary[u.role]}
+                  </p>
+                </div>
+
+                {pwFor === u.id ? (
+                  <form
+                    className="grid gap-2 border-t border-line pt-4 lg:max-w-md"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      update.run(() => updateUserAction(u.id, { password: pw }), {
+                        onSuccess: () => setPwFor(null),
+                      });
+                    }}
+                  >
+                    <label className="label" htmlFor={`pw-${u.id}`}>
+                      Nouveau mot de passe
                     </label>
-                    <select
-                      id={`role-${u.id}`}
-                      className="field h-10 min-h-10 w-full py-0 text-[14px] md:w-40"
-                      value={u.role}
-                      disabled={update.pending || u.id === me}
-                      onChange={(e) => update.run(() => updateUserAction(u.id, { role: e.target.value }))}
-                    >
-                      {(Object.keys(roleLabels) as Role[]).map((r) => (
-                        <option key={r} value={r}>
-                          {roleLabels[r]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="py-2" data-label="État">
-                    {u.active ? <Badge tone="green">Actif</Badge> : <Badge tone="red">Désactivé</Badge>}
-                  </td>
-                  <td className="rt-full px-3 py-2">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <button className="btn btn-ghost btn-sm" onClick={() => (setPwFor(u.id), setPw(""))}>
-                        Mot de passe
+                    <input
+                      id={`pw-${u.id}`}
+                      type="password"
+                      autoComplete="new-password"
+                      className="field"
+                      placeholder="10 caractères minimum"
+                      value={pw}
+                      onChange={(e) => setPw(e.target.value)}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPwFor(null)}>
+                        Annuler
                       </button>
-                      {u.id !== me ? (
-                        <button
-                          className={`btn btn-sm ${u.active ? "btn-danger" : "btn-outline"}`}
-                          disabled={update.pending}
-                          onClick={() => update.run(() => updateUserAction(u.id, { active: !u.active }))}
-                        >
-                          {u.active ? "Désactiver" : "Réactiver"}
-                        </button>
-                      ) : null}
+                      <button className="btn btn-blue btn-sm" disabled={pw.length < 10 || update.pending}>
+                        Enregistrer
+                      </button>
                     </div>
-                    {pwFor === u.id ? (
-                      <form
-                        className="mt-2 flex justify-end gap-2"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          update.run(() => updateUserAction(u.id, { password: pw }), {
-                            onSuccess: () => setPwFor(null),
-                          });
+                  </form>
+                ) : (
+                  <div
+                    className={`grid gap-2 border-t border-line pt-4 lg:max-w-md ${self ? "lg:max-w-56" : "grid-cols-2"}`}
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm whitespace-nowrap"
+                      onClick={() => (setPwFor(u.id), setPw(""))}
+                    >
+                      Mot de passe
+                    </button>
+                    {self ? null : (
+                      <button
+                        type="button"
+                        className={`btn btn-sm whitespace-nowrap ${u.active ? "btn-danger" : "btn-blue"}`}
+                        disabled={update.pending}
+                        onClick={() => {
+                          if (
+                            !u.active ||
+                            confirm(`Désactiver le compte de ${u.name} ? Il ne pourra plus se connecter.`)
+                          )
+                            update.run(() => updateUserAction(u.id, { active: !u.active }));
                         }}
                       >
-                        <label className="sr-only" htmlFor={`pw-${u.id}`}>
-                          Nouveau mot de passe
-                        </label>
-                        <input
-                          id={`pw-${u.id}`}
-                          type="password"
-                          autoComplete="new-password"
-                          className="field h-10 min-h-10 min-w-0 flex-1 md:w-48 md:flex-none"
-                          placeholder="10 caractères min."
-                          value={pw}
-                          onChange={(e) => setPw(e.target.value)}
-                        />
-                        <button className="btn btn-blue btn-sm" disabled={pw.length < 10}>
-                          Changer
-                        </button>
-                      </form>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        {u.active ? "Désactiver" : "Réactiver"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
         <div className="mt-3">
           <ActionFeedback failure={update.failure} success={update.success} />
         </div>
@@ -623,7 +668,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
         </Panel>
       </div>
       <form
-        className="grid content-start gap-3 rounded-[6px] border border-line bg-card p-4"
+        className="grid content-start gap-3 self-start rounded-[6px] border border-line bg-card p-4"
         onSubmit={(e) => {
           e.preventDefault();
           create.run(() => createUserAction(f), {
