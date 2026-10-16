@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { deleteServiceAction, saveServiceAction, saveStorefrontAction } from "@/app/comptoir/(app)/vitrine/actions";
-import { uploadImageAction } from "@/app/comptoir/(app)/catalogue/actions";
+import { optimizePhoto, precheck, uploadFile } from "@/lib/upload";
 import type { Service } from "@/server/domain/services";
 import { ActionFeedback, useAction } from "./useAction";
 import { proposals } from "@/lib/content-proposals";
@@ -202,11 +202,13 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
                     e.target.value = "";
                     if (!file) return;
                     setUploadError(null);
-                    const fd = new FormData();
-                    fd.append("file", file);
-                    const r = await uploadImageAction(fd).catch(() => null);
-                    if (r?.ok) setS((x) => ({ ...x, storePhotoUrl: r.data.url }));
-                    else setUploadError(r && !r.ok ? r.error : "Envoi impossible.");
+                    // Photo réduite dans le navigateur puis envoyée (type vérifié côté serveur).
+                    const photo = await optimizePhoto(file);
+                    const problem = precheck(photo, true);
+                    if (problem) return setUploadError(problem);
+                    const r = await uploadFile(photo, { photosOnly: true });
+                    if (r.ok) setS((x) => ({ ...x, storePhotoUrl: r.data.url }));
+                    else setUploadError(r.error);
                   }}
                 />
               </label>

@@ -309,6 +309,8 @@ end $$;
 alter table products add column if not exists deleted_at timestamptz;
 alter table products add column if not exists publish_at timestamptz;
 alter table products add column if not exists unpublish_at timestamptz;
+-- Fiches produits : vidéos courtes à côté des photos (la première image reste la photo principale).
+alter table product_images add column if not exists kind text not null default 'image';
 create table if not exists product_versions (
   id text primary key,
   product_id text not null references products (id) on delete cascade,

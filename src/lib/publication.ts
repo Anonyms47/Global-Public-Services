@@ -3,7 +3,7 @@ export interface PublishableInput {
   categoryId: string | null;
   description: string;
   axes: string[];
-  images: unknown[];
+  images: { kind?: "image" | "video" }[];
   variants: { sku: string; price: number; options: Record<string, string> }[];
 }
 
@@ -13,7 +13,9 @@ export function publicationIssues(input: PublishableInput) {
   if (!input.name.trim()) issues.push("Le nom du produit est obligatoire.");
   if (!input.categoryId) issues.push("Choisissez une catégorie.");
   if (input.description.trim().length < 20) issues.push("Rédigez une description d'au moins 20 caractères.");
-  if (!input.images.length) issues.push("Ajoutez au moins une photo.");
+  const photos = input.images.filter((i) => (i.kind ?? "image") !== "video");
+  if (!photos.length) issues.push("Ajoutez au moins une photo.");
+  else if (input.images[0].kind === "video") issues.push("La première image (photo principale) doit être une photo.");
   if (!input.variants.length) issues.push("Ajoutez au moins une variante avec un prix.");
   input.variants.forEach((v, i) => {
     const n = `Variante ${i + 1}`;

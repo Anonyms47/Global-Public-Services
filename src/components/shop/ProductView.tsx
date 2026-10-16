@@ -272,6 +272,21 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
               ))}
             </ul>
           ) : null}
+          {product.videos?.length ? (
+            <div className="order-3 grid gap-3 md:col-span-full">
+              {product.videos.map((v) => (
+                <video
+                  key={v.url}
+                  src={v.url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label={`Vidéo : ${v.alt || product.name}`}
+                  className="aspect-[4/5] w-full rounded-[14px] bg-ink object-contain md:aspect-video"
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 

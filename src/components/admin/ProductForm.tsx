@@ -3,16 +3,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import {
-  duplicateProductAction,
-  trashProductAction,
-  saveProductAction,
-  uploadImageAction,
-} from "@/app/comptoir/(app)/catalogue/actions";
+import { duplicateProductAction, trashProductAction, saveProductAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { publicationIssues } from "@/lib/publication";
 import { fcfa, slugify } from "@/lib/format";
 import { ActionFeedback, useAction } from "./useAction";
 import { MediaPicker } from "./MediaLibrary";
+import { UploadList, useUploadQueue } from "./UploadQueue";
 import { Badge } from "./ui";
 import { IconCheck, IconDown, IconPlus, IconTrash, IconUp, IconUpload, IconAlert } from "../ui/icons";
 
@@ -40,7 +36,7 @@ export interface ProductState {
   condition: string | null;
   axes: string[];
   axisValues: Record<string, string>;
-  images: { url: string; alt: string; color?: string | null }[];
+  images: { url: string; alt: string; color?: string | null; kind?: "image" | "video" }[];
   variants: VariantState[];
   status: "draft" | "published" | "archived";
   featured: boolean;
@@ -107,8 +103,16 @@ function ProductForm({
       return null;
     }
   });
-  const [uploading, setUploading] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploads = useUploadQueue({
+    onUploaded: (u) =>
+      setState((s) => ({
+        ...s,
+        images: [
+          ...s.images,
+          { url: u.url, alt: s.name, color: null, kind: u.mime.startsWith("video/") ? "video" : "image" },
+        ],
+      })),
+  });
   const { run, pending, failure, success } = useAction();
   const dirty = snapshot(state) !== saved;
   const dirtyRef = useRef(dirty);
@@ -202,27 +206,11 @@ function ProductForm({
     });
   };
 
-  const upload = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setUploadError(null);
-    for (const file of Array.from(files)) {
-      setUploading((n) => n + 1);
-      const fd = new FormData();
-      fd.append("file", file);
-      try {
-        const r = await uploadImageAction(fd);
-        if (r.ok)
-          setState((s) => ({
-            ...s,
-            images: [...s.images, { url: r.data.url, alt: s.name, color: null }],
-          }));
-        else setUploadError(`${file.name} : ${r.error}`);
-      } catch {
-        setUploadError(`${file.name} : envoi impossible (connexion ou taille).`);
-      } finally {
-        setUploading((n) => n - 1);
-      }
-    }
+  /** Met une photo en tête : elle devient la photo principale (vignettes, partage). */
+  const makeCover = (i: number) => {
+    const imgs = [...state.images];
+    const [img] = imgs.splice(i, 1);
+    set({ images: [img, ...imgs] });
   };
 
   const moveImage = (i: number, d: -1 | 1) => {
@@ -436,21 +424,36 @@ function ProductForm({
           </div>
 
           <fieldset className="content-start">
-            <legend className="label">Photos (la première est la photo principale)</legend>
+            <legend className="label">Photos et vidéos (la première photo est la photo principale)</legend>
             <ul className="grid gap-2">
               {state.images.map((img, i) => (
                 <li
                   key={img.url + i}
                   className="grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-[6px] border border-line bg-card p-2"
                 >
-                  <Image
-                    src={img.url}
-                    alt=""
-                    width={72}
-                    height={90}
-                    unoptimized={img.url.endsWith(".svg")}
-                    className="aspect-[4/5] w-[72px] rounded-[4px] object-cover"
-                  />
+                  <div className="relative">
+                    {img.kind === "video" ? (
+                      <video
+                        src={img.url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="aspect-[4/5] w-[72px] rounded-[4px] bg-ink object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={img.url}
+                        alt=""
+                        width={72}
+                        height={90}
+                        unoptimized={img.url.endsWith(".svg")}
+                        className="aspect-[4/5] w-[72px] rounded-[4px] object-cover"
+                      />
+                    )}
+                    <span className="absolute bottom-1 left-1 rounded-[3px] bg-ink/80 px-1 text-[10px] font-bold text-white">
+                      {img.kind === "video" ? "Vidéo" : i === 0 ? "Principale" : `Photo ${i + 1}`}
+                    </span>
+                  </div>
                   <div className="grid gap-2">
                     <input
                       aria-label={`Texte alternatif de la photo ${i + 1}`}
@@ -463,6 +466,15 @@ function ProductForm({
                         })
                       }
                     />
+                    {i > 0 && img.kind !== "video" ? (
+                      <button
+                        type="button"
+                        className="justify-self-start text-[13px] font-semibold text-gps-blue underline underline-offset-2"
+                        onClick={() => makeCover(i)}
+                      >
+                        Définir comme photo principale
+                      </button>
+                    ) : null}
                     {colorAxis && colorValues.length ? (
                       <select
                         aria-label={`${colorAxis} de la photo ${i + 1}`}
@@ -512,34 +524,41 @@ function ProductForm({
                 </li>
               ))}
             </ul>
-            <label className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed border-line bg-white p-4 text-center focus-within:border-gps-blue hover:border-gps-blue">
+            <label
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                uploads.add(e.dataTransfer.files);
+              }}
+              className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed border-line bg-white p-4 text-center focus-within:border-gps-blue hover:border-gps-blue"
+            >
               <IconUpload />
-              <span className="font-bold">{uploading ? `Envoi en cours (${uploading})…` : "Ajouter des photos"}</span>
+              <span className="font-bold">{uploads.busy ? "Envoi en cours…" : "Ajouter des photos ou une vidéo"}</span>
               <span className="text-[13px] text-ink-mute">
-                JPEG, PNG ou WebP · 3 Mo max par photo · format vertical 4:5 conseillé
+                Photos JPEG, PNG, WebP réduites automatiquement · vidéo MP4 ou WebM jusqu&apos;à 4 Mo · format vertical
+                4:5 conseillé
               </span>
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
                 multiple
                 className="sr-only"
-                onChange={(e) => (upload(e.target.files), (e.target.value = ""))}
+                onChange={(e) => (uploads.add(e.target.files), (e.target.value = ""))}
               />
             </label>
+            <UploadList items={uploads.items} retry={uploads.retry} dismiss={uploads.dismiss} />
             <MediaPicker
               onPick={(img) =>
                 setState((s) =>
                   s.images.some((x) => x.url === img.url)
                     ? s
-                    : { ...s, images: [...s.images, { url: img.url, alt: img.alt || s.name, color: null }] },
+                    : {
+                        ...s,
+                        images: [...s.images, { url: img.url, alt: img.alt || s.name, color: null, kind: img.kind }],
+                      },
                 )
               }
             />
-            {uploadError ? (
-              <p role="alert" className="error-text">
-                {uploadError}
-              </p>
-            ) : null}
           </fieldset>
         </div>
       ) : null}

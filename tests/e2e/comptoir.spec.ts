@@ -299,4 +299,34 @@ test.describe("Le Comptoir", () => {
     await page.reload();
     await expect(page.getByText("logo-gps-mark.png")).toBeVisible();
   });
+
+  test("médias : grande photo réduite avant l'envoi, progression, erreur puis nouvel essai", async ({ page }) => {
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/mediatheque");
+    // Photo de 3 000 × 3 000 px (bruit, plusieurs Mo) : réduite à 2 000 px dans le navigateur.
+    const big = await page.evaluate(() => {
+      const c = document.createElement("canvas");
+      c.width = c.height = 3000;
+      const ctx = c.getContext("2d")!;
+      const img = ctx.createImageData(3000, 3000);
+      for (let i = 0; i < img.data.length; i++) img.data[i] = (i * 2654435761) % 251;
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL("image/png").split(",")[1];
+    });
+    const input = page.locator('input[type="file"]');
+    await input.setInputFiles({ name: "grande-photo.png", mimeType: "image/png", buffer: Buffer.from(big, "base64") });
+    const row = page.getByRole("list", { name: "Envois en cours" }).locator("li", { hasText: "grande-photo.png" });
+    await expect(row.getByText("Envoyé")).toBeVisible({ timeout: 30_000 });
+    await expect(row.getByText(/Optimisée : .* Mo → /)).toBeVisible();
+    await expect(row.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+
+    // Fichier refusé (faux PNG) : erreur sur sa ligne, avec « Réessayer » et « Retirer ».
+    await input.setInputFiles({ name: "faux.png", mimeType: "image/png", buffer: Buffer.from("pas une image") });
+    const bad = page.getByRole("list", { name: "Envois en cours" }).locator("li", { hasText: "faux.png" });
+    await expect(bad.getByText(/Format non pris en charge/)).toBeVisible();
+    await bad.getByRole("button", { name: "Réessayer" }).click();
+    await expect(bad.getByText(/Format non pris en charge/)).toBeVisible();
+    await bad.getByRole("button", { name: "Retirer" }).click();
+    await expect(bad).toHaveCount(0);
+  });
 });

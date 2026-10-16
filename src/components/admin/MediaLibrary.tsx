@@ -8,8 +8,9 @@ import {
   purgeMediaAction,
   restoreMediaAction,
   trashMediaAction,
-  uploadMediaAction,
 } from "@/app/comptoir/(app)/mediatheque/actions";
+import { useRouter } from "next/navigation";
+import { UploadList, useUploadQueue } from "./UploadQueue";
 import { ActionFeedback, useAction } from "./useAction";
 import { Badge } from "./ui";
 import { Sheet } from "../ui/Sheet";
@@ -31,26 +32,11 @@ export interface MediaItem {
 const kb = (n: number) =>
   n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} Mo` : `${Math.max(1, Math.round(n / 1024))} Ko`;
 
-/** Envoi multiple : un fichier à la fois, progression et erreurs par fichier. */
+/** Envoi multiple : photos réduites avant l'envoi, progression et reprise par fichier. */
 export function MediaUploader() {
-  const a = useAction();
-  const [queue, setQueue] = useState<{ name: string; state: "wait" | "ok" | "error"; error?: string }[]>([]);
+  const router = useRouter();
+  const q = useUploadQueue({ onUploaded: () => router.refresh() });
   const [drag, setDrag] = useState(false);
-  const send = async (files: FileList | File[] | null) => {
-    const list = Array.from(files ?? []);
-    if (!list.length) return;
-    setQueue(list.map((f) => ({ name: f.name, state: "wait" })));
-    for (const [i, file] of list.entries()) {
-      const fd = new FormData();
-      fd.append("file", file);
-      let res: { ok: boolean; error?: string } = { ok: false, error: "Envoi impossible (connexion ou taille)." };
-      try {
-        res = (await uploadMediaAction(fd)) as typeof res;
-      } catch {}
-      setQueue((q) => q.map((x, j) => (j === i ? { ...x, state: res.ok ? "ok" : "error", error: res.error } : x)));
-    }
-    a.run(async () => ({ ok: true as const, data: null }), { successMessage: "Envoi terminé." });
-  };
   return (
     <div>
       <label
@@ -59,46 +45,25 @@ export function MediaUploader() {
         onDrop={(e) => {
           e.preventDefault();
           setDrag(false);
-          void send(e.dataTransfer.files);
+          q.add(e.dataTransfer.files);
         }}
         className={`flex min-h-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed p-6 text-center focus-within:border-gps-blue hover:border-gps-blue ${drag ? "border-gps-blue bg-gps-blue-soft" : "border-line bg-white"}`}
       >
         <IconUpload />
         <span className="font-bold">Déposez vos fichiers ici ou touchez pour choisir</span>
         <span className="text-[13px] text-ink-mute">
-          Photos JPEG, PNG, WebP · vidéos courtes MP4, WebM · 3 Mo maximum par fichier · plusieurs fichiers à la fois
+          Photos JPEG, PNG, WebP (réduites automatiquement) · vidéos courtes MP4, WebM jusqu&apos;à 4 Mo · plusieurs
+          fichiers à la fois
         </span>
         <input
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
           className="sr-only"
-          onChange={(e) => (void send(e.target.files), (e.target.value = ""))}
+          onChange={(e) => (q.add(e.target.files), (e.target.value = ""))}
         />
       </label>
-      {queue.length ? (
-        <ul className="mt-3 grid gap-1 text-[14px]" aria-live="polite">
-          {queue.map((q, i) => (
-            <li key={i} className="flex flex-wrap justify-between gap-2">
-              <span className="truncate">{q.name}</span>
-              <span
-                className={
-                  q.state === "ok"
-                    ? "font-semibold text-wa-ink"
-                    : q.state === "error"
-                      ? "text-gps-red-ink"
-                      : "text-ink-mute"
-                }
-              >
-                {q.state === "ok" ? "Envoyé" : q.state === "error" ? q.error : "En attente…"}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <div className="mt-2">
-        <ActionFeedback failure={a.failure} success={a.success} />
-      </div>
+      <UploadList items={q.items} retry={q.retry} dismiss={q.dismiss} />
     </div>
   );
 }
@@ -213,11 +178,15 @@ export function MediaGrid({ items, canEdit, canPurge }: { items: MediaItem[]; ca
 }
 
 /** Sélecteur de photos de la médiathèque, pour la fiche produit. */
-export function MediaPicker({ onPick }: { onPick: (img: { url: string; alt: string }) => void }) {
+export function MediaPicker({
+  onPick,
+}: {
+  onPick: (img: { url: string; alt: string; kind: "image" | "video" }) => void;
+}) {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<{ id: string; url: string; name: string; alt: string; used: number }[] | null>(
-    null,
-  );
+  const [items, setItems] = useState<
+    { id: string; url: string; name: string; alt: string; used: number; kind: "image" | "video" }[] | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const load = async () => {
     setOpen(true);
@@ -233,7 +202,7 @@ export function MediaPicker({ onPick }: { onPick: (img: { url: string; alt: stri
       <Sheet open={open} onClose={() => setOpen(false)} title="Médiathèque" side="right">
         {error ? <p className="text-gps-red-ink">{error}</p> : null}
         {!items ? <p className="text-ink-mute">Chargement…</p> : null}
-        {items && !items.length ? <p className="text-ink-mute">Aucune photo dans la médiathèque.</p> : null}
+        {items && !items.length ? <p className="text-ink-mute">Aucun fichier dans la médiathèque.</p> : null}
         <ul className="grid grid-cols-2 gap-2">
           {items?.map((m) => (
             <li key={m.id}>
@@ -241,14 +210,19 @@ export function MediaPicker({ onPick }: { onPick: (img: { url: string; alt: stri
                 type="button"
                 className="block w-full overflow-hidden rounded-[6px] border border-line text-left hover:border-gps-blue"
                 onClick={() => {
-                  onPick({ url: m.url, alt: m.alt });
+                  onPick({ url: m.url, alt: m.alt, kind: m.kind });
                   setOpen(false);
                 }}
               >
-                <span className="relative block aspect-square">
-                  <Image src={m.url} alt={m.alt || m.name} fill sizes="200px" className="object-cover" unoptimized />
+                <span className="relative block aspect-square bg-ink">
+                  {m.kind === "video" ? (
+                    <video src={m.url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                  ) : (
+                    <Image src={m.url} alt={m.alt || m.name} fill sizes="200px" className="object-cover" unoptimized />
+                  )}
                 </span>
                 <span className="block truncate p-1.5 text-[12px]">
+                  {m.kind === "video" ? "Vidéo · " : ""}
                   {m.name || "Photo"} {m.used ? "· utilisée" : ""}
                 </span>
               </button>

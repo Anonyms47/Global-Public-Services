@@ -697,6 +697,80 @@ describe("Catalogue, panier et promotions", () => {
     await db.query("delete from product_images where url = $1", [img.url]);
   });
 
+  it("médias : vidéo dans une fiche, photo principale obligatoire, fichier de la vitrine protégé, limites", async () => {
+    const owner = await userByRole(db, "owner");
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    const mp4 = (n: number) => {
+      const b = new Uint8Array(n);
+      b.set([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42")]);
+      return b;
+    };
+    // Vidéos : jusqu'à 4 Mo (au-delà de la limite des photos), pas plus.
+    const clip = await storeMedia(db, { bytes: mp4(3.5 * 1024 * 1024), name: "clip.mp4", userId: null, isDemo: true });
+    expect(clip.mime).toBe("video/mp4");
+    await expect(
+      storeMedia(db, { bytes: mp4(4 * 1024 * 1024 + 1), name: "long.mp4", userId: null, isDemo: true }),
+    ).rejects.toThrow(/4 Mo/);
+    const photo = await storeMedia(db, { bytes: png, name: "p.png", userId: null, isDemo: true });
+
+    // Fiche produit : la vidéo s'affiche à part, la photo principale doit être une photo.
+    const ctx = { userId: owner.id, withCosts: true };
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const input = {
+      ...base,
+      id: undefined,
+      slug: undefined,
+      name: "Recette vidéo",
+      status: "published" as const,
+      featured: false,
+      axes: [],
+      variants: [{ sku: "VID-1", options: {}, price: 5000, initialStock: 1 }],
+    };
+    await expect(
+      saveProduct(
+        db,
+        {
+          ...input,
+          images: [
+            { url: clip.url, alt: "", kind: "video" },
+            { url: photo.url, alt: "", kind: "image" },
+          ],
+        },
+        ctx,
+      ),
+    ).rejects.toThrow(/photo principale/);
+    const saved = await saveProduct(
+      db,
+      {
+        ...input,
+        images: [
+          { url: photo.url, alt: "", kind: "image" },
+          { url: clip.url, alt: "Démonstration", kind: "video" },
+        ],
+      },
+      ctx,
+    );
+    const pub = (await publishedProductById(db, saved.id))!;
+    expect(pub.images.map((i) => i.url)).toEqual([photo.url]);
+    expect(pub.videos).toEqual([{ url: clip.url, alt: "Démonstration" }]);
+    expect((await productForEdit(db, saved.id, { withCosts: false }))!.images.map((i) => i.kind)).toEqual([
+      "image",
+      "video",
+    ]);
+
+    // Photo de la boutique (réglages) : comptée comme utilisée, protégée contre la suppression.
+    const storePhoto = await storeMedia(db, { bytes: png, name: "boutique.png", userId: null, isDemo: true });
+    const company = (await getSettings(db)).company;
+    await saveSettingsSection(db, "company", { ...company, storePhotoUrl: storePhoto.url });
+    expect((await listMedia(db, { view: "all" })).find((m) => m.id === storePhoto.id)?.used_by).toBe(1);
+    await expect(trashMedia(db, storePhoto.id)).rejects.toThrow(/vitrine ou la configuration/);
+    await saveSettingsSection(db, "company", company);
+    await trashMedia(db, storePhoto.id);
+
+    await trashProduct(db, saved.id);
+    await purgeProduct(db, saved.id);
+  });
+
   it("import CSV : aperçu, erreurs par ligne, regroupement en variantes, tout ou rien", async () => {
     const owner = await userByRole(db, "owner");
     expect(parseCsv('a;b\n"x;1";"di""t"\n')).toEqual([

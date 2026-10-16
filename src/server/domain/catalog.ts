@@ -48,6 +48,8 @@ export interface PublicProduct {
   createdAt: Date;
   isDemo: boolean;
   images: { url: string; alt: string; color: string | null }[];
+  /** Vidéos courtes de la fiche (MP4/WebM), affichées après les photos. */
+  videos: { url: string; alt: string }[];
   variants: PublicVariant[];
   promo: { name: string; endsAt: Date; label: string } | null;
   minPrice: number;
@@ -133,7 +135,10 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
       url: string;
       alt: string;
       color: string | null;
-    }>("select product_id, url, alt, color from product_images where product_id = any($1) order by position", [ids]),
+      kind: string;
+    }>("select product_id, url, alt, color, kind from product_images where product_id = any($1) order by position", [
+      ids,
+    ]),
     db.query<Promotion>("select * from promotions where product_id = any($1) and active", [ids]),
   ]);
   return rows
@@ -165,7 +170,10 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         featuredPosition: r.featured_position,
         createdAt: new Date(r.created_at),
         isDemo: r.is_demo,
-        images: images.filter((i) => i.product_id === r.id).map(({ url, alt, color }) => ({ url, alt, color })),
+        images: images
+          .filter((i) => i.product_id === r.id && i.kind !== "video")
+          .map(({ url, alt, color }) => ({ url, alt, color })),
+        videos: images.filter((i) => i.product_id === r.id && i.kind === "video").map(({ url, alt }) => ({ url, alt })),
         variants: pv,
         promo: promo
           ? {
@@ -367,7 +375,7 @@ export async function adminProducts(db: Db, opts: { q?: string; status?: string;
   return db.query<AdminProductRow>(
     `select p.id, p.slug, p.name, p.brand, p.category_id, c.name as category_name, p.status, p.featured,
             p.updated_at, p.is_demo, p.publish_at, p.unpublish_at, p.deleted_at,
-            (select url from product_images i where i.product_id = p.id order by position limit 1) as image,
+            (select url from product_images i where i.product_id = p.id and i.kind = 'image' order by position limit 1) as image,
             (select count(*)::int from variants v where v.product_id = p.id and v.active) as variant_count,
             (select min(price) from variants v where v.product_id = p.id and v.active) as min_price,
             (select max(price) from variants v where v.product_id = p.id and v.active) as max_price,
@@ -401,7 +409,7 @@ export interface ProductInput {
   specs: Spec[];
   condition: string | null;
   axes: string[];
-  images: { url: string; alt: string; color?: string | null }[];
+  images: { url: string; alt: string; color?: string | null; kind?: "image" | "video" }[];
   variants: VariantInput[];
   status: ProductStatus;
   featured: boolean;
@@ -435,8 +443,8 @@ export async function productForEdit(
   const p = await db.one<Record<string, unknown>>("select * from products where id = $1", [id]);
   if (!p) return null;
   const [images, variants, sales] = await Promise.all([
-    db.query<{ url: string; alt: string; color: string | null }>(
-      "select url, alt, color from product_images where product_id = $1 order by position",
+    db.query<{ url: string; alt: string; color: string | null; kind: "image" | "video" }>(
+      "select url, alt, color, kind from product_images where product_id = $1 order by position",
       [id],
     ),
     db.query<Record<string, unknown>>(
@@ -608,8 +616,8 @@ export async function saveProduct(
     await tx.query("delete from product_images where product_id = $1", [id]);
     for (const [i, img] of input.images.entries()) {
       await tx.query(
-        "insert into product_images (id, product_id, url, alt, color, position) values ($1,$2,$3,$4,$5,$6)",
-        [newId(), id, img.url, img.alt || input.name, img.color ?? null, i],
+        "insert into product_images (id, product_id, url, alt, color, position, kind) values ($1,$2,$3,$4,$5,$6,$7)",
+        [newId(), id, img.url, img.alt || input.name, img.color ?? null, i, img.kind === "video" ? "video" : "image"],
       );
     }
 
