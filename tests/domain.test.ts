@@ -1210,6 +1210,109 @@ describe("Catalogue, panier et promotions", () => {
     const asc = filterProducts(all, { tri: "prix-asc" });
     expect(asc[0].minPrice).toBeLessThanOrEqual(asc[asc.length - 1].minPrice);
   });
+
+  it("saisie rapide : brouillon minimal, référence proposée, code-barres unique, création idempotente, stock commun", async () => {
+    const { codeClashes, listCategories } = await import("@/server/domain/catalog");
+    const { publicationHints, publicationIssues } = await import("@/lib/publication");
+    const manager = await userByRole(db, "manager");
+    const owner = await userByRole(db, "owner");
+    const ctx = { userId: manager.id, withCosts: false };
+    const categoryId = (await listCategories(db, { scope: "active" }))[0].id;
+    const base = {
+      name: "Saisie Rapide",
+      brand: "",
+      categoryId,
+      description: "",
+      specs: [],
+      condition: null,
+      axes: [] as string[],
+      images: [] as { url: string; alt: string; kind?: "image" | "video" }[],
+      status: "draft" as const,
+      featured: false,
+    };
+    // Brouillon : nom seul suffit, référence vide proposée à partir du nom, stock initial tracé.
+    const createId = crypto.randomUUID();
+    const input = {
+      ...base,
+      createId,
+      warranty: "6 mois",
+      variants: [{ sku: "", barcode: "600 1234 567890", options: {}, price: 5000, initialStock: 3 }],
+    };
+    const first = await saveProduct(db, input, ctx);
+    // Double clic ou réseau lent : le même envoi ne crée pas un second produit.
+    const again = await saveProduct(db, input, ctx);
+    expect(again.id).toBe(first.id);
+    expect(first.id).toBe(createId);
+    expect(
+      (await db.one<{ n: number }>("select count(*)::int as n from products where name = 'Saisie Rapide'"))!.n,
+    ).toBe(1);
+    const p = (await productForEdit(db, first.id, { withCosts: false }))!;
+    expect(p.variants[0].sku).toBe("SAISIERA");
+    expect(p.variants[0].barcode).toBe("6001234567890");
+    expect(p.variants[0].onHand).toBe(3);
+    expect(p.warranty).toBe("6 mois");
+    const moves = await db.query<{ kind: string; on_hand_delta: number }>(
+      "select kind, on_hand_delta from stock_movements where variant_id = $1",
+      [p.variants[0].id],
+    );
+    expect(moves).toEqual([{ kind: "initial", on_hand_delta: 3 }]);
+
+    // Code-barres et référence déjà pris : signalés pendant la saisie, refusés à l'enregistrement.
+    const clash = await codeClashes(db, { skus: ["saisiera"], barcodes: ["6001234567890"] }, null);
+    expect(clash.skus[0]).toMatchObject({ code: "SAISIERA", name: "Saisie Rapide" });
+    expect(clash.barcodes[0]).toMatchObject({ code: "6001234567890", name: "Saisie Rapide" });
+    expect(await codeClashes(db, { skus: ["SAISIERA"], barcodes: [] }, first.id)).toEqual({ skus: [], barcodes: [] });
+    await expect(
+      saveProduct(
+        db,
+        { ...base, name: "Autre", variants: [{ sku: "", barcode: "6001234567890", options: {}, price: 1 }] },
+        ctx,
+      ),
+    ).rejects.toThrow(/code-barres 6001234567890 est déjà utilisé/);
+
+    // Variantes sans référence : références uniques générées (suffixe si le nom existe déjà).
+    const twin = await saveProduct(
+      db,
+      {
+        ...base,
+        axes: ["Couleur"],
+        variants: [
+          { sku: "", options: { Couleur: "Noir" }, price: 5000 },
+          { sku: "", options: { Couleur: "Bleu" }, price: 5000 },
+        ],
+      },
+      ctx,
+    );
+    const skus = (await productForEdit(db, twin.id, { withCosts: false }))!.variants.map((v) => v.sku);
+    expect(skus).toEqual(["SAISIERA-NOIR", "SAISIERA-BLEU"]);
+    const third = await saveProduct(db, { ...base, variants: [{ sku: "", options: {}, price: 1 }] }, ctx);
+    expect((await productForEdit(db, third.id, { withCosts: false }))!.variants[0].sku).toBe("SAISIERA-2");
+
+    // Publication : nom, catégorie, prix valide et photo principale ; la description guide sans bloquer.
+    const check = { ...base, variants: [{ sku: "", price: 5000, costPrice: 6000, options: {} }] };
+    expect(publicationIssues(check)).toEqual(["Ajoutez au moins une photo."]);
+    expect(publicationHints(check)).toEqual([
+      "Une description de quelques lignes aide les clients.",
+      "Prix de vente inférieur au coût d'achat.",
+    ]);
+    await expect(
+      saveProduct(db, { ...input, id: first.id, createId: undefined, status: "published" }, ctx),
+    ).rejects.toThrow(/Publication impossible : Ajoutez au moins une photo/);
+    expect((await productForEdit(db, first.id, { withCosts: false }))!.status).toBe("draft");
+
+    // Stock commun : aucune quantité par point de vente, aucun transfert.
+    const perStore = await db.one<{ n: number }>(
+      `select count(*)::int as n from information_schema.columns
+        where table_name in ('variants', 'stock_movements', 'stock_batches') and column_name = 'store_id'`,
+    );
+    expect(perStore!.n).toBe(0);
+    // Droits : coût réservé au propriétaire, catalogue fermé aux vendeurs.
+    const seller = await userByRole(db, "seller");
+    expect(can(seller, "catalog.edit")).toBe(false);
+    expect(can(manager, "catalog.costs")).toBe(false);
+    expect(can(owner, "catalog.costs")).toBe(true);
+    await db.query("delete from products where name in ('Saisie Rapide', 'Autre')");
+  });
 });
 
 describe("Droits, clients, rapports, démonstration", () => {
@@ -1984,6 +2087,40 @@ describe("Points de vente (stock commun)", () => {
     await db.query("update users set default_store_id = null");
     await db.query("update orders set store_id = null where store_id in ($1, $2)", [s1, s2]);
     await db.query("update order_requests set store_id = null where store_id in ($1, $2)", [s1, s2]);
+    await db.query("delete from stores");
+  });
+
+  it("centre de lancement : informations manquantes listées sans mention de démonstration", async () => {
+    const st = await import("@/server/domain/stores");
+    await st.saveStore(db, {
+      name: "Boutique lancement",
+      address: "",
+      district: "Dabakh Malick",
+      city: "Petit Mbao",
+      landmark: "",
+      maps_url: "",
+      hours: st.defaultHours,
+      closures: [],
+      photo_url: null,
+      phone: "",
+      services: "",
+      pickup_enabled: true,
+      counter_enabled: true,
+      is_main: true,
+      published: true,
+    });
+    const env = { demoMode: false, indexable: false, siteUrl: "", protectedDemo: false };
+    const checks = await launchChecks(db, await getSettings(db), env);
+    const by = (k: string) => checks.find((c) => c.key === k)!;
+    expect(by("store-days")).toMatchObject({ status: "todo", fix: "/comptoir/parametres/points-de-vente" });
+    expect(by("store-days").detail).toMatch(/Boutique lancement/);
+    expect(by("store-place").status).toBe("todo");
+    expect(by("store-photos").status).toBe("todo");
+    expect(by("delivery").status).not.toBe("ok");
+    expect(["policy-warranty", "policy-returns", "policy-payment", "texts"].every((k) => by(k))).toBe(true);
+    // Plus aucune donnée d'exemple : aucun contrôle ni texte ne parle de démonstration.
+    expect(checks.some((c) => c.key === "demo")).toBe(false);
+    expect(JSON.stringify(checks)).not.toMatch(/démonstration|d'exemple|fictif/i);
     await db.query("delete from stores");
   });
 });

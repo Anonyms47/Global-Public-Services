@@ -3,6 +3,8 @@ import { fail } from "./errors";
 import { hasRealOwner } from "./auth";
 import { audit } from "./audit";
 import { getSettings, saveSettingsSection, type Settings, type ShopMode } from "./settings";
+import { listStores } from "./stores";
+import { DAYS } from "@/lib/stores";
 
 export type CheckStatus = "todo" | "incomplete" | "verify" | "ok" | "blocking";
 
@@ -60,7 +62,7 @@ const filled = (values: string[]) => {
 
 export async function launchChecks(db: Db, settings: Settings, env: Env): Promise<LaunchCheck[]> {
   const c = settings.company;
-  const [realOwner, catalog, demo, team] = await Promise.all([
+  const [realOwner, catalog, demo, team, stores] = await Promise.all([
     hasRealOwner(db),
     db.one<{ published: number; no_image: number; no_cost: number }>(
       `select
@@ -72,7 +74,22 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
     ),
     db.one<{ n: number }>("select count(*)::int as n from products where is_demo"),
     db.one<{ n: number }>("select count(*)::int as n from users where active and not is_demo"),
+    listStores(db, { publishedOnly: true }),
   ]);
+  // Points de vente : ce qui manque à chacun (rien n'est deviné à la place de GPS).
+  const storesMissing = (test: (s: (typeof stores)[number]) => boolean) =>
+    stores.filter((s) => !test(s)).map((s) => s.name);
+  const storeCheck = (missing: string[]): CheckStatus =>
+    !stores.length ? "todo" : missing.length === stores.length ? "todo" : missing.length ? "incomplete" : "ok";
+  const noDays = storesMissing((s) => DAYS.some(([k]) => s.hours?.days?.[k]?.enabled));
+  const noPlace = storesMissing((s) => !!s.address.trim() && !!s.landmark.trim());
+  const noPhoto = storesMissing((s) => !!s.photo_url);
+  const missingIn = (names: string[], what: string) =>
+    !stores.length
+      ? "Aucun point de vente publié."
+      : names.length
+        ? `${what} : ${names.join(", ")}.`
+        : "Renseigné pour chaque point de vente.";
   const wa = c.whatsapp.replace(/\D/g, "");
   const r = settings.reception;
   const checks: LaunchCheck[] = [
@@ -115,19 +132,24 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
       status: catalog?.published ? "ok" : "blocking",
       detail: catalog?.published
         ? `${catalog.published} produit${catalog.published > 1 ? "s" : ""} réel${catalog.published > 1 ? "s" : ""} publié${catalog.published > 1 ? "s" : ""}.`
-        : "Aucun produit réel publié : le site ne montre que le catalogue d'exemple.",
+        : "Aucun produit publié pour l'instant.",
       fix: "/comptoir/catalogue/nouveau",
     },
-    {
-      key: "demo",
-      level: 1,
-      label: "Données d'exemple retirées",
-      status: demo?.n ? "blocking" : "ok",
-      detail: demo?.n
-        ? `${demo.n} produit${demo.n > 1 ? "s" : ""} d'exemple en ligne. À purger au moment de l'ouverture, pas avant.`
-        : "Aucune donnée d'exemple.",
-      fix: "/comptoir/parametres#t-demo",
-    },
+    // Contrôle affiché seulement s'il reste des données d'exemple à retirer.
+    ...((demo?.n ?? 0) > 0 || env.demoMode
+      ? [
+          {
+            key: "demo",
+            level: 1 as const,
+            label: "Données d'exemple retirées",
+            status: (demo?.n ? "blocking" : "ok") as CheckStatus,
+            detail: demo?.n
+              ? `${demo.n} produit${demo.n > 1 ? "s" : ""} d'exemple en ligne. À purger au moment de l'ouverture, pas avant.`
+              : "Aucune donnée d'exemple.",
+            fix: "/comptoir/parametres#t-demo",
+          },
+        ]
+      : []),
     {
       key: "reception",
       level: 1,
@@ -147,12 +169,51 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
       fix: "/comptoir/parametres#t-reception",
     },
     {
-      key: "policies",
+      key: "delivery",
       level: 1,
-      label: "Garantie, retours et paiement",
-      status: filled([settings.policies.warranty, settings.policies.returns, settings.policies.payment]),
-      detail: "Textes repris sur les fiches produits et les conditions de vente. Rien n'est inventé à la place de GPS.",
+      label: "Zones et frais de livraison",
+      status: !r.zones.length ? "todo" : r.zones.some((z) => z.fee === null) ? "incomplete" : "ok",
+      detail: !r.zones.length
+        ? "Aucune zone de livraison saisie."
+        : r.zones.some((z) => z.fee === null)
+          ? `Frais à saisir : ${r.zones
+              .filter((z) => z.fee === null)
+              .map((z) => z.name)
+              .join(", ")}.`
+          : `${r.zones.length} zone${r.zones.length > 1 ? "s" : ""} avec frais.`,
+      fix: "/comptoir/parametres#t-reception",
+    },
+    ...(
+      [
+        ["warranty", "Garantie", settings.policies.warranty],
+        ["returns", "Retours", settings.policies.returns],
+        ["payment", "Moyens de paiement", settings.policies.payment],
+      ] as const
+    ).map(([key, label, value]) => ({
+      key: `policy-${key}`,
+      level: 1 as const,
+      label: `Texte « ${label} »`,
+      status: (value.trim() ? "ok" : "todo") as CheckStatus,
+      detail: "Repris sur les fiches produits et les conditions de vente. Rien n'est inventé à la place de GPS.",
       fix: "/comptoir/parametres#t-politiques",
+    })),
+    {
+      key: "store-days",
+      level: 1,
+      label: "Jours d'ouverture des points de vente",
+      status: storeCheck(noDays),
+      detail: noDays.length
+        ? `${missingIn(noDays, "Jours à confirmer")} En attendant, seule la plage horaire s'affiche.`
+        : missingIn(noDays, ""),
+      fix: "/comptoir/parametres/points-de-vente",
+    },
+    {
+      key: "store-place",
+      level: 1,
+      label: "Adresse et repère de chaque point de vente",
+      status: storeCheck(noPlace),
+      detail: missingIn(noPlace, "À compléter"),
+      fix: "/comptoir/parametres/points-de-vente",
     },
     {
       key: "legal",
@@ -185,18 +246,18 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
     {
       key: "texts",
       level: 2,
-      label: "Textes « Notre histoire » et « La boutique »",
+      label: "Texte À propos (« Notre histoire » et « La boutique »)",
       status: filled([c.aboutText, c.storeText]),
-      detail: "Page À propos et accueil.",
+      detail: "Page À propos et accueil : masqués tant qu'ils sont vides.",
       fix: "/comptoir/parametres#t-entreprise",
     },
     {
-      key: "place",
+      key: "store-photos",
       level: 2,
-      label: "Photo du point de vente et plan",
-      status: filled([c.storePhotoUrl, c.mapsUrl]),
-      detail: "Aide les clients à trouver le comptoir.",
-      fix: "/comptoir/parametres#t-entreprise",
+      label: "Photos des points de vente",
+      status: storeCheck(noPhoto),
+      detail: missingIn(noPhoto, "Sans photo"),
+      fix: "/comptoir/parametres/points-de-vente",
     },
     {
       key: "team",

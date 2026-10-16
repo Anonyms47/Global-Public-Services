@@ -309,6 +309,10 @@ end $$;
 alter table products add column if not exists deleted_at timestamptz;
 alter table products add column if not exists publish_at timestamptz;
 alter table products add column if not exists unpublish_at timestamptz;
+-- Saisie en boutique : garantie propre au produit, code-barres par variante (unique s'il est renseigné).
+alter table products add column if not exists warranty text not null default '';
+alter table variants add column if not exists barcode text;
+create unique index if not exists variants_barcode on variants (barcode) where barcode is not null and barcode <> '';
 -- Catégories gérées depuis le Comptoir : couverture, visibilité, mise en avant, archivage (structure plate).
 alter table categories add column if not exists image_url text;
 alter table categories add column if not exists visible boolean not null default true;

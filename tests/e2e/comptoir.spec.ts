@@ -277,7 +277,7 @@ test.describe("Le Comptoir", () => {
       .first()
       .click();
     await expect(page.getByRole("heading", { name: "Historique des versions" })).toBeVisible();
-    await page.getByRole("button", { name: /3\s*Publier/ }).click();
+    await page.locator("summary", { hasText: "Autres actions" }).click();
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Mettre à la corbeille" }).click();
     await expect(page).toHaveURL(/statut=corbeille/);
@@ -435,5 +435,95 @@ test.describe("Le Comptoir", () => {
       await page.goto(path);
       await expect(page.locator("body")).not.toContainText(/à confirmer/i);
     }
+  });
+  test("saisie en boutique : clavier, variantes, vidéo, brouillon repris, duplication sans valeurs uniques, sans doublon", async ({
+    page,
+  }) => {
+    const fs = await import("node:fs");
+    await login(page, "proprietaire@demo.gps");
+    await page.goto("/comptoir/catalogue/nouveau");
+    // Clavier : le nom a le focus, Tab mène à la catégorie.
+    await expect(page.locator("#p-name")).toBeFocused();
+    await page.keyboard.type("Clavier E2E Série");
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#p-cat")).toBeFocused();
+    await page.locator("#p-cat").selectOption({ index: 1 });
+    await page.locator("#p-price").fill("20000");
+    await page.locator("#p-cost").fill("25000");
+    await expect(page.getByText(/Prix inférieur au coût : perte de 5\s000/)).toBeVisible();
+    await page.locator("#p-cost").fill("15000");
+    await expect(page.getByTestId("marge")).toContainText("(25 %)");
+
+    // Fermeture accidentelle : la saisie est retrouvée sur l'appareil.
+    page.on("dialog", (d) => d.accept());
+    await page.reload();
+    await expect(page.getByText("Une saisie non enregistrée a été retrouvée sur cet appareil.")).toBeVisible();
+    await page.getByRole("button", { name: "Restaurer" }).click();
+    await expect(page.locator("#p-name")).toHaveValue("Clavier E2E Série");
+    await expect(page.locator("#p-price")).toHaveValue("20000");
+
+    // Variantes : valeurs en étiquettes, option personnalisée, combinaisons, réglage groupé.
+    await page.locator("summary", { hasText: "Variantes" }).click();
+    await page.getByRole("button", { name: "Couleur", exact: true }).click();
+    await page.getByLabel("Ajouter des valeurs pour Couleur").fill("Noir, Blanc");
+    await page.getByLabel("Ajouter des valeurs pour Couleur").press("Enter");
+    await page.getByLabel("Autre option (ex. Matière)").fill("Matière");
+    await page.getByLabel("Autre option (ex. Matière)").press("Enter");
+    for (const v of ["Cuir", "Tissu"]) {
+      await page.getByLabel("Ajouter des valeurs pour Matière").fill(v);
+      await page.getByLabel("Ajouter des valeurs pour Matière").press("Enter");
+    }
+    await expect(page.getByText("2 × 2 = 4 combinaisons")).toBeVisible();
+    await page.getByRole("button", { name: /Générer les 4 combinaisons/ }).click();
+    await expect(page.getByTestId("variant-count")).toHaveText(/4 variantes · 4 proposées/);
+    await page.getByLabel("Proposer Blanc · Tissu").uncheck();
+    await expect(page.getByTestId("variant-count")).toHaveText(/4 variantes · 3 proposées/);
+    await page.getByLabel("Prix pour la sélection").fill("30000");
+    await page.getByLabel("Stock initial pour la sélection").fill("2");
+    await page.getByRole("button", { name: "Appliquer à toutes" }).click();
+    await expect(page.getByLabel("Prix Noir · Cuir")).toHaveValue("30000");
+    await expect(page.getByLabel("Stock initial Blanc · Cuir")).toHaveValue("2");
+    await page.locator("#p-barcode-0").fill("E2E-CODE-1");
+
+    // Photo + vidéo dans le même envoi, progression par fichier.
+    await page.getByTestId("media-input").setInputFiles([
+      { name: "photo.png", mimeType: "image/png", buffer: fs.readFileSync("public/brand/logo-gps-mark.png") },
+      {
+        name: "clip.mp4",
+        mimeType: "video/mp4",
+        buffer: Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypmp42"), Buffer.alloc(64)]),
+      },
+    ]);
+    await expect(page.getByRole("list", { name: "Envois en cours" }).getByText("Envoyé")).toHaveCount(2);
+    const items = page.getByTestId("media-item");
+    await expect(items).toHaveCount(2);
+    await expect(items.nth(0).getByText("Principale")).toBeVisible();
+    await expect(items.nth(1).getByText("Vidéo")).toBeVisible();
+
+    // Publication immédiate, enregistrée au clavier (Ctrl + S).
+    await page.locator("label", { hasText: "Visible dès l'enregistrement" }).click();
+    await expect(page.getByText("Prêt à publier.")).toBeVisible();
+    await page.keyboard.press("Control+s");
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+    await expect(page.getByText("Tout est enregistré")).toBeVisible();
+
+    // Duplication : mêmes réglages, sans nom, références, code-barres, photos ni stock.
+    await page.locator("summary", { hasText: "Autres actions" }).click();
+    await page.getByRole("link", { name: "Dupliquer" }).click();
+    await expect(page).toHaveURL(/\/catalogue\/nouveau\?modele=/);
+    await expect(page.locator("#p-name")).toHaveValue("");
+    await expect(page.getByTestId("variant-count")).toHaveText(/3 variantes/);
+    await expect(page.getByLabel("Prix Noir · Cuir")).toHaveValue("30000");
+    await expect(page.locator("#p-sku-0")).toHaveValue("");
+    await expect(page.locator("#p-barcode-0")).toHaveValue("");
+    await expect(page.getByLabel("Stock initial Noir · Cuir")).toHaveValue("");
+    await expect(page.getByTestId("media-item")).toHaveCount(0);
+
+    // Double clic : un seul produit créé.
+    await page.locator("#p-name").fill("Doublon E2E");
+    await page.getByRole("button", { name: "Enregistrer et rester sur la fiche" }).dblclick();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+    await page.goto("/comptoir/stock?q=Doublon%20E2E");
+    await expect(page.locator("tbody tr", { hasText: "Doublon E2E" })).toHaveCount(3);
   });
 });

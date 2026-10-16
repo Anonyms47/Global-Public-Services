@@ -182,7 +182,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 </span>
                 <div>
                   <p className="font-bold">Garantie</p>
-                  <p className="text-[15px] text-white/70">{pol.warranty || `${TO_CONFIRM}.`}</p>
+                  <p className="text-[15px] text-white/70">{product.warranty || pol.warranty || `${TO_CONFIRM}.`}</p>
                 </div>
               </li>
               <li className="flex gap-3">

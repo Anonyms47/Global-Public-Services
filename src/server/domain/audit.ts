@@ -44,4 +44,8 @@ export const auditLabels: Record<string, string> = {
   "demo.backup": "Sauvegarde des données d'exemple",
   "store.create": "Point de vente créé",
   "store.update": "Point de vente modifié",
+  "product.create": "Produit créé",
+  "product.update": "Produit modifié",
+  "product.publish": "Produit publié",
+  "product.unpublish": "Produit retiré du site",
 };

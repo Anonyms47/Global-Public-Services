@@ -9,11 +9,13 @@ import { IconArrowLeft } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Promotions" };
 
-export default async function PromotionsPage() {
+export default async function PromotionsPage({ searchParams }: PageProps<"/comptoir/catalogue/promotions">) {
   const { db, allowed } = await requirePage("catalog.edit");
   if (!allowed) return <Forbidden />;
   const [promos, products] = await Promise.all([listPromotions(db), adminProducts(db, {})]);
   const now = new Date();
+  const produit = (await searchParams).produit;
+  const preselect = typeof produit === "string" && products.some((p) => p.id === produit) ? produit : "";
   return (
     <>
       <Link
@@ -82,6 +84,7 @@ export default async function PromotionsPage() {
           </table>
         </div>
         <PromotionForm
+          defaultProductId={preselect}
           products={products.filter((p) => p.status !== "archived").map((p) => ({ id: p.id, name: p.name }))}
         />
       </div>
