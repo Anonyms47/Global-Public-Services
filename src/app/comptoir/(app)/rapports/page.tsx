@@ -153,7 +153,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
           ) : (
             <p className="text-ink-soft">
               Marge non affichée : {r.margin.reason}
-              {!withMargin ? null : " Renseignez les coûts d'achat des variantes (propriétaire) pour l'obtenir."}
+              {withMargin && /coût/i.test(r.margin.reason)
+                ? " Renseignez les coûts d'achat des variantes (propriétaire) pour l'obtenir."
+                : null}
             </p>
           )}
         </Panel>

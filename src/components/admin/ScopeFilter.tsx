@@ -37,7 +37,7 @@ export function ScopeFilter({
         </span>
         Inclure la démonstration
       </Link>
-      <p className="flex min-w-0 flex-1 items-start gap-1.5 text-ink-soft" data-testid="scope">
+      <p className="flex w-full min-w-0 items-start gap-1.5 text-ink-soft sm:w-auto sm:flex-1" data-testid="scope">
         <IconInfo size={16} className="mt-0.5 shrink-0" />
         <span>
           <strong>Périmètre :</strong>{" "}
