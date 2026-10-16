@@ -11,6 +11,7 @@ export const roleLabels: Record<Role, string> = {
  * l'interface s'en sert seulement pour masquer ce qui n'est pas permis.
  */
 export const permissions = {
+  "account.self": ["owner", "manager", "seller"],
   "orders.view": ["owner", "manager", "seller"],
   "orders.create": ["owner", "manager", "seller"],
   "orders.progress": ["owner", "manager", "seller"],

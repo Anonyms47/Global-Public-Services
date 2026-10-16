@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   bulkCategoryAction,
   bulkStatusAction,
+  bulkTrashAction,
   priceApplyAction,
   pricePreviewAction,
 } from "@/app/comptoir/(app)/catalogue/actions";
@@ -69,6 +70,7 @@ export function CatalogBrowser({
   const [percent, setPercent] = useState("");
   const [preview, setPreview] = useState<{ sku: string; name: string; price: number; newPrice: number }[] | null>(null);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [trashConfirm, setTrashConfirm] = useState(false);
   const [category, setCategory] = useState("");
   const [blocked, setBlocked] = useState<string[]>([]);
   const { run, pending, failure, success, setSuccess } = useAction();
@@ -80,11 +82,13 @@ export function CatalogBrowser({
     setSelected(next);
     setPreview(null);
     setArchiveConfirm(false);
+    setTrashConfirm(false);
   };
   const clear = () => {
     setSelected(new Set());
     setPreview(null);
     setArchiveConfirm(false);
+    setTrashConfirm(false);
   };
 
   return (
@@ -159,6 +163,9 @@ export function CatalogBrowser({
             <button className="btn btn-sm btn-danger" disabled={pending} onClick={() => setArchiveConfirm(true)}>
               Archiver…
             </button>
+            <button className="btn btn-sm btn-danger" disabled={pending} onClick={() => setTrashConfirm(true)}>
+              Corbeille…
+            </button>
             <span className="flex items-center gap-1">
               <label className="sr-only" htmlFor="bulk-cat">
                 Nouvelle catégorie
@@ -213,6 +220,34 @@ export function CatalogBrowser({
               Désélectionner
             </button>
           </div>
+          {trashConfirm ? (
+            <div className="rounded-[6px] bg-white p-3">
+              <p className="font-bold">Mettre {selected.size} produit(s) à la corbeille ?</p>
+              <p className="text-[14px] text-ink-soft">
+                Retirés du site et de la vente. Chacun reste restaurable depuis l&apos;onglet Corbeille ;
+                l&apos;historique des ventes est conservé.
+              </p>
+              <ul className="mt-2 max-h-32 overflow-y-auto text-[14px]">
+                {rows
+                  .filter((r) => selected.has(r.id))
+                  .map((r) => (
+                    <li key={r.id}>• {r.name}</li>
+                  ))}
+              </ul>
+              <div className="mt-2 flex gap-2">
+                <button className="btn btn-sm btn-ghost" onClick={() => setTrashConfirm(false)}>
+                  Annuler
+                </button>
+                <button
+                  className="btn btn-sm btn-danger"
+                  disabled={pending}
+                  onClick={() => run(() => bulkTrashAction(ids), { onSuccess: clear })}
+                >
+                  Confirmer la mise à la corbeille
+                </button>
+              </div>
+            </div>
+          ) : null}
           {archiveConfirm ? (
             <div className="rounded-[6px] bg-white p-3">
               <p className="font-bold">Archiver {selected.size} produit(s) ?</p>

@@ -32,11 +32,18 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
         eyebrow="Catalogue"
         title={p.name || "Produit sans nom"}
         actions={
-          p.status === "published" ? (
-            <Link href={`/produits/${p.slug}`} target="_blank" className="btn btn-outline btn-sm">
-              Voir sur le site
-            </Link>
-          ) : null
+          <>
+            {!p.deletedAt ? (
+              <Link href={`/comptoir/catalogue/${p.id}/apercu`} className="btn btn-outline btn-sm">
+                Aperçu téléphone / ordinateur
+              </Link>
+            ) : null}
+            {p.status === "published" ? (
+              <Link href={`/produits/${p.slug}`} target="_blank" className="btn btn-outline btn-sm">
+                Voir sur le site
+              </Link>
+            ) : null}
+          </>
         }
       >
         {p.isDemo ? <Badge>Exemple</Badge> : null}{" "}
@@ -72,6 +79,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
             featured: p.featured,
             hasSales: p.hasSales,
             publishAt: p.publishAt ?? null,
+            unpublishAt: p.unpublishAt ?? null,
           }}
         />
       ) : p.deletedAt ? null : (

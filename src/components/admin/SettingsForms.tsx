@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   createUserAction,
@@ -497,6 +498,7 @@ interface U {
   role: Role;
   active: boolean;
   isDemo: boolean;
+  temporary?: boolean;
 }
 
 const roleSummary: Record<Role, string> = {
@@ -556,6 +558,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                       {u.active ? <Badge tone="green">Actif</Badge> : <Badge tone="red">Désactivé</Badge>}
                       {self ? <Badge tone="blue">Vous</Badge> : null}
                       {u.isDemo ? <Badge>Exemple</Badge> : null}
+                      {u.temporary ? <Badge tone="warn">Mot de passe provisoire</Badge> : null}
                     </div>
                   </div>
                 </div>
@@ -594,8 +597,12 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                     }}
                   >
                     <label className="label" htmlFor={`pw-${u.id}`}>
-                      Nouveau mot de passe
+                      Mot de passe provisoire
                     </label>
+                    <p className="hint -mt-1">
+                      À remettre en main propre : {u.name} devra le changer à sa prochaine connexion. Ses sessions sont
+                      fermées.
+                    </p>
                     <input
                       id={`pw-${u.id}`}
                       type="password"
@@ -618,13 +625,19 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                   <div
                     className={`grid gap-2 border-t border-line pt-4 lg:max-w-md ${self ? "lg:max-w-56" : "grid-cols-2"}`}
                   >
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-sm whitespace-nowrap"
-                      onClick={() => (setPwFor(u.id), setPw(""))}
-                    >
-                      Mot de passe
-                    </button>
+                    {self ? (
+                      <Link href="/comptoir/mon-compte" className="btn btn-outline btn-sm whitespace-nowrap">
+                        Mon mot de passe
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm whitespace-nowrap"
+                        onClick={() => (setPwFor(u.id), setPw(""))}
+                      >
+                        Réinitialiser
+                      </button>
+                    )}
                     {self ? null : (
                       <button
                         type="button"
@@ -715,7 +728,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
           type="password"
           value={f.password}
           onChange={(v) => setF({ ...f, password: v })}
-          hint="10 caractères minimum, à transmettre en main propre."
+          hint="10 caractères minimum, à transmettre en main propre. Il devra être changé à la première connexion."
           error={create.fieldErrors.password}
         />
         <ActionFeedback failure={create.failure} success={create.success} />

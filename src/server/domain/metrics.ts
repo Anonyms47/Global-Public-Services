@@ -168,17 +168,18 @@ export async function metricDetail(db: Db, key: MetricKey, period: Period): Prom
   if (key === "finalisees" || key === "annulees") {
     const col = key === "finalisees" ? "completed_at" : "cancelled_at";
     const status = key === "finalisees" ? "completed" : "cancelled";
-    const rows = await db.query<{ id: string; reference: string; customer_name: string; at: Date; subtotal: number }>(
-      `select id, reference, customer_name, ${col} as at, subtotal from orders
+    const rows = await db.query<{ id: string; reference: string; customer_name: string; at: Date }>(
+      `select id, reference, customer_name, ${col} as at from orders
         where status = $3 and ${col} >= $1 and ${col} < $2 order by ${col} desc`,
       [period.from, period.to, status],
     );
+    // Indicateurs de nombre : pas de montant dans le détail.
     return rows.map((r) => ({
       at: r.at,
       href: `/comptoir/commandes/${r.id}`,
       reference: r.reference,
       label: r.customer_name || "Vente au comptoir",
-      amount: r.subtotal,
+      amount: null,
     }));
   }
   const payments = await paymentsIn(db, period);
@@ -192,4 +193,115 @@ export async function metricDetail(db: Db, key: MetricKey, period: Period): Prom
       label: p.kind === "reversal" ? "Correction d'encaissement" : p.kind === "refund" ? "Remboursement" : "Paiement",
       amount: p.kind === "reversal" ? -p.amount : p.amount,
     }));
+}
+
+// ——— Marge brute (propriétaire) : détail par commande ———
+
+export interface MarginRow {
+  at: Date;
+  href: string;
+  reference: string;
+  label: string;
+  revenue: number;
+  cost: number | null;
+  margin: number | null;
+  missing: number;
+}
+
+/**
+ * Marge par commande non annulée créée sur la période : ventes (quantité −
+ * retours) × prix enregistré, moins le coût d'achat enregistré à la vente.
+ * Une ligne sans coût rend la marge de sa commande inconnue (null).
+ */
+export async function marginDetail(db: Db, period: Period): Promise<MarginRow[]> {
+  const rows = await db.query<{
+    id: string;
+    reference: string;
+    customer_name: string;
+    created_at: Date;
+    revenue: number;
+    cost: number;
+    missing: number;
+  }>(
+    `select o.id, o.reference, o.customer_name, o.created_at,
+            coalesce(sum((l.quantity - l.returned_quantity) * l.unit_price), 0)::int as revenue,
+            coalesce(sum((l.quantity - l.returned_quantity) * l.cost_price), 0)::int as cost,
+            count(*) filter (where l.cost_price is null)::int as missing
+       from orders o join order_lines l on l.order_id = o.id
+      where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2
+      group by o.id order by o.created_at desc`,
+    [period.from, period.to],
+  );
+  return rows.map((r) => ({
+    at: r.created_at,
+    href: `/comptoir/commandes/${r.id}`,
+    reference: r.reference,
+    label: r.customer_name || "Vente au comptoir",
+    revenue: r.revenue,
+    cost: r.missing ? null : r.cost,
+    margin: r.missing ? null : r.revenue - r.cost,
+    missing: r.missing,
+  }));
+}
+
+// ——— Graphiques ———
+
+export interface SeriesPoint {
+  start: Date;
+  label: string;
+  ca: number;
+  encaissements: number;
+}
+
+/**
+ * Évolution sur la période, en tranches : par heure pour un jour, par jour
+ * jusqu'à 92 jours, par semaine au-delà. Mêmes règles que les indicateurs :
+ * la somme des tranches est égale au chiffre affiché.
+ */
+export async function metricSeries(db: Db, period: Period): Promise<SeriesPoint[]> {
+  const span = period.to.getTime() - period.from.getTime();
+  const step = span <= 2 * 86400_000 ? 3600_000 : span <= 92 * 86400_000 ? 86400_000 : 7 * 86400_000;
+  const points: SeriesPoint[] = [];
+  for (let t = period.from.getTime(); t < period.to.getTime(); t += step) {
+    const d = new Date(t);
+    const label =
+      step === 3600_000
+        ? `${String(d.getUTCHours()).padStart(2, "0")} h`
+        : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", timeZone: "Africa/Dakar" });
+    points.push({ start: d, label, ca: 0, encaissements: 0 });
+  }
+  const at = (date: Date) => Math.floor((new Date(date).getTime() - period.from.getTime()) / step);
+  const [orders, payments] = await Promise.all([ordersCreatedIn(db, period), paymentsIn(db, period)]);
+  for (const o of orders) {
+    if (o.status === "cancelled") continue;
+    const i = at(o.created_at);
+    if (points[i]) points[i].ca += o.subtotal - o.returned_value;
+  }
+  for (const p of payments) {
+    const i = at(p.created_at);
+    if (!points[i]) continue;
+    if (p.kind === "payment") points[i].encaissements += p.amount;
+    if (p.kind === "reversal") points[i].encaissements -= p.amount;
+  }
+  return points;
+}
+
+/** Encaissements nets de la période par moyen de paiement (corrections déduites). */
+export async function paymentsByMethod(db: Db, period: Period) {
+  const payments = await paymentsIn(db, period);
+  const by = new Map<string, number>();
+  for (const p of payments) {
+    if (p.kind === "refund") continue;
+    by.set(p.method, (by.get(p.method) ?? 0) + (p.kind === "reversal" ? -p.amount : p.amount));
+  }
+  return [...by.entries()].map(([method, amount]) => ({ method, amount })).sort((a, b) => b.amount - a.amount);
+}
+
+/** Nombre de commandes d'exemple comprises dans la période (signalées tant qu'elles ne sont pas purgées). */
+export async function demoOrdersIn(db: Db, period: Period) {
+  const row = await db.one<{ n: number }>(
+    "select count(*)::int as n from orders where is_demo and created_at >= $1 and created_at < $2",
+    [period.from, period.to],
+  );
+  return row?.n ?? 0;
 }

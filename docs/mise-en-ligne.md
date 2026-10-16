@@ -10,11 +10,11 @@ Déjà fait :
 
 Le mot de passe de la base n'est jamais transmis à Claude : c'est à vous de le coller dans Vercel.
 
-1. **Supabase** → projet `gps-global-public-services` → bouton **Connect** → onglet **Connection string** → **Transaction pooler** → copier l'adresse (`postgresql://postgres.gzvuktctnfmqicnbmkst:[YOUR-PASSWORD]@aws-0-eu-west-3.pooler.supabase.com:6543/postgres`).
+1. **Supabase** → projet `gps-global-public-services` → bouton **Connect** → onglet **Connection string** → **Transaction pooler** → copier l'adresse (`postgresql://postgres.<projet>:[YOUR-PASSWORD]@<hôte-pooler>:6543/postgres`).
    Remplacez `[YOUR-PASSWORD]` par le mot de passe de la base. Si vous ne le connaissez pas : **Project Settings → Database → Reset database password**.
 2. **Vercel** → projet `gps-global-public-services` → **Settings → Environment Variables** → ajouter `DATABASE_URL` avec cette adresse, type **Sensitive**, environnements **Production** et **Preview**.
 3. **Fusionner la pull request** vers `main` (ou relancer le dernier déploiement) : Vercel publie le site.
-4. Ouvrir `https://gps-global-public-services.vercel.app` : la démonstration se crée au premier affichage. Le Comptoir est sur `/comptoir` (comptes de démonstration dans le README).
+4. Ouvrir `https://gps-global-public-services.vercel.app` : la démonstration se crée au premier affichage. Le Comptoir est sur `/comptoir`.
 
 Si le journal Vercel affiche une erreur de certificat (`self-signed certificate`), ajoutez la variable `DATABASE_SSL=no-verify` puis redéployez.
 

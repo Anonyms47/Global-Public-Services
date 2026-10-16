@@ -4,7 +4,6 @@ import { z } from "zod";
 import { guarded } from "@/server/admin";
 import { isDemoMode } from "@/server/db";
 import { AppError } from "@/server/domain/errors";
-import { MEDIA_MAX_BYTES, storeMedia } from "@/server/domain/media";
 import {
   applyPriceChange,
   deleteCategory,
@@ -53,6 +52,7 @@ const productSchema = z.object({
         url: z.string().regex(/^\/(demo|media)\/[\w./-]+$/, "Image invalide."),
         alt: z.string().max(200),
         color: z.string().max(40).nullable().optional(),
+        kind: z.enum(["image", "video"]).optional(),
       }),
     )
     .max(12),
@@ -72,6 +72,7 @@ const productSchema = z.object({
   status: z.enum(["draft", "published", "archived"]),
   featured: z.boolean(),
   publishAt: z.string().max(40).nullable().optional(),
+  unpublishAt: z.string().max(40).nullable().optional(),
 });
 
 export async function saveProductAction(input: unknown) {
@@ -118,23 +119,6 @@ export async function priceApplyAction(productIds: string[], percent: number) {
   return guarded("catalog.bulk", ({ db }) =>
     applyPriceChange(db, parse(ids, productIds), parse(z.coerce.number(), percent)),
   );
-}
-
-/** Téléversement de photo : JPEG, PNG ou WebP, 3 Mo au plus, type vérifié sur le contenu. */
-export async function uploadImageAction(formData: FormData) {
-  return guarded("catalog.edit", async ({ db, user }) => {
-    const file = formData.get("file");
-    if (!(file instanceof File) || file.size === 0) throw new AppError("validation", "Aucun fichier reçu.");
-    if (file.size > MEDIA_MAX_BYTES) throw new AppError("validation", "Photo trop lourde (3 Mo maximum).");
-    const r = await storeMedia(db, {
-      bytes: new Uint8Array(await file.arrayBuffer()),
-      name: file.name,
-      userId: user.id,
-      isDemo: isDemoMode(),
-      imagesOnly: true,
-    });
-    return { url: r.url };
-  });
 }
 
 export async function saveCategoryAction(input: unknown) {
@@ -204,6 +188,19 @@ export async function trashProductAction(id: string) {
   return guarded("catalog.edit", ({ db }) => trashProduct(db, String(id)), {
     message: "Produit mis à la corbeille. Il reste restaurable.",
   });
+}
+
+/** Corbeille groupée : chaque produit reste restaurable individuellement. */
+export async function bulkTrashAction(productIds: string[]) {
+  return guarded(
+    "catalog.bulk",
+    async ({ db }) => {
+      const list = parse(ids, productIds);
+      for (const id of list) await trashProduct(db, id);
+      return list.length;
+    },
+    { message: "Produits mis à la corbeille. Ils restent restaurables." },
+  );
 }
 
 export async function restoreProductAction(id: string) {

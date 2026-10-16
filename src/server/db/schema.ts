@@ -308,6 +308,9 @@ end $$;
 -- Catalogue : corbeille (restaurable), publication programmée, historique des versions.
 alter table products add column if not exists deleted_at timestamptz;
 alter table products add column if not exists publish_at timestamptz;
+alter table products add column if not exists unpublish_at timestamptz;
+-- Fiches produits : vidéos courtes à côté des photos (la première image reste la photo principale).
+alter table product_images add column if not exists kind text not null default 'image';
 create table if not exists product_versions (
   id text primary key,
   product_id text not null references products (id) on delete cascade,
@@ -324,6 +327,25 @@ alter table media add column if not exists alt text not null default '';
 alter table media add column if not exists uploaded_by text references users (id) on delete set null;
 alter table media add column if not exists deleted_at timestamptz;
 alter table media add column if not exists is_demo boolean not null default false;
+
+-- Vente rapide : somme remise en espèces et monnaie rendue, enregistrées à part.
+alter table payments add column if not exists tendered int;
+alter table payments add column if not exists change_given int not null default 0;
+
+-- Sécurité des comptes : mot de passe provisoire, inactivité des sessions, limitation des connexions.
+alter table users add column if not exists must_change_password boolean not null default false;
+alter table users add column if not exists password_changed_at timestamptz;
+alter table sessions add column if not exists last_seen_at timestamptz not null default now();
+alter table sessions add column if not exists user_agent text not null default '';
+create table if not exists login_attempts (
+  id text primary key,
+  identifier text not null,
+  ip text not null default '',
+  success boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists login_attempts_identifier on login_attempts (identifier, created_at);
+create index if not exists login_attempts_ip on login_attempts (ip, created_at);
 
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
@@ -349,4 +371,5 @@ alter table queue_items enable row level security;
 alter table audit_log enable row level security;
 alter table order_requests enable row level security;
 alter table product_versions enable row level security;
+alter table login_attempts enable row level security;
 `;

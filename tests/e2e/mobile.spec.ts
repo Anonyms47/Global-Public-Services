@@ -86,4 +86,28 @@ test.describe("Parcours mobile et clavier", () => {
     await sheet.getByRole("button", { name: "Fermer" }).click();
     await expect(sheet).toBeHidden();
   });
+
+  test("vente rapide sur téléphone : monnaie à rendre et reçu", async ({ page }) => {
+    await page.goto("/comptoir/connexion");
+    await page.getByLabel("Identifiant ou e-mail").fill("vente@demo.gps");
+    await page.getByLabel("Mot de passe").fill(DEMO_PASSWORD);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(page).toHaveURL(/\/comptoir$/);
+    await page.goto("/comptoir/vente");
+    await page.locator("#pos-search").fill("batterie");
+    await page.getByRole("button", { name: /Volta Batterie/ }).click();
+    await page.getByRole("button", { name: /^Vente · 1/ }).click();
+    const total = Number((await page.locator("#p-amount").getAttribute("placeholder")) ?? "0");
+    await page.locator("#p-amount").fill(String(total + 5000));
+    await expect(page.getByText("Monnaie à rendre")).toBeVisible();
+    await page.getByRole("button", { name: "Vérifier la vente" }).click();
+    await page.getByRole("button", { name: "Confirmer la vente" }).click();
+    await expect(page.getByText("Vente enregistrée")).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Vente enregistrée" })).toContainText(
+      /rendre :\s*5\s000\sFCFA/,
+    );
+    await page.getByRole("link", { name: /Reçu/ }).click();
+    await expect(page.locator("article")).toContainText(/Monnaie rendue 5\s000\sFCFA/);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
 });

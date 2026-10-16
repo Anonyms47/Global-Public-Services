@@ -232,10 +232,28 @@ function OrderComposer({
         ? Math.max(0, total - extraTotal)
         : 0
       : Math.max(0, Math.round(Number(draft.amount) || 0));
-  // La monnaie ne se rend que sur les espèces (premier moyen).
-  const change = mode === "sale" && draft.payMethod === "cash" ? Math.max(0, received + extraTotal - total) : 0;
-  const firstPaid = Math.min(received, Math.max(0, total - extraTotal));
-  const paid = Math.min(total, firstPaid + extraTotal);
+  // Surplus remis : rendu en monnaie, uniquement sur les espèces (quel que soit leur rang).
+  const entries = [{ method: draft.payMethod, amount: received }, ...extras];
+  const over = Math.max(0, received + extraTotal - total);
+  const cashGiven = entries.filter((p) => p.method === "cash").reduce((sum, p) => sum + p.amount, 0);
+  const changeImpossible = over > 0 && (mode !== "sale" || cashGiven < over);
+  const change = changeImpossible ? 0 : over;
+  // Encaissements réels : la monnaie est retirée des lignes en espèces, de la dernière à la première.
+  const settled = (() => {
+    let left = change;
+    const out = entries.map((p) => ({ ...p, tendered: undefined as number | undefined }));
+    for (let i = out.length - 1; i >= 0 && left > 0; i--) {
+      if (out[i].method !== "cash" || out[i].amount === 0) continue;
+      const take = Math.min(left, out[i].amount);
+      out[i] = { ...out[i], tendered: out[i].amount, amount: out[i].amount - take };
+      left -= take;
+    }
+    return out;
+  })();
+  const paid = Math.min(
+    total,
+    settled.reduce((sum, p) => sum + p.amount, 0),
+  );
   const needsCustomer = mode === "order" || draft.withCustomer;
 
   const checkPhone = async (phone: string) => {
@@ -257,6 +275,12 @@ function OrderComposer({
     problems.push("Ce numéro correspond à un client existant : choisissez-le ou confirmez la création.");
   if (mode === "order" && draft.reception === "delivery" && !draft.address.trim())
     problems.push("Indiquez l'adresse de livraison.");
+  if (changeImpossible)
+    problems.push(
+      mode === "sale"
+        ? "Les montants dépassent le total : la monnaie ne se rend que sur des espèces. Corrigez les montants."
+        : "Les montants encaissés dépassent le total de la commande.",
+    );
 
   const submit = () => {
     const payload = {
@@ -278,14 +302,23 @@ function OrderComposer({
         unitPrice: canEditPrice && l.unitPrice !== l.catalogPrice ? l.unitPrice : undefined,
       })),
       payment:
-        firstPaid > 0
+        settled[0].amount > 0
           ? {
-              method: draft.payMethod,
-              amount: firstPaid,
-              note: change ? `Reçu ${fcfa(received)}, rendu ${fcfa(change)}` : extras.length ? "Paiement mixte" : "",
+              method: settled[0].method,
+              amount: settled[0].amount,
+              note: extras.length ? "Paiement mixte" : "",
+              ...(settled[0].tendered !== undefined ? { tendered: settled[0].tendered } : {}),
             }
           : null,
-      payments: extras.filter((p) => p.amount > 0).map((p) => ({ ...p, note: "Paiement mixte" })),
+      payments: settled
+        .slice(1)
+        .filter((p) => p.amount > 0)
+        .map((p) => ({
+          method: p.method,
+          amount: p.amount,
+          note: "Paiement mixte",
+          ...(p.tendered !== undefined ? { tendered: p.tendered } : {}),
+        })),
     };
     run(() => (mode === "sale" ? quickSaleAction(payload) : createOrderAction(payload)), {
       refresh: false,

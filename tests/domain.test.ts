@@ -24,6 +24,12 @@ import {
   listVersions,
   restoreVersion,
   adminProducts,
+  duplicateProduct,
+  setProductsStatus,
+  previewPriceChange,
+  applyPriceChange,
+  previewProductById,
+  publishedProductById,
 } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
@@ -37,7 +43,16 @@ import { parseCsv } from "@/lib/csv";
 import { listQueue, updateQueueItem, addManualTask } from "@/server/domain/queue";
 import { launchChecks, setTargetMode, currentMode, summarize } from "@/server/domain/launch";
 import { healthChecks } from "@/server/domain/health";
-import { computeMetrics, metricDetail, previousPeriod, change } from "@/server/domain/metrics";
+import {
+  computeMetrics,
+  metricDetail,
+  previousPeriod,
+  change,
+  metricSeries,
+  marginDetail,
+  paymentsByMethod,
+  demoOrdersIn,
+} from "@/server/domain/metrics";
 import { addLateDemoProducts, purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { buildOrderMessage } from "@/lib/whatsapp";
@@ -346,6 +361,61 @@ describe("Stock", () => {
     expect(d.payments.map((p) => p.method).sort()).toEqual(["cash", "orange_money", "wave"]);
   });
 
+  it("vente rapide : monnaie rendue enregistrée, paiement partiel, double envoi ignoré", async () => {
+    const v = await variantBySku(db, "VOL-PB20");
+    // Wave 5 000 + espèces : 20 000 remis pour le reste → monnaie rendue enregistrée à part.
+    const cashDue = v.price - 5000;
+    const o = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "wave", amount: 5000 },
+      payments: [{ method: "cash", amount: cashDue, tendered: cashDue + 5000 }],
+    });
+    const d = (await getOrder(db, o.id))!;
+    const cash = d.payments.find((p) => p.method === "cash")!;
+    expect(cash).toMatchObject({ amount: cashDue, tendered: cashDue + 5000, change_given: 5000 });
+    expect(d.payment).toBe("paid");
+    expect(d.events.some((e) => /rendu 5/.test(e.message))).toBe(true);
+    // La monnaie ne se rend pas sur un paiement mobile, ni avec une somme remise inférieure.
+    for (const bad of [
+      { method: "wave" as const, amount: v.price, tendered: v.price + 1000 },
+      { method: "cash" as const, amount: v.price, tendered: v.price - 1 },
+    ]) {
+      await expect(
+        createOrder(db, manager, {
+          idempotencyKey: key(),
+          channel: "boutique",
+          reception: "immediate",
+          lines: [{ variantId: v.id, quantity: 1 }],
+          payment: bad,
+        }),
+      ).rejects.toThrow(/espèces/);
+    }
+    // Paiement partiel : la vente est remise, le solde reste dû.
+    const k = key();
+    const partial = await createOrder(db, manager, {
+      idempotencyKey: k,
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "cash", amount: 5000 },
+    });
+    const p = (await getOrder(db, partial.id))!;
+    expect(p.payment).toBe("partial");
+    expect(p.balance).toBe(v.price - 5000);
+    // Double envoi de la même vente : une seule vente, un seul mouvement de stock.
+    const again = await createOrder(db, manager, {
+      idempotencyKey: k,
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "cash", amount: 5000 },
+    });
+    expect(again).toMatchObject({ id: partial.id, duplicate: true });
+  });
+
   it("l'inventaire refuse un comptage inférieur aux réservations", async () => {
     const v = await variantBySku(db, "ORB-N12-512-GR");
     await expect(
@@ -527,6 +597,69 @@ describe("Catalogue, panier et promotions", () => {
     await db.query("update products set status = 'published' where id = $1", [sold!.product_id]);
   });
 
+  it("catalogue : duplication, variantes, actions groupées, retrait programmé, aperçu des brouillons", async () => {
+    const owner = await userByRole(db, "owner");
+    const ctx = { userId: owner.id, withCosts: true };
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const created = await saveProduct(
+      db,
+      {
+        ...base,
+        id: undefined,
+        slug: undefined,
+        name: "Recette catalogue",
+        status: "published",
+        featured: false,
+        axes: ["Couleur"],
+        variants: [
+          { sku: "REC-NO", options: { Couleur: "Noir" }, price: 10000, initialStock: 2 },
+          { sku: "REC-BL", options: { Couleur: "Blanc" }, price: 11000, initialStock: 0 },
+        ],
+      },
+      ctx,
+    );
+    // Variantes : prix et stock propres à chacune.
+    const live = (await publishedProductById(db, created.id))!;
+    expect(live.variants.map((v) => [v.sku, v.price, v.available])).toEqual([
+      ["REC-NO", 10000, 2],
+      ["REC-BL", 11000, 0],
+    ]);
+    // Duplication : brouillon, références nouvelles, stock à zéro.
+    const copy = await duplicateProduct(db, created.id, owner.id);
+    const dup = (await productForEdit(db, copy.id, { withCosts: true }))!;
+    expect(dup).toMatchObject({ name: "Recette catalogue (copie)", status: "draft" });
+    expect(dup.variants.every((v) => !["REC-NO", "REC-BL"].includes(v.sku))).toBe(true);
+    // Aperçu : un brouillon est visible dans l'aperçu interne, jamais sur le site.
+    expect(await publishedProductById(db, copy.id)).toBeNull();
+    expect((await previewProductById(db, copy.id))?.name).toBe("Recette catalogue (copie)");
+    // Actions groupées : prix (+10 %, arrondi à 50 FCFA), statut.
+    const preview = await previewPriceChange(db, [created.id], 10);
+    expect(preview.map((p) => p.newPrice)).toEqual([11000, 12100]);
+    await applyPriceChange(db, [created.id], 10);
+    expect((await publishedProductById(db, created.id))!.variants.map((v) => v.price)).toEqual([11000, 12100]);
+    await setProductsStatus(db, [created.id, copy.id], "draft");
+    expect(await publishedProductById(db, created.id)).toBeNull();
+    // Retrait programmé : publié, puis repassé en brouillon à l'heure dite.
+    const p1 = (await productForEdit(db, created.id, { withCosts: true }))!;
+    await expect(
+      saveProduct(db, { ...p1, status: "published", unpublishAt: new Date(Date.now() - 60_000).toISOString() }, ctx),
+    ).rejects.toThrow(/retrait/);
+    await saveProduct(
+      db,
+      { ...p1, status: "published", unpublishAt: new Date(Date.now() + 60_000).toISOString() },
+      ctx,
+    );
+    expect(await publishedProductById(db, created.id)).not.toBeNull();
+    await db.query("update products set unpublish_at = now() - interval '1 second' where id = $1", [created.id]);
+    expect(await publishedProductById(db, created.id)).toBeNull();
+    expect((await productForEdit(db, created.id, { withCosts: false }))!.status).toBe("draft");
+    // Nettoyage.
+    for (const id of [created.id, copy.id]) {
+      await trashProduct(db, id);
+      await purgeProduct(db, id);
+    }
+  });
+
   it("médiathèque : type vérifié sur le contenu, fichier utilisé protégé, corbeille", async () => {
     const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
     const mp4 = new Uint8Array([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42"), 0, 0]);
@@ -564,6 +697,80 @@ describe("Catalogue, panier et promotions", () => {
     await db.query("delete from product_images where url = $1", [img.url]);
   });
 
+  it("médias : vidéo dans une fiche, photo principale obligatoire, fichier de la vitrine protégé, limites", async () => {
+    const owner = await userByRole(db, "owner");
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    const mp4 = (n: number) => {
+      const b = new Uint8Array(n);
+      b.set([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42")]);
+      return b;
+    };
+    // Vidéos : jusqu'à 4 Mo (au-delà de la limite des photos), pas plus.
+    const clip = await storeMedia(db, { bytes: mp4(3.5 * 1024 * 1024), name: "clip.mp4", userId: null, isDemo: true });
+    expect(clip.mime).toBe("video/mp4");
+    await expect(
+      storeMedia(db, { bytes: mp4(4 * 1024 * 1024 + 1), name: "long.mp4", userId: null, isDemo: true }),
+    ).rejects.toThrow(/4 Mo/);
+    const photo = await storeMedia(db, { bytes: png, name: "p.png", userId: null, isDemo: true });
+
+    // Fiche produit : la vidéo s'affiche à part, la photo principale doit être une photo.
+    const ctx = { userId: owner.id, withCosts: true };
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const input = {
+      ...base,
+      id: undefined,
+      slug: undefined,
+      name: "Recette vidéo",
+      status: "published" as const,
+      featured: false,
+      axes: [],
+      variants: [{ sku: "VID-1", options: {}, price: 5000, initialStock: 1 }],
+    };
+    await expect(
+      saveProduct(
+        db,
+        {
+          ...input,
+          images: [
+            { url: clip.url, alt: "", kind: "video" },
+            { url: photo.url, alt: "", kind: "image" },
+          ],
+        },
+        ctx,
+      ),
+    ).rejects.toThrow(/photo principale/);
+    const saved = await saveProduct(
+      db,
+      {
+        ...input,
+        images: [
+          { url: photo.url, alt: "", kind: "image" },
+          { url: clip.url, alt: "Démonstration", kind: "video" },
+        ],
+      },
+      ctx,
+    );
+    const pub = (await publishedProductById(db, saved.id))!;
+    expect(pub.images.map((i) => i.url)).toEqual([photo.url]);
+    expect(pub.videos).toEqual([{ url: clip.url, alt: "Démonstration" }]);
+    expect((await productForEdit(db, saved.id, { withCosts: false }))!.images.map((i) => i.kind)).toEqual([
+      "image",
+      "video",
+    ]);
+
+    // Photo de la boutique (réglages) : comptée comme utilisée, protégée contre la suppression.
+    const storePhoto = await storeMedia(db, { bytes: png, name: "boutique.png", userId: null, isDemo: true });
+    const company = (await getSettings(db)).company;
+    await saveSettingsSection(db, "company", { ...company, storePhotoUrl: storePhoto.url });
+    expect((await listMedia(db, { view: "all" })).find((m) => m.id === storePhoto.id)?.used_by).toBe(1);
+    await expect(trashMedia(db, storePhoto.id)).rejects.toThrow(/vitrine ou la configuration/);
+    await saveSettingsSection(db, "company", company);
+    await trashMedia(db, storePhoto.id);
+
+    await trashProduct(db, saved.id);
+    await purgeProduct(db, saved.id);
+  });
+
   it("import CSV : aperçu, erreurs par ligne, regroupement en variantes, tout ou rien", async () => {
     const owner = await userByRole(db, "owner");
     expect(parseCsv('a;b\n"x;1";"di""t"\n')).toEqual([
@@ -598,7 +805,8 @@ describe("Catalogue, panier et promotions", () => {
     const ok =
       "nom;marque;reference;prix;cout;stock;options\nImport Test;GPS;IMP-OK-1;2000;1200;4;Couleur=Noir\nImport Test;GPS;IMP-OK-2;2000;1200;2;Couleur=Blanc\n";
     const r = await applyImport(db, ok, { userId: owner.id, withCosts: true, isDemo: true });
-    expect(r).toEqual({ products: 1, variants: 2 });
+    expect(r).toMatchObject({ products: 1, variants: 2, skipped: [] });
+    expect(r.created).toEqual([{ id: expect.any(String), name: "Import Test", variants: 2 }]);
     const v = await variantBySku(db, "IMP-OK-1");
     expect(v.on_hand).toBe(4);
     const prod = await db.one<{ status: string; axes: string[] }>(
@@ -607,6 +815,48 @@ describe("Catalogue, panier et promotions", () => {
     );
     expect(prod).toEqual({ status: "draft", axes: ["Couleur"] });
     await expect(applyImport(db, ok, { userId: owner.id, withCosts: true, isDemo: true })).rejects.toThrow(/erreur/);
+  });
+
+  it("import CSV : association des colonnes, doublons, import partiel et rapport", async () => {
+    const owner = await userByRole(db, "owner");
+    const ctx = { userId: owner.id, withCosts: true, isDemo: true };
+    // Intitulés d'un autre logiciel : reconnus automatiquement (désignation, code, prix de vente, quantité).
+    const other = "Désignation;Code;Prix de vente;Quantité\nCâble Recette;REC-CAB-1;2500;7\n";
+    const auto = await previewImport(db, other);
+    expect(auto.missing).toEqual([]);
+    expect(auto.products[0]).toMatchObject({ name: "Câble Recette" });
+    expect(auto.products[0].variants[0]).toMatchObject({ sku: "REC-CAB-1", price: 2500, stock: 7 });
+    // Intitulés inconnus : l'aperçu demande l'association, puis l'applique.
+    const odd = "A;B;C\nCâble Recette 2;REC-CAB-2;3000\n";
+    const ask = await previewImport(db, odd);
+    expect(ask.missing).toEqual(["nom", "reference", "prix"]);
+    expect(ask.headers).toEqual(["A", "B", "C"]);
+    await expect(applyImport(db, odd, ctx)).rejects.toThrow(/Associez/);
+    const mapped = await previewImport(db, odd, { nom: 0, reference: 1, prix: 2 });
+    expect(mapped.missing).toEqual([]);
+    expect(mapped.products[0].variants[0]).toMatchObject({ sku: "REC-CAB-2", price: 3000 });
+    // Doublons : mêmes options dans un produit ; produit déjà présent au catalogue signalé.
+    const dup = [
+      "nom;reference;prix;options",
+      "Câble Recette;REC-CAB-3;1000;Longueur=1 m",
+      "Câble Recette;REC-CAB-4;1000;Longueur=1 m",
+      "Câble Recette;;1000;Longueur=2 m",
+      "Câble Recette;REC-CAB-5;1200;Longueur=2 m",
+    ].join("\n");
+    const pd = await previewImport(db, dup);
+    expect(pd.errors.map((e) => [e.line, /double|manquante/.test(e.message)])).toEqual([
+      [3, true],
+      [4, true],
+    ]);
+    expect(pd.errors[0].raw).toEqual(["Câble Recette", "REC-CAB-4", "1000", "Longueur=1 m"]);
+    await applyImport(db, other, ctx);
+    expect((await previewImport(db, dup)).warnings[0]).toMatch(/existe déjà/);
+    // Import partiel : lignes valides importées, lignes en erreur rendues dans le rapport.
+    await expect(applyImport(db, dup, ctx)).rejects.toThrow(/erreur/);
+    const rep = await applyImport(db, dup, ctx, { partial: true });
+    expect(rep).toMatchObject({ products: 1, variants: 2 });
+    expect(rep.skipped.map((e) => e.line)).toEqual([3, 4]);
+    expect((await variantBySku(db, "REC-CAB-5")).price).toBe(1200);
   });
 
   it("recherche par référence et par catégorie", async () => {
@@ -673,6 +923,91 @@ describe("Droits, clients, rapports, démonstration", () => {
     await db.query("delete from users where email = $1", [input.email]);
   });
 
+  it("sécurité : limitation des connexions, mot de passe provisoire, révocation, inactivité, empreintes", async () => {
+    const auth = await import("@/server/domain/auth");
+    const owner = await userByRole(db, "owner");
+    const pw = "provisoire-1234";
+    // Compte créé par un tiers : mot de passe provisoire, changement exigé.
+    const id = await auth.createUser(db, { name: "Fatou", email: "fatou.test", role: "seller", password: pw });
+    const first = await auth.login(db, "fatou.test", pw, { allowDemo: false, ip: "10.0.0.1" });
+    expect(first.mustChangePassword).toBe(true);
+    const fatou = (await auth.userFromToken(db, first.token, { allowDemo: false }))!;
+    expect(fatou.must_change_password).toBe(true);
+    // Changement : ancien mot de passe exigé, nouveau différent, autres appareils déconnectés.
+    const second = await auth.login(db, "fatou.test", pw, { allowDemo: false, ip: "10.0.0.2" });
+    await expect(
+      auth.changeOwnPassword(db, fatou, first.token, {
+        current: "faux",
+        password: "nouveau-mdp-1",
+        confirm: "nouveau-mdp-1",
+      }),
+    ).rejects.toThrow(/actuel incorrect/);
+    await expect(
+      auth.changeOwnPassword(db, fatou, first.token, { current: pw, password: pw, confirm: pw }),
+    ).rejects.toThrow(/différent/);
+    await auth.changeOwnPassword(db, fatou, first.token, {
+      current: pw,
+      password: "nouveau-mdp-1",
+      confirm: "nouveau-mdp-1",
+    });
+    expect((await auth.userFromToken(db, first.token, { allowDemo: false }))?.must_change_password).toBe(false);
+    expect(await auth.userFromToken(db, second.token, { allowDemo: false })).toBeNull();
+
+    // Limitation : 5 échecs pour un identifiant bloquent même le bon mot de passe.
+    for (let i = 0; i < 5; i++) {
+      await expect(auth.login(db, "fatou.test", "faux", { allowDemo: false, ip: "10.0.0.3" })).rejects.toThrow(
+        /incorrect/,
+      );
+    }
+    await expect(auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.4" })).rejects.toThrow(
+      /Trop de tentatives/,
+    );
+    // … et 20 échecs depuis une même adresse IP bloquent tous les identifiants.
+    for (let i = 0; i < 20; i++) {
+      await expect(auth.login(db, `inconnu${i}`, "faux", { allowDemo: false, ip: "10.9.9.9" })).rejects.toThrow(
+        /incorrect/,
+      );
+    }
+    await expect(auth.login(db, "personne", "faux", { allowDemo: false, ip: "10.9.9.9" })).rejects.toThrow(
+      /Trop de tentatives/,
+    );
+    // La fenêtre passée, la connexion redevient possible et remet le compteur à zéro.
+    await db.query("update login_attempts set created_at = now() - interval '16 minutes'");
+    const third = await auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.4" });
+    expect(third.mustChangePassword).toBe(false);
+
+    // Inactivité : une session sans activité depuis plus de 2 h est refusée.
+    await db.query("update sessions set last_seen_at = now() - interval '3 hours' where user_id = $1", [id]);
+    expect(await auth.userFromToken(db, third.token, { allowDemo: false })).toBeNull();
+
+    // Réinitialisation par le propriétaire : provisoire à nouveau, sessions fermées.
+    const fourth = await auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false });
+    await auth.updateUser(db, { ...owner, role: "owner" } as never, id, { password: "remise-a-zero-1" });
+    expect(await auth.userFromToken(db, fourth.token, { allowDemo: false })).toBeNull();
+    expect((await auth.login(db, "fatou.test", "remise-a-zero-1", { allowDemo: false })).mustChangePassword).toBe(true);
+    await expect(
+      auth.updateUser(db, { ...owner, role: "owner" } as never, owner.id, { password: "x".repeat(12) }),
+    ).rejects.toThrow(/Mon compte/);
+    // Désactivation : accès révoqué immédiatement.
+    const fifth = await auth.login(db, "fatou.test", "remise-a-zero-1", { allowDemo: false });
+    await auth.updateUser(db, { ...owner, role: "owner" } as never, id, { active: false });
+    expect(await auth.userFromToken(db, fifth.token, { allowDemo: false })).toBeNull();
+
+    // Empreintes : paramètres scrypt renforcés, ancien format accepté puis mis à niveau à la connexion.
+    expect((await auth.hashPassword("x")).split("$")).toHaveLength(6);
+    const { scryptSync, randomBytes } = await import("node:crypto");
+    const salt = randomBytes(16);
+    const legacy = `scrypt$${salt.toString("hex")}$${scryptSync("ancien-format-1", salt, 64).toString("hex")}`;
+    expect(await auth.verifyPassword("ancien-format-1", legacy)).toBe(true);
+    await db.query("update users set password_hash = $2, active = true where id = $1", [id, legacy]);
+    await auth.login(db, "fatou.test", "ancien-format-1", { allowDemo: false });
+    const upgraded = await db.one<{ password_hash: string }>("select password_hash from users where id = $1", [id]);
+    expect(auth.needsRehash(upgraded!.password_hash)).toBe(false);
+
+    await db.query("delete from users where id = $1", [id]);
+    await db.query("delete from login_attempts");
+  });
+
   it("signale un numéro déjà connu avant de créer un doublon", async () => {
     expect((await phoneMatches(db, "+000 00 00 00 01")).length).toBeGreaterThan(0);
     await expect(createCustomer(db, { name: "Doublon", phone: "00 00 00 01" })).rejects.toThrow(/correspond/);
@@ -724,6 +1059,57 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(change(150, 100)).toBe(50);
     expect(change(5, 0)).toBeNull();
     await cancelOrder(db, manager, o.id, "test");
+  });
+
+  it("tableau de bord : montant, remboursements, annulations, graphiques et marge détaillée", async () => {
+    const period = periodFromKey("jour");
+    const before = await computeMetrics(db, period);
+    const v = await variantBySku(db, "SON-ST2-NO");
+    // Vente payée puis remboursée en partie ; commande annulée.
+    const sale = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "wave", amount: v.price },
+    });
+    await refund(db, manager, sale.id, { method: "wave", amount: 1000, note: "Geste commercial" });
+    const cancelled = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "whatsapp",
+      reception: "pickup",
+      customerName: "Annulation",
+      customerPhone: "000",
+      lines: [{ variantId: v.id, quantity: 1 }],
+    });
+    await cancelOrder(db, manager, cancelled.id, "test");
+    const after = await computeMetrics(db, period);
+    expect(after.montant - before.montant).toBe(v.price);
+    expect(after.remboursements - before.remboursements).toBe(1000);
+    expect(after.annulees - before.annulees).toBe(1);
+    expect(after.finalisees - before.finalisees).toBe(1);
+    // Indicateurs de nombre : pas de montant dans le détail ; le détail des remboursements retombe sur le chiffre.
+    expect((await metricDetail(db, "annulees", period)).every((r) => r.amount === null)).toBe(true);
+    expect((await metricDetail(db, "remboursements", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
+      after.remboursements,
+    );
+    // Graphique : la somme des tranches est égale aux chiffres affichés.
+    const series = await metricSeries(db, period);
+    expect(series).toHaveLength(24);
+    expect(series.reduce((s, p) => s + p.ca, 0)).toBe(after.ca);
+    expect(series.reduce((s, p) => s + p.encaissements, 0)).toBe(after.encaissements);
+    expect(await metricSeries(db, periodFromKey("30j"))).toHaveLength(30);
+    expect((await paymentsByMethod(db, period)).reduce((s, m) => s + m.amount, 0)).toBe(after.encaissements);
+    // Marge par commande : connue seulement si chaque ligne a un coût d'achat.
+    await db.query("update order_lines set cost_price = unit_price - 2000 where order_id = $1", [sale.id]);
+    const m = (await marginDetail(db, period)).find((r) => r.reference.length && r.href.endsWith(sale.id))!;
+    expect(m).toMatchObject({ revenue: v.price, cost: v.price - 2000, margin: 2000, missing: 0 });
+    await db.query("update order_lines set cost_price = null where order_id = $1", [sale.id]);
+    expect((await marginDetail(db, period)).find((r) => r.href.endsWith(sale.id))).toMatchObject({
+      margin: null,
+      missing: 1,
+    });
+    expect(await demoOrdersIn(db, periodFromKey("30j"))).toBeGreaterThanOrEqual(0);
   });
 
   it("File GPS : éléments dérivés, attribution, report, résolution et tâche manuelle", async () => {

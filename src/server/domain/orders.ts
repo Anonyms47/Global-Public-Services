@@ -50,6 +50,14 @@ export interface LineInput {
   unitPrice?: number;
 }
 
+/** Encaissement saisi à la création ; « tendered » : somme remise en espèces (monnaie rendue = tendered − amount). */
+export interface PaymentInput {
+  method: PaymentMethod;
+  amount: number;
+  note?: string;
+  tendered?: number;
+}
+
 export interface OrderInput {
   idempotencyKey: string;
   channel: Channel;
@@ -63,9 +71,9 @@ export interface OrderInput {
   deliveryFee?: number | null;
   notes?: string;
   lines: LineInput[];
-  payment?: { method: PaymentMethod; amount: number; note?: string } | null;
+  payment?: PaymentInput | null;
   /** Paiement mixte : plusieurs moyens pour une même vente. */
-  payments?: { method: PaymentMethod; amount: number; note?: string }[];
+  payments?: PaymentInput[];
   isDemo?: boolean;
 }
 
@@ -286,6 +294,8 @@ export async function createOrder(db: Db, actor: Actor, input: OrderInput, now =
         p.method,
         p.amount,
         p.note ?? (pays.length > 1 ? "Paiement mixte" : ""),
+        null,
+        p.tendered ?? null,
       );
     }
     return { id, reference, duplicate: false };
@@ -301,15 +311,27 @@ async function insertPayment(
   amount: number,
   note: string,
   reversesId: string | null = null,
+  tendered: number | null = null,
 ) {
   if (!Number.isInteger(amount) || amount <= 0)
     fail("validation", "Le montant doit être un nombre entier positif.", {
       amount: "Montant invalide.",
     });
+  // Monnaie rendue : seulement sur un encaissement en espèces, somme remise ≥ montant encaissé.
+  if (tendered !== null) {
+    if (kind !== "payment" || method !== "cash" || !Number.isInteger(tendered) || tendered < amount) {
+      fail("validation", "La somme remise doit être en espèces et au moins égale au montant encaissé.");
+    }
+  }
+  const changeGiven = tendered !== null ? tendered - amount : 0;
   await tx.query(
-    "insert into payments (id, order_id, kind, method, amount, note, reverses_id, created_by) values ($1,$2,$3,$4,$5,$6,$7,$8)",
-    [newId(), orderId, kind, method, amount, note, reversesId, actor.id],
+    `insert into payments (id, order_id, kind, method, amount, note, reverses_id, created_by, tendered, change_given)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [newId(), orderId, kind, method, amount, note, reversesId, actor.id, tendered, changeGiven],
   );
+  if (changeGiven > 0) {
+    note = `${note ? `${note} — ` : ""}reçu ${tendered!.toLocaleString("fr-FR")} FCFA, rendu ${changeGiven.toLocaleString("fr-FR")} FCFA`;
+  }
   const verb =
     kind === "payment" ? "Encaissement" : kind === "refund" ? "Remboursement" : "Annulation d'un encaissement";
   await event(
@@ -467,6 +489,8 @@ export async function getOrder(db: Db, id: string) {
       amount: number;
       note: string;
       reverses_id: string | null;
+      tendered: number | null;
+      change_given: number;
       created_at: Date;
       user_name: string | null;
     }>(
