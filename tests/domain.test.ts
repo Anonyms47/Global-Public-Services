@@ -346,6 +346,61 @@ describe("Stock", () => {
     expect(d.payments.map((p) => p.method).sort()).toEqual(["cash", "orange_money", "wave"]);
   });
 
+  it("vente rapide : monnaie rendue enregistrée, paiement partiel, double envoi ignoré", async () => {
+    const v = await variantBySku(db, "VOL-PB20");
+    // Wave 5 000 + espèces : 20 000 remis pour le reste → monnaie rendue enregistrée à part.
+    const cashDue = v.price - 5000;
+    const o = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "wave", amount: 5000 },
+      payments: [{ method: "cash", amount: cashDue, tendered: cashDue + 5000 }],
+    });
+    const d = (await getOrder(db, o.id))!;
+    const cash = d.payments.find((p) => p.method === "cash")!;
+    expect(cash).toMatchObject({ amount: cashDue, tendered: cashDue + 5000, change_given: 5000 });
+    expect(d.payment).toBe("paid");
+    expect(d.events.some((e) => /rendu 5/.test(e.message))).toBe(true);
+    // La monnaie ne se rend pas sur un paiement mobile, ni avec une somme remise inférieure.
+    for (const bad of [
+      { method: "wave" as const, amount: v.price, tendered: v.price + 1000 },
+      { method: "cash" as const, amount: v.price, tendered: v.price - 1 },
+    ]) {
+      await expect(
+        createOrder(db, manager, {
+          idempotencyKey: key(),
+          channel: "boutique",
+          reception: "immediate",
+          lines: [{ variantId: v.id, quantity: 1 }],
+          payment: bad,
+        }),
+      ).rejects.toThrow(/espèces/);
+    }
+    // Paiement partiel : la vente est remise, le solde reste dû.
+    const k = key();
+    const partial = await createOrder(db, manager, {
+      idempotencyKey: k,
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "cash", amount: 5000 },
+    });
+    const p = (await getOrder(db, partial.id))!;
+    expect(p.payment).toBe("partial");
+    expect(p.balance).toBe(v.price - 5000);
+    // Double envoi de la même vente : une seule vente, un seul mouvement de stock.
+    const again = await createOrder(db, manager, {
+      idempotencyKey: k,
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "cash", amount: 5000 },
+    });
+    expect(again).toMatchObject({ id: partial.id, duplicate: true });
+  });
+
   it("l'inventaire refuse un comptage inférieur aux réservations", async () => {
     const v = await variantBySku(db, "ORB-N12-512-GR");
     await expect(

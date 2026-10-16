@@ -325,6 +325,10 @@ alter table media add column if not exists uploaded_by text references users (id
 alter table media add column if not exists deleted_at timestamptz;
 alter table media add column if not exists is_demo boolean not null default false;
 
+-- Vente rapide : somme remise en espèces et monnaie rendue, enregistrées à part.
+alter table payments add column if not exists tendered int;
+alter table payments add column if not exists change_given int not null default 0;
+
 -- Sécurité des comptes : mot de passe provisoire, inactivité des sessions, limitation des connexions.
 alter table users add column if not exists must_change_password boolean not null default false;
 alter table users add column if not exists password_changed_at timestamptz;

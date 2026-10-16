@@ -102,9 +102,11 @@ const orderSchema = z.object({
   deliveryFee: money.nullish(),
   notes: z.string().max(1000).optional(),
   lines: z.array(lineSchema).min(1, "Ajoutez au moins un article."),
-  payment: z.object({ method, amount: money, note: z.string().max(200).optional() }).nullish(),
+  payment: z
+    .object({ method, amount: money, note: z.string().max(200).optional(), tendered: money.optional() })
+    .nullish(),
   payments: z
-    .array(z.object({ method, amount: money, note: z.string().max(200).optional() }))
+    .array(z.object({ method, amount: money, note: z.string().max(200).optional(), tendered: money.optional() }))
     .max(4)
     .optional(),
 });
