@@ -373,7 +373,7 @@ export function CatalogBrowser({
                       alt=""
                       width={300}
                       height={375}
-                      unoptimized={r.image.endsWith(".svg")}
+                      unoptimized={r.image.endsWith(".svg") || r.image.startsWith("/media/")}
                       className="aspect-[4/5] w-full object-cover"
                     />
                   ) : (

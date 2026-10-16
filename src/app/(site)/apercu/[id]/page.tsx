@@ -24,7 +24,12 @@ export default async function PreviewPage({ params }: PageProps<"/apercu/[id]">)
       <p className="mb-4 rounded-[6px] bg-gps-blue-soft px-3 py-2 text-[14px] font-semibold text-gps-blue">
         Aperçu du Comptoir — version enregistrée, visible par l&apos;équipe uniquement.
       </p>
-      <ProductView product={product} url={siteUrl(`/produits/${product.slug}`)} whatsapp={settings.company.whatsapp} />
+      <ProductView
+        preview
+        product={product}
+        url={siteUrl(`/produits/${product.slug}`)}
+        whatsapp={settings.company.whatsapp}
+      />
       {product.description ? (
         <section className="pdp-card mt-10">
           <h2 className="font-display text-3xl font-bold uppercase">Description</h2>

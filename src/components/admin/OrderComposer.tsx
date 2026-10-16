@@ -494,7 +494,7 @@ function OrderComposer({
                       alt=""
                       width={48}
                       height={60}
-                      unoptimized={p.image.endsWith(".svg")}
+                      unoptimized={p.image.endsWith(".svg") || p.image.startsWith("/media/")}
                       className="h-[60px] w-12 shrink-0 rounded-[4px] object-cover"
                     />
                   ) : null}

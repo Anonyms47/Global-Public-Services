@@ -201,7 +201,24 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/tableau-de-bord?periode=30j");
     await page.getByRole("link", { name: /Chiffre d'affaires/ }).click();
     await expect(page.getByText("Calcul :")).toBeVisible();
+    // Par défaut, données réelles uniquement : les commandes d'exemple sont exclues et annoncées.
+    const scope = page.getByTestId("scope");
+    await expect(scope).toContainText("données réelles uniquement");
+    await expect(scope).toContainText(/commandes? d'exemple exclues?/);
+    const toggle = page.getByRole("switch", { name: "Inclure la démonstration" });
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    await toggle.click();
+    await expect(page).toHaveURL(/demo=1/);
+    await expect(page.getByRole("switch", { name: "Inclure la démonstration" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(scope).toContainText("données réelles et données de démonstration");
+    await expect(page.getByText("Calcul :")).toBeVisible();
     await expect(page.locator("table").getByRole("link").first()).toBeVisible();
+    // La période choisie conserve le filtre.
+    await page.getByRole("link", { name: "7 jours" }).click();
+    await expect(page).toHaveURL(/periode=7j&demo=1/);
 
     await page.goto("/comptoir/file");
     await page.getByLabel("Nouvelle tâche").fill("Tâche E2E");
@@ -339,5 +356,49 @@ test.describe("Le Comptoir", () => {
     await expect(bad.getByText(/Format non pris en charge/)).toBeVisible();
     await bad.getByRole("button", { name: "Retirer" }).click();
     await expect(bad).toHaveCount(0);
+  });
+
+  test("médias : fichiers hors base, privé réservé à l'équipe, glisser-déposer sur ordinateur", async ({
+    page,
+    request,
+  }) => {
+    const fs = await import("node:fs");
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/mediatheque");
+    await expect(page.getByText(/Stockage : dossier local/)).toBeVisible();
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "prive-e2e.png",
+      mimeType: "image/png",
+      buffer: fs.readFileSync("public/brand/logo-gps-mark.png"),
+    });
+    await expect(page.getByText("Envoyé")).toBeVisible();
+    await page.reload();
+    const src = await page.getByAltText("prive-e2e.png").first().getAttribute("src");
+    const id = /\/media\/([0-9a-f-]{36})/.exec(src ?? "")![1];
+    // Le fichier est dans le stockage (dossier), pas en base.
+    const files = fs.readdirSync(".data/e2e-media", { recursive: true }).map(String);
+    expect(files.some((f) => f.endsWith(`${id}.png`))).toBe(true);
+    // Non utilisé par une fiche publiée : servi à l'équipe connectée, introuvable pour le public.
+    expect((await page.request.get(`/media/${id}`)).status()).toBe(200);
+    expect((await request.get(`/media/${id}`)).status()).toBe(404);
+    const partial = await page.request.get(`/media/${id}`, { headers: { Range: "bytes=0-7" } });
+    expect(partial.status()).toBe(206);
+
+    // Fiche produit : la 2e vignette glissée sur la 1re devient la photo principale ; les boutons restent là.
+    await page.goto("/comptoir/catalogue?q=Sonna%20Studio");
+    await page
+      .getByRole("link", { name: /Sonna Studio 2/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+    const items = page.getByTestId("media-item");
+    await expect(items.nth(1)).toBeVisible();
+    const thumb = (i: number) => items.nth(i).locator("img, video").first().getAttribute("src");
+    const [first, second] = [await thumb(0), await thumb(1)];
+    await expect(items.nth(0).getByRole("button", { name: "Descendre la photo 1" })).toBeVisible();
+    await items.nth(1).getByTestId("media-grip").dragTo(items.nth(0));
+    expect(await thumb(0)).toBe(second);
+    expect(await thumb(1)).toBe(first);
+    await expect(items.nth(0).getByText("Principale")).toBeVisible();
   });
 });

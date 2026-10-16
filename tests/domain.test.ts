@@ -37,7 +37,27 @@ import { can } from "@/lib/permissions";
 import { createCustomer, phoneMatches } from "@/server/domain/customers";
 import { report, periodFromKey } from "@/server/domain/reports";
 import { createRequest, convertRequest, dismissRequest, getRequest } from "@/server/domain/requests";
-import { storeMedia, listMedia, trashMedia, restoreMedia, purgeMedia, sniffMime } from "@/server/domain/media";
+import {
+  storeMedia,
+  listMedia,
+  trashMedia,
+  restoreMedia,
+  purgeMedia,
+  sniffMime,
+  startUpload,
+  receiveUpload,
+  finishUpload,
+  abortUpload,
+  cleanupStaleUploads,
+  mediaFile,
+  readMediaBytes,
+  migrateMediaToStore,
+  verifyMediaStore,
+  rollbackMediaFromStore,
+  releaseDatabaseCopies,
+  mediaStorageStatus,
+} from "@/server/domain/media";
+import { localStore, supabaseStore, type StorageConfig } from "@/server/storage";
 import { previewImport, applyImport, importTemplate } from "@/server/domain/import";
 import { parseCsv } from "@/lib/csv";
 import { listQueue, updateQueueItem, addManualTask } from "@/server/domain/queue";
@@ -673,9 +693,17 @@ describe("Catalogue, panier et promotions", () => {
     await expect(
       storeMedia(db, { bytes: mp4, name: "v.mp4", userId: null, isDemo: true, imagesOnly: true }),
     ).rejects.toThrow(/JPEG/);
+    // Limites : 4 Mo par photo en stockage objet, 3 Mo dans l'ancien mode (en base).
+    const heavy = new Uint8Array(4 * 1024 * 1024 + 1);
+    heavy.set(png);
+    await expect(storeMedia(db, { bytes: heavy, name: "big.png", userId: null, isDemo: true })).rejects.toThrow(
+      /trop lourd/,
+    );
+    const big = new Uint8Array(3 * 1024 * 1024 + 1);
+    big.set(png);
     await expect(
-      storeMedia(db, { bytes: new Uint8Array(3 * 1024 * 1024 + 1), name: "big", userId: null, isDemo: true }),
-    ).rejects.toThrow(/trop lourd/);
+      storeMedia(db, { bytes: big, name: "big.png", userId: null, isDemo: true }, { backend: "database", store: null }),
+    ).rejects.toThrow(/3 Mo/);
     const img = await storeMedia(db, { bytes: png, name: "photo.png", userId: null, isDemo: true });
     const vid = await storeMedia(db, { bytes: mp4, name: "clip.mp4", userId: null, isDemo: true });
     expect((await listMedia(db, { view: "unused" })).map((m) => m.id)).toEqual(
@@ -706,11 +734,18 @@ describe("Catalogue, panier et promotions", () => {
       b.set([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42")]);
       return b;
     };
-    // Vidéos : jusqu'à 4 Mo (au-delà de la limite des photos), pas plus.
-    const clip = await storeMedia(db, { bytes: mp4(3.5 * 1024 * 1024), name: "clip.mp4", userId: null, isDemo: true });
+    // Vidéos : 50 Mo en stockage objet ; 4 Mo seulement dans l'ancien mode en base.
+    const clip = await storeMedia(db, { bytes: mp4(12 * 1024 * 1024), name: "clip.mp4", userId: null, isDemo: true });
     expect(clip.mime).toBe("video/mp4");
     await expect(
-      storeMedia(db, { bytes: mp4(4 * 1024 * 1024 + 1), name: "long.mp4", userId: null, isDemo: true }),
+      storeMedia(db, { bytes: mp4(50 * 1024 * 1024 + 1), name: "long.mp4", userId: null, isDemo: true }),
+    ).rejects.toThrow(/50 Mo/);
+    await expect(
+      storeMedia(
+        db,
+        { bytes: mp4(4 * 1024 * 1024 + 1), name: "long.mp4", userId: null, isDemo: true },
+        { backend: "database", store: null },
+      ),
     ).rejects.toThrow(/4 Mo/);
     const photo = await storeMedia(db, { bytes: png, name: "p.png", userId: null, isDemo: true });
 
@@ -770,6 +805,235 @@ describe("Catalogue, panier et promotions", () => {
 
     await trashProduct(db, saved.id);
     await purgeProduct(db, saved.id);
+  });
+
+  it("médias hors base : envoi en trois temps, contenu vérifié, visibilité, suppression du fichier stocké", async () => {
+    const owner = await userByRole(db, "owner");
+    const { mkdtempSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const store = localStore(mkdtempSync(join(tmpdir(), "gps-store-")));
+    const cfg: StorageConfig = { backend: "local", store };
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4, 5, 6, 7, 8]);
+    const mov = new Uint8Array([0, 0, 0, 0x14, ...new TextEncoder().encode("ftypqt  "), 0, 0, 0, 0]);
+    expect(sniffMime(mov)).toBe("video/quicktime");
+
+    // 1. Préparation → envoi → validation : la base ne garde que les métadonnées.
+    const up = await startUpload(
+      db,
+      { name: "photo.png", size: png.length, type: "image/png", userId: owner.id, isDemo: false },
+      cfg,
+    );
+    expect(up.target).toMatchObject({ method: "PUT", url: `/comptoir/mediatheque/envoi?id=${up.id}` });
+    // Pas encore validé : invisible dans la médiathèque et non servi.
+    expect((await listMedia(db, { view: "all" })).map((m) => m.id)).not.toContain(up.id);
+    expect(await mediaFile(db, up.id)).toBeNull();
+    // Un autre utilisateur ne peut pas compléter cet envoi.
+    await expect(receiveUpload(db, up.id, crypto.randomUUID(), png, cfg)).rejects.toThrow(/introuvable/);
+    await receiveUpload(db, up.id, owner.id, png, cfg);
+    const done = await finishUpload(db, up.id, owner.id, {}, cfg);
+    expect(done).toMatchObject({ id: up.id, url: `/media/${up.id}`, mime: "image/png" });
+    const row = await db.one<{
+      data: Uint8Array | null;
+      storage_backend: string;
+      storage_path: string;
+      status: string;
+    }>("select data, storage_backend, storage_path, status from media where id = $1", [up.id]);
+    expect(row).toMatchObject({ data: null, storage_backend: "local", status: "ready" });
+    expect(row!.storage_path).toMatch(new RegExp(`^catalogue/\\d{4}/\\d{2}/${up.id}\\.png$`));
+
+    // 2. Lecture, y compris partielle (Range).
+    const file = (await mediaFile(db, up.id))!;
+    expect(file.public).toBe(false);
+    const full = await readMediaBytes(db, file, null, cfg);
+    expect(Array.from(full!.body as Uint8Array)).toEqual(Array.from(png));
+    const part = await readMediaBytes(db, file, "bytes=0-3", cfg);
+    expect(part).toMatchObject({ status: 206, length: 4, contentRange: `bytes 0-3/${png.length}` });
+    expect((await readMediaBytes(db, file, "bytes=999-", cfg))!.status).toBe(416);
+
+    // 3. Visibilité : public seulement une fois utilisé par une fiche publiée.
+    const product = (await publishedProducts(db))[0];
+    await db.query("insert into product_images (id, product_id, url, position) values ($1, $2, $3, 98)", [
+      crypto.randomUUID(),
+      product.id,
+      done.url,
+    ]);
+    expect((await mediaFile(db, up.id))!.public).toBe(true);
+    await db.query("update products set status = 'draft' where id = $1", [product.id]);
+    expect((await mediaFile(db, up.id))!.public).toBe(false);
+    await db.query("update products set status = 'published' where id = $1", [product.id]);
+    await db.query("delete from product_images where url = $1", [done.url]);
+
+    // 4. Contenu réel contrôlé : un faux « .jpg » est refusé et nettoyé.
+    const fake = await startUpload(
+      db,
+      { name: "x.jpg", size: 10, type: "image/jpeg", userId: owner.id, isDemo: false },
+      cfg,
+    );
+    await expect(receiveUpload(db, fake.id, owner.id, new TextEncoder().encode("<html>…"), cfg)).rejects.toThrow(
+      /Format/,
+    );
+    await abortUpload(db, fake.id, owner.id, cfg);
+    expect(await db.one("select 1 from media where id = $1", [fake.id])).toBeNull();
+    // Photo seulement : une vidéo est refusée à la validation et son fichier supprimé.
+    const vid = await startUpload(
+      db,
+      { name: "clip.mov", size: mov.length, type: "", userId: owner.id, isDemo: false },
+      cfg,
+    );
+    await receiveUpload(db, vid.id, owner.id, mov, cfg);
+    const vidPath = (await db.one<{ storage_path: string }>("select storage_path from media where id = $1", [vid.id]))!
+      .storage_path;
+    await expect(finishUpload(db, vid.id, owner.id, { imagesOnly: true }, cfg)).rejects.toThrow(/JPEG/);
+    expect(await store.head(vidPath)).toBeNull();
+    // Taille annoncée trop grande : refus avant tout envoi.
+    await expect(
+      startUpload(
+        db,
+        { name: "v.mp4", size: 60 * 1024 * 1024, type: "video/mp4", userId: owner.id, isDemo: false },
+        cfg,
+      ),
+    ).rejects.toThrow(/50 Mo/);
+
+    // 5. Envoi abandonné depuis plus de 24 h : nettoyé.
+    const stale = await startUpload(
+      db,
+      { name: "z.png", size: png.length, type: "image/png", userId: owner.id, isDemo: false },
+      cfg,
+    );
+    await receiveUpload(db, stale.id, owner.id, png, cfg);
+    await db.query("update media set created_at = now() - interval '25 hours' where id = $1", [stale.id]);
+    expect(await cleanupStaleUploads(db, cfg)).toBeGreaterThanOrEqual(1);
+    expect(await db.one("select 1 from media where id = $1", [stale.id])).toBeNull();
+
+    // 6. Suppression sécurisée : corbeille, puis suppression définitive du fichier stocké.
+    await trashMedia(db, up.id);
+    expect((await mediaFile(db, up.id))!.public).toBe(false);
+    await purgeMedia(db, up.id, cfg);
+    expect(await store.head(row!.storage_path)).toBeNull();
+  });
+
+  it("migration des médias : non destructive, vérifiée, reprise, retour arrière et libération explicite", async () => {
+    // Même dossier que le stockage configuré pour les tests : la vérification porte sur tous les fichiers.
+    const store = localStore(process.env.MEDIA_LOCAL_DIR!);
+    const legacy: StorageConfig = { backend: "database", store: null };
+    const jpg = (n: number) => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, n, n + 1, n + 2]);
+    // Fichiers « historiques » enregistrés en base, dont un utilisé par une fiche publiée.
+    const a = await storeMedia(db, { bytes: jpg(1), name: "a.jpg", userId: null, isDemo: true }, legacy);
+    const b = await storeMedia(db, { bytes: jpg(2), name: "b.jpg", userId: null, isDemo: false }, legacy);
+    const product = (await publishedProducts(db))[0];
+    await db.query("insert into product_images (id, product_id, url, position) values ($1, $2, $3, 97)", [
+      crypto.randomUUID(),
+      product.id,
+      a.url,
+    ]);
+    const counts = async () =>
+      db.one<{ media: number; images: number; products: number; orders: number; movements: number }>(
+        `select (select count(*)::int from media) as media, (select count(*)::int from product_images) as images,
+                (select count(*)::int from products) as products, (select count(*)::int from orders) as orders,
+                (select count(*)::int from stock_movements) as movements`,
+      );
+    const before = await counts();
+
+    // Essai à blanc : rien ne bouge.
+    expect((await migrateMediaToStore(db, store, { dryRun: true })).migrated).toBe(0);
+    expect((await mediaFile(db, a.id))!.storage_backend).toBe("database");
+
+    // Migration : copie relue et comparée ; octets en base conservés.
+    const report = await migrateMediaToStore(db, store);
+    expect(report.failed, JSON.stringify(report.failed)).toEqual([]);
+    expect(report.migrated).toBeGreaterThanOrEqual(2);
+    const ra = await db.one<{ storage_backend: string; storage_path: string; has_data: boolean; checksum: string }>(
+      "select storage_backend, storage_path, data is not null as has_data, checksum from media where id = $1",
+      [a.id],
+    );
+    expect(ra).toMatchObject({ storage_backend: "local", has_data: true });
+    expect(ra!.storage_path).toMatch(/^demo\//);
+    expect(ra!.checksum).toMatch(/^[0-9a-f]{64}$/);
+    // Reprise : relancée, elle ne refait rien.
+    expect((await migrateMediaToStore(db, store)).scanned).toBe(0);
+    // Le fichier reste servi à la même adresse, avec le même contenu, et la fiche le montre toujours.
+    const fa = (await mediaFile(db, a.id))!;
+    expect(fa.public).toBe(true);
+    const cfg: StorageConfig = { backend: "local", store };
+    expect(Array.from((await readMediaBytes(db, fa, null, cfg))!.body as Uint8Array)).toEqual(Array.from(jpg(1)));
+    expect((await verifyMediaStore(db, store)).problems).toEqual([]);
+    // Rien de perdu : médias, images de fiches, produits, commandes et mouvements identiques.
+    expect(await counts()).toEqual(before);
+
+    // Libération des copies en base : refusée sans confirmation explicite.
+    await expect(releaseDatabaseCopies(db, store, { confirm: false })).rejects.toThrow(/Confirmation/);
+    expect(await releaseDatabaseCopies(db, store, { confirm: true })).toBeGreaterThanOrEqual(2);
+    expect((await db.one<{ d: boolean }>("select data is not null as d from media where id = $1", [b.id]))!.d).toBe(
+      false,
+    );
+    // Fichier altéré dans le stockage : détecté par la vérification.
+    await store.put(ra!.storage_path, jpg(9), "image/jpeg");
+    expect((await verifyMediaStore(db, store)).problems.map((p) => p.id)).toContain(a.id);
+    await store.put(ra!.storage_path, jpg(1), "image/jpeg");
+
+    // Retour arrière : octets ramenés en base (retéléchargés), servis depuis la base.
+    const back = await rollbackMediaFromStore(db, store);
+    expect(back.failed).toEqual([]);
+    const fb = (await mediaFile(db, b.id))!;
+    expect(fb.storage_backend).toBe("database");
+    expect(Array.from((await readMediaBytes(db, fb, null, legacy))!.body as Uint8Array)).toEqual(Array.from(jpg(2)));
+    expect(await counts()).toEqual(before);
+    expect((await mediaStorageStatus(db)).some((r) => r.backend === "database")).toBe(true);
+
+    await db.query("delete from product_images where url = $1", [a.url]);
+  });
+
+  it("Supabase Storage : compartiment privé, envoi signé, lecture par plages, sans clé dans les erreurs", async () => {
+    const calls: { url: string; method: string; headers: Record<string, string>; body?: unknown }[] = [];
+    const fake: typeof fetch = async (input, init) => {
+      const url = String(input);
+      const headers = Object.fromEntries(new Headers(init?.headers).entries());
+      calls.push({ url, method: init?.method ?? "GET", headers, body: init?.body });
+      if (url.endsWith("/bucket/gps-media")) return new Response("{}", { status: 404 });
+      if (url.endsWith("/bucket")) return Response.json({ name: "gps-media" });
+      if (url.includes("/object/upload/sign/"))
+        return Response.json({ url: "/object/upload/sign/gps-media/catalogue/x.png?token=t" });
+      if (url.includes("/object/sign/")) return Response.json({ signedURL: "/object/sign/gps-media/v.mp4?token=s" });
+      if (url.includes("missing.png")) return new Response("not found", { status: 400 });
+      if (url.includes("/object/authenticated/") && headers.range === "bytes=0-63")
+        return new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), {
+          status: 206,
+          headers: { "content-range": "bytes 0-3/1234", "content-length": "4" },
+        });
+      if (url.includes("missing.png")) return new Response("not found", { status: 400 });
+      if (init?.method === "DELETE") return Response.json([]);
+      return new Response("refusé", { status: 403 });
+    };
+    const store = supabaseStore({
+      url: "https://exemple.supabase.co",
+      key: "cle-secrete-test",
+      bucket: "gps-media",
+      fetch: fake,
+    });
+    await store.ensureReady!();
+    const created = calls.find((c) => c.url.endsWith("/storage/v1/bucket"))!;
+    expect(JSON.parse(String(created.body))).toMatchObject({ id: "gps-media", public: false });
+    expect(JSON.parse(String(created.body)).allowed_mime_types).toContain("video/quicktime");
+    const target = await store.uploadTarget!("catalogue/x.png", "image/png");
+    expect(target.url).toBe(
+      "https://exemple.supabase.co/storage/v1/object/upload/sign/gps-media/catalogue/x.png?token=t",
+    );
+    expect(target.headers).toEqual({ "Content-Type": "image/png", "x-upsert": "false" });
+    // La clé reste côté serveur : jamais dans l'adresse donnée au navigateur.
+    expect(target.url).not.toContain("cle-secrete-test");
+    expect(await store.head("catalogue/x.png")).toEqual({
+      size: 1234,
+      start: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+    });
+    expect(await store.head("missing.png")).toBeNull();
+    expect(await store.signedUrl!("v.mp4", 3600)).toContain("/storage/v1/object/sign/gps-media/v.mp4?token=s");
+    await store.remove(["catalogue/x.png"]);
+    expect(JSON.parse(String(calls.at(-1)!.body))).toEqual({ prefixes: ["catalogue/x.png"] });
+    const err = await store.put("a.png", new Uint8Array([1]), "image/png").catch((e: Error) => e.message);
+    expect(err).toMatch(/envoi impossible \(403\)/);
+    expect(err).not.toContain("cle-secrete-test");
+    expect(calls.every((c) => c.headers.apikey === "cle-secrete-test")).toBe(true);
   });
 
   it("import CSV : aperçu, erreurs par ligne, regroupement en variantes, tout ou rien", async () => {

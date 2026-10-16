@@ -84,10 +84,13 @@ function ProductForm({
   initial,
   categories,
   canCosts,
+  videoMaxMb = 4,
 }: {
   initial: ProductState;
   categories: { id: string; name: string }[];
   canCosts: boolean;
+  /** Taille maximale d'une vidéo, selon le stockage des médias. */
+  videoMaxMb?: number;
 }) {
   const router = useRouter();
   const draftKey = `gps-produit-${initial.id ?? "nouveau"}`;
@@ -218,6 +221,16 @@ function ProductForm({
     const j = i + d;
     if (j < 0 || j >= imgs.length) return;
     [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
+    set({ images: imgs });
+  };
+  // Glisser-déposer (ordinateur, souris) : complément des boutons Monter / Descendre, qui restent la voie principale.
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const dropImage = (to: number) => {
+    if (dragFrom === null || dragFrom === to) return;
+    const imgs = [...state.images];
+    const [moved] = imgs.splice(dragFrom, 1);
+    imgs.splice(to, 0, moved);
     set({ images: imgs });
   };
 
@@ -429,8 +442,50 @@ function ProductForm({
               {state.images.map((img, i) => (
                 <li
                   key={img.url + i}
-                  className="grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-[6px] border border-line bg-card p-2"
+                  data-testid="media-item"
+                  onDragOver={(e) => {
+                    if (dragFrom === null) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (dragOver !== i) setDragOver(i);
+                  }}
+                  onDragLeave={() => setDragOver((x) => (x === i ? null : x))}
+                  onDrop={(e) => {
+                    if (dragFrom === null) return;
+                    e.preventDefault();
+                    dropImage(i);
+                    setDragFrom(null);
+                    setDragOver(null);
+                  }}
+                  className={`grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-[6px] border bg-card p-2 [@media(pointer:fine)]:grid-cols-[auto_72px_1fr_auto] ${
+                    dragOver === i && dragFrom !== i ? "border-gps-blue ring-2 ring-gps-blue/30" : "border-line"
+                  } ${dragFrom === i ? "opacity-50" : ""}`}
                 >
+                  <span
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", String(i));
+                      setDragFrom(i);
+                    }}
+                    onDragEnd={() => {
+                      setDragFrom(null);
+                      setDragOver(null);
+                    }}
+                    title="Glisser pour déplacer"
+                    aria-hidden="true"
+                    data-testid="media-grip"
+                    className="hidden h-full cursor-grab items-center px-0.5 text-ink-mute active:cursor-grabbing [@media(pointer:fine)]:flex"
+                  >
+                    <svg width="12" height="20" viewBox="0 0 12 20" fill="currentColor">
+                      {[3, 10, 17].map((y) => (
+                        <g key={y}>
+                          <circle cx="3" cy={y} r="1.6" />
+                          <circle cx="9" cy={y} r="1.6" />
+                        </g>
+                      ))}
+                    </svg>
+                  </span>
                   <div className="relative">
                     {img.kind === "video" ? (
                       <video
@@ -446,7 +501,7 @@ function ProductForm({
                         alt=""
                         width={72}
                         height={90}
-                        unoptimized={img.url.endsWith(".svg")}
+                        unoptimized={img.url.endsWith(".svg") || img.url.startsWith("/media/")}
                         className="aspect-[4/5] w-[72px] rounded-[4px] object-cover"
                       />
                     )}
@@ -535,8 +590,11 @@ function ProductForm({
               <IconUpload />
               <span className="font-bold">{uploads.busy ? "Envoi en cours…" : "Ajouter des photos ou une vidéo"}</span>
               <span className="text-[13px] text-ink-mute">
-                Photos JPEG, PNG, WebP réduites automatiquement · vidéo MP4 ou WebM jusqu&apos;à 4 Mo · format vertical
-                4:5 conseillé
+                Photos JPEG, PNG, WebP réduites automatiquement · vidéo MP4, MOV ou WebM jusqu&apos;à {videoMaxMb} Mo ·
+                format vertical 4:5 conseillé{" "}
+                <span className="hidden [@media(pointer:fine)]:inline">
+                  · glissez les vignettes pour les réordonner
+                </span>
               </span>
               <input
                 type="file"

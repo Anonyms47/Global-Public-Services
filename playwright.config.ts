@@ -20,7 +20,7 @@ export default defineConfig({
   ],
   webServer: {
     // Base de démonstration neuve à chaque lancement, isolée de la base locale.
-    command: `rm -rf .data/e2e && next start -p ${PORT}`,
+    command: `rm -rf .data/e2e .data/e2e-media && next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     // E2E_DATABASE_URL : exécuter les parcours sur un vrai PostgreSQL (base vidée au préalable).
     env: {

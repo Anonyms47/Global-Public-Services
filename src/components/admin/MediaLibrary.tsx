@@ -33,7 +33,7 @@ const kb = (n: number) =>
   n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} Mo` : `${Math.max(1, Math.round(n / 1024))} Ko`;
 
 /** Envoi multiple : photos réduites avant l'envoi, progression et reprise par fichier. */
-export function MediaUploader() {
+export function MediaUploader({ videoMaxMb = 4 }: { videoMaxMb?: number }) {
   const router = useRouter();
   const q = useUploadQueue({ onUploaded: () => router.refresh() });
   const [drag, setDrag] = useState(false);
@@ -52,8 +52,8 @@ export function MediaUploader() {
         <IconUpload />
         <span className="font-bold">Déposez vos fichiers ici ou touchez pour choisir</span>
         <span className="text-[13px] text-ink-mute">
-          Photos JPEG, PNG, WebP (réduites automatiquement) · vidéos courtes MP4, WebM jusqu&apos;à 4 Mo · plusieurs
-          fichiers à la fois
+          Photos JPEG, PNG, WebP (réduites automatiquement) · vidéos MP4, MOV, WebM jusqu&apos;à {videoMaxMb} Mo ·
+          plusieurs fichiers à la fois
         </span>
         <input
           type="file"
