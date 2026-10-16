@@ -638,8 +638,8 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
         />
         <Field
           id="u-email"
-          label="E-mail de connexion"
-          type="email"
+          label="Identifiant de connexion"
+          hint="Un identifiant (ex. awa.diop) ou une adresse e-mail."
           value={f.email}
           onChange={(v) => setF({ ...f, email: v })}
           error={create.fieldErrors.email}

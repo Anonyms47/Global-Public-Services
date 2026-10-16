@@ -4,7 +4,7 @@ export const DEMO_PASSWORD = "demo-gps-2026";
 
 export async function login(page: Page, email: string) {
   await page.goto("/comptoir/connexion");
-  await page.getByLabel("Adresse e-mail").fill(email);
+  await page.getByLabel("Identifiant ou e-mail").fill(email);
   await page.getByLabel("Mot de passe").fill(DEMO_PASSWORD);
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).toHaveURL(/\/comptoir$/);

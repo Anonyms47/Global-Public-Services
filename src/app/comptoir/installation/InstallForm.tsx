@@ -12,7 +12,13 @@ const fields = [
     hint: "Défini dans Vercel (COMPTOIR_SETUP_CODE).",
   },
   { name: "name", label: "Votre nom", type: "text", auto: "name" },
-  { name: "email", label: "Adresse e-mail", type: "email", auto: "username" },
+  {
+    name: "email",
+    label: "Identifiant de connexion",
+    type: "text",
+    auto: "username",
+    hint: "Un identifiant (ex. Ndiogou) ou une adresse e-mail.",
+  },
   { name: "password", label: "Mot de passe", type: "password", auto: "new-password", hint: "12 caractères minimum." },
   { name: "confirm", label: "Confirmer le mot de passe", type: "password", auto: "new-password" },
 ] as const;

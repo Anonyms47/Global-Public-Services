@@ -15,12 +15,14 @@ export function LoginForm({ suite }: { suite: string }) {
       ) : null}
       <div>
         <label className="label" htmlFor="email">
-          Adresse e-mail
+          Identifiant ou e-mail
         </label>
         <input
           id="email"
           name="email"
-          type="email"
+          type="text"
+          autoCapitalize="none"
+          autoCorrect="off"
           required
           autoComplete="username"
           defaultValue={state?.email}

@@ -661,6 +661,14 @@ describe("Droits, clients, rapports, démonstration", () => {
     ]);
     expect(real).toEqual({ is_demo: false, role: "owner" });
     await expect(claimOwner(db, code, { ...input, email: "autre@exemple.test" })).rejects.toThrow(/existe déjà/);
+    // Identifiant simple accepté à la place d'un e-mail.
+    const { createUser: cu, isLoginId } = await import("@/server/domain/auth");
+    expect(isLoginId("Ndiogou")).toBe(true);
+    expect(isLoginId("a b")).toBe(false);
+    await cu(db, { name: "Ndiogou", email: "Ndiogou", role: "seller", password: "un-mot-de-passe-solide" });
+    const t = await login(db, "ndiogou", "un-mot-de-passe-solide", { allowDemo: false });
+    expect(t.token).toBeTruthy();
+    await db.query("delete from users where email = 'ndiogou'");
     // Remise à l'état initial pour les autres tests.
     await db.query("delete from users where email = $1", [input.email]);
   });
