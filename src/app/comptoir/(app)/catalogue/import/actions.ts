@@ -35,3 +35,24 @@ export async function applyImportAction(csv: string, opts?: { mapping?: unknown;
     { message: "Import terminé : les produits sont en brouillon, ajoutez-leur des photos avant de publier." },
   );
 }
+
+/**
+ * Import du catalogue réel de la boutique (manifeste versionné) : propriétaire
+ * seulement, confirmation tapée, tout en brouillon, sans doublon si relancé.
+ */
+export async function applyGpsImportAction(confirmation: string, only?: string[]) {
+  return guarded("catalog.import", async ({ db, user }) => {
+    if (
+      String(confirmation ?? "")
+        .trim()
+        .toUpperCase() !== "IMPORTER"
+    ) {
+      throw new AppError("validation", "Tapez « IMPORTER » pour confirmer.", {
+        confirmation: "Confirmation incorrecte.",
+      });
+    }
+    const keys = z.array(z.string().max(80)).max(200).optional().parse(only);
+    const { applyGpsImport } = await import("@/server/domain/catalog-import-gps");
+    return applyGpsImport(db, { id: user.is_demo ? null : user.id }, { only: keys });
+  });
+}

@@ -2123,6 +2123,101 @@ describe("Points de vente (stock commun)", () => {
     expect(JSON.stringify(checks)).not.toMatch(/démonstration|d'exemple|fictif/i);
     await db.query("delete from stores");
   });
+
+  it("import du catalogue de la boutique : brouillons sans prix ni stock, sans doublon, sauvegarde et journal", async () => {
+    const imp = await import("@/server/domain/catalog-import-gps");
+    const { createUser } = await import("@/server/domain/auth");
+    const ownerId = await createUser(db, {
+      name: "Propriétaire import",
+      email: "proprio.import",
+      role: "owner",
+      password: "motdepasse-import",
+      temporary: false,
+    });
+    expect(can("owner", "catalog.import")).toBe(true);
+    expect(can("manager", "catalog.import")).toBe(false);
+    expect(can("seller", "catalog.import")).toBe(false);
+    // Un produit saisi à la main sous le même nom n'est jamais doublé.
+    const manual = await saveProduct(
+      db,
+      {
+        name: "Oraimo Watch 6R (OSW-823)",
+        brand: "Oraimo",
+        categoryId: null,
+        description: "",
+        specs: [],
+        condition: null,
+        axes: [],
+        images: [],
+        variants: [{ sku: "", options: {}, price: 0 }],
+        status: "draft",
+        featured: false,
+      },
+      { userId: ownerId, withCosts: true },
+    );
+    const plan = await imp.planGpsImport(db);
+    const total = imp.gpsManifest.products.length;
+    expect(plan.totals.conflict).toBe(1);
+    expect(plan.totals.create).toBe(total - 1);
+    expect(plan.missingPhotos).toBe(81);
+    const before = (await publishedProducts(db)).length;
+
+    const report = await imp.applyGpsImport(db, { id: ownerId });
+    expect(report.errors).toEqual([]);
+    expect(report.created).toHaveLength(total - 1);
+    const rows = await db.query<{
+      status: string;
+      price: number;
+      cost_price: number | null;
+      on_hand: number;
+      barcode: string | null;
+    }>(
+      `select p.status, v.price, v.cost_price, v.on_hand, v.barcode from products p join variants v on v.product_id = p.id
+        where p.internal->>'externalKey' is not null`,
+    );
+    expect(rows.length).toBe(report.created.reduce((n, c) => n + c.variants, 0));
+    // Rien de publié, aucun prix, coût, stock ni code-barres inventé, aucun mouvement de stock.
+    expect(
+      rows.every(
+        (r) => r.status === "draft" && r.price === 0 && r.cost_price === null && r.on_hand === 0 && !r.barcode,
+      ),
+    ).toBe(true);
+    expect((await publishedProducts(db)).length).toBe(before);
+    const moves = await db.one<{ n: number }>(
+      `select count(*)::int as n from stock_movements m join variants v on v.id = m.variant_id
+         join products p on p.id = v.product_id where p.internal->>'externalKey' is not null`,
+    );
+    expect(moves!.n).toBe(0);
+    // Sources et vérifications humaines conservées en interne, pas dans les caractéristiques publiques.
+    const watch5 = report.created.find((c) => c.externalKey === "gps-oraimo-osw-804")!;
+    const info = (await imp.importedInfo(db, watch5.id))!;
+    expect(info.humanChecks.some((c) => /Résolution/.test(c))).toBe(true);
+    const pub = (await productForEdit(db, watch5.id, { withCosts: false }))!;
+    expect(pub.specs.map((x) => x.label)).not.toContain("Résolution");
+    expect(JSON.stringify(pub.specs)).not.toMatch(/source/);
+    // Variantes uniquement pour les compatibilités relevées.
+    const coques = report.created.find((c) => c.externalKey === "gps-coques-telephone")!;
+    expect(coques.variants).toBe(24);
+    // Sauvegarde datée et journal.
+    expect(await db.one("select 1 from data_backups where label = $1", [report.backup])).toBeTruthy();
+    const logs = await db.one<{ n: number }>(
+      "select count(*)::int as n from audit_log where action = 'product.import'",
+    );
+    expect(logs!.n).toBe(total - 1);
+    expect(report.categoriesCreated).toEqual(expect.arrayContaining(["Câbles", "Batteries externes"]));
+
+    // Relancer : aucun doublon.
+    const again = await imp.applyGpsImport(db, { id: ownerId });
+    expect(again.created).toHaveLength(0);
+    expect(again.categoriesCreated).toHaveLength(0);
+    expect(
+      (await db.one<{ n: number }>(
+        "select count(*)::int as n from products where internal->>'externalKey' is not null",
+      ))!.n,
+    ).toBe(total - 1);
+
+    await db.query("delete from products where internal->>'externalKey' is not null or id = $1", [manual.id]);
+  });
 });
 
 describe("Démonstration déjà en ligne", () => {

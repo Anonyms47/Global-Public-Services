@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
+import { can } from "@/lib/permissions";
 import { importColumns } from "@/server/domain/import";
 import { Forbidden, PageTitle, Panel } from "@/components/admin/ui";
 import { ImportForm } from "@/components/admin/ImportForm";
@@ -9,7 +10,7 @@ import { IconArrowLeft } from "@/components/ui/icons";
 export const metadata: Metadata = { title: "Import CSV" };
 
 export default async function ImportPage() {
-  const { allowed } = await requirePage("catalog.bulk");
+  const { user, allowed } = await requirePage("catalog.bulk");
   if (!allowed) return <Forbidden what="l'import du catalogue" />;
   return (
     <>
@@ -23,6 +24,15 @@ export default async function ImportPage() {
         Créez de nombreux produits d&apos;un coup depuis un tableur. Une ligne par variante ; les lignes de même nom
         forment un produit. Rien n&apos;est enregistré avant votre confirmation, et tout arrive en brouillon.
       </PageTitle>
+      {can(user, "catalog.import") ? (
+        <Link
+          href="/comptoir/catalogue/import/boutique"
+          className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-[6px] border-[1.5px] border-gps-blue bg-gps-blue-soft p-4 font-bold text-gps-blue"
+        >
+          Catalogue relevé en boutique : simulation puis import en brouillons
+          <span aria-hidden="true">→</span>
+        </Link>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Panel>
           <ImportForm />

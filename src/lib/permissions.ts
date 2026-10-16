@@ -25,6 +25,7 @@ export const permissions = {
   "catalog.edit": ["owner", "manager"],
   "catalog.bulk": ["owner", "manager"],
   "catalog.costs": ["owner"],
+  "catalog.import": ["owner"],
   "stock.view": ["owner", "manager", "seller"],
   "stock.restock": ["owner", "manager"],
   "stock.inventory": ["owner", "manager"],

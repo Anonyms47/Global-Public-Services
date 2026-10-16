@@ -1,0 +1,4734 @@
+{
+  "version": "2026-10-16",
+  "description": "Catalogue réel GPS préparé d'après le relevé photo de la boutique. Tous les produits sont créés en brouillon privé.",
+  "photosExpectedDir": "data/photos-boutique/",
+  "photosExpected": [
+    "IMG_3638.jpeg",
+    "IMG_3639.jpeg",
+    "IMG_3640.jpeg",
+    "IMG_3641.jpeg",
+    "IMG_3642.jpeg",
+    "IMG_3643.jpeg",
+    "IMG_3644.jpeg",
+    "IMG_3645.jpeg",
+    "IMG_3646.jpeg",
+    "IMG_3647.jpeg",
+    "IMG_3648.jpeg",
+    "IMG_3649.jpeg",
+    "IMG_3650.jpeg",
+    "IMG_3651.jpeg",
+    "IMG_3652.jpeg",
+    "IMG_3653.jpeg",
+    "IMG_3654.jpeg",
+    "IMG_3655.jpeg",
+    "IMG_3656.jpeg",
+    "IMG_3657.jpeg",
+    "IMG_3658.jpeg",
+    "IMG_3659.jpeg",
+    "IMG_3660.jpeg",
+    "IMG_3661.jpeg",
+    "IMG_3662.jpeg",
+    "IMG_3663.jpeg",
+    "IMG_3664.jpeg",
+    "IMG_3665.jpeg",
+    "IMG_3666.jpeg",
+    "IMG_3667.jpeg",
+    "IMG_3668.jpeg",
+    "IMG_3669.jpeg",
+    "IMG_3670.jpeg",
+    "IMG_3671.jpeg",
+    "IMG_3672.jpeg",
+    "IMG_3673.jpeg",
+    "IMG_3674.jpeg",
+    "IMG_3675.jpeg",
+    "IMG_3676.jpeg",
+    "IMG_3677.jpeg",
+    "IMG_3678.jpeg",
+    "IMG_3679.jpeg",
+    "IMG_3681.jpeg",
+    "IMG_3682.jpeg",
+    "IMG_3683.jpeg",
+    "IMG_3684.jpeg",
+    "IMG_3685.jpeg",
+    "IMG_3686.jpeg",
+    "IMG_3687.jpeg",
+    "IMG_3688.jpeg",
+    "IMG_3689.jpeg",
+    "IMG_3690.jpeg",
+    "IMG_3691.jpeg",
+    "IMG_3692.jpeg",
+    "IMG_3693.jpeg",
+    "IMG_3694.jpeg",
+    "IMG_3695.jpeg",
+    "IMG_3696.jpeg",
+    "IMG_3697.jpeg",
+    "IMG_3698.jpeg",
+    "IMG_3699.jpeg",
+    "IMG_3700.jpeg",
+    "IMG_3701.jpeg",
+    "IMG_3702.jpeg",
+    "IMG_3703.jpeg",
+    "IMG_3704.jpeg",
+    "IMG_3705.jpeg",
+    "IMG_3706.jpeg",
+    "IMG_3707.jpeg",
+    "IMG_3708.jpeg",
+    "IMG_3709.jpeg",
+    "IMG_3710.jpeg",
+    "IMG_3711.jpeg",
+    "IMG_3712.jpeg",
+    "IMG_3713.jpeg",
+    "IMG_3714.jpeg",
+    "IMG_3715.jpeg",
+    "IMG_3716.jpeg",
+    "IMG_3717.jpeg",
+    "IMG_3718.jpeg",
+    "IMG_3719.jpeg"
+  ],
+  "photosAvailable": false,
+  "categories": [
+    "Téléphones",
+    "AirPods & écouteurs",
+    "Casques",
+    "Montres",
+    "Chargeurs",
+    "Câbles",
+    "Batteries externes",
+    "Enceintes & audio",
+    "Informatique",
+    "Création de contenu",
+    "Accessoires",
+    "Protections & coques",
+    "Jeux",
+    "Autres articles"
+  ],
+  "products": [
+    {
+      "externalKey": "gps-oraimo-otw-323p",
+      "section": "A",
+      "name": "Oraimo SpaceBuds Neo+ (OTW-323P)",
+      "brand": "Oraimo",
+      "model": "OTW-323P",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs sans fil",
+      "summary": "Écouteurs sans fil Oraimo avec réduction active du bruit, son spatial Sound360 et Bluetooth 5.4, rechargés en USB-C. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs sans fil Oraimo avec réduction active du bruit, son spatial Sound360 et Bluetooth 5.4, rechargés en USB-C. Renseignements auprès de GPS sur WhatsApp.\n\nLe boîtier recharge les écouteurs en déplacement : jusqu'à 5 h d'écoute, plus 25 h avec le boîtier, réduction de bruit désactivée.\n\nRéduction de bruit activée, comptez jusqu'à 4 h, plus 20 h avec le boîtier. Les durées sont celles annoncées par Oraimo et varient selon le volume et l'usage.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.4",
+          "source": "oraimo"
+        },
+        {
+          "label": "Portée",
+          "value": "10 m",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "USB-C",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie (ANC désactivée)",
+          "value": "jusqu'à 5 h + 25 h avec le boîtier",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie (ANC activée)",
+          "value": "jusqu'à 4 h + 20 h avec le boîtier",
+          "source": "oraimo"
+        },
+        {
+          "label": "Réduction de bruit",
+          "value": "Active (ANC)",
+          "source": "oraimo"
+        },
+        {
+          "label": "Son",
+          "value": "Sound360 Spatial Audio",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/tune-in-noise-out-active-noise-cancellation-elegant-metallic-design-30-hour-long-playtime-sound360-spatial-audio-spacebuds-neo",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs bluetooth", "oraimo", "anc", "réduction de bruit"],
+      "seo": {
+        "title": "Oraimo SpaceBuds Neo+ (OTW-323P) | GPS",
+        "description": "Écouteurs sans fil Oraimo avec réduction active du bruit, son spatial Sound360 et Bluetooth 5.4, rechargés en USB-C. Renseignements auprès de GPS sur Whats"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Vérifier qu'il ne s'agit pas de l'édition « Tahsan » (invites vocales différentes)",
+        "Couleur(s) présente(s) en boutique",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026."
+    },
+    {
+      "externalKey": "gps-oraimo-otw-324",
+      "section": "A",
+      "name": "Oraimo SpaceBuds Lite (OTW-324)",
+      "brand": "Oraimo",
+      "model": "OTW-324",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs sans fil",
+      "summary": "Écouteurs sans fil Oraimo légers, Bluetooth 5.4, résistants aux éclaboussures (IPX4), jusqu'à 40 h d'écoute avec le boîtier.",
+      "description": "Écouteurs sans fil Oraimo légers, Bluetooth 5.4, résistants aux éclaboussures (IPX4), jusqu'à 40 h d'écoute avec le boîtier.\n\nJusqu'à 7 h d'écoute par charge et 33 h supplémentaires grâce au boîtier, rechargé en USB-C.\n\nHaut-parleurs de 10 mm, certification IPX4 contre les éclaboussures et la transpiration.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.4",
+          "source": "oraimo"
+        },
+        {
+          "label": "Portée",
+          "value": "10 m",
+          "source": "oraimo"
+        },
+        {
+          "label": "Haut-parleurs",
+          "value": "10 mm",
+          "source": "oraimo"
+        },
+        {
+          "label": "Résistance",
+          "value": "IPX4",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 7 h + 33 h avec le boîtier",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "USB-C",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/powerful-bass-pure-immersion-spacebuds-lite",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs bluetooth", "oraimo", "ipx4"],
+      "seo": {
+        "title": "Oraimo SpaceBuds Lite (OTW-324) | GPS",
+        "description": "Écouteurs sans fil Oraimo légers, Bluetooth 5.4, résistants aux éclaboussures (IPX4), jusqu'à 40 h d'écoute avec le boîtier."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Couleurs présentes en boutique (Gravity Black, Light Gold, Digital Lavender documentées) : ne créer que celles vues",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026. Un revendeur indique Bluetooth 5.3 : la boîte fait foi."
+    },
+    {
+      "externalKey": "gps-oraimo-ohp-317",
+      "section": "A",
+      "name": "Oraimo BoomPop Lite (OHP-317)",
+      "brand": "Oraimo",
+      "model": "OHP-317",
+      "category": "Casques",
+      "subtype": "Casque sans fil",
+      "summary": "Casque Oraimo sans fil et filaire : Bluetooth 5.3 ou câble jack 3,5 mm, transducteurs de 40 mm, jusqu'à 65 h d'écoute. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Casque Oraimo sans fil et filaire : Bluetooth 5.3 ou câble jack 3,5 mm, transducteurs de 40 mm, jusqu'à 65 h d'écoute. Renseignements auprès de GPS sur WhatsApp.\n\nIl s'utilise en Bluetooth ou avec un câble jack 3,5 mm, pratique quand la batterie est vide.\n\nRecharge en USB-C. Autonomie annoncée par Oraimo : jusqu'à 65 h.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.3",
+          "source": "oraimo"
+        },
+        {
+          "label": "Entrée auxiliaire",
+          "value": "Jack 3,5 mm",
+          "source": "oraimo"
+        },
+        {
+          "label": "Transducteurs",
+          "value": "40 mm",
+          "source": "oraimo"
+        },
+        {
+          "label": "Portée",
+          "value": "au moins 10 m",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 65 h",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "USB-C",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/endless-beats-all-day-long-boompop-lite",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "oraimo-es",
+          "url": "https://es.oraimo.com/",
+          "kind": "boutique officielle Oraimo (Espagne)",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["casque bluetooth", "oraimo", "boompop"],
+      "seo": {
+        "title": "Oraimo BoomPop Lite (OHP-317) | GPS",
+        "description": "Casque Oraimo sans fil et filaire : Bluetooth 5.3 ou câble jack 3,5 mm, transducteurs de 40 mm, jusqu'à 65 h d'écoute. Renseignements auprès de GPS sur Wha"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026. Seule l'autonomie de 65 h a été recoupée ; ne pas afficher 60 h."
+    },
+    {
+      "externalKey": "gps-oraimo-ohp-917",
+      "section": "A",
+      "name": "Oraimo BoomPop Pro (OHP-917)",
+      "brand": "Oraimo",
+      "model": "OHP-917",
+      "category": "Casques",
+      "subtype": "Casque à réduction de bruit",
+      "summary": "Casque Oraimo à réduction active du bruit hybride, Bluetooth 5.4 et commandes tactiles, avec une grande autonomie annoncée.",
+      "description": "Casque Oraimo à réduction active du bruit hybride, Bluetooth 5.4 et commandes tactiles, avec une grande autonomie annoncée.\n\nJusqu'à 82 h d'écoute sans réduction de bruit et 53 h avec, selon Oraimo. Recharge complète en USB-C en 2 h environ.\n\nCommandes tactiles par effleurement et glissement sur l'écouteur.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.4",
+          "source": "oraimo"
+        },
+        {
+          "label": "Portée",
+          "value": "10 m",
+          "source": "oraimo"
+        },
+        {
+          "label": "Réduction de bruit",
+          "value": "Active hybride",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 82 h (ANC désactivée), 53 h (ANC activée)",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "USB-C, environ 2 h",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/silence-meets-clarity-boompop-pro",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["casque anc", "oraimo", "réduction de bruit"],
+      "seo": {
+        "title": "Oraimo BoomPop Pro (OHP-917) | GPS",
+        "description": "Casque Oraimo à réduction active du bruit hybride, Bluetooth 5.4 et commandes tactiles, avec une grande autonomie annoncée."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Caractéristiques non recoupées par la recherche : contrôler la boîte avant publication",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026. Aucune source secondaire trouvée pour OHP-917."
+    },
+    {
+      "externalKey": "gps-oraimo-oeb-311",
+      "section": "A",
+      "name": "Oraimo Necklace Lite (OEB-311)",
+      "brand": "Oraimo",
+      "model": "OEB-311",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs tour de cou",
+      "summary": "Écouteurs Bluetooth tour de cou Oraimo, avec alerte vibrante pour les appels et jusqu'à 30 h d'écoute, recharge USB-C. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs Bluetooth tour de cou Oraimo, avec alerte vibrante pour les appels et jusqu'à 30 h d'écoute, recharge USB-C. Renseignements auprès de GPS sur WhatsApp.\n\nLe tour de cou vibre à l'arrivée d'un appel : pratique au marché, au volant ou au travail.\n\nBatterie de 220 mAh annoncée pour jusqu'à 30 h d'écoute.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.3",
+          "source": "oraimo"
+        },
+        {
+          "label": "Portée",
+          "value": "10 m",
+          "source": "oraimo"
+        },
+        {
+          "label": "Batterie",
+          "value": "220 mAh",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 30 h",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "USB-C",
+          "source": "oraimo"
+        },
+        {
+          "label": "Appels",
+          "value": "Alerte vibrante",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/vibrate-to-the-rhythm-necklace-lite",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs tour de cou", "neckband", "oraimo"],
+      "seo": {
+        "title": "Oraimo Necklace Lite (OEB-311) | GPS",
+        "description": "Écouteurs Bluetooth tour de cou Oraimo, avec alerte vibrante pour les appels et jusqu'à 30 h d'écoute, recharge USB-C. Renseignements auprès de GPS sur Wha"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026."
+    },
+    {
+      "externalKey": "gps-oraimo-opn-672",
+      "section": "A",
+      "name": "Oraimo OpenCirclet 2 (OPN-672)",
+      "brand": "Oraimo",
+      "model": "OPN-672",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs ouverts",
+      "summary": "Écouteurs ouverts Oraimo qui laissent entendre l'environnement : Bluetooth 5.4, IPX5, jusqu'à 16 h d'écoute, recharge USB-C.",
+      "description": "Écouteurs ouverts Oraimo qui laissent entendre l'environnement : Bluetooth 5.4, IPX5, jusqu'à 16 h d'écoute, recharge USB-C.\n\nLeur forme ouverte ne bouche pas l'oreille : on reste attentif à la circulation et aux personnes autour.\n\nRésistance IPX5 à la transpiration et aux projections d'eau.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.4",
+          "source": "oraimo"
+        },
+        {
+          "label": "Portée",
+          "value": "au moins 10 m",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 16 h",
+          "source": "oraimo"
+        },
+        {
+          "label": "Résistance",
+          "value": "IPX5",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "USB-C",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/move-free-sound-bold-opencirclet-2",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs ouverts", "open ear", "oraimo"],
+      "seo": {
+        "title": "Oraimo OpenCirclet 2 (OPN-672) | GPS",
+        "description": "Écouteurs ouverts Oraimo qui laissent entendre l'environnement : Bluetooth 5.4, IPX5, jusqu'à 16 h d'écoute, recharge USB-C."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Confirmer la référence OPN-672 sur la boîte (non recoupée par la recherche)",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026."
+    },
+    {
+      "externalKey": "gps-oraimo-osw-804",
+      "section": "A",
+      "name": "Oraimo Watch 5 Lite (OSW-804)",
+      "brand": "Oraimo",
+      "model": "OSW-804",
+      "category": "Montres",
+      "subtype": "Montre connectée",
+      "summary": "Montre connectée Oraimo à grand écran tactile de 2,01 pouces, étanche IP68, jusqu'à 7 jours d'utilisation par charge. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Montre connectée Oraimo à grand écran tactile de 2,01 pouces, étanche IP68, jusqu'à 7 jours d'utilisation par charge. Renseignements auprès de GPS sur WhatsApp.\n\nGrand écran pour lire notifications, pas et suivi santé. Jusqu'à 7 jours d'utilisation et plus de 28 jours en veille, selon Oraimo.\n\nCertification IP68 contre la poussière et l'eau. Recharge complète en 3 h environ.",
+      "specs": [
+        {
+          "label": "Écran",
+          "value": "Tactile TFT 2,01 pouces",
+          "source": "oraimo"
+        },
+        {
+          "label": "Batterie",
+          "value": "300 mAh",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "environ 3 h",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 7 jours, plus de 28 jours en veille",
+          "source": "oraimo"
+        },
+        {
+          "label": "Étanchéité",
+          "value": "IP68",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/201-hd-screen-full-control-oraimo-watch-5-lite",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["montre connectée", "smartwatch", "oraimo"],
+      "seo": {
+        "title": "Oraimo Watch 5 Lite (OSW-804) | GPS",
+        "description": "Montre connectée Oraimo à grand écran tactile de 2,01 pouces, étanche IP68, jusqu'à 7 jours d'utilisation par charge. Renseignements auprès de GPS sur What"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Résolution (240 × 296 ou 240 × 280 selon les sources) : relever sur la boîte",
+        "Version Bluetooth : relever sur la boîte",
+        "Application compatible indiquée sur la boîte",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Sources contradictoires sur la résolution et la version Bluetooth : non affichées. Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026."
+    },
+    {
+      "externalKey": "gps-oraimo-osw-823",
+      "section": "A",
+      "name": "Oraimo Watch 6R (OSW-823)",
+      "brand": "Oraimo",
+      "model": "OSW-823",
+      "category": "Montres",
+      "subtype": "Montre connectée",
+      "summary": "Montre connectée Oraimo à écran rond de 1,39 pouce, appels Bluetooth, suivi du rythme cardiaque et de l'oxygène, IP68. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Montre connectée Oraimo à écran rond de 1,39 pouce, appels Bluetooth, suivi du rythme cardiaque et de l'oxygène, IP68. Renseignements auprès de GPS sur WhatsApp.\n\nElle permet de passer des appels Bluetooth depuis le poignet et suit le rythme cardiaque et la saturation en oxygène (SpO2).\n\nJusqu'à 7 jours d'utilisation et 28 jours en veille, selon Oraimo. Recharge en 3 h environ.",
+      "specs": [
+        {
+          "label": "Écran",
+          "value": "Tactile TFT 1,39 pouce, 240 × 240",
+          "source": "oraimo"
+        },
+        {
+          "label": "Bluetooth",
+          "value": "5.3",
+          "source": "oraimo"
+        },
+        {
+          "label": "Batterie",
+          "value": "300 mAh",
+          "source": "oraimo"
+        },
+        {
+          "label": "Recharge",
+          "value": "environ 3 h",
+          "source": "oraimo"
+        },
+        {
+          "label": "Autonomie",
+          "value": "jusqu'à 7 jours, 28 jours en veille",
+          "source": "oraimo"
+        },
+        {
+          "label": "Étanchéité",
+          "value": "IP68",
+          "source": "oraimo"
+        },
+        {
+          "label": "Fonctions",
+          "value": "Appels Bluetooth, fréquence cardiaque, SpO2",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/139-hd-colorful-screen-vivid-viewing-watch-6r",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["montre connectée", "appels bluetooth", "oraimo"],
+      "seo": {
+        "title": "Oraimo Watch 6R (OSW-823) | GPS",
+        "description": "Montre connectée Oraimo à écran rond de 1,39 pouce, appels Bluetooth, suivi du rythme cardiaque et de l'oxygène, IP68. Renseignements auprès de GPS sur Wha"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026."
+    },
+    {
+      "externalKey": "gps-oraimo-opb-p600q",
+      "section": "A",
+      "name": "Oraimo PowerBox 600 — 60 000 mAh (OPB-P600Q)",
+      "brand": "Oraimo",
+      "model": "OPB-P600Q",
+      "category": "Batteries externes",
+      "subtype": "Batterie externe",
+      "summary": "Batterie externe Oraimo de 60 000 mAh avec écran, cinq sorties, charge rapide jusqu'à 22,5 W et lampe avec alarme SOS. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Batterie externe Oraimo de 60 000 mAh avec écran, cinq sorties, charge rapide jusqu'à 22,5 W et lampe avec alarme SOS. Renseignements auprès de GPS sur WhatsApp.\n\nGrande capacité pour plusieurs jours sans courant : 60 000 mAh (222 Wh), cinq sorties et deux entrées.\n\nCharge rapide jusqu'à 22,5 W selon le téléphone et le câble utilisés (PD et QC). Écran LED du niveau de charge, lampe et alarme SOS.",
+      "specs": [
+        {
+          "label": "Capacité",
+          "value": "60 000 mAh (222 Wh)",
+          "source": "oraimo"
+        },
+        {
+          "label": "Charge rapide",
+          "value": "jusqu'à 22,5 W (PD, QC)",
+          "source": "oraimo"
+        },
+        {
+          "label": "Sorties",
+          "value": "5",
+          "source": "oraimo"
+        },
+        {
+          "label": "Entrées",
+          "value": "2",
+          "source": "oraimo"
+        },
+        {
+          "label": "Écran",
+          "value": "LED",
+          "source": "oraimo"
+        },
+        {
+          "label": "Lampe",
+          "value": "Avec alarme SOS",
+          "source": "oraimo"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo",
+          "url": "https://www.oraimo.com/product/60000mah-super-huge-capacity-power-bank-one-charge-for-three-weeks-powerbox-600",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["powerbank", "batterie externe", "60000mah", "oraimo"],
+      "seo": {
+        "title": "Oraimo PowerBox 600 — 60 000 mAh (OPB-P600Q) | GPS",
+        "description": "Batterie externe Oraimo de 60 000 mAh avec écran, cinq sorties, charge rapide jusqu'à 22,5 W et lampe avec alarme SOS. Renseignements auprès de GPS sur Wha"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Confirmer OPB-P600Q sur la boîte (ancienne lecture OPB-P6001 corrigée)",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Site fabricant non consultable directement depuis l'outil (DNS) : contenu recoupé par recherche web le 16/10/2026."
+    },
+    {
+      "externalKey": "gps-oraimo-odf-201a",
+      "section": "A",
+      "name": "Oraimo SmartTableFan Mini (ODF-201A)",
+      "brand": "Oraimo",
+      "model": "ODF-201A",
+      "category": "Accessoires",
+      "subtype": "Ventilateur de table",
+      "summary": "Petit ventilateur de table Oraimo SmartTableFan Mini, référence ODF-201A. Caractéristiques à compléter d'après la boîte.",
+      "description": "Petit ventilateur de table Oraimo SmartTableFan Mini, référence ODF-201A. Caractéristiques à compléter d'après la boîte.\n\nModèle confirmé par la boîte. Autonomie, puissance et capacité de batterie seront ajoutées après lecture de l'emballage.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["ventilateur", "oraimo"],
+      "seo": {
+        "title": "Oraimo SmartTableFan Mini (ODF-201A) | GPS",
+        "description": "Petit ventilateur de table Oraimo SmartTableFan Mini, référence ODF-201A. Caractéristiques à compléter d'après la boîte."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Relever autonomie, batterie et mode de recharge sur la boîte",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune page officielle exacte trouvée : aucune caractéristique saisie."
+    },
+    {
+      "externalKey": "gps-oraimo-ocw-1062ec",
+      "section": "A",
+      "name": "Oraimo PowerCube 62 — chargeur secteur (OCW-1062EC)",
+      "brand": "Oraimo",
+      "model": "OCW-1062EC",
+      "category": "Chargeurs",
+      "subtype": "Chargeur secteur",
+      "summary": "Chargeur secteur Oraimo PowerCube 62 à prise européenne, référence OCW-1062EC. Puissances de sortie à relever sur la boîte.",
+      "description": "Chargeur secteur Oraimo PowerCube 62 à prise européenne, référence OCW-1062EC. Puissances de sortie à relever sur la boîte.\n\nPrise européenne adaptée aux prises du Sénégal. Les tensions et intensités exactes seront ajoutées après lecture de l'étiquette.",
+      "specs": [
+        {
+          "label": "Prise",
+          "value": "Européenne",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "oraimo-ma",
+          "url": "https://ma.oraimo.com/en/product/oraimo-charger-powercube-62-ocw-1062ec-black",
+          "kind": "boutique officielle Oraimo (Maroc)",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur", "oraimo", "powercube"],
+      "seo": {
+        "title": "Oraimo PowerCube 62 — chargeur secteur (OCW-1062EC) | GPS",
+        "description": "Chargeur secteur Oraimo PowerCube 62 à prise européenne, référence OCW-1062EC. Puissances de sortie à relever sur la boîte."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Confirmer OCW-1062EC (ancienne lecture OCW-U62)",
+        "Relever tensions et intensités de sortie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-samsung-a06-4g",
+      "section": "A",
+      "name": "Samsung Galaxy A06 (4G)",
+      "brand": "Samsung",
+      "model": "SM-A065F",
+      "category": "Téléphones",
+      "subtype": "Smartphone",
+      "summary": "Smartphone Samsung Galaxy A06 4G : grand écran de 6,7 pouces, batterie de 5 000 mAh et appareil photo principal de 50 Mpx.",
+      "description": "Smartphone Samsung Galaxy A06 4G : grand écran de 6,7 pouces, batterie de 5 000 mAh et appareil photo principal de 50 Mpx.\n\nÉcran HD+ de 6,7 pouces, processeur MediaTek Helio G85 et batterie de 5 000 mAh pour tenir la journée.\n\nAppareil photo arrière 50 Mpx avec capteur de profondeur 2 Mpx, caméra avant 8 Mpx. Charge jusqu'à 25 W avec un chargeur compatible (non fourni d'office).\n\nVersion 4G : à ne pas confondre avec le Galaxy A06 5G.",
+      "specs": [
+        {
+          "label": "Écran",
+          "value": "6,7 pouces HD+ (720 × 1600)",
+          "source": "samsung"
+        },
+        {
+          "label": "Processeur",
+          "value": "MediaTek Helio G85",
+          "source": "samsung"
+        },
+        {
+          "label": "Appareil photo arrière",
+          "value": "50 Mpx + 2 Mpx (profondeur)",
+          "source": "samsung"
+        },
+        {
+          "label": "Caméra avant",
+          "value": "8 Mpx",
+          "source": "samsung"
+        },
+        {
+          "label": "Batterie",
+          "value": "5 000 mAh",
+          "source": "samsung"
+        },
+        {
+          "label": "Charge",
+          "value": "jusqu'à 25 W",
+          "source": "samsung"
+        },
+        {
+          "label": "Réseau",
+          "value": "4G",
+          "source": "samsung"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "samsung",
+          "url": "https://www.samsung.com/levant/smartphones/galaxy-a/galaxy-a06-light-blue-128gb-sm-a065flbhmea/",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["samsung", "galaxy a06", "smartphone"],
+      "seo": {
+        "title": "Samsung Galaxy A06 (4G) | GPS",
+        "description": "Smartphone Samsung Galaxy A06 4G : grand écran de 6,7 pouces, batterie de 5 000 mAh et appareil photo principal de 50 Mpx."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "RAM, stockage et couleur de chaque boîte (créer les variantes après lecture)",
+        "Chargeur inclus ou non",
+        "Neuf ou occasion",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "La charge 25 W n'est recoupée que par une source secondaire."
+    },
+    {
+      "externalKey": "gps-nokia-105",
+      "section": "A",
+      "name": "Nokia 105",
+      "brand": "Nokia",
+      "model": "105 (génération à confirmer)",
+      "category": "Téléphones",
+      "subtype": "Téléphone à touches",
+      "summary": "Téléphone à touches Nokia 105, simple et robuste. Génération à confirmer sur la boîte avant d'ajouter les caractéristiques.",
+      "description": "Téléphone à touches Nokia 105, simple et robuste. Génération à confirmer sur la boîte avant d'ajouter les caractéristiques.\n\nPlusieurs générations du Nokia 105 existent : les caractéristiques seront ajoutées une fois l'année de la boîte relevée.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "hmd",
+          "url": "https://www.hmd.com/en_int/nokia-105",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["nokia", "téléphone à touches"],
+      "seo": {
+        "title": "Nokia 105 | GPS",
+        "description": "Téléphone à touches Nokia 105, simple et robuste. Génération à confirmer sur la boîte avant d'ajouter les caractéristiques."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Génération (année) sur la boîte",
+        "Couleurs présentes",
+        "Double SIM ou non",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Référence récente (si confirmée) : écran 1,8 pouce, 1 000 mAh, jack 3,5 mm, radio FM."
+    },
+    {
+      "externalKey": "gps-nokia-105-4g",
+      "section": "A",
+      "name": "Nokia 105 4G",
+      "brand": "Nokia",
+      "model": "105 4G (édition à confirmer)",
+      "category": "Téléphones",
+      "subtype": "Téléphone à touches",
+      "summary": "Téléphone à touches Nokia 105 en version 4G. Édition à confirmer sur la boîte (2021, 2023, 2024 ou 4th Edition). Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Téléphone à touches Nokia 105 en version 4G. Édition à confirmer sur la boîte (2021, 2023, 2024 ou 4th Edition). Renseignements auprès de GPS sur WhatsApp.\n\nLes éditions du Nokia 105 4G diffèrent (écran, batterie) : les caractéristiques seront ajoutées après lecture de la boîte.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "hmd",
+          "url": "https://www.hmd.com/en_int/nokia-105-4g-2024",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["nokia", "4g", "téléphone à touches"],
+      "seo": {
+        "title": "Nokia 105 4G | GPS",
+        "description": "Téléphone à touches Nokia 105 en version 4G. Édition à confirmer sur la boîte (2021, 2023, 2024 ou 4th Edition). Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Édition exacte sur la boîte",
+        "Couleurs présentes",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Édition 2024 selon HMD : batterie amovible 1 450 mAh, USB-C. Taille d'écran contradictoire chez HMD (2,0 / 2,4 pouces) : non affichée."
+    },
+    {
+      "externalKey": "gps-kgtel-k2163",
+      "section": "A",
+      "name": "KGTEL K2163",
+      "brand": "KGTEL",
+      "model": "K2163",
+      "category": "Téléphones",
+      "subtype": "Téléphone à touches",
+      "summary": "Téléphone à touches KGTEL K2163 avec batterie de 1 150 mAh et plus de 13 jours de veille annoncés sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Téléphone à touches KGTEL K2163 avec batterie de 1 150 mAh et plus de 13 jours de veille annoncés sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur la boîte.",
+      "specs": [
+        {
+          "label": "Batterie",
+          "value": "1 150 mAh (indiqué sur la boîte)",
+          "source": "boite"
+        },
+        {
+          "label": "Veille",
+          "value": "plus de 13 jours (indiqué sur la boîte)",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["téléphone à touches", "kgtel"],
+      "seo": {
+        "title": "KGTEL K2163 | GPS",
+        "description": "Téléphone à touches KGTEL K2163 avec batterie de 1 150 mAh et plus de 13 jours de veille annoncés sur l'emballage. Renseignements auprès de GPS sur WhatsAp"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-astech-neo",
+      "section": "A",
+      "name": "ASTECH Neo",
+      "brand": "ASTECH",
+      "model": "Neo",
+      "category": "Téléphones",
+      "subtype": "Téléphone",
+      "summary": "Téléphone ASTECH Neo. Mémoire, écran, appareil photo, réseau et batterie à confirmer en boutique avant toute mise en ligne.",
+      "description": "Téléphone ASTECH Neo. Mémoire, écran, appareil photo, réseau et batterie à confirmer en boutique avant toute mise en ligne.\n\nNom et modèle confirmés par la boîte ; les autres caractéristiques seront saisies après contrôle.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["astech", "téléphone"],
+      "seo": {
+        "title": "ASTECH Neo | GPS",
+        "description": "Téléphone ASTECH Neo. Mémoire, écran, appareil photo, réseau et batterie à confirmer en boutique avant toute mise en ligne."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "RAM et stockage",
+        "Écran",
+        "Appareil photo",
+        "Réseau (3G/4G)",
+        "Batterie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-corn-classy-s26-ultra",
+      "section": "A",
+      "name": "CORN Classy S26 Ultra",
+      "brand": "CORN",
+      "model": "Classy S26 Ultra",
+      "category": "Téléphones",
+      "subtype": "Smartphone",
+      "summary": "Smartphone CORN Classy S26 Ultra. Toutes les caractéristiques restent à confirmer en boutique ; sans lien avec Samsung. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Smartphone CORN Classy S26 Ultra. Toutes les caractéristiques restent à confirmer en boutique ; sans lien avec Samsung. Renseignements auprès de GPS sur WhatsApp.\n\nModèle visible sur la boîte. Ce téléphone de marque CORN n'est pas un Samsung Galaxy.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["corn", "smartphone"],
+      "seo": {
+        "title": "CORN Classy S26 Ultra | GPS",
+        "description": "Smartphone CORN Classy S26 Ultra. Toutes les caractéristiques restent à confirmer en boutique ; sans lien avec Samsung. Renseignements auprès de GPS sur Wh"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Toutes les caractéristiques techniques",
+        "RAM, stockage, couleur",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Ne jamais l'assimiler à un Samsung Galaxy S26 Ultra."
+    },
+    {
+      "externalKey": "gps-hp-x500",
+      "section": "A",
+      "name": "Souris filaire HP X500",
+      "brand": "HP",
+      "model": "X500",
+      "category": "Informatique",
+      "subtype": "Souris",
+      "summary": "Souris filaire HP X500 : connexion USB, capteur optique, trois boutons et forme symétrique pour droitiers comme gauchers.",
+      "description": "Souris filaire HP X500 : connexion USB, capteur optique, trois boutons et forme symétrique pour droitiers comme gauchers.\n\nBranchez-la en USB, elle fonctionne aussitôt : ni pile ni logiciel.\n\nSa forme symétrique convient aux droitiers comme aux gauchers.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "USB filaire",
+          "source": "hp"
+        },
+        {
+          "label": "Capteur",
+          "value": "Optique",
+          "source": "hp"
+        },
+        {
+          "label": "Boutons",
+          "value": "3",
+          "source": "hp"
+        },
+        {
+          "label": "Forme",
+          "value": "Ambidextre",
+          "source": "hp"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "hp",
+          "url": "https://www.hp.com/ (documentation X500, réf. E5E76AA)",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["souris", "hp", "usb"],
+      "seo": {
+        "title": "Souris filaire HP X500 | GPS",
+        "description": "Souris filaire HP X500 : connexion USB, capteur optique, trois boutons et forme symétrique pour droitiers comme gauchers."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-casio-fx-991es-plus",
+      "section": "A",
+      "name": "Calculatrice scientifique Casio fx-991ES PLUS",
+      "brand": "Casio",
+      "model": "fx-991ES PLUS",
+      "category": "Autres articles",
+      "subtype": "Calculatrice scientifique",
+      "summary": "Calculatrice scientifique Casio fx-991ES PLUS, 417 fonctions, affichage Natural Textbook, alimentation solaire et pile. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Calculatrice scientifique Casio fx-991ES PLUS, 417 fonctions, affichage Natural Textbook, alimentation solaire et pile. Renseignements auprès de GPS sur WhatsApp.\n\nL'affichage Natural Textbook présente fractions, racines et formules comme dans un manuel.\n\nNon programmable et non graphique. Alimentation solaire avec pile d'appoint.",
+      "specs": [
+        {
+          "label": "Fonctions",
+          "value": "417",
+          "source": "casio"
+        },
+        {
+          "label": "Affichage",
+          "value": "Natural Textbook",
+          "source": "casio"
+        },
+        {
+          "label": "Alimentation",
+          "value": "Solaire et pile",
+          "source": "casio"
+        },
+        {
+          "label": "Type",
+          "value": "Non programmable, non graphique",
+          "source": "casio"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "casio",
+          "url": "https://www.casio.com/intl/scientific-calculators/product.FX-991ESPLUS/",
+          "kind": "fabricant",
+          "consulted": "2026-10-16",
+          "verified": "recherche"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["calculatrice", "casio", "fx-991"],
+      "seo": {
+        "title": "Calculatrice scientifique Casio fx-991ES PLUS | GPS",
+        "description": "Calculatrice scientifique Casio fx-991ES PLUS, 417 fonctions, affichage Natural Textbook, alimentation solaire et pile. Renseignements auprès de GPS sur Wh"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Édition (fx-991ES PLUS ou 2nd edition) sur la boîte",
+        "Contrôle d'authenticité avant toute mention « Casio original »",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "« 10 + 2 chiffres » contredit par une fiche technique : non affiché."
+    },
+    {
+      "externalKey": "gps-plokama-u160-pro",
+      "section": "A",
+      "name": "Lampe vidéo LED Plokama U160 Pro",
+      "brand": "Plokama",
+      "model": "U160 Pro",
+      "category": "Création de contenu",
+      "subtype": "Lampe vidéo",
+      "summary": "Lampe vidéo LED Plokama U160 Pro pour photos et vidéos au téléphone. Caractéristiques à valider d'après l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Lampe vidéo LED Plokama U160 Pro pour photos et vidéos au téléphone. Caractéristiques à valider d'après l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nAucune documentation fabricant fiable n'a été trouvée : les caractéristiques seront saisies après lecture de la boîte.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "secondaire",
+          "url": null,
+          "kind": "page marchande unique (non suffisante)",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["lampe vidéo", "led", "rgb", "plokama"],
+      "seo": {
+        "title": "Lampe vidéo LED Plokama U160 Pro | GPS",
+        "description": "Lampe vidéo LED Plokama U160 Pro pour photos et vidéos au téléphone. Caractéristiques à valider d'après l'emballage. Renseignements auprès de GPS sur Whats"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Relever sur la boîte : batterie, IRC, température de couleur, autonomie, fixations",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Source secondaire unique : 2 000 mAh, CRI Ra95+, 2 700–6 500 K, USB-C, jusqu'à 90 min, pas de vis 1/4 et griffe. Non affiché tant que non confirmé."
+    },
+    {
+      "externalKey": "gps-plokama-pk-771",
+      "section": "A",
+      "name": "Kit vidéo smartphone Plokama PK-771",
+      "brand": "Plokama",
+      "model": "PK-771",
+      "category": "Création de contenu",
+      "subtype": "Kit vidéo",
+      "summary": "Kit vidéo pour smartphone Plokama PK-771 avec trépied, microphone et éclairage. Contenu exact à confirmer sur la boîte. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Kit vidéo pour smartphone Plokama PK-771 avec trépied, microphone et éclairage. Contenu exact à confirmer sur la boîte. Renseignements auprès de GPS sur WhatsApp.\n\nLe contenu du kit sera détaillé après vérification de l'emballage.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["kit vidéo", "trépied", "microphone", "plokama"],
+      "seo": {
+        "title": "Kit vidéo smartphone Plokama PK-771 | GPS",
+        "description": "Kit vidéo pour smartphone Plokama PK-771 avec trépied, microphone et éclairage. Contenu exact à confirmer sur la boîte. Renseignements auprès de GPS sur Wh"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Contenu exact du kit",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-plokama-ring-450",
+      "section": "A",
+      "name": "Anneau lumineux Plokama Soft Ring Light 450 mm",
+      "brand": "Plokama",
+      "model": "Soft Ring Light 450 mm",
+      "category": "Création de contenu",
+      "subtype": "Anneau lumineux",
+      "summary": "Anneau lumineux Plokama Soft Ring Light de 450 mm de diamètre pour vidéos, photos et visioconférences. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Anneau lumineux Plokama Soft Ring Light de 450 mm de diamètre pour vidéos, photos et visioconférences. Renseignements auprès de GPS sur WhatsApp.\n\nDiamètre annoncé : 450 mm. Les autres caractéristiques seront ajoutées après lecture de la boîte.",
+      "specs": [
+        {
+          "label": "Diamètre",
+          "value": "450 mm",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["ring light", "anneau lumineux", "plokama"],
+      "seo": {
+        "title": "Anneau lumineux Plokama Soft Ring Light 450 mm | GPS",
+        "description": "Anneau lumineux Plokama Soft Ring Light de 450 mm de diamètre pour vidéos, photos et visioconférences. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Pied inclus ou non",
+        "Alimentation",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-adaptateur-magsafe2-45w",
+      "section": "A",
+      "name": "Adaptateur secteur 45 W compatible MacBook Air — connecteur MagSafe 2",
+      "brand": "",
+      "model": "MagSafe 2 45 W",
+      "category": "Chargeurs",
+      "subtype": "Chargeur d'ordinateur",
+      "summary": "Adaptateur secteur 45 W à connecteur MagSafe 2, compatible avec les MacBook Air équipés de ce connecteur. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Adaptateur secteur 45 W à connecteur MagSafe 2, compatible avec les MacBook Air équipés de ce connecteur. Renseignements auprès de GPS sur WhatsApp.\n\nCompatible avec les MacBook Air à connecteur MagSafe 2. Vérifiez le connecteur de votre ordinateur avant l'achat.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "45 W",
+          "source": "boite"
+        },
+        {
+          "label": "Connecteur",
+          "value": "MagSafe 2",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["MacBook Air à connecteur MagSafe 2"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "apple",
+          "url": "https://cdsassets.apple.com/live/6GJYWVAV/user/locale/en-gb/ma1986_apple-magsafe-2-power-adapter-ug.pdf",
+          "kind": "manuel fabricant (référence)",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur macbook", "magsafe 2"],
+      "seo": {
+        "title": "Adaptateur secteur 45 W compatible MacBook Air — con | GPS",
+        "description": "Adaptateur secteur 45 W à connecteur MagSafe 2, compatible avec les MacBook Air équipés de ce connecteur. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Contrôle d'authenticité",
+        "Comparer l'étiquette à la référence Apple : entrée 100–240 V 50/60 Hz, sortie 14,85 V / 3,05 A",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Authenticité non prouvée : marque Apple non utilisée. Référence Apple à comparer à l'étiquette."
+    },
+    {
+      "externalKey": "gps-adaptateur-magsafe2-60-85w",
+      "section": "A",
+      "name": "Adaptateur secteur compatible MacBook — connecteur MagSafe 2 (puissance à confirmer)",
+      "brand": "",
+      "model": "MagSafe 2 60 W / 85 W",
+      "category": "Chargeurs",
+      "subtype": "Chargeur d'ordinateur",
+      "summary": "Adaptateur secteur à connecteur MagSafe 2 compatible MacBook. Puissance (60 W ou 85 W) à relever sur chaque boîte. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Adaptateur secteur à connecteur MagSafe 2 compatible MacBook. Puissance (60 W ou 85 W) à relever sur chaque boîte. Renseignements auprès de GPS sur WhatsApp.\n\nLes variantes 60 W et 85 W seront créées uniquement pour les puissances lisibles sur les boîtes.",
+      "specs": [
+        {
+          "label": "Connecteur",
+          "value": "MagSafe 2",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["MacBook à connecteur MagSafe 2"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "apple",
+          "url": "https://cdsassets.apple.com/live/6GJYWVAV/user/locale/en-gb/ma1986_apple-magsafe-2-power-adapter-ug.pdf",
+          "kind": "manuel fabricant (référence)",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur macbook", "magsafe 2"],
+      "seo": {
+        "title": "Adaptateur secteur compatible MacBook — connecteur M | GPS",
+        "description": "Adaptateur secteur à connecteur MagSafe 2 compatible MacBook. Puissance (60 W ou 85 W) à relever sur chaque boîte. Renseignements auprès de GPS sur WhatsAp"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Puissance de chaque boîte (60 W : 16,5 V / 3,65 A ; 85 W : 20 V / 4,25 A)",
+        "Contrôle d'authenticité",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Authenticité non prouvée : marque Apple non utilisée. Référence Apple à comparer à l'étiquette."
+    },
+    {
+      "externalKey": "gps-adaptateur-usbc-macbook",
+      "section": "A",
+      "name": "Adaptateur secteur USB-C compatible MacBook (puissance à confirmer)",
+      "brand": "",
+      "model": "USB-C (61/87/96 W ?)",
+      "category": "Chargeurs",
+      "subtype": "Chargeur d'ordinateur",
+      "summary": "Adaptateur secteur USB-C compatible MacBook. Puissance à relever sur chaque étiquette avant de créer les variantes. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Adaptateur secteur USB-C compatible MacBook. Puissance à relever sur chaque étiquette avant de créer les variantes. Renseignements auprès de GPS sur WhatsApp.\n\nPlusieurs puissances semblent présentes (61, 87 ou 96 W) : aucune variante n'est créée avant photo rapprochée des étiquettes.",
+      "specs": [
+        {
+          "label": "Connecteur",
+          "value": "USB-C",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["MacBook à recharge USB-C (selon puissance)"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "apple-support",
+          "url": "https://support.apple.com/en-us/109509",
+          "kind": "support fabricant (compatibilité)",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur macbook", "usb-c"],
+      "seo": {
+        "title": "Adaptateur secteur USB-C compatible MacBook (puissan | GPS",
+        "description": "Adaptateur secteur USB-C compatible MacBook. Puissance à relever sur chaque étiquette avant de créer les variantes. Renseignements auprès de GPS sur WhatsA"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Photo rapprochée de chaque étiquette",
+        "Contrôle d'authenticité",
+        "Câble inclus ou non",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Authenticité non prouvée : marque Apple non utilisée. Référence Apple à comparer à l'étiquette."
+    },
+    {
+      "externalKey": "gps-cable-charge-montre-usbc",
+      "section": "A",
+      "name": "Câble de charge magnétique compatible Apple Watch vers USB-C — 1 m",
+      "brand": "",
+      "model": "Charge magnétique USB-C 1 m",
+      "category": "Câbles",
+      "subtype": "Câble de charge montre",
+      "summary": "Câble de charge magnétique de 1 m, prise USB-C, compatible avec les Apple Watch à recharge magnétique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Câble de charge magnétique de 1 m, prise USB-C, compatible avec les Apple Watch à recharge magnétique. Renseignements auprès de GPS sur WhatsApp.\n\nSe branche sur un adaptateur ou un ordinateur USB-C. Vérifiez la compatibilité de votre modèle de montre.",
+      "specs": [
+        {
+          "label": "Longueur",
+          "value": "1 m",
+          "source": "boite"
+        },
+        {
+          "label": "Prise",
+          "value": "USB-C",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["Apple Watch à recharge magnétique"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "apple",
+          "url": "https://www.apple.com/shop/product/ml434am/a/apple-watch-magnetic-fast-charger-to-usb-c-cable-1-m",
+          "kind": "fabricant (référence)",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        },
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur apple watch", "câble montre"],
+      "seo": {
+        "title": "Câble de charge magnétique compatible Apple Watch ve | GPS",
+        "description": "Câble de charge magnétique de 1 m, prise USB-C, compatible avec les Apple Watch à recharge magnétique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Contrôle d'authenticité",
+        "Charge rapide indiquée ou non sur la boîte",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Authenticité non prouvée : marque Apple non utilisée. Référence Apple à comparer à l'étiquette."
+    },
+    {
+      "externalKey": "gps-tdk-14",
+      "section": "B",
+      "name": "Batterie externe TDKC313 TDK-14 — 40 000 mAh",
+      "brand": "TDKC313",
+      "model": "TDK-14",
+      "category": "Batteries externes",
+      "subtype": "Batterie externe",
+      "summary": "Batterie externe TDKC313 TDK-14 de 40 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Batterie externe TDKC313 TDK-14 de 40 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Capacité",
+          "value": "40 000 mAh",
+          "source": "boite"
+        },
+        {
+          "label": "Charge",
+          "value": "22,5 W annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["powerbank", "batterie externe"],
+      "seo": {
+        "title": "Batterie externe TDKC313 TDK-14 — 40 000 mAh | GPS",
+        "description": "Batterie externe TDKC313 TDK-14 de 40 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Nombre et type de sorties",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-13",
+      "section": "B",
+      "name": "Batterie externe TDKC313 TDK-13 — 30 000 mAh",
+      "brand": "TDKC313",
+      "model": "TDK-13",
+      "category": "Batteries externes",
+      "subtype": "Batterie externe",
+      "summary": "Batterie externe TDKC313 TDK-13 de 30 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Batterie externe TDKC313 TDK-13 de 30 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Capacité",
+          "value": "30 000 mAh",
+          "source": "boite"
+        },
+        {
+          "label": "Charge",
+          "value": "22,5 W annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["powerbank", "batterie externe"],
+      "seo": {
+        "title": "Batterie externe TDKC313 TDK-13 — 30 000 mAh | GPS",
+        "description": "Batterie externe TDKC313 TDK-13 de 30 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Nombre et type de sorties",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-550",
+      "section": "B",
+      "name": "Batterie externe TDKC313 TDK550 — 10 000 mAh",
+      "brand": "TDKC313",
+      "model": "TDK550",
+      "category": "Batteries externes",
+      "subtype": "Batterie externe",
+      "summary": "Batterie externe compacte TDKC313 TDK550 de 10 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Batterie externe compacte TDKC313 TDK550 de 10 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Capacité",
+          "value": "10 000 mAh",
+          "source": "boite"
+        },
+        {
+          "label": "Charge",
+          "value": "22,5 W annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["powerbank", "batterie externe"],
+      "seo": {
+        "title": "Batterie externe TDKC313 TDK550 — 10 000 mAh | GPS",
+        "description": "Batterie externe compacte TDKC313 TDK550 de 10 000 mAh avec charge annoncée de 22,5 W sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Nombre et type de sorties",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-21",
+      "section": "B",
+      "name": "Écouteurs sport TDKC313 TDK-21",
+      "brand": "TDKC313",
+      "model": "TDK-21",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs sport",
+      "summary": "Écouteurs sport TDKC313 TDK-21 avec une autonomie de 26 h annoncée sur l'emballage. Autres données à relever. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs sport TDKC313 TDK-21 avec une autonomie de 26 h annoncée sur l'emballage. Autres données à relever. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Autonomie",
+          "value": "26 h annoncées",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs sport", "bluetooth"],
+      "seo": {
+        "title": "Écouteurs sport TDKC313 TDK-21 | GPS",
+        "description": "Écouteurs sport TDKC313 TDK-21 avec une autonomie de 26 h annoncée sur l'emballage. Autres données à relever. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Version Bluetooth",
+        "Résistance à l'eau",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-360",
+      "section": "B",
+      "name": "Écouteurs ouverts TDKC313 TDK-360",
+      "brand": "TDKC313",
+      "model": "TDK-360",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs ouverts",
+      "summary": "Écouteurs ouverts TDKC313 TDK-360 (Open Earphone). Caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs ouverts TDKC313 TDK-360 (Open Earphone). Caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs ouverts", "open ear"],
+      "seo": {
+        "title": "Écouteurs ouverts TDKC313 TDK-360 | GPS",
+        "description": "Écouteurs ouverts TDKC313 TDK-360 (Open Earphone). Caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Autonomie",
+        "Version Bluetooth",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-hifi-6g",
+      "section": "B",
+      "name": "Écouteurs sans fil TDKC313 Hi-Fi 6G",
+      "brand": "TDKC313",
+      "model": "Hi-Fi 6G (référence à relever)",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs sans fil",
+      "summary": "Écouteurs sans fil TDKC313 de la gamme Hi-Fi 6G. Référence exacte et caractéristiques à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs sans fil TDKC313 de la gamme Hi-Fi 6G. Référence exacte et caractéristiques à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs sans fil"],
+      "seo": {
+        "title": "Écouteurs sans fil TDKC313 Hi-Fi 6G | GPS",
+        "description": "Écouteurs sans fil TDKC313 de la gamme Hi-Fi 6G. Référence exacte et caractéristiques à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Référence exacte",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-ecouteurs-tige",
+      "section": "B",
+      "name": "Écouteurs sans fil TDKC313 blancs à tige",
+      "brand": "TDKC313",
+      "model": "Modèle non lisible",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs sans fil",
+      "summary": "Écouteurs sans fil blancs TDKC313 de type tige. Modèle non lisible sur le relevé : à identifier en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs sans fil blancs TDKC313 de type tige. Modèle non lisible sur le relevé : à identifier en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs sans fil"],
+      "seo": {
+        "title": "Écouteurs sans fil TDKC313 blancs à tige | GPS",
+        "description": "Écouteurs sans fil blancs TDKC313 de type tige. Modèle non lisible sur le relevé : à identifier en boutique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Modèle exact",
+        "Autonomie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-usbc-35w",
+      "section": "B",
+      "name": "Adaptateur secteur USB-C 35 W TDKC313",
+      "brand": "TDKC313",
+      "model": "USB-C 35 W",
+      "category": "Chargeurs",
+      "subtype": "Chargeur secteur",
+      "summary": "Adaptateur secteur TDKC313 à port USB-C de 35 W annoncés sur l'emballage. Câble et compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Adaptateur secteur TDKC313 à port USB-C de 35 W annoncés sur l'emballage. Câble et compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "35 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Port",
+          "value": "USB-C",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur", "usb-c"],
+      "seo": {
+        "title": "Adaptateur secteur USB-C 35 W TDKC313 | GPS",
+        "description": "Adaptateur secteur TDKC313 à port USB-C de 35 W annoncés sur l'emballage. Câble et compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Câble inclus ou non",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-usbc-pd-45w",
+      "section": "B",
+      "name": "Adaptateur secteur USB-C PD 45 W TDKC313",
+      "brand": "TDKC313",
+      "model": "USB-C PD 45 W",
+      "category": "Chargeurs",
+      "subtype": "Chargeur secteur",
+      "summary": "Adaptateur secteur TDKC313 USB-C Power Delivery de 45 W annoncés sur l'emballage. Compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Adaptateur secteur TDKC313 USB-C Power Delivery de 45 W annoncés sur l'emballage. Compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "45 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Port",
+          "value": "USB-C PD",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur", "usb-c", "pd"],
+      "seo": {
+        "title": "Adaptateur secteur USB-C PD 45 W TDKC313 | GPS",
+        "description": "Adaptateur secteur TDKC313 USB-C Power Delivery de 45 W annoncés sur l'emballage. Compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Câble inclus ou non",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-gan-45w",
+      "section": "B",
+      "name": "Adaptateur GaN 45 W TDKC313 avec câble USB-C vers USB-C",
+      "brand": "TDKC313",
+      "model": "GaN 45 W",
+      "category": "Chargeurs",
+      "subtype": "Chargeur secteur",
+      "summary": "Adaptateur secteur GaN TDKC313 de 45 W annoncés, fourni avec un câble USB-C vers USB-C selon l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Adaptateur secteur GaN TDKC313 de 45 W annoncés, fourni avec un câble USB-C vers USB-C selon l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "45 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Technologie",
+          "value": "GaN",
+          "source": "boite"
+        },
+        {
+          "label": "Câble",
+          "value": "USB-C vers USB-C",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur gan", "usb-c"],
+      "seo": {
+        "title": "Adaptateur GaN 45 W TDKC313 avec câble USB-C vers US | GPS",
+        "description": "Adaptateur secteur GaN TDKC313 de 45 W annoncés, fourni avec un câble USB-C vers USB-C selon l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-e02",
+      "section": "B",
+      "name": "Chargeur 45 W TDKC313 TDK-E02",
+      "brand": "TDKC313",
+      "model": "TDK-E02",
+      "category": "Chargeurs",
+      "subtype": "Chargeur secteur",
+      "summary": "Chargeur secteur TDKC313 TDK-E02 de 45 W annoncés sur l'emballage. Ports et câble à vérifier en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Chargeur secteur TDKC313 TDK-E02 de 45 W annoncés sur l'emballage. Ports et câble à vérifier en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "45 W annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur"],
+      "seo": {
+        "title": "Chargeur 45 W TDKC313 TDK-E02 | GPS",
+        "description": "Chargeur secteur TDKC313 TDK-E02 de 45 W annoncés sur l'emballage. Ports et câble à vérifier en boutique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Ports",
+        "Câble inclus ou non",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-kit-lightning-50w",
+      "section": "B",
+      "name": "Kit chargeur TDKC313 + câble USB-C vers Lightning — 50 W",
+      "brand": "TDKC313",
+      "model": "Kit 50 W",
+      "category": "Chargeurs",
+      "subtype": "Kit chargeur",
+      "summary": "Kit TDKC313 : chargeur et câble USB-C vers Lightning, 50 W annoncés sur la boîte. Compatible iPhone à port Lightning. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Kit TDKC313 : chargeur et câble USB-C vers Lightning, 50 W annoncés sur la boîte. Compatible iPhone à port Lightning. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "50 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Câble",
+          "value": "USB-C vers Lightning",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["iPhone à port Lightning"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur iphone", "lightning"],
+      "seo": {
+        "title": "Kit chargeur TDKC313 + câble USB-C vers Lightning — | GPS",
+        "description": "Kit TDKC313 : chargeur et câble USB-C vers Lightning, 50 W annoncés sur la boîte. Compatible iPhone à port Lightning. Renseignements auprès de GPS sur What"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Puissance réellement délivrée à un iPhone (dépend du téléphone)",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-cable-lightning-35w-1m",
+      "section": "B",
+      "name": "Câble USB-C vers Lightning TDKC313 — 35 W, 1 m",
+      "brand": "TDKC313",
+      "model": "35 W 1 m",
+      "category": "Câbles",
+      "subtype": "Câble",
+      "summary": "Câble TDKC313 USB-C vers Lightning de 1 m, 35 W annoncés. Compatible avec les iPhone à port Lightning. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Câble TDKC313 USB-C vers Lightning de 1 m, 35 W annoncés. Compatible avec les iPhone à port Lightning. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Longueur",
+          "value": "1 m",
+          "source": "boite"
+        },
+        {
+          "label": "Puissance",
+          "value": "35 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Connecteurs",
+          "value": "USB-C vers Lightning",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["iPhone à port Lightning"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["câble iphone", "lightning"],
+      "seo": {
+        "title": "Câble USB-C vers Lightning TDKC313 — 35 W, 1 m | GPS",
+        "description": "Câble TDKC313 USB-C vers Lightning de 1 m, 35 W annoncés. Compatible avec les iPhone à port Lightning. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-c-i107",
+      "section": "B",
+      "name": "Câble coudé USB-C vers Lightning TDKC313 C-I107 — 27 W",
+      "brand": "TDKC313",
+      "model": "C-I107",
+      "category": "Câbles",
+      "subtype": "Câble",
+      "summary": "Câble coudé TDKC313 C-I107, USB-C vers Lightning, 27 W annoncés. Pratique pour jouer en tenant le téléphone. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Câble coudé TDKC313 C-I107, USB-C vers Lightning, 27 W annoncés. Pratique pour jouer en tenant le téléphone. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "27 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Connecteurs",
+          "value": "USB-C vers Lightning",
+          "source": "boite"
+        },
+        {
+          "label": "Forme",
+          "value": "Coudé",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["iPhone à port Lightning"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["câble coudé", "lightning"],
+      "seo": {
+        "title": "Câble coudé USB-C vers Lightning TDKC313 C-I107 — 27 | GPS",
+        "description": "Câble coudé TDKC313 C-I107, USB-C vers Lightning, 27 W annoncés. Pratique pour jouer en tenant le téléphone. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Longueur",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-cable-lightning-2m",
+      "section": "B",
+      "name": "Câble USB-C vers Lightning TDKC313 — 2 m",
+      "brand": "TDKC313",
+      "model": "2 m",
+      "category": "Câbles",
+      "subtype": "Câble",
+      "summary": "Câble TDKC313 USB-C vers Lightning de 2 m, compatible avec les iPhone à port Lightning. Puissance à relever. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Câble TDKC313 USB-C vers Lightning de 2 m, compatible avec les iPhone à port Lightning. Puissance à relever. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Longueur",
+          "value": "2 m",
+          "source": "boite"
+        },
+        {
+          "label": "Connecteurs",
+          "value": "USB-C vers Lightning",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["iPhone à port Lightning"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["câble iphone", "lightning"],
+      "seo": {
+        "title": "Câble USB-C vers Lightning TDKC313 — 2 m | GPS",
+        "description": "Câble TDKC313 USB-C vers Lightning de 2 m, compatible avec les iPhone à port Lightning. Puissance à relever. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Puissance",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-cable-usbc-2m-60w",
+      "section": "B",
+      "name": "Câble USB-C vers USB-C TDKC313 — 2 m, 60 W",
+      "brand": "TDKC313",
+      "model": "2 m 60 W",
+      "category": "Câbles",
+      "subtype": "Câble",
+      "summary": "Câble TDKC313 USB-C vers USB-C de 2 m, 60 W annoncés : téléphones, tablettes et ordinateurs à port USB-C. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Câble TDKC313 USB-C vers USB-C de 2 m, 60 W annoncés : téléphones, tablettes et ordinateurs à port USB-C. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Longueur",
+          "value": "2 m",
+          "source": "boite"
+        },
+        {
+          "label": "Puissance",
+          "value": "60 W annoncés",
+          "source": "boite"
+        },
+        {
+          "label": "Connecteurs",
+          "value": "USB-C vers USB-C",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["câble usb-c"],
+      "seo": {
+        "title": "Câble USB-C vers USB-C TDKC313 — 2 m, 60 W | GPS",
+        "description": "Câble TDKC313 USB-C vers USB-C de 2 m, 60 W annoncés : téléphones, tablettes et ordinateurs à port USB-C. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tdk-cable-120w",
+      "section": "B",
+      "name": "Câble forte puissance TDKC313 — 120 W",
+      "brand": "TDKC313",
+      "model": "120 W (connecteurs à confirmer)",
+      "category": "Câbles",
+      "subtype": "Câble",
+      "summary": "Câble TDKC313 annoncé à 120 W sur l'emballage. Connecteurs et longueur à confirmer en boutique avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Câble TDKC313 annoncé à 120 W sur l'emballage. Connecteurs et longueur à confirmer en boutique avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Puissance",
+          "value": "120 W annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["câble charge rapide"],
+      "seo": {
+        "title": "Câble forte puissance TDKC313 — 120 W | GPS",
+        "description": "Câble TDKC313 annoncé à 120 W sur l'emballage. Connecteurs et longueur à confirmer en boutique avant publication. Renseignements auprès de GPS sur WhatsApp"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Connecteurs",
+        "Longueur",
+        "Puissance réelle selon téléphone",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-os-c56",
+      "section": "B",
+      "name": "Chargeur double port USB-A + USB-C OS-C56",
+      "brand": "",
+      "model": "OS-C56",
+      "category": "Chargeurs",
+      "subtype": "Chargeur secteur",
+      "summary": "Chargeur secteur OS-C56 à deux ports, USB-A et USB-C. Puissance à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Chargeur secteur OS-C56 à deux ports, USB-A et USB-C. Puissance à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Ports",
+          "value": "USB-A + USB-C",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["chargeur", "double port"],
+      "seo": {
+        "title": "Chargeur double port USB-A + USB-C OS-C56 | GPS",
+        "description": "Chargeur secteur OS-C56 à deux ports, USB-A et USB-C. Puissance à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Puissance",
+        "Marque",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-jeqang-jw-ap03",
+      "section": "B",
+      "name": "Souris sans fil JEQANG JW-AP03",
+      "brand": "JEQANG",
+      "model": "JW-AP03",
+      "category": "Informatique",
+      "subtype": "Souris",
+      "summary": "Souris sans fil JEQANG JW-AP03 à récepteur 2,4 GHz. Alimentation et compatibilités à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Souris sans fil JEQANG JW-AP03 à récepteur 2,4 GHz. Alimentation et compatibilités à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "Sans fil 2,4 GHz",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["souris sans fil"],
+      "seo": {
+        "title": "Souris sans fil JEQANG JW-AP03 | GPS",
+        "description": "Souris sans fil JEQANG JW-AP03 à récepteur 2,4 GHz. Alimentation et compatibilités à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Piles ou batterie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-jeqang-jk-905",
+      "section": "B",
+      "name": "Clavier filaire JEQANG JK-905",
+      "brand": "JEQANG",
+      "model": "JK-905",
+      "category": "Informatique",
+      "subtype": "Clavier",
+      "summary": "Clavier filaire JEQANG JK-905. Disposition des touches (AZERTY ou QWERTY) à confirmer en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Clavier filaire JEQANG JK-905. Disposition des touches (AZERTY ou QWERTY) à confirmer en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "Filaire",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["clavier", "usb"],
+      "seo": {
+        "title": "Clavier filaire JEQANG JK-905 | GPS",
+        "description": "Clavier filaire JEQANG JK-905. Disposition des touches (AZERTY ou QWERTY) à confirmer en boutique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Disposition AZERTY/QWERTY",
+        "Connecteur",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-langeer-lge-kc99",
+      "section": "B",
+      "name": "Casque Bluetooth LANGEER LGE-KC99",
+      "brand": "LANGEER",
+      "model": "LGE-KC99",
+      "category": "Casques",
+      "subtype": "Casque sans fil",
+      "summary": "Casque Bluetooth LANGEER LGE-KC99. Autonomie et caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Casque Bluetooth LANGEER LGE-KC99. Autonomie et caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "Bluetooth",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["casque bluetooth"],
+      "seo": {
+        "title": "Casque Bluetooth LANGEER LGE-KC99 | GPS",
+        "description": "Casque Bluetooth LANGEER LGE-KC99. Autonomie et caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Autonomie",
+        "Version Bluetooth",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-bluespectrum-f1",
+      "section": "B",
+      "name": "Casque filaire BlueSpectrum F-1",
+      "brand": "BlueSpectrum",
+      "model": "F-1",
+      "category": "Casques",
+      "subtype": "Casque filaire",
+      "summary": "Casque filaire BlueSpectrum F-1 à prise jack 3,5 mm, avec microphone et commandes selon l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Casque filaire BlueSpectrum F-1 à prise jack 3,5 mm, avec microphone et commandes selon l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "Jack 3,5 mm",
+          "source": "boite"
+        },
+        {
+          "label": "Microphone",
+          "value": "Oui (commandes)",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["casque filaire", "jack"],
+      "seo": {
+        "title": "Casque filaire BlueSpectrum F-1 | GPS",
+        "description": "Casque filaire BlueSpectrum F-1 à prise jack 3,5 mm, avec microphone et commandes selon l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-okmax-km-113",
+      "section": "B",
+      "name": "Écouteurs filaires Lightning OKMAX KM-113",
+      "brand": "OKMAX",
+      "model": "KM-113",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs filaires",
+      "summary": "Écouteurs filaires OKMAX KM-113 à prise Lightning, pour les iPhone sans prise jack. Compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs filaires OKMAX KM-113 à prise Lightning, pour les iPhone sans prise jack. Compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connecteur",
+          "value": "Lightning",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": ["iPhone à port Lightning"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs iphone", "lightning"],
+      "seo": {
+        "title": "Écouteurs filaires Lightning OKMAX KM-113 | GPS",
+        "description": "Écouteurs filaires OKMAX KM-113 à prise Lightning, pour les iPhone sans prise jack. Compatibilités à vérifier. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Microphone et commandes",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-okmax-km-813",
+      "section": "B",
+      "name": "Écouteurs ouverts à conduction aérienne OKMAX KM-813",
+      "brand": "OKMAX",
+      "model": "KM-813",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs ouverts",
+      "summary": "Écouteurs ouverts OKMAX KM-813 à conduction aérienne (Air Conduction), qui laissent entendre l'environnement. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs ouverts OKMAX KM-813 à conduction aérienne (Air Conduction), qui laissent entendre l'environnement. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Type",
+          "value": "Ouverts, conduction aérienne",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs ouverts"],
+      "seo": {
+        "title": "Écouteurs ouverts à conduction aérienne OKMAX KM-813 | GPS",
+        "description": "Écouteurs ouverts OKMAX KM-813 à conduction aérienne (Air Conduction), qui laissent entendre l'environnement. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Autonomie",
+        "Version Bluetooth",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-montre-s9-pro",
+      "section": "B",
+      "name": "Montre connectée S9 Pro — écran 2,19 pouces",
+      "brand": "",
+      "model": "S9 Pro",
+      "category": "Montres",
+      "subtype": "Montre connectée",
+      "summary": "Montre connectée S9 Pro à écran de 2,19 pouces annoncé sur l'emballage. Marque exacte et fonctions à confirmer. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Montre connectée S9 Pro à écran de 2,19 pouces annoncé sur l'emballage. Marque exacte et fonctions à confirmer. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Écran",
+          "value": "2,19 pouces annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["montre connectée", "smartwatch"],
+      "seo": {
+        "title": "Montre connectée S9 Pro — écran 2,19 pouces | GPS",
+        "description": "Montre connectée S9 Pro à écran de 2,19 pouces annoncé sur l'emballage. Marque exacte et fonctions à confirmer. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Marque exacte",
+        "Fonctions (appels, suivi santé)",
+        "Autonomie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-amiya-bd68",
+      "section": "B",
+      "name": "Enceinte Bluetooth Amiya BD68",
+      "brand": "Amiya",
+      "model": "BD68",
+      "category": "Enceintes & audio",
+      "subtype": "Enceinte Bluetooth",
+      "summary": "Enceinte Bluetooth Amiya BD68 : Bluetooth 5.3, résistance IPX5 et puissance de 15 W annoncées sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Enceinte Bluetooth Amiya BD68 : Bluetooth 5.3, résistance IPX5 et puissance de 15 W annoncées sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Bluetooth",
+          "value": "5.3",
+          "source": "boite"
+        },
+        {
+          "label": "Résistance",
+          "value": "IPX5",
+          "source": "boite"
+        },
+        {
+          "label": "Puissance",
+          "value": "15 W annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["enceinte bluetooth"],
+      "seo": {
+        "title": "Enceinte Bluetooth Amiya BD68 | GPS",
+        "description": "Enceinte Bluetooth Amiya BD68 : Bluetooth 5.3, résistance IPX5 et puissance de 15 W annoncées sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Autonomie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-aibimy-enceinte",
+      "section": "B",
+      "name": "Enceinte portable aibimy",
+      "brand": "aibimy",
+      "model": "Modèle à relever",
+      "category": "Enceintes & audio",
+      "subtype": "Enceinte Bluetooth",
+      "summary": "Enceinte portable aibimy. Modèle et caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Enceinte portable aibimy. Modèle et caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["enceinte"],
+      "seo": {
+        "title": "Enceinte portable aibimy | GPS",
+        "description": "Enceinte portable aibimy. Modèle et caractéristiques à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Modèle",
+        "Puissance",
+        "Autonomie",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-bt2301",
+      "section": "B",
+      "name": "Enceinte LED avec recharge sans fil BT2301",
+      "brand": "",
+      "model": "BT2301",
+      "category": "Enceintes & audio",
+      "subtype": "Enceinte Bluetooth",
+      "summary": "Enceinte BT2301 avec éclairage LED et socle de recharge sans fil, selon l'emballage. Caractéristiques à relever. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Enceinte BT2301 avec éclairage LED et socle de recharge sans fil, selon l'emballage. Caractéristiques à relever. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Fonctions",
+          "value": "Éclairage LED, recharge sans fil",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["enceinte", "chargeur sans fil"],
+      "seo": {
+        "title": "Enceinte LED avec recharge sans fil BT2301 | GPS",
+        "description": "Enceinte BT2301 avec éclairage LED et socle de recharge sans fil, selon l'emballage. Caractéristiques à relever. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Puissance de recharge sans fil",
+        "Marque",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-micro-aud-1000ir",
+      "section": "B",
+      "name": "Microphone sans fil AUD-1000IR",
+      "brand": "",
+      "model": "AUD-1000IR (à confirmer)",
+      "category": "Création de contenu",
+      "subtype": "Microphone",
+      "summary": "Microphone sans fil, référence AUD-1000IR à confirmer sur l'emballage. Connecteurs et compatibilités à relever. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Microphone sans fil, référence AUD-1000IR à confirmer sur l'emballage. Connecteurs et compatibilités à relever. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "Sans fil",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["micro sans fil"],
+      "seo": {
+        "title": "Microphone sans fil AUD-1000IR | GPS",
+        "description": "Microphone sans fil, référence AUD-1000IR à confirmer sur l'emballage. Connecteurs et compatibilités à relever. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Référence exacte",
+        "Connecteur (USB-C, Lightning, jack)",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-x8s-fm",
+      "section": "B",
+      "name": "Transmetteur FM voiture X8S avec lecteur MP3",
+      "brand": "",
+      "model": "X8S",
+      "category": "Accessoires",
+      "subtype": "Accessoire voiture",
+      "summary": "Transmetteur FM X8S pour voiture avec lecteur MP3 et sortie de charge 3,1 A annoncée sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Transmetteur FM X8S pour voiture avec lecteur MP3 et sortie de charge 3,1 A annoncée sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Fonctions",
+          "value": "Transmetteur FM, lecteur MP3",
+          "source": "boite"
+        },
+        {
+          "label": "Sortie",
+          "value": "3,1 A annoncés",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["transmetteur fm", "voiture"],
+      "seo": {
+        "title": "Transmetteur FM voiture X8S avec lecteur MP3 | GPS",
+        "description": "Transmetteur FM X8S pour voiture avec lecteur MP3 et sortie de charge 3,1 A annoncée sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Bluetooth ou non",
+        "Ports",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-manette-v8",
+      "section": "B",
+      "name": "Manette sans fil V8",
+      "brand": "",
+      "model": "V8",
+      "category": "Jeux",
+      "subtype": "Manette",
+      "summary": "Manette sans fil V8. Les compatibilités seront indiquées exactement selon les mentions de l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Manette sans fil V8. Les compatibilités seront indiquées exactement selon les mentions de l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Connexion",
+          "value": "Sans fil",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["manette sans fil"],
+      "seo": {
+        "title": "Manette sans fil V8 | GPS",
+        "description": "Manette sans fil V8. Les compatibilités seront indiquées exactement selon les mentions de l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Compatibilités exactes de la boîte",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-manette-type-ds3",
+      "section": "B",
+      "name": "Manette de type DualShock 3",
+      "brand": "",
+      "model": "Type DualShock 3",
+      "category": "Jeux",
+      "subtype": "Manette",
+      "summary": "Manette de type DualShock 3 pour console. Marque et compatibilités à confirmer ; produit non présenté comme officiel Sony.",
+      "description": "Manette de type DualShock 3 pour console. Marque et compatibilités à confirmer ; produit non présenté comme officiel Sony.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["manette"],
+      "seo": {
+        "title": "Manette de type DualShock 3 | GPS",
+        "description": "Manette de type DualShock 3 pour console. Marque et compatibilités à confirmer ; produit non présenté comme officiel Sony."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Marque",
+        "Compatibilités",
+        "Filaire ou sans fil",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-tapis-souris-h02",
+      "section": "B",
+      "name": "Tapis de souris ergonomique H-02",
+      "brand": "",
+      "model": "H-02",
+      "category": "Informatique",
+      "subtype": "Tapis de souris",
+      "summary": "Tapis de souris ergonomique H-02 avec repose-poignet, selon l'emballage. Dimensions à relever en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Tapis de souris ergonomique H-02 avec repose-poignet, selon l'emballage. Dimensions à relever en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["tapis de souris"],
+      "seo": {
+        "title": "Tapis de souris ergonomique H-02 | GPS",
+        "description": "Tapis de souris ergonomique H-02 avec repose-poignet, selon l'emballage. Dimensions à relever en boutique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Dimensions",
+        "Repose-poignet",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-support-l07",
+      "section": "B",
+      "name": "Support pliable téléphone et tablette Carbon Steel L-07",
+      "brand": "",
+      "model": "L-07",
+      "category": "Accessoires",
+      "subtype": "Support",
+      "summary": "Support pliable Carbon Steel L-07 pour téléphone et tablette, rotation à 360° annoncée sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Support pliable Carbon Steel L-07 pour téléphone et tablette, rotation à 360° annoncée sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Rotation",
+          "value": "360° annoncée",
+          "source": "boite"
+        },
+        {
+          "label": "Pliable",
+          "value": "Oui",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["support téléphone", "support tablette"],
+      "seo": {
+        "title": "Support pliable téléphone et tablette Carbon Steel L | GPS",
+        "description": "Support pliable Carbon Steel L-07 pour téléphone et tablette, rotation à 360° annoncée sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Tailles d'appareils compatibles",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-etui-t307",
+      "section": "B",
+      "name": "Étui rotatif pour tablette T307",
+      "brand": "",
+      "model": "T307",
+      "category": "Protections & coques",
+      "subtype": "Étui tablette",
+      "summary": "Étui rotatif pour tablette T307. Modèles de tablettes compatibles à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Étui rotatif pour tablette T307. Modèles de tablettes compatibles à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [
+        {
+          "label": "Type",
+          "value": "Étui rotatif",
+          "source": "boite"
+        }
+      ],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["étui tablette"],
+      "seo": {
+        "title": "Étui rotatif pour tablette T307 | GPS",
+        "description": "Étui rotatif pour tablette T307. Modèles de tablettes compatibles à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Tablettes compatibles",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-radio-multibande",
+      "section": "B",
+      "name": "Radio multibande",
+      "brand": "",
+      "model": "Modèle à relever",
+      "category": "Enceintes & audio",
+      "subtype": "Radio",
+      "summary": "Radio multibande. Marque, modèle et bandes reçues à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Radio multibande. Marque, modèle et bandes reçues à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["radio"],
+      "seo": {
+        "title": "Radio multibande | GPS",
+        "description": "Radio multibande. Marque, modèle et bandes reçues à relever sur l'emballage avant publication. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Marque et modèle",
+        "Bandes",
+        "Alimentation",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-ecouteurs-filaires-blancs",
+      "section": "B",
+      "name": "Écouteurs filaires blancs avec commandes",
+      "brand": "",
+      "model": "Modèle à relever",
+      "category": "AirPods & écouteurs",
+      "subtype": "Écouteurs filaires",
+      "summary": "Écouteurs filaires blancs avec commandes. Marque, modèle et connecteur à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Écouteurs filaires blancs avec commandes. Marque, modèle et connecteur à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["écouteurs filaires"],
+      "seo": {
+        "title": "Écouteurs filaires blancs avec commandes | GPS",
+        "description": "Écouteurs filaires blancs avec commandes. Marque, modèle et connecteur à relever sur l'emballage. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Marque et modèle",
+        "Connecteur",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-cles-usb",
+      "section": "B",
+      "name": "Clé USB",
+      "brand": "",
+      "model": "Capacités à relever",
+      "category": "Informatique",
+      "subtype": "Clé USB",
+      "summary": "Clés USB. Marque, capacité et norme USB à relever sur chaque emballage avant de créer les variantes. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Clés USB. Marque, capacité et norme USB à relever sur chaque emballage avant de créer les variantes. Renseignements auprès de GPS sur WhatsApp.\n\nCaractéristiques limitées à celles indiquées sur l'emballage ; le reste sera complété en boutique.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["clé usb"],
+      "seo": {
+        "title": "Clé USB | GPS",
+        "description": "Clés USB. Marque, capacité et norme USB à relever sur chaque emballage avant de créer les variantes. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Capacité de chaque clé (une variante par capacité)",
+        "Marque",
+        "Norme USB",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Aucune documentation officielle fiable : données visibles sur l'emballage uniquement."
+    },
+    {
+      "externalKey": "gps-coques-telephone",
+      "section": "C",
+      "name": "Coque de téléphone",
+      "brand": "",
+      "model": "Famille",
+      "category": "Protections & coques",
+      "subtype": "Coque",
+      "summary": "Coques de protection pour iPhone, Samsung et Tecno. Choisissez le modèle exact de votre téléphone avant l'achat. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Coques de protection pour iPhone, Samsung et Tecno. Choisissez le modèle exact de votre téléphone avant l'achat. Renseignements auprès de GPS sur WhatsApp.\n\nUne variante par modèle de téléphone. Styles disponibles selon le modèle : transparent, renforcé, anneau, magnétique, imitation cuir, décoratif.",
+      "specs": [],
+      "axes": ["Compatibilité"],
+      "variants": [
+        {
+          "options": {
+            "Compatibilité": "iPhone XR"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 11 Pro"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 12 Pro"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 13"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 14"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 15 Pro"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 15 Pro Max"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 16"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 16 Plus"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 16 Pro"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 17 Pro"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "iPhone 17 Air"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy A07"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy A16"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy A24"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy A25"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy A34"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy A54"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy Z Fold 5"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy Z Fold 6"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy Z Flip 4"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy Z Flip 5"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Samsung Galaxy Z Flip 7"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "Tecno Pop 20"
+          }
+        }
+      ],
+      "compatibility": ["Voir les variantes"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["coque iphone", "coque samsung", "coque tecno"],
+      "seo": {
+        "title": "Coque de téléphone | GPS",
+        "description": "Coques de protection pour iPhone, Samsung et Tecno. Choisissez le modèle exact de votre téléphone avant l'achat. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Style disponible pour chaque compatibilité",
+        "Ne mentionner MagSafe que si la coque le porte explicitement",
+        "Retirer les compatibilités épuisées",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-coques-ecouteurs",
+      "section": "C",
+      "name": "Coque compatible AirPods",
+      "brand": "",
+      "model": "Famille",
+      "category": "Protections & coques",
+      "subtype": "Coque d'écouteurs",
+      "summary": "Coques de protection compatibles AirPods 1/2, AirPods Pro, AirPods 3 et AirPods 4, en plusieurs styles. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Coques de protection compatibles AirPods 1/2, AirPods Pro, AirPods 3 et AirPods 4, en plusieurs styles. Renseignements auprès de GPS sur WhatsApp.\n\nStyles visibles en boutique : renforcé, imitation cuir avec mousqueton, rose, bleu clair. Produits compatibles, non fabriqués par Apple.",
+      "specs": [],
+      "axes": ["Compatibilité"],
+      "variants": [
+        {
+          "options": {
+            "Compatibilité": "AirPods 1/2"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "AirPods Pro"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "AirPods 3"
+          }
+        },
+        {
+          "options": {
+            "Compatibilité": "AirPods 4"
+          }
+        }
+      ],
+      "compatibility": ["Voir les variantes"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["coque airpods"],
+      "seo": {
+        "title": "Coque compatible AirPods | GPS",
+        "description": "Coques de protection compatibles AirPods 1/2, AirPods Pro, AirPods 3 et AirPods 4, en plusieurs styles. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Style disponible par compatibilité",
+        "Modèle à logo de marque automobile : vérifier le droit de vente avant toute mise en ligne",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "Ne jamais nommer « Coque Apple » ni « officielle » d'une autre marque."
+    },
+    {
+      "externalKey": "gps-bracelets-montre",
+      "section": "C",
+      "name": "Bracelet compatible Apple Watch",
+      "brand": "",
+      "model": "Famille",
+      "category": "Montres",
+      "subtype": "Bracelet",
+      "summary": "Bracelets compatibles Apple Watch en 42, 44, 45 et 49 mm : silicone, imitation cuir ou métal selon les modèles. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Bracelets compatibles Apple Watch en 42, 44, 45 et 49 mm : silicone, imitation cuir ou métal selon les modèles. Renseignements auprès de GPS sur WhatsApp.\n\nChoisissez la taille correspondant au boîtier de votre montre. Matières visibles : silicone, imitation cuir, métal.",
+      "specs": [],
+      "axes": ["Taille"],
+      "variants": [
+        {
+          "options": {
+            "Taille": "42 mm"
+          }
+        },
+        {
+          "options": {
+            "Taille": "44 mm"
+          }
+        },
+        {
+          "options": {
+            "Taille": "45 mm"
+          }
+        },
+        {
+          "options": {
+            "Taille": "49 mm"
+          }
+        }
+      ],
+      "compatibility": ["Apple Watch (selon taille)"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["bracelet apple watch"],
+      "seo": {
+        "title": "Bracelet compatible Apple Watch | GPS",
+        "description": "Bracelets compatibles Apple Watch en 42, 44, 45 et 49 mm : silicone, imitation cuir ou métal selon les modèles. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Matières et couleurs disponibles par taille (à ajouter comme options)",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-protections-montre",
+      "section": "C",
+      "name": "Coque de protection compatible Apple Watch",
+      "brand": "",
+      "model": "Famille",
+      "category": "Montres",
+      "subtype": "Protection de montre",
+      "summary": "Coques de protection compatibles Apple Watch, en 44 et 49 mm, dont modèles 360° couvrant l'écran. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Coques de protection compatibles Apple Watch, en 44 et 49 mm, dont modèles 360° couvrant l'écran. Renseignements auprès de GPS sur WhatsApp.\n\nChoisissez la taille de boîtier de votre montre. Marque GUOI et modèles 360° visibles en boutique.",
+      "specs": [],
+      "axes": ["Taille"],
+      "variants": [
+        {
+          "options": {
+            "Taille": "44 mm"
+          }
+        },
+        {
+          "options": {
+            "Taille": "49 mm"
+          }
+        }
+      ],
+      "compatibility": ["Apple Watch (selon taille)"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["coque apple watch", "protection montre"],
+      "seo": {
+        "title": "Coque de protection compatible Apple Watch | GPS",
+        "description": "Coques de protection compatibles Apple Watch, en 44 et 49 mm, dont modèles 360° couvrant l'écran. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Modèles et couleurs par taille",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-protections-ecran",
+      "section": "C",
+      "name": "Protection d'écran",
+      "brand": "",
+      "model": "Famille",
+      "category": "Protections & coques",
+      "subtype": "Protection d'écran",
+      "summary": "Protections d'écran pour téléphones et tablettes, dont Samsung Galaxy Tab A9 et iPad 10,5 pouces. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Protections d'écran pour téléphones et tablettes, dont Samsung Galaxy Tab A9 et iPad 10,5 pouces. Renseignements auprès de GPS sur WhatsApp.\n\nUne variante par appareil. Type de film et finition indiqués seulement s'ils sont lisibles sur l'emballage.",
+      "specs": [],
+      "axes": ["Appareil"],
+      "variants": [
+        {
+          "options": {
+            "Appareil": "Samsung Galaxy Tab A9"
+          }
+        },
+        {
+          "options": {
+            "Appareil": "iPad 10,5 pouces"
+          }
+        }
+      ],
+      "compatibility": ["Voir les variantes"],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["protection écran", "verre trempé"],
+      "seo": {
+        "title": "Protection d'écran | GPS",
+        "description": "Protections d'écran pour téléphones et tablettes, dont Samsung Galaxy Tab A9 et iPad 10,5 pouces. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Autres modèles à relever",
+        "Type de film (verre trempé, souple) et finition",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-piles-bouton",
+      "section": "C",
+      "name": "Pile bouton",
+      "brand": "",
+      "model": "Famille",
+      "category": "Accessoires",
+      "subtype": "Pile",
+      "summary": "Piles bouton au lithium pour montres, clés de voiture, balances et télécommandes : CR2032 et CR2016. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Piles bouton au lithium pour montres, clés de voiture, balances et télécommandes : CR2032 et CR2016. Renseignements auprès de GPS sur WhatsApp.\n\nVérifiez la référence inscrite sur l'ancienne pile avant l'achat.",
+      "specs": [],
+      "axes": ["Modèle"],
+      "variants": [
+        {
+          "options": {
+            "Modèle": "CR2032"
+          }
+        },
+        {
+          "options": {
+            "Modèle": "CR2016"
+          }
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["pile bouton", "cr2032", "cr2016"],
+      "seo": {
+        "title": "Pile bouton | GPS",
+        "description": "Piles bouton au lithium pour montres, clés de voiture, balances et télécommandes : CR2032 et CR2016. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Marque",
+        "Vendues à l'unité ou par plaquette",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": "CR2025 à ajouter seulement si une nouvelle photo la confirme."
+    },
+    {
+      "externalKey": "gps-fourn-slide-binder",
+      "section": "C",
+      "name": "Classeur à baguette HAOXIANG (Slide Binder)",
+      "brand": "",
+      "model": "Slide Binder HAOXIANG",
+      "category": "Autres articles",
+      "subtype": "Fournitures",
+      "summary": "Classeur à baguette HAOXIANG pour relier rapidement des feuilles. Format et quantité par paquet à relever en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Classeur à baguette HAOXIANG pour relier rapidement des feuilles. Format et quantité par paquet à relever en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nRangé dans « Autres articles » en attendant la décision du propriétaire sur une catégorie Fournitures.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["fournitures", "papeterie"],
+      "seo": {
+        "title": "Classeur à baguette HAOXIANG (Slide Binder) | GPS",
+        "description": "Classeur à baguette HAOXIANG pour relier rapidement des feuilles. Format et quantité par paquet à relever en boutique. Renseignements auprès de GPS sur Wha"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Format",
+        "Quantité par paquet",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-fourn-stylos-roller",
+      "section": "C",
+      "name": "Stylos roller 0,5 mm (réf. 199SH2000A)",
+      "brand": "",
+      "model": "199SH2000A",
+      "category": "Autres articles",
+      "subtype": "Fournitures",
+      "summary": "Stylos roller à pointe de 0,5 mm, référence 199SH2000A. Couleurs d'encre et conditionnement à relever en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Stylos roller à pointe de 0,5 mm, référence 199SH2000A. Couleurs d'encre et conditionnement à relever en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nRangé dans « Autres articles » en attendant la décision du propriétaire sur une catégorie Fournitures.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["fournitures", "papeterie"],
+      "seo": {
+        "title": "Stylos roller 0,5 mm (réf. 199SH2000A) | GPS",
+        "description": "Stylos roller à pointe de 0,5 mm, référence 199SH2000A. Couleurs d'encre et conditionnement à relever en boutique. Renseignements auprès de GPS sur WhatsAp"
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Couleurs d'encre",
+        "Conditionnement",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-fourn-marqueurs",
+      "section": "C",
+      "name": "Marqueurs HaiJiaV HJ-2004",
+      "brand": "",
+      "model": "HJ-2004",
+      "category": "Autres articles",
+      "subtype": "Fournitures",
+      "summary": "Marqueurs HaiJiaV HJ-2004. Type de pointe, couleurs et conditionnement à relever sur l'emballage en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Marqueurs HaiJiaV HJ-2004. Type de pointe, couleurs et conditionnement à relever sur l'emballage en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nRangé dans « Autres articles » en attendant la décision du propriétaire sur une catégorie Fournitures.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["fournitures", "papeterie"],
+      "seo": {
+        "title": "Marqueurs HaiJiaV HJ-2004 | GPS",
+        "description": "Marqueurs HaiJiaV HJ-2004. Type de pointe, couleurs et conditionnement à relever sur l'emballage en boutique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Type de pointe",
+        "Couleurs",
+        "Conditionnement",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    },
+    {
+      "externalKey": "gps-fourn-trombones",
+      "section": "C",
+      "name": "Trombones (réf. No. 80028)",
+      "brand": "",
+      "model": "No. 80028",
+      "category": "Autres articles",
+      "subtype": "Fournitures",
+      "summary": "Trombones de bureau, référence No. 80028. Taille et nombre par boîte à relever sur l'emballage en boutique. Renseignements auprès de GPS sur WhatsApp.",
+      "description": "Trombones de bureau, référence No. 80028. Taille et nombre par boîte à relever sur l'emballage en boutique. Renseignements auprès de GPS sur WhatsApp.\n\nRangé dans « Autres articles » en attendant la décision du propriétaire sur une catégorie Fournitures.",
+      "specs": [],
+      "axes": [],
+      "variants": [
+        {
+          "options": {}
+        }
+      ],
+      "compatibility": [],
+      "boxContents": null,
+      "sources": [
+        {
+          "id": "boite",
+          "url": null,
+          "kind": "boîte visible sur le relevé photo",
+          "consulted": "2026-10-16",
+          "verified": "relevé"
+        }
+      ],
+      "keywords": ["fournitures", "papeterie"],
+      "seo": {
+        "title": "Trombones (réf. No. 80028) | GPS",
+        "description": "Trombones de bureau, référence No. 80028. Taille et nombre par boîte à relever sur l'emballage en boutique. Renseignements auprès de GPS sur WhatsApp."
+      },
+      "status": "draft",
+      "needsHumanReview": true,
+      "humanChecks": [
+        "Taille",
+        "Nombre par boîte",
+        "Prix de vente en FCFA",
+        "Coût d'achat (propriétaire)",
+        "Stock compté en boutique",
+        "Garantie proposée par GPS",
+        "Photo de boutique cadrée sur ce produit",
+        "Comparer chaque caractéristique à la boîte"
+      ],
+      "media": [],
+      "shopPhotos": [],
+      "notes": null
+    }
+  ],
+  "identificationRequired": [
+    "Smartphone CORN supplémentaire, modèle illisible",
+    "iPhone rouge : modèle, capacité et état illisibles",
+    "Second iPhone récent : modèle, capacité et état illisibles",
+    "Tablette Lenovo noire",
+    "iPad doré",
+    "Tablette Samsung noire",
+    "Tablette ou boîte marquée S8",
+    "Téléphones classiques noirs supplémentaires",
+    "Boîtes d'écouteurs de type AirPods : génération et authenticité non vérifiées",
+    "Supports « Bracket »",
+    "Cahiers et fournitures aux références illisibles"
+  ],
+  "usedDeviceChecks": [
+    "État",
+    "Défauts",
+    "Batterie mesurée",
+    "Capacité",
+    "RAM",
+    "Couleur",
+    "SIM",
+    "Réseau",
+    "Accessoires",
+    "Garantie",
+    "IMEI (interne, partiellement masqué, jamais public)"
+  ]
+}

@@ -450,6 +450,8 @@ export interface ProductInput {
   publishAt?: string | null;
   /** Retrait programmé du site (le produit repasse en brouillon à cette date). */
   unpublishAt?: string | null;
+  /** Données internes (import : clé stable, sources, vérifications). Écrites à la création seulement. */
+  internal?: Record<string, unknown>;
 }
 
 export interface EditableProduct extends ProductInput {
@@ -660,8 +662,8 @@ export async function saveProduct(
       );
     } else {
       await tx.query(
-        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at, warranty)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at, warranty, internal)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
         [
           id,
           input.name.trim(),
@@ -679,6 +681,7 @@ export async function saveProduct(
           publishAt,
           unpublishAt,
           (input.warranty ?? "").trim(),
+          JSON.stringify(input.internal ?? {}),
         ],
       );
     }

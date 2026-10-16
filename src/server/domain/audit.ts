@@ -48,4 +48,6 @@ export const auditLabels: Record<string, string> = {
   "product.update": "Produit modifié",
   "product.publish": "Produit publié",
   "product.unpublish": "Produit retiré du site",
+  "product.import": "Produit importé (brouillon)",
+  "catalog.import": "Import du catalogue de la boutique",
 };
