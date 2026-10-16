@@ -77,7 +77,8 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow text-gps-red-ink">
-            {channelLabels[o.channel]} · {receptionLabels[o.reception]} · {formatDateTime(o.created_at)}
+            {channelLabels[o.channel]} · {receptionLabels[o.reception]}
+            {o.store_name ? ` · ${o.store_name}` : ""} · {formatDateTime(o.created_at)}
           </p>
           <h1 className="mt-1 font-display text-[40px] leading-none font-extrabold uppercase md:text-[52px]">
             {o.reference}

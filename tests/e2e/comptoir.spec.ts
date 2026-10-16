@@ -401,4 +401,39 @@ test.describe("Le Comptoir", () => {
     expect(await thumb(1)).toBe(first);
     await expect(items.nth(0).getByText("Principale")).toBeVisible();
   });
+
+  test("points de vente : deux boutiques, deux itinéraires distincts, aucune mention « à confirmer »", async ({
+    page,
+  }) => {
+    await login(page, "proprietaire@demo.gps");
+    for (const [name, maps] of [
+      ["GPS Petit Mbao 1", "https://maps.app.goo.gl/qM3MVde8n8LfCe2n6?g_st=ic"],
+      ["GPS Petit Mbao 2", "https://maps.app.goo.gl/5c21wooLPBo1aThDA"],
+    ]) {
+      await page.goto("/comptoir/parametres/points-de-vente");
+      await page.getByRole("button", { name: "Ajouter un point de vente" }).click();
+      await page.getByLabel("Nom (identifiant interne) *").fill(name);
+      await page.getByLabel("Quartier").fill("Dabakh Malick");
+      await page.getByLabel("Localité").fill("Petit Mbao");
+      await page.getByLabel("Lien Google Maps").fill(maps);
+      await page.getByRole("button", { name: "Enregistrer" }).click();
+      await expect(page.getByText("Point de vente enregistré.")).toBeVisible();
+    }
+    await page.goto("/contact");
+    const stores = page.getByRole("list", { name: "Nos points de vente" });
+    await expect(stores.getByText("Point de vente 1")).toBeVisible();
+    await expect(stores.getByText("Point de vente 2")).toBeVisible();
+    const hrefs = await stores
+      .getByRole("link", { name: "Itinéraire" })
+      .evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+    expect(hrefs).toEqual([
+      "https://maps.app.goo.gl/qM3MVde8n8LfCe2n6?g_st=ic",
+      "https://maps.app.goo.gl/5c21wooLPBo1aThDA",
+    ]);
+    await expect(stores.getByText("9 h – 22 h").first()).toBeVisible();
+    for (const path of ["/contact", "/a-propos", "/conditions-de-vente", "/faq", "/services"]) {
+      await page.goto(path);
+      await expect(page.locator("body")).not.toContainText(/à confirmer/i);
+    }
+  });
 });

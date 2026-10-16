@@ -75,6 +75,8 @@ export interface OrderInput {
   /** Paiement mixte : plusieurs moyens pour une même vente. */
   payments?: PaymentInput[];
   isDemo?: boolean;
+  /** Point de vente : retrait choisi par le client, ou boutique où la vente est réalisée. */
+  storeId?: string | null;
 }
 
 interface Actor {
@@ -206,8 +208,8 @@ export async function createOrder(db: Db, actor: Actor, input: OrderInput, now =
     await tx.query(
       `insert into orders (id, reference, idempotency_key, customer_id, customer_name, customer_phone, channel, status,
                            fulfillment, reception, delivery_address, delivery_zone, delivery_fee, subtotal, notes,
-                           created_by, created_at, updated_at, completed_at, is_demo)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17,$18,$19)`,
+                           created_by, created_at, updated_at, completed_at, is_demo, store_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17,$18,$19,$20)`,
       [
         id,
         reference,
@@ -228,6 +230,9 @@ export async function createOrder(db: Db, actor: Actor, input: OrderInput, now =
         now,
         immediate ? now : null,
         !!input.isDemo,
+        input.storeId
+          ? ((await tx.one<{ id: string }>("select id from stores where id = $1", [input.storeId]))?.id ?? null)
+          : null,
       ],
     );
     for (const l of lines) {
@@ -348,6 +353,8 @@ async function insertPayment(
 export interface OrderSummary {
   id: string;
   reference: string;
+  store_id: string | null;
+  store_name: string | null;
   customer_name: string;
   customer_phone: string;
   channel: Channel;
@@ -389,7 +396,8 @@ export const paymentLabels = {
 
 export const summarySelect = `
   select o.id, o.reference, o.customer_name, o.customer_phone, o.channel, o.status, o.fulfillment, o.reception,
-         o.subtotal, o.delivery_fee, o.created_at, o.is_demo,
+         o.subtotal, o.delivery_fee, o.created_at, o.is_demo, o.store_id,
+         (select st.name from stores st where st.id = o.store_id) as store_name,
          coalesce((select sum(l.returned_quantity * l.unit_price) from order_lines l where l.order_id = o.id), 0)::int as returned_value,
          coalesce((select sum(l.quantity) from order_lines l where l.order_id = o.id), 0)::int as item_count,
          coalesce((select sum(case when p.kind = 'payment' then p.amount when p.kind = 'reversal' then -p.amount else 0 end)
@@ -402,7 +410,7 @@ export type OrderView =
 
 export async function listOrders(
   db: Db,
-  opts: { view?: OrderView; q?: string; channel?: string; limit?: number } = {},
+  opts: { view?: OrderView; q?: string; channel?: string; store?: string; limit?: number } = {},
 ) {
   const where: string[] = [];
   const params: unknown[] = [];
@@ -443,6 +451,10 @@ export async function listOrders(
   if (opts.channel) {
     params.push(opts.channel);
     where.push(`o.channel = $${params.length}`);
+  }
+  if (opts.store) {
+    params.push(opts.store);
+    where.push(`o.store_id = $${params.length}`);
   }
   params.push(opts.limit ?? 200);
   const rows = await db.query<OrderSummary>(

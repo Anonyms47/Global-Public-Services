@@ -26,6 +26,7 @@ export default async function TeamPage() {
             label: "Équipe",
             href: "/comptoir/parametres/equipe",
           },
+          { key: "points-de-vente", label: "Points de vente", href: "/comptoir/parametres/points-de-vente" },
         ]}
       />
       <TeamManager

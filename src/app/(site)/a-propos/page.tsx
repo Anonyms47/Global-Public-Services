@@ -3,20 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { siteContext } from "@/server/context";
 import { listCategories, publishedProducts } from "@/server/domain/catalog";
-import { ToConfirm } from "@/components/site/PageHeader";
+import { StoreList } from "@/components/site/StoreList";
 import { Ribbon } from "@/components/brand/Ribbon";
 import { BrandPanel } from "@/components/brand/BrandPanel";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
-import {
-  IconArrowRight,
-  IconBag,
-  IconCheck,
-  IconClock,
-  IconPin,
-  IconStore,
-  IconSwap,
-  IconWhatsApp,
-} from "@/components/ui/icons";
+import { IconArrowRight, IconBag, IconCheck, IconPin, IconStore, IconSwap, IconWhatsApp } from "@/components/ui/icons";
 import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
@@ -26,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const { db, settings } = await siteContext();
+  const { db, settings, stores } = await siteContext();
   const c = settings.company;
   const [products, categories] = await Promise.all([publishedProducts(db), listCategories(db)]);
   const univers = categories.filter((cat) => cat.product_count > 0);
@@ -194,11 +185,7 @@ export default async function AboutPage() {
                   </p>
                 ))}
               </div>
-            ) : (
-              <p className="text-[17px]">
-                <ToConfirm label="Texte de présentation à fournir par GPS" />
-              </p>
-            )}
+            ) : null}
             {c.storeText ? (
               <p className="mt-8 border-l-4 border-gps-red pl-4 text-[17px] leading-relaxed text-ink-soft">
                 {c.storeText}
@@ -257,40 +244,18 @@ export default async function AboutPage() {
             >
               Passez nous voir
             </h2>
-            <dl className="mt-6 grid gap-4">
-              <div className="flex gap-3">
-                <span className="pdp-icon">
-                  <IconPin size={20} />
-                </span>
-                <div>
-                  <dt className="text-[13px] font-bold tracking-[0.08em] text-ink-mute uppercase">Adresse</dt>
-                  <dd className="mt-0.5 font-semibold">
-                    {c.address ? (
-                      <>
-                        {c.address}
-                        {c.city ? `, ${c.city}` : ""}
-                      </>
-                    ) : (
-                      <ToConfirm />
-                    )}
-                  </dd>
-                </div>
+            {stores.length ? (
+              <div className="mt-6">
+                <StoreList stores={stores} />
               </div>
-              <div className="flex gap-3">
-                <span className="pdp-icon">
-                  <IconClock size={20} />
-                </span>
-                <div>
-                  <dt className="text-[13px] font-bold tracking-[0.08em] text-ink-mute uppercase">Horaires</dt>
-                  <dd className="mt-0.5 font-semibold">{c.hours || <ToConfirm />}</dd>
-                </div>
-              </div>
-            </dl>
+            ) : c.address || c.hours ? (
+              <p className="mt-6 font-semibold">{[c.address, c.city, c.hours].filter(Boolean).join(" · ")}</p>
+            ) : null}
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/contact" className="btn btn-ink">
                 Contact & accès <IconArrowRight size={18} />
               </Link>
-              {c.mapsUrl ? (
+              {!stores.length && c.mapsUrl ? (
                 <a href={c.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline">
                   <IconPin size={18} /> Itinéraire
                 </a>

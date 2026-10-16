@@ -37,9 +37,9 @@ export function PageHeader({
   );
 }
 
-/** Valeur métier non encore fournie par GPS : affichée explicitement comme à confirmer. */
-export function ToConfirm({ label = "À confirmer avec GPS" }: { label?: string }) {
-  return <span className="rounded-[4px] bg-warn-soft px-1.5 py-0.5 text-[0.9em] font-semibold text-warn">{label}</span>;
+/** Valeur métier non encore fournie par GPS : rien n'est affiché publiquement (champ masqué). */
+export function ToConfirm(_props: { label?: string }) {
+  return null;
 }
 
 export function Prose({ children }: { children: ReactNode }) {

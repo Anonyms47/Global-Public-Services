@@ -15,8 +15,8 @@ export default async function SettingsPage() {
   return (
     <>
       <PageTitle eyebrow="Développer" title="Configuration">
-        Entreprise, coordonnées, réception, paiements, messages WhatsApp et conditions. Rien n&apos;est inventé : un
-        champ vide reste « à confirmer » sur le site.
+        Entreprise, coordonnées, réception, paiements, messages WhatsApp et conditions. Un champ vide est simplement
+        masqué sur le site.
       </PageTitle>
       <Tabs
         current="parametres"
@@ -31,6 +31,7 @@ export default async function SettingsPage() {
             label: "Équipe",
             href: "/comptoir/parametres/equipe",
           },
+          { key: "points-de-vente", label: "Points de vente", href: "/comptoir/parametres/points-de-vente" },
         ]}
       />
       <SettingsForm
@@ -44,7 +45,7 @@ export default async function SettingsPage() {
           payments: s.payments,
         }}
       />
-      <DemoPurge demoMode={isDemoMode()} hasDemo={demoData} />
+      {demoData || isDemoMode() ? <DemoPurge demoMode={isDemoMode()} hasDemo={demoData} /> : null}
     </>
   );
 }

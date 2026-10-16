@@ -9,6 +9,7 @@ import { clearLoginLock, createUser, updateUser } from "@/server/domain/auth";
 import { purgeDemo } from "@/server/demo/seed";
 import { audit } from "@/server/domain/audit";
 import { mediaStorage } from "@/server/storage";
+import { moveStore, saveStore } from "@/server/domain/stores";
 import { templateKeys, type TemplateKey } from "@/lib/templates";
 import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
 
@@ -229,4 +230,48 @@ export async function purgeDemoAction(confirmText: string, opts: { dryRun?: bool
         : "Données d'exemple supprimées après sauvegarde.",
     },
   );
+}
+
+// ——— Points de vente ———
+
+const hm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format HH:MM.");
+const day = z.object({ enabled: z.boolean(), open: hm.optional(), close: hm.optional() });
+const storeSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().max(80),
+  address: z.string().max(200),
+  district: z.string().max(80),
+  city: z.string().max(80),
+  landmark: z.string().max(200),
+  maps_url: z.string().max(300),
+  hours: z.object({
+    open: hm,
+    close: hm,
+    days: z.partialRecord(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]), day),
+  }),
+  closures: z.array(z.object({ date: z.string().max(10), note: z.string().max(120) })).max(60),
+  photo_url: z.string().max(300).nullable(),
+  phone: z.string().max(40),
+  services: z.string().max(300),
+  pickup_enabled: z.boolean(),
+  counter_enabled: z.boolean(),
+  is_main: z.boolean(),
+  published: z.boolean(),
+});
+
+export async function saveStoreAction(input: unknown) {
+  return guarded(
+    "settings.edit",
+    async ({ db, user }) => {
+      const d = parse(storeSchema, input);
+      const id = await saveStore(db, d);
+      await audit(db, user.id, d.id ? "store.update" : "store.create", d.name);
+      return { id };
+    },
+    { message: "Point de vente enregistré." },
+  );
+}
+
+export async function moveStoreAction(id: string, direction: -1 | 1) {
+  return guarded("settings.edit", ({ db }) => moveStore(db, String(id), direction === -1 ? -1 : 1));
 }

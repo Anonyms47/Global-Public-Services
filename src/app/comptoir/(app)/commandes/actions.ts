@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { guarded } from "@/server/admin";
+import { setDefaultStore } from "@/server/domain/stores";
 import { sellableProducts } from "@/server/domain/catalog";
 import { phoneMatches, searchCustomers } from "@/server/domain/customers";
 import { isDemoMode } from "@/server/db";
@@ -86,6 +87,7 @@ const lineSchema = z.object({
 
 const orderSchema = z.object({
   idempotencyKey: z.string().min(8),
+  storeId: z.string().max(64).nullish(),
   channel: z.enum(["whatsapp", "boutique", "telephone", "autre"]),
   reception: z.enum(["pickup", "delivery", "immediate"]),
   customerId: z.string().nullish(),
@@ -136,6 +138,10 @@ export async function quickSaleAction(input: unknown) {
       lines,
       newCustomer: data.newCustomer ?? undefined,
       isDemo: isDemoMode(),
+    }).then(async (r) => {
+      // Point de vente habituel du vendeur, mémorisé pour la prochaine vente.
+      if (data.storeId) await setDefaultStore(db, user.id, data.storeId);
+      return r;
     });
   });
 }

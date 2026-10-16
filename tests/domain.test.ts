@@ -499,7 +499,7 @@ describe("Catalogue, panier et promotions", () => {
     expect(msg).toContain("Couleur : Noir · Pointure : 41");
     expect(msg).toContain("Qté 2");
     expect(msg).toMatch(/Total des produits : 64\s000\sFCFA/);
-    expect(msg).toContain("Frais de livraison : À confirmer avec GPS");
+    expect(msg).toContain("Frais de livraison : Précisé par GPS sur WhatsApp");
   });
 
   it("une modification du catalogue ne réécrit pas l'historique des commandes", async () => {
@@ -1864,6 +1864,127 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(after.company.whatsapp).toBe("22500000000");
     expect(after.company.hours).toBe("Lun–Sam");
     expect(after.storefront.heroProductId).toBeNull();
+  });
+});
+
+describe("Points de vente (stock commun)", () => {
+  it("retrait par boutique, vente rapide par boutique, point habituel, rapports, stock commun", async () => {
+    const st = await import("@/server/domain/stores");
+    const { storeReport } = await import("@/server/domain/reports");
+    // Après la purge de démonstration (test précédent), un propriétaire réel est créé pour ce scénario.
+    const { createUser } = await import("@/server/domain/auth");
+    const ownerId = await createUser(db, {
+      name: "Propriétaire boutique",
+      email: "proprio.boutique",
+      role: "owner",
+      password: "motdepasse-proprio",
+      temporary: false,
+    });
+    const owner = { id: ownerId, name: "Propriétaire boutique", is_demo: false, role: "owner" as const };
+    const base = {
+      address: "",
+      district: "Dabakh Malick",
+      city: "Petit Mbao",
+      landmark: "",
+      hours: st.defaultHours,
+      closures: [],
+      photo_url: null,
+      phone: "",
+      services: "",
+      pickup_enabled: true,
+      counter_enabled: true,
+      published: true,
+    };
+    const s1 = await st.saveStore(db, {
+      ...base,
+      name: "GPS Petit Mbao 1",
+      maps_url: "https://maps.app.goo.gl/qM3MVde8n8LfCe2n6?g_st=ic",
+      is_main: true,
+    });
+    const s2 = await st.saveStore(db, {
+      ...base,
+      name: "GPS Petit Mbao 2",
+      maps_url: "https://maps.app.goo.gl/5c21wooLPBo1aThDA",
+      is_main: false,
+    });
+    const list = await st.listStores(db, { publishedOnly: true });
+    expect(list.map((x) => x.maps_url)).toEqual([
+      "https://maps.app.goo.gl/qM3MVde8n8LfCe2n6?g_st=ic",
+      "https://maps.app.goo.gl/5c21wooLPBo1aThDA",
+    ]);
+    // Plage 09 h – 22 h sans prétendre « tous les jours » tant que les jours ne sont pas confirmés.
+    expect(st.hoursText(list[0].hours)).toBe("9 h – 22 h");
+    expect(st.hoursText({ ...list[0].hours, days: { mon: { enabled: true }, sun: { enabled: false } } })).toBe(
+      "Lundi : 9 h – 22 h · Dimanche : fermé",
+    );
+    await expect(
+      st.saveStore(db, { ...base, name: "X", maps_url: "javascript:alert(1)", is_main: false }),
+    ).rejects.toThrow(/Maps/);
+
+    // Retrait : le point de vente est obligatoire, enregistré et repris dans la commande.
+    await saveProduct(
+      db,
+      {
+        name: "Article boutique",
+        brand: "GPS",
+        categoryId: (await db.one<{ id: string }>("select id from categories order by position limit 1"))!.id,
+        description: "Article réel de contrôle pour les points de vente de Petit Mbao.",
+        specs: [],
+        condition: null,
+        axes: [],
+        images: [{ url: "/brand/logo-gps-mark.png", alt: "Article", kind: "image" }],
+        variants: [{ sku: "BOUT-1", options: {}, price: 10000, initialStock: 5 }],
+        status: "published",
+        featured: false,
+        isDemo: false,
+      },
+      { userId: owner.id, withCosts: true },
+    );
+    const v = await variantBySku(db, "BOUT-1");
+    const input = {
+      items: [{ variantId: v.id, quantity: 1, seenPrice: v.price }],
+      name: "Client retrait",
+      reception: "pickup" as const,
+      deliveryFee: 0,
+    };
+    await expect(createRequest(db, input)).rejects.toThrow(/point de vente/);
+    const req = await createRequest(db, { ...input, storeId: s2 });
+    expect((await getRequest(db, req.id))?.store_name).toBe("GPS Petit Mbao 2");
+    const order = await convertRequest(db, owner, req.id, { isDemo: false });
+    expect((await getOrder(db, order.id))?.store_name).toBe("GPS Petit Mbao 2");
+
+    // Vente rapide dans la boutique 1 : même stock commun, point habituel mémorisé.
+    const before = await variantBySku(db, "BOUT-1");
+    const sale = await createOrder(db, owner, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "cash", amount: v.price },
+      storeId: s1,
+    });
+    await st.setDefaultStore(db, owner.id, s1);
+    const after = await variantBySku(db, "BOUT-1");
+    // Stock commun : la vente en boutique 1 et la réservation du retrait en boutique 2 portent sur le même stock.
+    expect(after.on_hand).toBe(before.on_hand - 1);
+    expect(after.reserved).toBe(1);
+    expect((await db.one<{ s: string }>("select default_store_id as s from users where id = $1", [owner.id]))!.s).toBe(
+      s1,
+    );
+    // Rapports : ventes réparties par boutique, filtre de la liste des commandes.
+    const rows = await storeReport(db, periodFromKey("jour"), { scope: { includeDemo: true } });
+    const r1 = rows.find((r) => r.id === s1)!;
+    expect(r1).toMatchObject({ counter: 1, ca: v.price, encaissements: v.price });
+    expect(r1.sellers).toContain(owner.name);
+    expect(rows.find((r) => r.id === s2)?.orders).toBe(1);
+    const { listOrders } = await import("@/server/domain/orders");
+    expect((await listOrders(db, { store: s1 })).map((o) => o.id)).toEqual([sale.id]);
+
+    await cancelOrder(db, owner, order.id, "test");
+    await db.query("update users set default_store_id = null");
+    await db.query("update orders set store_id = null where store_id in ($1, $2)", [s1, s2]);
+    await db.query("update order_requests set store_id = null where store_id in ($1, $2)", [s1, s2]);
+    await db.query("delete from stores");
   });
 });
 

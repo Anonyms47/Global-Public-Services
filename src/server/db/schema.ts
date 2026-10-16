@@ -365,6 +365,34 @@ alter table login_attempts add column if not exists reason text not null default
 alter table login_attempts add column if not exists cleared boolean not null default false;
 alter table login_attempts add column if not exists user_agent text not null default '';
 
+-- Points de vente : informations et horaires par boutique. Le stock reste commun (un seul stock par variante).
+create table if not exists stores (
+  id text primary key,
+  name text not null,
+  address text not null default '',
+  district text not null default '',
+  city text not null default '',
+  landmark text not null default '',
+  maps_url text not null default '',
+  hours jsonb not null default '{}',
+  closures jsonb not null default '[]',
+  photo_url text,
+  phone text not null default '',
+  services text not null default '',
+  pickup_enabled boolean not null default true,
+  counter_enabled boolean not null default true,
+  is_main boolean not null default false,
+  position int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+-- Commandes, demandes et ventes rattachées à un point de vente (retrait choisi, vente réalisée).
+alter table orders add column if not exists store_id text references stores (id) on delete set null;
+alter table order_requests add column if not exists store_id text references stores (id) on delete set null;
+-- Point de vente habituel du vendeur (prérempli en vente rapide).
+alter table users add column if not exists default_store_id text references stores (id) on delete set null;
+create index if not exists orders_store on orders (store_id, created_at);
+
 -- Sauvegardes datées (ex. données d'exemple avant purge), restaurables (docs/purge-demo.md).
 create table if not exists data_backups (
   id text primary key,
@@ -401,4 +429,5 @@ alter table order_requests enable row level security;
 alter table product_versions enable row level security;
 alter table login_attempts enable row level security;
 alter table data_backups enable row level security;
+alter table stores enable row level security;
 `;

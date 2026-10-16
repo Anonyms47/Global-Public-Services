@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 
 /** Ligne façon ticket : libellé, points de conduite, valeur. */
 function Line({ label, children }: { label: string; children: React.ReactNode }) {
+  if (!children) return null;
   return (
     <div className="receipt-line">
       <dt>{label}</dt>
@@ -84,8 +85,8 @@ export default async function ServicesPage() {
                 <IconSwap size={20} className="text-gps-blue" /> Le guichet
               </p>
               <dl className="mt-3 grid gap-2.5">
-                <Line label="Adresse">{[c.address, c.city].filter(Boolean).join(", ") || <ToConfirm />}</Line>
-                <Line label="Horaires">{c.hours || <ToConfirm />}</Line>
+                {c.city ? <Line label="Adresse">{[c.address, c.city].filter(Boolean).join(", ")}</Line> : null}
+                {c.hours ? <Line label="Horaires">{c.hours}</Line> : null}
                 <Line label="En ligne">aucune opération</Line>
               </dl>
             </div>
@@ -121,9 +122,9 @@ export default async function ServicesPage() {
                 <h3 className="mt-5 font-display text-[32px] leading-none font-bold uppercase">{s.title}</h3>
                 {s.summary ? <p className="mt-3 text-[16px] leading-relaxed text-ink-soft">{s.summary}</p> : null}
                 <dl className="mt-auto grid gap-2.5 border-t-2 border-dashed border-line pt-5">
-                  <Line label="Opérateurs">{s.operators || <ToConfirm />}</Line>
-                  <Line label="Opérations">{s.operations || <ToConfirm />}</Line>
-                  <Line label="Horaires">{s.hours || c.hours || <ToConfirm />}</Line>
+                  <Line label="Opérateurs">{s.operators || null}</Line>
+                  <Line label="Opérations">{s.operations || null}</Line>
+                  <Line label="Horaires">{s.hours || c.hours || null}</Line>
                 </dl>
               </li>
             ))}

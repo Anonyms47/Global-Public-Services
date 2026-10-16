@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
+import { isDemoMode } from "@/server/db";
 import { todayCounts } from "@/server/domain/orders";
 import { lowStockCount } from "@/server/domain/stock";
 import { getSettings } from "@/server/domain/settings";
@@ -208,8 +209,8 @@ export default async function TodayPage() {
             ))}
           </dl>
           <p className="hint mt-3">
-            Périmètre : données réelles uniquement (démonstration exclue). Transferts d&apos;argent exclus : leurs fonds
-            restent séparés des ventes.
+            {isDemoMode() ? "Périmètre : données réelles uniquement (démonstration exclue). " : ""}Transferts
+            d&apos;argent exclus : leurs fonds restent séparés des ventes.
           </p>
         </Panel>
       </div>

@@ -108,7 +108,7 @@ export function SettingsForm({ initial }: { initial: Initial }) {
             label="Numéro WhatsApp de GPS"
             value={c.whatsapp}
             onChange={(v) => setC({ whatsapp: v })}
-            hint="Format international avec indicatif, sans + ni espaces. Vide = mode démonstration (aucun numéro contacté)."
+            hint="Format international avec indicatif, sans + ni espaces. Vide = aucun lien WhatsApp affiché."
             error={fieldErrors["company.whatsapp"]}
           />
           <Field id="s-phone" label="Téléphone (appel)" value={c.phone} onChange={(v) => setC({ phone: v })} />
@@ -761,7 +761,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
           <ul className="grid gap-2 text-[14px]">
             <li>
               <strong>Propriétaire</strong> — tout, dont coûts d&apos;achat et marge, export des clients, paramètres,
-              équipe, purge de démonstration.
+              équipe, purge des données d&apos;exemple.
             </li>
             <li>
               <strong>Gestionnaire</strong> — catalogue, stock, inventaire, commandes (annulation, corrections, retours,

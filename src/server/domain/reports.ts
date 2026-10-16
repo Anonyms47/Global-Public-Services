@@ -223,3 +223,59 @@ export async function stockSummary(db: Db, opts: { scope?: Scope; withCost: bool
     low: r?.low ?? 0,
   };
 }
+
+/**
+ * Analyse par point de vente (le stock reste commun, seules les ventes sont
+ * réparties) : chiffre d'affaires, encaissements, commandes, ventes au
+ * comptoir, panier moyen et vendeurs. « Non attribué » regroupe les commandes
+ * sans boutique (livraisons non attribuées).
+ */
+export async function storeReport(db: Db, period: Period, opts: { scope?: Scope } = {}) {
+  const only = scopeSql(opts.scope ?? realOnly);
+  const rows = await db.query<{
+    store: string | null;
+    name: string | null;
+    orders: number;
+    counter: number;
+    ca: number;
+    sellers: string[] | null;
+  }>(
+    `select o.store_id as store, st.name, count(*)::int as orders,
+            count(*) filter (where o.reception = 'immediate')::int as counter,
+            coalesce(sum(o.subtotal - coalesce((select sum(l.returned_quantity * l.unit_price) from order_lines l where l.order_id = o.id), 0)), 0)::int as ca,
+            array_remove(array_agg(distinct u.name), null) as sellers
+       from orders o left join stores st on st.id = o.store_id left join users u on u.id = o.created_by
+      where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2${only}
+      group by o.store_id, st.name`,
+    [period.from, period.to],
+  );
+  const cash = await db.query<{ store: string | null; total: number }>(
+    `select o.store_id as store,
+            coalesce(sum(case when p.kind = 'payment' then p.amount when p.kind = 'reversal' then -p.amount else 0 end), 0)::int as total
+       from payments p join orders o on o.id = p.order_id
+      where p.created_at >= $1 and p.created_at < $2${only} group by o.store_id`,
+    [period.from, period.to],
+  );
+  const stores = await db.query<{ id: string; name: string }>("select id, name from stores order by position, name");
+  const keys = [
+    ...stores.map((st) => ({ id: st.id as string | null, name: st.name })),
+    { id: null, name: "Non attribué" },
+  ];
+  return keys
+    .map((k) => {
+      const r = rows.find((x) => x.store === k.id);
+      const ca = r?.ca ?? 0;
+      const orders = r?.orders ?? 0;
+      return {
+        id: k.id,
+        name: k.name,
+        ca,
+        encaissements: cash.find((x) => x.store === k.id)?.total ?? 0,
+        orders,
+        counter: r?.counter ?? 0,
+        basket: orders ? Math.round(ca / orders) : null,
+        sellers: r?.sellers ?? [],
+      };
+    })
+    .filter((r) => r.id !== null || r.orders || r.encaissements);
+}

@@ -47,6 +47,7 @@ export async function registerRequest(input: RequestInput & { replacesId?: strin
       deliveryFee: typeof fee === "number" && Number.isFinite(fee) && fee >= 0 ? Math.floor(fee) : null,
       note: String(input?.note ?? ""),
       replacesId: input?.replacesId ? String(input.replacesId).slice(0, 64) : undefined,
+      storeId: input?.storeId ? String(input.storeId).slice(0, 64) : null,
     });
     return { ok: true as const, reference: r.reference, id: r.id };
   } catch (error) {

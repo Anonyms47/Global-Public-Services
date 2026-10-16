@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
+import { isDemoMode } from "@/server/db";
 import { periodFromKey, report } from "@/server/domain/reports";
 import {
   change,
@@ -87,6 +88,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
           <ScopeFilter
             includeDemo={scope.includeDemo}
             demoCount={demoCount}
+            demoMode={isDemoMode()}
             toggleHref={qs(detailAllowed || marginOpen ? { detail: str("detail")! } : {}, !scope.includeDemo)}
           />
         </div>
@@ -318,13 +320,15 @@ export default async function DashboardPage({ searchParams }: PageProps<"/compto
               <dd className="text-ink-soft">{metricDefs[k].formula}</dd>
             </div>
           ))}
-          <div>
-            <dt className="font-bold">Données de démonstration</dt>
-            <dd className="text-ink-soft">
-              Exclues par défaut : commandes d&apos;exemple et commandes contenant un produit d&apos;exemple, avec leurs
-              paiements, remboursements et retours. Le filtre « Inclure la démonstration » les ajoute.
-            </dd>
-          </div>
+          {isDemoMode() || demoCount ? (
+            <div>
+              <dt className="font-bold">Données de démonstration</dt>
+              <dd className="text-ink-soft">
+                Exclues par défaut : commandes d&apos;exemple et commandes contenant un produit d&apos;exemple, avec
+                leurs paiements, remboursements et retours. Le filtre « Inclure la démonstration » les ajoute.
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt className="font-bold">Transferts d&apos;argent</dt>
             <dd className="text-ink-soft">Jamais comptés : leurs fonds restent séparés des ventes.</dd>

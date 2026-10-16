@@ -32,8 +32,17 @@ interface Reception {
   zones: DeliveryZone[];
 }
 
+export interface PickupStore {
+  id: string;
+  name: string;
+  place: string;
+  hours: string;
+  mapsUrl: string;
+}
+
 interface Form {
   reception: "pickup" | "delivery" | "";
+  store: string;
   zone: string;
   address: string;
   name: string;
@@ -44,6 +53,7 @@ interface Form {
 const FORM_KEY = "gps-commande-v1";
 const emptyForm: Form = {
   reception: "",
+  store: "",
   zone: "",
   address: "",
   name: "",
@@ -89,7 +99,15 @@ function describeIssues(items: CheckedItem[]): Notice[] {
   return out;
 }
 
-export function CartView({ whatsapp, reception }: { whatsapp: string; reception: Reception }) {
+export function CartView({
+  whatsapp,
+  reception,
+  stores = [],
+}: {
+  whatsapp: string;
+  reception: Reception;
+  stores?: PickupStore[];
+}) {
   const items = useCart();
   const ready = useCartReady();
   const [checking, setChecking] = useState(false);
@@ -213,6 +231,8 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
   const validate = () => {
     const e: Partial<Record<keyof Form, string>> = {};
     if (!form.reception) e.reception = "Choisissez un mode de réception.";
+    if (form.reception === "pickup" && stores.length && !stores.some((st) => st.id === form.store))
+      e.store = "Choisissez le point de vente où retirer votre commande.";
     if (!form.name.trim()) e.name = "Indiquez votre nom pour que GPS puisse identifier la commande.";
     if (form.reception === "delivery") {
       if (reception.zones.length && !form.zone) e.zone = "Choisissez votre zone de livraison.";
@@ -249,6 +269,7 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
       deliveryFee,
       note: form.note.trim(),
       replacesId: lastRequest.current ?? undefined,
+      storeId: form.reception === "pickup" ? form.store || null : null,
     }).catch(() => ({ ok: false as const }));
     if (req.ok) lastRequest.current = req.id;
     const msg = buildOrderMessage({
@@ -261,7 +282,12 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
         unitPrice: i.unitPrice,
       })),
       reception: form.reception as "pickup" | "delivery",
-      pickupDetails: reception.pickupDetails,
+      pickupDetails: (() => {
+        const st = stores.find((x) => x.id === form.store);
+        return st
+          ? [`${st.name} — ${st.place}`, st.mapsUrl && `Itinéraire : ${st.mapsUrl}`].filter(Boolean).join(" · ")
+          : reception.pickupDetails;
+      })(),
       zone: form.zone || undefined,
       deliveryFee,
       address: form.address.trim() || undefined,
@@ -577,10 +603,47 @@ export function CartView({ whatsapp, reception }: { whatsapp: string; reception:
                   </div>
                 )}
                 {errors.reception ? <p className="error-text">{errors.reception}</p> : null}
-                {form.reception === "pickup" ? (
-                  <p className="hint">
-                    {reception.pickupDetails || `Lieu et horaires de retrait : ${TO_CONFIRM.toLowerCase()}.`}
-                  </p>
+                {form.reception === "pickup" && stores.length ? (
+                  <fieldset className="mt-3 grid gap-2" aria-describedby={errors.store ? "err-store" : undefined}>
+                    <legend className="label">Point de retrait *</legend>
+                    {stores.map((st) => (
+                      <label
+                        key={st.id}
+                        className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-[10px] border-[1.5px] p-3 ${form.store === st.id ? "border-gps-blue bg-gps-blue-soft" : "border-line bg-white"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="store"
+                          className="mt-1"
+                          checked={form.store === st.id}
+                          onChange={() => setForm({ ...form, store: st.id })}
+                        />
+                        <span className="min-w-0">
+                          <span className="block font-bold">{st.name}</span>
+                          <span className="block text-[14px] text-ink-soft">
+                            {st.place} · {st.hours}
+                          </span>
+                          {st.mapsUrl ? (
+                            <a
+                              href={st.mapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[14px] font-semibold text-gps-blue underline"
+                            >
+                              Itinéraire
+                            </a>
+                          ) : null}
+                        </span>
+                      </label>
+                    ))}
+                    {errors.store ? (
+                      <p id="err-store" className="error-text">
+                        {errors.store}
+                      </p>
+                    ) : null}
+                  </fieldset>
+                ) : form.reception === "pickup" && reception.pickupDetails ? (
+                  <p className="hint">{reception.pickupDetails}</p>
                 ) : null}
                 {form.reception === "delivery" && reception.deliveryDetails ? (
                   <p className="hint">{reception.deliveryDetails}</p>

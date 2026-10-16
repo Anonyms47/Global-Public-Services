@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { ToConfirm } from "@/components/site/PageHeader";
 import { LegalDoc } from "@/components/site/LegalDoc";
+import { siteContext } from "@/server/context";
 
 export const metadata: Metadata = { title: "Confidentialité" };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const c = (await siteContext()).settings.company;
   return (
     <LegalDoc
       title="Confidentialité"
       intro="Ce que le site garde, ce qui part vers GPS et quand : en clair, sans jargon."
-      notice="Projet à faire valider par GPS."
       other={{ href: "/conditions-de-vente", label: "Conditions de vente" }}
       sections={[
         {
@@ -40,8 +40,8 @@ export default function PrivacyPage() {
           body: (
             <p>
               Lorsqu&apos;une commande est confirmée, GPS enregistre les informations nécessaires à son suivi (articles,
-              prix, coordonnées, réception, paiements). Durée de conservation et contact pour exercer vos droits :{" "}
-              <ToConfirm />
+              prix, coordonnées, réception, paiements). Pour exercer vos droits, écrivez à GPS sur WhatsApp
+              {c.email ? ` ou à ${c.email}` : ""}.
             </p>
           ),
         },

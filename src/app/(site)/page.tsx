@@ -7,6 +7,7 @@ import { Ribbon } from "@/components/brand/Ribbon";
 import { BrandPanel } from "@/components/brand/BrandPanel";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductImage } from "@/components/shop/ProductImage";
+import { StoreList } from "@/components/site/StoreList";
 import { Price } from "@/components/shop/Price";
 import {
   IconArrowRight,
@@ -59,7 +60,7 @@ function optionSummary(p: PublicProduct) {
 }
 
 export default async function HomePage() {
-  const { db, settings } = await siteContext();
+  const { db, settings, stores } = await siteContext();
   const [products, categories, services] = await Promise.all([
     publishedProducts(db),
     listCategories(db),
@@ -422,11 +423,11 @@ export default async function HomePage() {
                 <dl className="mt-3 grid gap-2 text-[15px]">
                   <div className="flex justify-between gap-4">
                     <dt className="text-white/70">Opérateurs</dt>
-                    <dd className="text-right font-semibold">{s?.operators || "À confirmer avec GPS"}</dd>
+                    <dd className="text-right font-semibold">{s?.operators || "Sur demande"}</dd>
                   </div>
                   <div className="flex justify-between gap-4">
                     <dt className="text-white/70">Horaires</dt>
-                    <dd className="text-right font-semibold">{s?.hours || c.hours || "À confirmer avec GPS"}</dd>
+                    <dd className="text-right font-semibold">{s?.hours || c.hours || "Aux heures d'ouverture"}</dd>
                   </div>
                 </dl>
               </li>
@@ -512,27 +513,34 @@ export default async function HomePage() {
               })}
             </ol>
             <dl className="grid gap-5 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
-              {[
-                [IconPin, "Adresse", [c.address, c.city].filter(Boolean).join(", ")],
-                [IconClock, "Horaires", c.hours],
-                [IconPhone, "Téléphone", c.phone],
-              ].map(([Icon, label, value]) => {
-                const I = Icon as typeof IconPin;
-                return (
-                  <div key={label as string} className="flex gap-3">
-                    <I className="mt-0.5 shrink-0 text-gps-blue" />
-                    <div>
-                      <dt className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">{label as string}</dt>
-                      <dd className="mt-0.5 font-semibold">
-                        {(value as string) || (
-                          <span className="font-normal text-ink-mute italic">À confirmer avec GPS</span>
-                        )}
-                      </dd>
+              {(
+                [
+                  [IconPin, "Adresse", stores.length ? "" : [c.address, c.city].filter(Boolean).join(", ")],
+                  [IconClock, "Horaires", stores.length ? "" : c.hours],
+                  [IconPhone, "Téléphone", c.phone],
+                ] as const
+              )
+                .filter(([, , value]) => value)
+                .map(([Icon, label, value]) => {
+                  const I = Icon as typeof IconPin;
+                  return (
+                    <div key={label as string} className="flex gap-3">
+                      <I className="mt-0.5 shrink-0 text-gps-blue" />
+                      <div>
+                        <dt className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">
+                          {label as string}
+                        </dt>
+                        <dd className="mt-0.5 font-semibold">{value as string}</dd>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </dl>
+            {stores.length ? (
+              <div className="sm:col-span-2 lg:col-span-1">
+                <StoreList stores={stores} />
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

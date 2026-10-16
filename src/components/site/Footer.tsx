@@ -4,6 +4,7 @@ import { Logo } from "../brand/Logo";
 
 /** Ligne de ticket : libellé, points de conduite, valeur. */
 function Line({ label, value, href }: { label: string; value: string; href?: string }) {
+  if (!value) return null;
   return (
     <div className="receipt-line">
       <dt>{label}</dt>
@@ -17,9 +18,7 @@ function Line({ label, value, href }: { label: string; value: string; href?: str
           ) : (
             value
           )
-        ) : (
-          <span className="text-ink-mute italic">à confirmer</span>
-        )}
+        ) : null}
       </dd>
     </div>
   );
@@ -38,7 +37,15 @@ const legal: [string, string][] = [
   ["/confidentialite", "Confidentialité"],
 ];
 
-export function Footer({ settings, categories }: { settings: Settings; categories: { slug: string; name: string }[] }) {
+export function Footer({
+  settings,
+  categories,
+  stores = [],
+}: {
+  settings: Settings;
+  categories: { slug: string; name: string }[];
+  stores?: { id: string; label: string; place: string; hours: string; mapsUrl: string }[];
+}) {
   const c = settings.company;
   const wa = c.whatsapp.replace(/\D/g, "");
   const tel = c.phone.replace(/[^\d+]/g, "");
@@ -75,14 +82,21 @@ export function Footer({ settings, categories }: { settings: Settings; categorie
             <div className="md:col-span-4">
               <p className="receipt-title">Au comptoir</p>
               <dl className="mt-3 grid gap-2.5">
-                <Line
-                  label="Adresse"
-                  value={[c.address, c.city].filter(Boolean).join(", ")}
-                  href={c.mapsUrl || undefined}
-                />
-                <Line label="Horaires" value={c.hours} />
+                {stores.length ? (
+                  stores.map((st) => (
+                    <Line key={st.id} label={st.label} value={st.place} href={st.mapsUrl || undefined} />
+                  ))
+                ) : (
+                  <Line
+                    label="Adresse"
+                    value={[c.address, c.city].filter(Boolean).join(", ")}
+                    href={c.mapsUrl || undefined}
+                  />
+                )}
+                <Line label="Horaires" value={stores[0]?.hours ?? c.hours} />
                 <Line label="Téléphone" value={c.phone} href={tel ? `tel:${tel}` : undefined} />
                 <Line label="WhatsApp" value={wa ? `+${wa}` : ""} href={wa ? `https://wa.me/${wa}` : undefined} />
+                <Line label="E-mail" value={c.email} href={c.email ? `mailto:${c.email}` : undefined} />
               </dl>
             </div>
 

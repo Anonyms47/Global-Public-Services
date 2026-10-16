@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { siteContext } from "@/server/context";
 import { legalIds } from "@/server/domain/settings";
-import { ToConfirm } from "@/components/site/PageHeader";
 import { LegalDoc } from "@/components/site/LegalDoc";
 
 export const metadata: Metadata = { title: "Conditions de vente" };
@@ -11,12 +10,10 @@ export default async function CgvPage() {
   const p = settings.policies;
   const c = settings.company;
   const ids = legalIds(c);
-  const missing = !c.legalName || !ids || !c.address;
   return (
     <LegalDoc
       title="Conditions de vente"
       intro="Comment se passe une commande chez GPS : de la préparation sur le site à la confirmation, au paiement et à la réception."
-      notice="Projet à faire valider par GPS et, si besoin, par un conseil juridique."
       other={{ href: "/confidentialite", label: "Confidentialité" }}
       sections={[
         {
@@ -27,12 +24,6 @@ export default async function CgvPage() {
               GPS — Global Public Services. {c.legalName ? `${c.legalName}. ` : null}
               {ids ? `Immatriculation : ${ids}. ` : null}
               {[c.address, c.city].filter(Boolean).join(", ") || null}
-              {missing ? (
-                <>
-                  {" "}
-                  Informations manquantes : <ToConfirm />
-                </>
-              ) : null}
             </p>
           ),
         },
@@ -65,7 +56,7 @@ export default async function CgvPage() {
           body: (
             <p>
               Aucun paiement n&apos;est effectué sur le site.{" "}
-              {p.payment || <ToConfirm label="Moyens et moment du paiement à confirmer" />}
+              {p.payment || "Moyens et moment du paiement précisés par GPS à la confirmation de la commande."}
             </p>
           ),
         },
@@ -74,19 +65,20 @@ export default async function CgvPage() {
           title: "Réception",
           body: (
             <p>
-              Retrait en boutique ou livraison, selon les options proposées. Délais et zones : <ToConfirm />
+              Retrait dans l&apos;un de nos points de vente à Petit Mbao, ou livraison selon les options proposées.
+              Délais et frais de livraison précisés par GPS au moment de la confirmation.
             </p>
           ),
         },
         {
           id: "garantie",
           title: "Garantie",
-          body: <p>{p.warranty || <ToConfirm label="Conditions de garantie à confirmer" />}</p>,
+          body: <p>{p.warranty || "Conditions de garantie précisées par GPS pour chaque article, avant l'achat."}</p>,
         },
         {
           id: "retours",
           title: "Retours",
-          body: <p>{p.returns || <ToConfirm label="Conditions de retour à confirmer" />}</p>,
+          body: <p>{p.returns || "Pour un retour, contactez GPS sur WhatsApp avec la référence de votre commande."}</p>,
         },
       ]}
     />
