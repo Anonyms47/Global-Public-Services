@@ -26,7 +26,7 @@ export default async function PromotionsPage() {
         Programmées avec une date de début et de fin : le prix revient automatiquement à la normale à la fin.
       </PageTitle>
       <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+        <div className="rtable overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[600px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -53,17 +53,19 @@ export default async function PromotionsPage() {
                       <p className="font-semibold">{p.name}</p>
                       <p className="text-[13px] text-ink-mute">{p.product_name}</p>
                     </td>
-                    <td className="py-2 font-bold">{promoLabel(p)}</td>
-                    <td className="py-2 text-[13px]">
+                    <td className="py-2 font-bold" data-label="Remise">
+                      {promoLabel(p)}
+                    </td>
+                    <td className="py-2 text-[13px]" data-label="Période">
                       {formatDateTime(p.starts_at)}
                       <br />→ {formatDateTime(p.ends_at)}
                     </td>
-                    <td className="py-2">
+                    <td className="py-2" data-label="État">
                       <Badge tone={state === "En cours" ? "green" : state === "Programmée" ? "blue" : "neutral"}>
                         {state}
                       </Badge>
                     </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="rt-full px-3 py-2 text-right">
                       {p.active && new Date(p.ends_at) > now ? <StopPromotionButton id={p.id} /> : null}
                     </td>
                   </tr>

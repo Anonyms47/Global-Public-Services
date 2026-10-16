@@ -69,7 +69,7 @@ function Field({
       {proposal && value.trim() !== proposal ? (
         <button
           type="button"
-          className="mt-1 text-[13px] font-bold text-gps-blue underline underline-offset-2"
+          className="mt-1 inline-flex min-h-10 items-center text-[13px] font-bold text-gps-blue underline underline-offset-2"
           onClick={() => {
             if (!value.trim() || confirm("Remplacer le texte actuel par la proposition GPS ?")) onChange(proposal);
           }}
@@ -382,7 +382,7 @@ export function SettingsForm({ initial }: { initial: Initial }) {
               {s.messages[k] !== defaultTemplates[k] ? (
                 <button
                   type="button"
-                  className="mt-1 text-[13px] font-bold text-gps-blue underline underline-offset-2"
+                  className="mt-1 inline-flex min-h-10 items-center text-[13px] font-bold text-gps-blue underline underline-offset-2"
                   onClick={() => setS({ ...s, messages: { ...s.messages, [k]: defaultTemplates[k] } })}
                 >
                   Revenir au modèle d&apos;origine
@@ -427,7 +427,10 @@ export function SettingsForm({ initial }: { initial: Initial }) {
         </div>
       </Panel>
 
-      <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur md:mx-0 md:rounded-[6px] md:border">
+      <div
+        data-bottom-bar
+        className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur md:mx-0 md:rounded-[6px] md:border"
+      >
         <button className="btn btn-blue" disabled={pending}>
           {pending ? "Enregistrement…" : "Enregistrer les paramètres"}
         </button>
@@ -510,7 +513,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
       <div>
-        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+        <div className="rtable overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[620px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -530,13 +533,13 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                     </div>
                     <div className="text-[13px] text-ink-mute">{u.email}</div>
                   </td>
-                  <td className="py-2">
+                  <td className="py-2" data-label="Rôle">
                     <label className="sr-only" htmlFor={`role-${u.id}`}>
                       Rôle de {u.name}
                     </label>
                     <select
                       id={`role-${u.id}`}
-                      className="field h-10 min-h-10 w-40 py-0 text-[14px]"
+                      className="field h-10 min-h-10 w-full py-0 text-[14px] md:w-40"
                       value={u.role}
                       disabled={update.pending || u.id === me}
                       onChange={(e) => update.run(() => updateUserAction(u.id, { role: e.target.value }))}
@@ -548,11 +551,11 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                       ))}
                     </select>
                   </td>
-                  <td className="py-2">
+                  <td className="py-2" data-label="État">
                     {u.active ? <Badge tone="green">Actif</Badge> : <Badge tone="red">Désactivé</Badge>}
                   </td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
+                  <td className="rt-full px-3 py-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <button className="btn btn-ghost btn-sm" onClick={() => (setPwFor(u.id), setPw(""))}>
                         Mot de passe
                       </button>
@@ -583,7 +586,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                           id={`pw-${u.id}`}
                           type="password"
                           autoComplete="new-password"
-                          className="field h-10 min-h-10 w-48"
+                          className="field h-10 min-h-10 min-w-0 flex-1 md:w-48 md:flex-none"
                           placeholder="10 caractères min."
                           value={pw}
                           onChange={(e) => setPw(e.target.value)}

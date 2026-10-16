@@ -1078,7 +1078,10 @@ function OrderComposer({
         {salePane}
       </div>
       {/* Barre mobile : bascule articles / récapitulatif */}
-      <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-line bg-paper p-2 lg:hidden">
+      <div
+        data-bottom-bar
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-line bg-paper p-2 lg:hidden"
+      >
         <button
           type="button"
           className={`btn ${tab === "articles" ? "btn-ink" : "btn-outline"}`}

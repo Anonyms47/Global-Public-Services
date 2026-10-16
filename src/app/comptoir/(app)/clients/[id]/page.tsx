@@ -45,7 +45,7 @@ export default async function CustomerPage({ params }: PageProps<"/comptoir/clie
       </PageTitle>
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="grid content-start gap-4 lg:col-span-7">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <Panel>
               <p className="text-[12px] font-bold tracking-wide text-ink-mute uppercase">Commandes</p>
               <p className="mt-1 text-2xl font-extrabold tabular">{orders.length}</p>

@@ -301,7 +301,7 @@ function ProductForm({
               type="button"
               onClick={() => setStep(i)}
               aria-current={step === i ? "step" : undefined}
-              className={`flex min-h-14 w-full items-center gap-2 rounded-[6px] border-[1.5px] px-3 text-left font-bold ${step === i ? "border-gps-blue bg-gps-blue text-white" : "border-line bg-card"}`}
+              className={`flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-[6px] border-[1.5px] px-1.5 py-2 text-center text-[12.5px] font-bold [overflow-wrap:anywhere] sm:flex-row sm:justify-start sm:gap-2 sm:px-3 sm:text-left sm:text-[16px] ${step === i ? "border-gps-blue bg-gps-blue text-white" : "border-line bg-card"}`}
             >
               <span
                 className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] tabular ${step === i ? "bg-white text-gps-blue" : "bg-paper-deep"}`}
@@ -611,7 +611,7 @@ function ProductForm({
             ) : null}
           </fieldset>
 
-          <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+          <div className="rtable overflow-x-auto rounded-[6px] border border-line bg-card">
             <table className="w-full min-w-[760px] text-[14px]">
               <thead>
                 <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -632,10 +632,10 @@ function ProductForm({
                 {state.variants.map((v, i) => (
                   <tr key={v.id ?? `n${i}`}>
                     {state.axes.map((a) => (
-                      <td key={a} className="px-2 py-2">
+                      <td key={a} className="px-2 py-2" data-label={a}>
                         <input
                           aria-label={`${a} variante ${i + 1}`}
-                          className="field h-10 min-h-10 w-28 text-[14px]"
+                          className="field h-10 min-h-10 w-full text-[14px] md:w-28"
                           value={v.options[a] ?? ""}
                           onChange={(e) =>
                             updateVariant(i, {
@@ -645,10 +645,10 @@ function ProductForm({
                         />
                       </td>
                     ))}
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2" data-label="Référence">
                       <input
                         aria-label={`Référence variante ${i + 1}`}
-                        className="field h-10 min-h-10 w-40 font-mono text-[13px]"
+                        className="field h-10 min-h-10 w-full font-mono text-[13px] md:w-40"
                         value={v.sku}
                         onChange={(e) =>
                           updateVariant(i, {
@@ -657,21 +657,21 @@ function ProductForm({
                         }
                       />
                     </td>
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2" data-label="Prix (FCFA)">
                       <input
                         aria-label={`Prix variante ${i + 1}`}
                         inputMode="numeric"
-                        className="field h-10 min-h-10 w-28 text-[14px]"
+                        className="field h-10 min-h-10 w-full text-[14px] md:w-28"
                         value={v.price || ""}
                         onChange={(e) => updateVariant(i, { price: num(e.target.value) ?? 0 })}
                       />
                     </td>
                     {canCosts ? (
-                      <td className="px-2 py-2">
+                      <td className="px-2 py-2" data-label="Coût d'achat">
                         <input
                           aria-label={`Coût d'achat variante ${i + 1}`}
                           inputMode="numeric"
-                          className="field h-10 min-h-10 w-28 text-[14px]"
+                          className="field h-10 min-h-10 w-full text-[14px] md:w-28"
                           value={v.costPrice ?? ""}
                           onChange={(e) =>
                             updateVariant(i, {
@@ -681,7 +681,7 @@ function ProductForm({
                         />
                       </td>
                     ) : null}
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2" data-label="Stock">
                       {v.id ? (
                         <span className="text-[13px] tabular">
                           {v.onHand} <span className="text-ink-mute">({v.reserved} rés.)</span>
@@ -690,7 +690,7 @@ function ProductForm({
                         <input
                           aria-label={`Stock initial variante ${i + 1}`}
                           inputMode="numeric"
-                          className="field h-10 min-h-10 w-20 text-[14px]"
+                          className="field h-10 min-h-10 w-full text-[14px] md:w-20"
                           value={v.initialStock ?? ""}
                           placeholder="0"
                           onChange={(e) =>
@@ -701,11 +701,11 @@ function ProductForm({
                         />
                       )}
                     </td>
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2" data-label="Seuil">
                       <input
                         aria-label={`Seuil d'alerte variante ${i + 1}`}
                         inputMode="numeric"
-                        className="field h-10 min-h-10 w-16 text-[14px]"
+                        className="field h-10 min-h-10 w-full text-[14px] md:w-16"
                         placeholder="—"
                         value={v.lowStockThreshold ?? ""}
                         onChange={(e) =>
@@ -715,7 +715,7 @@ function ProductForm({
                         }
                       />
                     </td>
-                    <td className="px-2 py-2">
+                    <td className="rt-full px-2 py-2">
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm px-2"
@@ -850,7 +850,10 @@ function ProductForm({
       ) : null}
 
       {/* Barre d'enregistrement */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 backdrop-blur lg:left-[256px]">
+      <div
+        data-bottom-bar
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 backdrop-blur lg:left-[256px]"
+      >
         <div className="mx-auto flex max-w-[1320px] flex-wrap items-center gap-2 px-4 py-3 md:px-8">
           <div className="mr-auto min-w-0 text-[14px]" aria-live="polite">
             {failure || success ? (

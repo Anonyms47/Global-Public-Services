@@ -55,7 +55,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/compto
           {q ? `Aucun résultat pour « ${q} ».` : "Les clients apparaissent ici dès leur première commande."}
         </Empty>
       ) : (
-        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+        <div className="rtable rtable-3 overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[640px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -77,9 +77,13 @@ export default async function CustomersPage({ searchParams }: PageProps<"/compto
                     </Link>{" "}
                     {c.is_demo ? <Badge>Exemple</Badge> : null}
                   </td>
-                  <td className="py-2">{c.phone || "—"}</td>
-                  <td className="py-2 text-right tabular">{c.order_count}</td>
-                  <td className="px-3 py-2 text-right text-ink-mute">
+                  <td className="py-2" data-label="Téléphone">
+                    {c.phone || "—"}
+                  </td>
+                  <td className="py-2 text-right tabular" data-label="Commandes">
+                    {c.order_count}
+                  </td>
+                  <td className="px-3 py-2 text-right text-ink-mute" data-label="Dernière">
                     {c.last_order_at ? formatDate(c.last_order_at) : "—"}
                   </td>
                 </tr>

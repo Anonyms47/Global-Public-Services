@@ -119,7 +119,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
           {q ? `Aucun résultat pour « ${q} » dans cette vue.` : "Rien à traiter dans cette étape pour le moment."}
         </Empty>
       ) : (
-        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+        <div className="rtable overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[820px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -143,24 +143,25 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
                     </Link>
                     <div className="text-[13px] text-ink-mute">{formatDateTime(o.created_at)}</div>
                   </td>
-                  <td className="py-3">
+                  <td className="py-3" data-label="Client">
                     <div className="font-semibold">{o.customer_name || "Client de passage"}</div>
                     <ChannelLabel c={o.channel} r={o.reception} />
                   </td>
-                  <td className="py-3">
+                  <td className="py-3" data-label="Étape">
                     <div className="flex flex-wrap gap-1">
                       <StatusBadge status={o.status} />
                       <FulfillmentBadge f={o.fulfillment} reception={o.reception} status={o.status} />
                     </div>
                   </td>
-                  <td className="py-3">
+                  <td className="py-3" data-label="Paiement">
                     <PaymentBadge p={o.payment} />
                   </td>
-                  <td className="py-3 text-right font-semibold">
+                  <td className="py-3 text-right font-semibold" data-label="Total">
                     <Money value={o.due} />
                     {o.feeUnknown ? <div className="text-[12px] text-warn">+ frais à confirmer</div> : null}
                   </td>
                   <td
+                    data-label="Solde"
                     className={`px-4 py-3 text-right font-bold ${o.balance > 0 ? "text-gps-red-ink" : o.balance < 0 ? "text-warn" : "text-ink-mute"}`}
                   >
                     <Money value={o.balance} />

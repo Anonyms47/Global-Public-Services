@@ -129,7 +129,7 @@ export default async function TodayPage() {
         <h2 id="titre-raccourcis" className="eyebrow mb-3 text-ink-mute">
           Raccourcis
         </h2>
-        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
           {shortcuts.map((s) => (
             <li key={s.href}>
               <Link

@@ -40,10 +40,28 @@ test.describe("Parcours mobile et clavier", () => {
     await page.getByRole("button", { name: "Se connecter" }).click();
     await expect(page).toHaveURL(/\/comptoir$/);
     const width = page.viewportSize()!.width;
-    for (const path of ["/comptoir", "/comptoir/file", "/comptoir/tableau-de-bord", "/comptoir/lancement"]) {
+    const paths = [
+      "/comptoir",
+      "/comptoir/file",
+      "/comptoir/tableau-de-bord",
+      "/comptoir/lancement",
+      "/comptoir/commandes",
+      "/comptoir/stock",
+      "/comptoir/stock/inventaire",
+      "/comptoir/stock/mouvements",
+      "/comptoir/clients",
+      "/comptoir/catalogue/promotions",
+    ];
+    for (const path of paths) {
       await page.goto(path);
       expect(await page.evaluate(() => document.documentElement.scrollWidth), path).toBeLessThanOrEqual(width);
     }
+    // Les tableaux deviennent des fiches : chaque cellule porte sa légende, sans défilement horizontal.
+    await page.goto("/comptoir/stock");
+    await expect(page.locator(".rtable td[data-label='Disponible']").first()).toBeVisible();
+    // Une page qui a sa propre barre d'action en bas masque le bouton flottant.
+    await page.goto("/comptoir/vente");
+    await expect(page.getByRole("button", { name: "Actions rapides" })).toBeHidden();
     await page.goto("/comptoir");
     await page.getByRole("button", { name: "Actions rapides" }).click();
     const sheet = page.getByRole("dialog", { name: "Actions rapides" });

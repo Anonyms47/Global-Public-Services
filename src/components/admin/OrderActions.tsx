@@ -133,7 +133,7 @@ export function ReversePaymentButton({ paymentId }: { paymentId: string }) {
     return (
       <button
         type="button"
-        className="text-[13px] font-semibold text-gps-red-ink underline"
+        className="inline-flex min-h-10 items-center text-[13px] font-semibold text-gps-red-ink underline"
         onClick={() => setOpen(true)}
       >
         Corriger

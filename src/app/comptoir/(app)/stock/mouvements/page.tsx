@@ -56,7 +56,7 @@ export default async function MovementsPage({ searchParams }: PageProps<"/compto
       {rows.length === 0 ? (
         <Empty title="Aucun mouvement" />
       ) : (
-        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+        <div className="rtable rtable-3 overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[900px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -73,11 +73,11 @@ export default async function MovementsPage({ searchParams }: PageProps<"/compto
               {rows.map((m) => (
                 <tr key={m.id}>
                   <td className="px-3 py-2 whitespace-nowrap text-ink-mute">{formatDateTime(m.created_at)}</td>
-                  <td className="py-2">
+                  <td className="rt-full py-2">
                     <div className="font-semibold">{m.product_name}</div>
                     <div className="text-[12px] text-ink-mute">{m.sku}</div>
                   </td>
-                  <td className="py-2">
+                  <td className="py-2" data-label="Type">
                     <Badge
                       tone={
                         m.kind === "sale"
@@ -94,12 +94,16 @@ export default async function MovementsPage({ searchParams }: PageProps<"/compto
                       {movementLabels[m.kind as MovementKind]}
                     </Badge>
                   </td>
-                  <td className="py-2 text-right font-bold tabular">{delta(m.on_hand_delta)}</td>
-                  <td className="py-2 text-right font-bold tabular">{delta(m.reserved_delta)}</td>
-                  <td className="py-2 text-right text-ink-soft tabular">
+                  <td className="py-2 text-right font-bold tabular" data-label="Physique">
+                    {delta(m.on_hand_delta)}
+                  </td>
+                  <td className="py-2 text-right font-bold tabular" data-label="Réservé">
+                    {delta(m.reserved_delta)}
+                  </td>
+                  <td className="py-2 text-right text-ink-soft tabular" data-label="Après">
                     {m.on_hand_after} / {m.reserved_after}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="rt-full px-3 py-2" data-label="Motif · auteur">
                     <div>{m.reason || "—"}</div>
                     <div className="text-[12px] text-ink-mute">
                       {m.user_name ?? "—"}

@@ -94,7 +94,7 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
           {low ? "Toutes les variantes sont au-dessus de leur seuil d'alerte." : "Aucun résultat."}
         </Empty>
       ) : (
-        <div className="overflow-x-auto rounded-[6px] border border-line bg-card">
+        <div className="rtable rtable-3 overflow-x-auto rounded-[6px] border border-line bg-card">
           <table className="w-full min-w-[920px] text-[14px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] tracking-wide text-ink-mute uppercase">
@@ -118,9 +118,13 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
                       {optionsLabel(r.options) || "Article unique"} · {r.sku}
                     </div>
                   </td>
-                  <td className="py-2 text-right tabular">{r.on_hand}</td>
-                  <td className="py-2 text-right text-gps-blue tabular">{r.reserved}</td>
-                  <td className="py-2 text-right">
+                  <td className="py-2 text-right tabular" data-label="Physique">
+                    {r.on_hand}
+                  </td>
+                  <td className="py-2 text-right text-gps-blue tabular" data-label="Réservé">
+                    {r.reserved}
+                  </td>
+                  <td className="py-2 text-right" data-label="Disponible">
                     <span className="font-extrabold tabular">{r.available}</span>{" "}
                     {r.available <= 0 ? (
                       <Badge tone="red">Épuisé</Badge>
@@ -128,12 +132,14 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
                       <Badge tone="warn">Faible</Badge>
                     ) : null}
                   </td>
-                  <td className="py-2 text-right tabular">
+                  <td className="py-2 text-right tabular" data-label="Non vendable">
                     {r.unsellable ? <span className="font-bold text-warn">{r.unsellable}</span> : "—"}
                   </td>
-                  <td className="py-2 text-right text-ink-mute tabular">{r.threshold}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
+                  <td className="py-2 text-right text-ink-mute tabular" data-label="Seuil">
+                    {r.threshold}
+                  </td>
+                  <td className="rt-full px-3 py-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <Link
                         href={`/comptoir/stock/mouvements?variante=${r.variant_id}`}
                         className="btn btn-ghost btn-sm"
@@ -164,10 +170,18 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
             <tfoot>
               <tr className="border-t border-line font-bold">
                 <td className="px-3 py-2">Total ({rows.length} variantes)</td>
-                <td className="py-2 text-right tabular">{totals.onHand}</td>
-                <td className="py-2 text-right tabular">{totals.reserved}</td>
-                <td className="py-2 text-right tabular">{totals.available}</td>
-                <td className="py-2 text-right tabular">{totals.unsellable}</td>
+                <td className="py-2 text-right tabular" data-label="Physique">
+                  {totals.onHand}
+                </td>
+                <td className="py-2 text-right tabular" data-label="Réservé">
+                  {totals.reserved}
+                </td>
+                <td className="py-2 text-right tabular" data-label="Disponible">
+                  {totals.available}
+                </td>
+                <td className="py-2 text-right tabular" data-label="Non vendable">
+                  {totals.unsellable}
+                </td>
                 <td colSpan={2} />
               </tr>
             </tfoot>
