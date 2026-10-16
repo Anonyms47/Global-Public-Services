@@ -5,7 +5,7 @@ import { guarded } from "@/server/admin";
 import { isDemoMode } from "@/server/db";
 import { AppError } from "@/server/domain/errors";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
-import { createUser, updateUser } from "@/server/domain/auth";
+import { clearLoginLock, createUser, updateUser } from "@/server/domain/auth";
 import { purgeDemo } from "@/server/demo/seed";
 import { audit } from "@/server/domain/audit";
 import { templateKeys, type TemplateKey } from "@/lib/templates";
@@ -177,6 +177,22 @@ export async function updateUserAction(id: string, input: unknown) {
       });
     },
     { message: "Compte mis à jour." },
+  );
+}
+
+/** Lève un blocage de connexion (identifiant ou adresse). Les échecs restent au journal. */
+export async function unlockLoginAction(kind: string, value: string) {
+  return guarded(
+    "team.manage",
+    async ({ db, user }) => {
+      const d = parse(z.object({ kind: z.enum(["identifier", "ip"]), value: z.string().min(1).max(120) }), {
+        kind,
+        value,
+      });
+      const n = await clearLoginLock(db, d.kind, d.value);
+      await audit(db, user.id, "auth.unlock", d.value, { kind: d.kind, failures: n });
+    },
+    { message: "Blocage levé : la connexion est de nouveau possible." },
   );
 }
 

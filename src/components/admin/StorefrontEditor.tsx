@@ -78,7 +78,9 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
             alt=""
             width={120}
             height={150}
-            unoptimized={byId(s.heroProductId)!.image!.endsWith(".svg")}
+            unoptimized={
+              byId(s.heroProductId)!.image!.endsWith(".svg") || byId(s.heroProductId)!.image!.startsWith("/media/")
+            }
             className="aspect-[4/5] w-24 rounded-[4px] object-cover"
           />
         ) : null}
@@ -183,6 +185,7 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
                 alt="Photo de la boutique"
                 width={480}
                 height={340}
+                unoptimized={s.storePhotoUrl.startsWith("/media/")}
                 className="aspect-[7/5] w-full rounded-[4px] object-cover"
               />
             ) : (

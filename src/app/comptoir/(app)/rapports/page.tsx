@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
-import { periodFromKey, report } from "@/server/domain/reports";
+import { periodFromKey, report, stockSummary } from "@/server/domain/reports";
+import { demoOrdersIn, scopeFromParam } from "@/server/domain/metrics";
+import { getSettings } from "@/server/domain/settings";
+import { PeriodPicker } from "@/components/admin/PeriodPicker";
+import { ScopeFilter } from "@/components/admin/ScopeFilter";
 import { methodLabels, type PaymentMethod } from "@/server/domain/orders";
 import { can } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { Badge, Forbidden, Money, PageTitle, Panel } from "@/components/admin/ui";
 
 export const metadata: Metadata = { title: "Rapports" };
-
-const periods = [
-  ["jour", "Aujourd'hui"],
-  ["7j", "7 jours"],
-  ["30j", "30 jours"],
-  ["mois", "Ce mois"],
-] as const;
 
 export default async function ReportsPage({ searchParams }: PageProps<"/comptoir/rapports">) {
   const { db, user, allowed } = await requirePage("reports.view");
@@ -26,7 +23,19 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
     to: str("au"),
   });
   const withMargin = can(user, "reports.margin");
-  const r = await report(db, period, { withMargin });
+  const scope = scopeFromParam(str("demo"));
+  const settings = await getSettings(db);
+  const [r, demoCount, stock] = await Promise.all([
+    report(db, period, { withMargin, scope }),
+    demoOrdersIn(db, period),
+    stockSummary(db, { scope, withCost: withMargin, defaultThreshold: settings.stock.defaultLowThreshold }),
+  ]);
+  const toggle = new URLSearchParams({ periode: period.key });
+  if (period.key === "perso") {
+    toggle.set("du", period.from.toISOString().slice(0, 10));
+    toggle.set("au", new Date(period.to.getTime() - 86400000).toISOString().slice(0, 10));
+  }
+  if (!scope.includeDemo) toggle.set("demo", "1");
   const payments = r.cashflow.filter((c) => c.kind === "payment");
   const maxBest = Math.max(1, ...r.best.map((b) => b.amount));
   const toDay = new Date(period.to.getTime() - 86400000);
@@ -37,45 +46,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
         {period.label} : du {formatDate(period.from)} au {formatDate(toDay)}. Les ventes enregistrées ne sont ni des
         encaissements ni un bénéfice.
       </PageTitle>
-      <div className="mb-6 flex flex-wrap items-end gap-2">
-        {periods.map(([k, label]) => (
-          <Link
-            key={k}
-            href={`/comptoir/rapports?periode=${k}`}
-            aria-current={period.key === k ? "page" : undefined}
-            className={`chip ${period.key === k ? "border-ink bg-ink text-white" : ""}`}
-          >
-            {label}
-          </Link>
-        ))}
-        <form className="flex flex-wrap items-end gap-2">
-          <input type="hidden" name="periode" value="perso" />
-          <div>
-            <label className="label text-[13px]" htmlFor="du">
-              Du
-            </label>
-            <input
-              id="du"
-              name="du"
-              type="date"
-              className="field h-10 min-h-10 py-0"
-              defaultValue={period.key === "perso" ? period.from.toISOString().slice(0, 10) : undefined}
-            />
-          </div>
-          <div>
-            <label className="label text-[13px]" htmlFor="au">
-              Au
-            </label>
-            <input
-              id="au"
-              name="au"
-              type="date"
-              className="field h-10 min-h-10 py-0"
-              defaultValue={period.key === "perso" ? toDay.toISOString().slice(0, 10) : undefined}
-            />
-          </div>
-          <button className="btn btn-outline btn-sm">Appliquer</button>
-        </form>
+      <div className="mb-6 grid gap-3">
+        <PeriodPicker base="/comptoir/rapports" period={period} extra={scope.includeDemo ? { demo: "1" } : {}} />
+        <ScopeFilter
+          includeDemo={scope.includeDemo}
+          demoCount={demoCount}
+          toggleHref={`/comptoir/rapports?${toggle.toString()}`}
+        />
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -176,9 +153,45 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
           ) : (
             <p className="text-ink-soft">
               Marge non affichée : {r.margin.reason}
-              {!withMargin ? null : " Renseignez les coûts d'achat des variantes (propriétaire) pour l'obtenir."}
+              {withMargin && /coût/i.test(r.margin.reason)
+                ? " Renseignez les coûts d'achat des variantes (propriétaire) pour l'obtenir."
+                : null}
             </p>
           )}
+        </Panel>
+
+        <Panel title="Stock commercial" id="t-stock">
+          <dl className="grid grid-cols-2 gap-3 text-[14px]">
+            <div>
+              <dt className="text-ink-mute">Unités en stock</dt>
+              <dd className="text-xl font-extrabold tabular">{stock.units}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-mute">Disponibles à la vente</dt>
+              <dd className="text-xl font-extrabold tabular">{stock.available}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-mute">Valeur au prix de vente</dt>
+              <dd className="text-xl font-extrabold">
+                <Money value={stock.saleValue} />
+              </dd>
+            </div>
+            {stock.costValue !== null ? (
+              <div>
+                <dt className="text-ink-mute">Valeur au coût d&apos;achat</dt>
+                <dd className="text-xl font-extrabold">
+                  <Money value={stock.costValue} />
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="hint mt-3">
+            {stock.variants} variante(s) active(s) · {stock.low} en stock faible
+            {stock.costValue !== null && stock.missingCost
+              ? ` · ${stock.missingCost} sans coût d'achat (non comptée(s) dans la valeur au coût)`
+              : ""}
+            . Hors stock non vendable ; {scope.includeDemo ? "produits d'exemple inclus" : "produits d'exemple exclus"}.
+          </p>
         </Panel>
 
         <Panel title="Soldes à encaisser" id="t-soldes">

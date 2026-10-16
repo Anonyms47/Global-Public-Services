@@ -327,6 +327,15 @@ alter table media add column if not exists alt text not null default '';
 alter table media add column if not exists uploaded_by text references users (id) on delete set null;
 alter table media add column if not exists deleted_at timestamptz;
 alter table media add column if not exists is_demo boolean not null default false;
+-- Fichiers hors de la base (Supabase Storage ou disque) : la base ne garde que les métadonnées.
+-- « data » reste lisible pour les fichiers non migrés et le retour arrière ; il n'est plus obligatoire.
+alter table media alter column data drop not null;
+alter table media add column if not exists storage_backend text not null default 'database';
+alter table media add column if not exists storage_path text;
+alter table media add column if not exists status text not null default 'ready';
+alter table media add column if not exists checksum text;
+alter table media add column if not exists migrated_at timestamptz;
+create index if not exists media_status on media (status, created_at);
 
 -- Vente rapide : somme remise en espèces et monnaie rendue, enregistrées à part.
 alter table payments add column if not exists tendered int;
@@ -346,6 +355,10 @@ create table if not exists login_attempts (
 );
 create index if not exists login_attempts_identifier on login_attempts (identifier, created_at);
 create index if not exists login_attempts_ip on login_attempts (ip, created_at);
+-- Journal des connexions : motif (succès, échec, refus pendant un blocage), appareil, déblocage.
+alter table login_attempts add column if not exists reason text not null default 'bad_credentials';
+alter table login_attempts add column if not exists cleared boolean not null default false;
+alter table login_attempts add column if not exists user_agent text not null default '';
 
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire

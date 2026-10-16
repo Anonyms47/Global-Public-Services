@@ -35,4 +35,6 @@ export const auditLabels: Record<string, string> = {
   "account.password": "Mot de passe changé (par son titulaire)",
   "account.sessions": "Autres appareils déconnectés",
   "demo.purge": "Données d'exemple purgées",
+  "auth.lockout": "Connexions bloquées (trop d'échecs)",
+  "auth.unlock": "Connexions débloquées",
 };

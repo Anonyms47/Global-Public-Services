@@ -28,7 +28,19 @@ function matches(v: PublicVariant, sel: Record<string, string | undefined>, exce
   return Object.entries(sel).every(([k, val]) => k === except || !val || v.options[k] === val);
 }
 
-export function ProductView({ product, url, whatsapp }: { product: PublicProduct; url: string; whatsapp: string }) {
+export function ProductView({
+  product,
+  url,
+  whatsapp,
+  preview = false,
+}: {
+  product: PublicProduct;
+  url: string;
+  whatsapp: string;
+  /** Aperçu interne (brouillons) : fichiers privés chargés directement, avec la session. */
+  preview?: boolean;
+}) {
+  const direct = (u: string) => u.endsWith(".svg") || (preview && u.startsWith("/media/"));
   const axes = product.axes;
   const values = useMemo(
     () =>
@@ -204,7 +216,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
                       height={1500}
                       priority={i === 0}
                       sizes="(max-width: 1024px) 100vw, 55vw"
-                      unoptimized={img.url.endsWith(".svg")}
+                      unoptimized={direct(img.url)}
                       className="aspect-[4/5] w-full object-cover transition-transform duration-700 ease-out md:group-hover:scale-[1.03]"
                     />
                   </button>
@@ -264,7 +276,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
                       alt=""
                       width={120}
                       height={150}
-                      unoptimized={img.url.endsWith(".svg")}
+                      unoptimized={direct(img.url)}
                       className="aspect-[4/5] w-full object-cover"
                     />
                   </button>
@@ -545,7 +557,7 @@ export function ProductView({ product, url, whatsapp }: { product: PublicProduct
               width={1200}
               height={1500}
               sizes="90vw"
-              unoptimized={current.url.endsWith(".svg")}
+              unoptimized={direct(current.url)}
               className="mx-auto max-h-[72dvh] w-auto object-contain"
             />
             {images.length > 1 ? (

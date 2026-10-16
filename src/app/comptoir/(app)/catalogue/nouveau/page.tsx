@@ -4,6 +4,7 @@ import { listCategories } from "@/server/domain/catalog";
 import { can } from "@/lib/permissions";
 import { Forbidden, PageTitle } from "@/components/admin/ui";
 import { ProductFormClient } from "@/components/admin/ProductForm";
+import { videoMaxMb } from "@/server/domain/media";
 
 export const metadata: Metadata = { title: "Nouveau produit" };
 
@@ -17,6 +18,7 @@ export default async function NewProductPage() {
         Présenter, configurer, publier. Vous pouvez enregistrer un brouillon à tout moment.
       </PageTitle>
       <ProductFormClient
+        videoMaxMb={videoMaxMb()}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         canCosts={can(user, "catalog.costs")}
         initial={{

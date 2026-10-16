@@ -7,6 +7,7 @@ import { TrashActions, VersionList } from "@/components/admin/CatalogHistory";
 import { can } from "@/lib/permissions";
 import { Badge, Forbidden, PageTitle, Panel } from "@/components/admin/ui";
 import { ProductFormClient } from "@/components/admin/ProductForm";
+import { videoMaxMb } from "@/server/domain/media";
 import { IconArrowLeft } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Produit" };
@@ -60,6 +61,7 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
       ) : null}
       {canEdit && !p.deletedAt ? (
         <ProductFormClient
+          videoMaxMb={videoMaxMb()}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           canCosts={can(user, "catalog.costs")}
           initial={{

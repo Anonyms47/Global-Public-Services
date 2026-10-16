@@ -1,4 +1,6 @@
 import type { Db } from "../db/client";
+import { mediaStorage } from "../storage";
+import { mediaStorageStatus } from "./media";
 
 export type HealthStatus = "ok" | "warn" | "error" | "info";
 
@@ -97,6 +99,35 @@ export async function healthChecks(
   const n = (x: { n: number } | null) => x?.n ?? 0;
   const fmtDate = (d: Date | null) => (d ? new Date(d).toLocaleString("fr-FR", { timeZone: "Africa/Dakar" }) : "—");
 
+  const storage = mediaStorage();
+  const files = await mediaStorageStatus(db);
+  const count = (f: (r: (typeof files)[number]) => boolean) => files.filter(f).reduce((t, r) => t + r.n, 0);
+  const waiting = count((r) => r.backend === "database" && r.status === "ready");
+  const stored = count((r) => r.backend !== "database" && r.status === "ready");
+  const pending = count((r) => r.status === "pending");
+  const storageCheck: HealthCheck = {
+    key: "media_storage",
+    label: "Stockage des médias",
+    status: !storage.backend
+      ? "error"
+      : storage.backend === "database" || (storage.backend === "supabase" && waiting)
+        ? "warn"
+        : storage.backend === "local" && env.postgres
+          ? "warn"
+          : "ok",
+    value:
+      storage.backend === "supabase"
+        ? "Supabase Storage (privé)"
+        : storage.backend === "local"
+          ? "Dossier local"
+          : storage.backend === "database"
+            ? "Base de données (secours)"
+            : "Non configuré",
+    detail: `${storage.problem ? `${storage.problem} ` : ""}${stored} fichier(s) hors base · ${waiting} encore en base${
+      waiting && storage.backend === "supabase" ? " (à migrer : scripts/media-storage.ts)" : ""
+    } · ${pending} envoi(s) en cours.`,
+  };
+
   return [
     {
       key: "db",
@@ -144,6 +175,7 @@ export async function healthChecks(
       value: `${broken?.no_variant ?? 0} sans variante · ${broken?.no_image ?? 0} sans photo`,
       detail: "Un produit publié doit avoir au moins une variante active et une photo.",
     },
+    storageCheck,
     {
       key: "volume",
       label: "Volumes",

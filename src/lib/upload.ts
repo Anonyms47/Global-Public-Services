@@ -1,12 +1,14 @@
 /**
  * Envoi de fichiers depuis le navigateur : réduction des photos avant l'envoi
  * (côté le plus long ≤ 2 000 px, WebP ou JPEG qualité 85 %) puis téléversement
- * avec progression.
+ * en trois temps (préparation, envoi direct au stockage avec progression,
+ * validation du contenu par le serveur). Les limites exactes dépendent du
+ * stockage et sont contrôlées par le serveur.
  */
 
 export const PHOTO_MAX_SIDE = 2000;
-export const PHOTO_MAX_BYTES = 3 * 1024 * 1024;
-export const VIDEO_MAX_BYTES = 4 * 1024 * 1024;
+export const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
+export const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 
 const isPhoto = (f: File) => /^image\/(jpeg|png|webp)$/.test(f.type);
 
@@ -43,40 +45,81 @@ export async function optimizePhoto(file: File): Promise<File> {
 
 export type UploadResult = { ok: true; data: { id: string; url: string; mime: string } } | { ok: false; error: string };
 
-/** Téléversement avec progression (0 à 1). */
-export function uploadFile(file: File, opts: { photosOnly?: boolean; onProgress?: (p: number) => void }) {
-  return new Promise<UploadResult>((resolve) => {
-    const fd = new FormData();
-    fd.append("file", file);
-    if (opts.photosOnly) fd.append("photos", "1");
+const ENDPOINT = "/comptoir/mediatheque/envoi";
+
+async function call<T>(payload: object): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return (await res.json()) as { ok: true; data: T } | { ok: false; error: string };
+  } catch {
+    return { ok: false, error: "Connexion interrompue. Réessayez." };
+  }
+}
+
+/** Envoi du fichier lui-même, avec progression (0 à 1). */
+function put(target: { url: string; headers: Record<string, string> }, file: File, onProgress?: (p: number) => void) {
+  return new Promise<{ ok: true } | { ok: false; error: string }>((resolve) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/comptoir/mediatheque/envoi");
-    xhr.upload.onprogress = (e) => e.lengthComputable && opts.onProgress?.(e.loaded / e.total);
+    xhr.open("PUT", target.url);
+    for (const [k, v] of Object.entries(target.headers)) xhr.setRequestHeader(k, v);
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.(e.loaded / e.total);
     xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve({ ok: true });
+      let error = `Envoi refusé par le stockage (${xhr.status}).`;
       try {
-        resolve(JSON.parse(xhr.responseText) as UploadResult);
-      } catch {
-        resolve({
-          ok: false,
-          error:
-            xhr.status === 413 ? "Fichier trop lourd pour l'envoi." : `Réponse inattendue du serveur (${xhr.status}).`,
-        });
-      }
+        // Réponse du Comptoir (envoi local) : message déjà rédigé pour l'utilisateur.
+        const j = JSON.parse(xhr.responseText) as { ok?: boolean; error?: string };
+        if (j.ok === false && typeof j.error === "string") error = j.error;
+      } catch {}
+      if (xhr.status === 413) error = "Fichier trop lourd pour l'envoi.";
+      resolve({ ok: false, error });
     };
     xhr.onerror = () => resolve({ ok: false, error: "Connexion interrompue. Réessayez." });
     xhr.ontimeout = () => resolve({ ok: false, error: "Envoi trop long. Réessayez." });
-    xhr.timeout = 120_000;
-    xhr.send(fd);
+    xhr.timeout = 10 * 60_000;
+    xhr.send(file);
+  });
+}
+
+/**
+ * Téléversement complet. En cas d'échec, l'envoi partiel est nettoyé côté
+ * serveur et le fichier peut être renvoyé tel quel (« Réessayer »).
+ */
+export async function uploadFile(
+  file: File,
+  opts: { photosOnly?: boolean; onProgress?: (p: number) => void },
+): Promise<UploadResult> {
+  const start = await call<{ id: string; target: { url: string; headers: Record<string, string> } }>({
+    action: "start",
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    photos: !!opts.photosOnly,
+  });
+  if (!start.ok) return start;
+  const sent = await put(start.data.target, file, opts.onProgress);
+  if (!sent.ok) {
+    await call({ action: "abort", id: start.data.id });
+    return sent;
+  }
+  return call<{ id: string; url: string; mime: string }>({
+    action: "finish",
+    id: start.data.id,
+    photos: !!opts.photosOnly,
   });
 }
 
 /** Contrôle avant envoi (après réduction des photos). */
 export function precheck(file: File, photosOnly: boolean) {
-  const video = /^video\/(mp4|webm|quicktime)$/.test(file.type);
+  const video = /^video\/(mp4|webm|quicktime)$/.test(file.type) || /\.(mp4|m4v|mov|webm)$/i.test(file.name);
   if (photosOnly && !isPhoto(file)) return "Format non pris en charge : JPEG, PNG ou WebP.";
-  if (!isPhoto(file) && !video) return "Format non pris en charge : JPEG, PNG, WebP, MP4 ou WebM.";
+  if (!isPhoto(file) && !video) return "Format non pris en charge : JPEG, PNG, WebP, MP4, MOV ou WebM.";
   if (video && file.size > VIDEO_MAX_BYTES)
-    return "Vidéo trop lourde (4 Mo maximum) : raccourcissez-la ou réduisez sa qualité.";
-  if (!video && file.size > PHOTO_MAX_BYTES) return "Photo trop lourde, même après réduction (3 Mo maximum).";
+    return "Vidéo trop lourde (50 Mo maximum) : raccourcissez-la ou réduisez sa qualité.";
+  if (!video && file.size > PHOTO_MAX_BYTES) return "Photo trop lourde, même après réduction (4 Mo maximum).";
   return null;
 }

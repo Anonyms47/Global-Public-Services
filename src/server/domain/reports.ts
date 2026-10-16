@@ -1,5 +1,6 @@
 import type { Db } from "../db/client";
-import { listOrders } from "./orders";
+import { money, summarySelect, type OrderSummary } from "./orders";
+import { realOnly, scopeSql, type Scope } from "./metrics";
 
 export interface Period {
   from: Date;
@@ -60,7 +61,9 @@ export function periodFromKey(
  * confirmées), les encaissements (argent reçu) et les soldes restants sont
  * distincts. Les transferts d'argent ne sont pas comptés ici.
  */
-export async function report(db: Db, period: Period, opts: { withMargin: boolean }) {
+export async function report(db: Db, period: Period, opts: { withMargin: boolean; scope?: Scope }) {
+  const scope = opts.scope ?? realOnly;
+  const only = scopeSql(scope);
   const sales = await db.one<{
     n: number;
     amount: number;
@@ -69,7 +72,7 @@ export async function report(db: Db, period: Period, opts: { withMargin: boolean
   }>(
     `select count(*)::int as n, coalesce(sum(subtotal), 0)::int as amount, coalesce(sum(delivery_fee), 0)::int as fees,
             coalesce(sum((select sum(l.returned_quantity * l.unit_price) from order_lines l where l.order_id = o.id)), 0)::int as returned
-       from orders o where status <> 'cancelled' and created_at >= $1 and created_at < $2`,
+       from orders o where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2${only}`,
     [period.from, period.to],
   );
   const cashflow = await db.query<{
@@ -78,8 +81,9 @@ export async function report(db: Db, period: Period, opts: { withMargin: boolean
     total: number;
     n: number;
   }>(
-    `select kind, method, sum(amount)::int as total, count(*)::int as n from payments
-      where created_at >= $1 and created_at < $2 group by kind, method order by kind, method`,
+    `select p.kind, p.method, sum(p.amount)::int as total, count(*)::int as n
+       from payments p join orders o on o.id = p.order_id
+      where p.created_at >= $1 and p.created_at < $2${only} group by p.kind, p.method order by p.kind, p.method`,
     [period.from, period.to],
   );
   const sum = (k: string) => cashflow.filter((c) => c.kind === k).reduce((s, c) => s + c.total, 0);
@@ -95,7 +99,7 @@ export async function report(db: Db, period: Period, opts: { withMargin: boolean
     `select l.name, l.sku, sum(l.quantity - l.returned_quantity)::int as quantity,
             sum((l.quantity - l.returned_quantity) * l.unit_price)::int as amount
        from order_lines l join orders o on o.id = l.order_id
-      where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2
+      where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2${only}
       group by l.name, l.sku having sum(l.quantity - l.returned_quantity) > 0
       order by amount desc limit 8`,
     [period.from, period.to],
@@ -110,15 +114,22 @@ export async function report(db: Db, period: Period, opts: { withMargin: boolean
     detail: string;
   }>(
     `select o.created_at as at, 'vente' as kind, o.reference, o.id as order_id, o.subtotal as amount, o.customer_name as detail
-       from orders o where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2
+       from orders o where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2${only}
      union all
      select p.created_at, p.kind, o.reference, o.id, p.amount, p.method
-       from payments p join orders o on o.id = p.order_id where p.created_at >= $1 and p.created_at < $2
+       from payments p join orders o on o.id = p.order_id where p.created_at >= $1 and p.created_at < $2${only}
      order by at desc limit 100`,
     [period.from, period.to],
   );
 
-  const open = await listOrders(db, { view: "solde", limit: 1000 });
+  // Soldes ouverts, toutes dates : commandes non annulées du périmètre.
+  const open = (
+    await db.query<OrderSummary>(
+      `${summarySelect} where o.status <> 'cancelled'${only} order by o.created_at desc limit 2000`,
+    )
+  )
+    .map((r) => ({ ...r, ...money(r) }))
+    .filter((o) => o.balance > 0);
   const soldes = open.reduce((s, o) => s + o.balance, 0);
 
   let margin:
@@ -137,7 +148,7 @@ export async function report(db: Db, period: Period, opts: { withMargin: boolean
               coalesce(sum((l.quantity - l.returned_quantity) * l.unit_price), 0)::int as revenue,
               coalesce(sum((l.quantity - l.returned_quantity) * l.cost_price), 0)::int as cost
          from order_lines l join orders o on o.id = l.order_id
-        where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2`,
+        where o.status <> 'cancelled' and o.created_at >= $1 and o.created_at < $2${only}`,
       [period.from, period.to],
     );
     if (!m || m.lines === 0) margin = { available: false, reason: "Aucune vente sur la période." };
@@ -172,5 +183,43 @@ export async function report(db: Db, period: Period, opts: { withMargin: boolean
     best,
     operations,
     margin,
+  };
+}
+
+/**
+ * Stock commercial : variantes actives des produits non archivés, hors
+ * produits d'exemple sauf si le périmètre les inclut. Valeur au prix de vente
+ * et, pour le propriétaire, au coût d'achat (variantes sans coût signalées).
+ */
+export async function stockSummary(db: Db, opts: { scope?: Scope; withCost: boolean; defaultThreshold: number }) {
+  const r = await db.one<{
+    variants: number;
+    units: number;
+    available: number;
+    sale_value: number;
+    cost_value: number;
+    missing_cost: number;
+    low: number;
+  }>(
+    `select count(*)::int as variants, coalesce(sum(v.on_hand), 0)::int as units,
+            coalesce(sum(v.on_hand - v.reserved - v.unsellable), 0)::int as available,
+            coalesce(sum((v.on_hand - v.unsellable)::bigint * v.price), 0)::bigint as sale_value,
+            coalesce(sum((v.on_hand - v.unsellable)::bigint * v.cost_price), 0)::bigint as cost_value,
+            count(*) filter (where v.cost_price is null and v.on_hand > 0)::int as missing_cost,
+            count(*) filter (where p.status = 'published'
+              and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1))::int as low
+       from variants v join products p on p.id = v.product_id
+      where v.active and p.status <> 'archived' and p.deleted_at is null
+        ${opts.scope?.includeDemo ? "" : "and not p.is_demo"}`,
+    [opts.defaultThreshold],
+  );
+  return {
+    variants: r?.variants ?? 0,
+    units: r?.units ?? 0,
+    available: r?.available ?? 0,
+    saleValue: Number(r?.sale_value ?? 0),
+    costValue: opts.withCost ? Number(r?.cost_value ?? 0) : null,
+    missingCost: r?.missing_cost ?? 0,
+    low: r?.low ?? 0,
   };
 }

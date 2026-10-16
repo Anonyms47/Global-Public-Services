@@ -1,44 +1,51 @@
 import { getDb } from "@/server/db";
+import { currentUser } from "@/server/admin";
+import { mediaFile, readMediaBytes } from "@/server/domain/media";
+import { mediaStorage } from "@/server/storage";
 
 /**
- * Fichiers téléversés depuis le Comptoir (stockés en base). Les requêtes
- * partielles (Range) sont prises en charge : Safari les exige pour lire une
- * vidéo, et elles permettent d'avancer dans la lecture.
+ * Diffusion des fichiers de la médiathèque.
+ * - Public : fichiers d'une fiche publiée ou de la vitrine. Mis en cache 1 h
+ *   (un fichier retiré du site cesse d'être servi au plus tard 1 h après).
+ * - Privé : brouillons, fichiers non utilisés, corbeille : équipe connectée
+ *   seulement ; ailleurs la réponse est « introuvable » (rien n'est révélé).
+ * Vidéos en stockage objet : redirection vers une adresse de lecture signée
+ * de courte durée ; le navigateur les charge progressivement par plages.
+ * Photos : relayées avec prise en charge des requêtes partielles (Range).
  */
 export async function GET(req: Request, ctx: RouteContext<"/media/[id]">) {
   const { id } = await ctx.params;
-  if (!/^[0-9a-f-]{36}$/.test(id)) return new Response("Introuvable", { status: 404 });
+  const notFound = () => new Response("Introuvable", { status: 404, headers: { "Cache-Control": "no-store" } });
+  if (!/^[0-9a-f-]{36}$/.test(id)) return notFound();
   const db = await getDb();
-  const row = await db.one<{ mime: string; data: Uint8Array }>(
-    "select mime, data from media where id = $1 and deleted_at is null",
-    [id],
-  );
-  if (!row) return new Response("Introuvable", { status: 404 });
-  const body = Buffer.from(row.data);
+  const file = await mediaFile(db, id);
+  if (!file) return notFound();
+  if (!file.public && !(await currentUser())) return notFound();
+  const cache = file.public ? "public, max-age=3600, stale-while-revalidate=86400" : "private, max-age=3600";
+
+  const cfg = mediaStorage();
+  if (file.mime.startsWith("video/") && file.storage_path && cfg.store?.backend === file.storage_backend) {
+    const signed = await cfg.store.signedUrl?.(file.storage_path, 3600);
+    if (signed) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: signed, "Cache-Control": "private, max-age=600" },
+      });
+    }
+  }
+
+  const read = await readMediaBytes(db, file, req.headers.get("range"), cfg);
+  if (!read) return notFound();
   const headers: Record<string, string> = {
-    "Content-Type": row.mime,
-    "Cache-Control": "public, max-age=31536000, immutable",
+    "Content-Type": file.mime,
+    "Cache-Control": cache,
     "X-Content-Type-Options": "nosniff",
     "Accept-Ranges": "bytes",
   };
-  const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.get("range") ?? "");
-  if (range && (range[1] || range[2])) {
-    const size = body.length;
-    let start = range[1] ? Number(range[1]) : size - Number(range[2]);
-    let end = range[1] && range[2] ? Number(range[2]) : size - 1;
-    start = Math.max(0, start);
-    end = Math.min(size - 1, end);
-    if (start > end || start >= size) {
-      return new Response(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${size}` } });
-    }
-    return new Response(body.subarray(start, end + 1), {
-      status: 206,
-      headers: {
-        ...headers,
-        "Content-Range": `bytes ${start}-${end}/${size}`,
-        "Content-Length": String(end - start + 1),
-      },
-    });
+  if (read.status === 416) {
+    return new Response(null, { status: 416, headers: { ...headers, "Content-Range": read.contentRange! } });
   }
-  return new Response(body, { headers: { ...headers, "Content-Length": String(body.length) } });
+  if (read.length) headers["Content-Length"] = String(read.length);
+  if (read.contentRange) headers["Content-Range"] = read.contentRange;
+  return new Response(read.body as BodyInit, { status: read.status, headers });
 }
