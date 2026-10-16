@@ -37,7 +37,16 @@ import { parseCsv } from "@/lib/csv";
 import { listQueue, updateQueueItem, addManualTask } from "@/server/domain/queue";
 import { launchChecks, setTargetMode, currentMode, summarize } from "@/server/domain/launch";
 import { healthChecks } from "@/server/domain/health";
-import { computeMetrics, metricDetail, previousPeriod, change } from "@/server/domain/metrics";
+import {
+  computeMetrics,
+  metricDetail,
+  previousPeriod,
+  change,
+  metricSeries,
+  marginDetail,
+  paymentsByMethod,
+  demoOrdersIn,
+} from "@/server/domain/metrics";
 import { addLateDemoProducts, purgeDemo, refreshDemoImages, DEMO_PASSWORD } from "@/server/demo/seed";
 import { getSettings, saveSettingsSection } from "@/server/domain/settings";
 import { buildOrderMessage } from "@/lib/whatsapp";
@@ -864,6 +873,57 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(change(150, 100)).toBe(50);
     expect(change(5, 0)).toBeNull();
     await cancelOrder(db, manager, o.id, "test");
+  });
+
+  it("tableau de bord : montant, remboursements, annulations, graphiques et marge détaillée", async () => {
+    const period = periodFromKey("jour");
+    const before = await computeMetrics(db, period);
+    const v = await variantBySku(db, "SON-ST2-NO");
+    // Vente payée puis remboursée en partie ; commande annulée.
+    const sale = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "boutique",
+      reception: "immediate",
+      lines: [{ variantId: v.id, quantity: 1 }],
+      payment: { method: "wave", amount: v.price },
+    });
+    await refund(db, manager, sale.id, { method: "wave", amount: 1000, note: "Geste commercial" });
+    const cancelled = await createOrder(db, manager, {
+      idempotencyKey: key(),
+      channel: "whatsapp",
+      reception: "pickup",
+      customerName: "Annulation",
+      customerPhone: "000",
+      lines: [{ variantId: v.id, quantity: 1 }],
+    });
+    await cancelOrder(db, manager, cancelled.id, "test");
+    const after = await computeMetrics(db, period);
+    expect(after.montant - before.montant).toBe(v.price);
+    expect(after.remboursements - before.remboursements).toBe(1000);
+    expect(after.annulees - before.annulees).toBe(1);
+    expect(after.finalisees - before.finalisees).toBe(1);
+    // Indicateurs de nombre : pas de montant dans le détail ; le détail des remboursements retombe sur le chiffre.
+    expect((await metricDetail(db, "annulees", period)).every((r) => r.amount === null)).toBe(true);
+    expect((await metricDetail(db, "remboursements", period)).reduce((s, r) => s + (r.amount ?? 0), 0)).toBe(
+      after.remboursements,
+    );
+    // Graphique : la somme des tranches est égale aux chiffres affichés.
+    const series = await metricSeries(db, period);
+    expect(series).toHaveLength(24);
+    expect(series.reduce((s, p) => s + p.ca, 0)).toBe(after.ca);
+    expect(series.reduce((s, p) => s + p.encaissements, 0)).toBe(after.encaissements);
+    expect(await metricSeries(db, periodFromKey("30j"))).toHaveLength(30);
+    expect((await paymentsByMethod(db, period)).reduce((s, m) => s + m.amount, 0)).toBe(after.encaissements);
+    // Marge par commande : connue seulement si chaque ligne a un coût d'achat.
+    await db.query("update order_lines set cost_price = unit_price - 2000 where order_id = $1", [sale.id]);
+    const m = (await marginDetail(db, period)).find((r) => r.reference.length && r.href.endsWith(sale.id))!;
+    expect(m).toMatchObject({ revenue: v.price, cost: v.price - 2000, margin: 2000, missing: 0 });
+    await db.query("update order_lines set cost_price = null where order_id = $1", [sale.id]);
+    expect((await marginDetail(db, period)).find((r) => r.href.endsWith(sale.id))).toMatchObject({
+      margin: null,
+      missing: 1,
+    });
+    expect(await demoOrdersIn(db, periodFromKey("30j"))).toBeGreaterThanOrEqual(0);
   });
 
   it("File GPS : éléments dérivés, attribution, report, résolution et tâche manuelle", async () => {

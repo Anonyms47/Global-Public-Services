@@ -103,7 +103,9 @@ test.describe("Parcours mobile et clavier", () => {
     await page.getByRole("button", { name: "Vérifier la vente" }).click();
     await page.getByRole("button", { name: "Confirmer la vente" }).click();
     await expect(page.getByText("Vente enregistrée")).toBeVisible();
-    await expect(page.getByRole("status").filter({ hasText: "Vente enregistrée" })).toContainText(/rendre :\s*5\s000\sFCFA/);
+    await expect(page.getByRole("status").filter({ hasText: "Vente enregistrée" })).toContainText(
+      /rendre :\s*5\s000\sFCFA/,
+    );
     await page.getByRole("link", { name: /Reçu/ }).click();
     await expect(page.locator("article")).toContainText(/Monnaie rendue 5\s000\sFCFA/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
