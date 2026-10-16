@@ -88,7 +88,7 @@ export function Sheet({
           <IconClose size={22} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-6">{children}</div>
+      <div className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-4 py-4 md:px-6">{children}</div>
       {footer ? <div className="border-t border-line bg-card px-4 py-3 md:px-6">{footer}</div> : null}
     </dialog>
   );
