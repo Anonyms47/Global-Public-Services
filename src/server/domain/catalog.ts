@@ -198,6 +198,12 @@ export async function applySchedules(db: Db, now = new Date()) {
       where status = 'draft' and publish_at is not null and publish_at <= $1 and deleted_at is null`,
     [now],
   );
+  // Retrait programmé : le produit repasse en brouillon (hors du site), sans rien perdre.
+  await db.query(
+    `update products set status = 'draft', featured = false, unpublish_at = null, updated_at = now()
+      where status = 'published' and unpublish_at is not null and unpublish_at <= $1`,
+    [now],
+  );
 }
 
 export async function publishedProducts(db: Db, now = new Date()) {
@@ -219,11 +225,19 @@ export async function publishedProductBySlug(db: Db, slug: string, now = new Dat
 }
 
 export async function publishedProductById(db: Db, id: string, now = new Date()) {
+  await applySchedules(db, now);
   const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' and p.id = $1`, [id]);
   return (await hydrate(db, rows, now))[0] ?? null;
 }
 
+/** Aperçu interne (Comptoir) : le produit tel qu'il apparaîtra, quel que soit son statut (hors corbeille). */
+export async function previewProductById(db: Db, id: string, now = new Date()) {
+  const rows = await db.query<ProductRow>(`${productSelect} where p.id = $1 and p.deleted_at is null`, [id]);
+  return (await hydrate(db, rows, now))[0] ?? null;
+}
+
 export async function listCategories(db: Db) {
+  await applySchedules(db);
   return db.query<Category & { product_count: number }>(
     `select c.*, (select count(*)::int from products p where p.category_id = c.id and p.status = 'published') as product_count
        from categories c order by c.position, c.name`,
@@ -317,6 +331,7 @@ export interface AdminProductRow {
   updated_at: Date;
   is_demo: boolean;
   publish_at: Date | null;
+  unpublish_at: Date | null;
   deleted_at: Date | null;
   image: string | null;
   variant_count: number;
@@ -351,7 +366,7 @@ export async function adminProducts(db: Db, opts: { q?: string; status?: string;
   }
   return db.query<AdminProductRow>(
     `select p.id, p.slug, p.name, p.brand, p.category_id, c.name as category_name, p.status, p.featured,
-            p.updated_at, p.is_demo, p.publish_at, p.deleted_at,
+            p.updated_at, p.is_demo, p.publish_at, p.unpublish_at, p.deleted_at,
             (select url from product_images i where i.product_id = p.id order by position limit 1) as image,
             (select count(*)::int from variants v where v.product_id = p.id and v.active) as variant_count,
             (select min(price) from variants v where v.product_id = p.id and v.active) as min_price,
@@ -393,6 +408,8 @@ export interface ProductInput {
   isDemo?: boolean;
   /** Publication programmée (brouillon publié automatiquement à cette date). */
   publishAt?: string | null;
+  /** Retrait programmé du site (le produit repasse en brouillon à cette date). */
+  unpublishAt?: string | null;
 }
 
 export interface EditableProduct extends ProductInput {
@@ -445,6 +462,7 @@ export async function productForEdit(
     isDemo: p.is_demo as boolean,
     updatedAt: new Date(p.updated_at as Date).toISOString(),
     publishAt: p.publish_at ? new Date(p.publish_at as Date).toISOString() : null,
+    unpublishAt: p.unpublish_at ? new Date(p.unpublish_at as Date).toISOString() : null,
     deletedAt: p.deleted_at ? new Date(p.deleted_at as Date).toISOString() : null,
     hasSales: (sales?.n ?? 0) > 0,
     variants: variants.map((v) => ({
@@ -489,6 +507,14 @@ export async function saveProduct(
   }
   const publishAt = input.status === "draft" && input.publishAt ? new Date(input.publishAt) : null;
   if (publishAt && Number.isNaN(publishAt.getTime())) fail("validation", "Date de publication invalide.");
+  const unpublishAt =
+    (input.status === "published" || publishAt) && input.unpublishAt ? new Date(input.unpublishAt) : null;
+  if (unpublishAt && Number.isNaN(unpublishAt.getTime())) fail("validation", "Date de retrait invalide.");
+  if (unpublishAt && unpublishAt.getTime() <= Math.max(Date.now(), publishAt?.getTime() ?? 0)) {
+    fail("validation", "La date de retrait doit être postérieure à maintenant et à la date de publication.", {
+      unpublishAt: "Date trop proche.",
+    });
+  }
   for (const v of input.variants) {
     if (!v.sku.trim()) fail("validation", "Chaque variante doit avoir une référence.");
     if (!Number.isInteger(v.price) || v.price < 0) fail("validation", `Prix invalide pour ${v.sku}.`);
@@ -537,7 +563,7 @@ export async function saveProduct(
     if (existing) {
       await tx.query(
         `update products set name=$2, slug=$3, brand=$4, category_id=$5, description=$6, specs=$7, condition=$8,
-                axes=$9, status=$10, featured=$11, published_at=$12, publish_at=$13, updated_at=now() where id=$1`,
+                axes=$9, status=$10, featured=$11, published_at=$12, publish_at=$13, unpublish_at=$14, updated_at=now() where id=$1`,
         [
           id,
           input.name.trim(),
@@ -552,12 +578,13 @@ export async function saveProduct(
           input.featured,
           publishedAt,
           publishAt,
+          unpublishAt,
         ],
       );
     } else {
       await tx.query(
-        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
         [
           id,
           input.name.trim(),
@@ -573,6 +600,7 @@ export async function saveProduct(
           publishedAt,
           !!input.isDemo,
           publishAt,
+          unpublishAt,
         ],
       );
     }

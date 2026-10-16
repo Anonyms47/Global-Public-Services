@@ -51,6 +51,25 @@ test.describe("Le Comptoir", () => {
     await expect(page).toHaveURL(/\/comptoir\/commandes/);
   });
 
+  test("catalogue : aperçu téléphone et ordinateur d'un produit", async ({ page }) => {
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue");
+    const href = await page
+      .locator("a[href^='/comptoir/catalogue/']")
+      .evaluateAll((as) => as.map((a) => a.getAttribute("href")).find((h) => /\/[0-9a-f-]{36}$/.test(h ?? "")));
+    await page.goto(href!);
+    await page.getByRole("link", { name: "Aperçu téléphone / ordinateur" }).click();
+    const frame = page.frameLocator("iframe");
+    await expect(frame.getByText(/Aperçu du Comptoir/)).toBeVisible();
+    await expect(frame.getByRole("button", { name: /Ajouter au panier|Commander/ }).first()).toBeVisible();
+    await page.getByRole("button", { name: /Ordinateur/ }).click();
+    await expect(page.locator("iframe")).toHaveAttribute("title", "Aperçu ordinateur");
+    await expect(frame.getByText(/Aperçu du Comptoir/)).toBeVisible();
+    // Sans session, l'aperçu n'existe pas.
+    const anon = await page.context().request.fetch("/apercu/inconnu", { headers: { cookie: "" } });
+    expect(anon.status()).toBe(404);
+  });
+
   test("commande : réservation, paiement partiel, solde, remise", async ({ page }) => {
     await login(page, "gestion@demo.gps");
     const before = await availability(page, "LUM-RIV-EC");

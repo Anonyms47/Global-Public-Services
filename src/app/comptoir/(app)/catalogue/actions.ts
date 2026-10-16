@@ -72,6 +72,7 @@ const productSchema = z.object({
   status: z.enum(["draft", "published", "archived"]),
   featured: z.boolean(),
   publishAt: z.string().max(40).nullable().optional(),
+  unpublishAt: z.string().max(40).nullable().optional(),
 });
 
 export async function saveProductAction(input: unknown) {
@@ -204,6 +205,19 @@ export async function trashProductAction(id: string) {
   return guarded("catalog.edit", ({ db }) => trashProduct(db, String(id)), {
     message: "Produit mis à la corbeille. Il reste restaurable.",
   });
+}
+
+/** Corbeille groupée : chaque produit reste restaurable individuellement. */
+export async function bulkTrashAction(productIds: string[]) {
+  return guarded(
+    "catalog.bulk",
+    async ({ db }) => {
+      const list = parse(ids, productIds);
+      for (const id of list) await trashProduct(db, id);
+      return list.length;
+    },
+    { message: "Produits mis à la corbeille. Ils restent restaurables." },
+  );
 }
 
 export async function restoreProductAction(id: string) {

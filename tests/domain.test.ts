@@ -24,6 +24,12 @@ import {
   listVersions,
   restoreVersion,
   adminProducts,
+  duplicateProduct,
+  setProductsStatus,
+  previewPriceChange,
+  applyPriceChange,
+  previewProductById,
+  publishedProductById,
 } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
@@ -589,6 +595,69 @@ describe("Catalogue, panier et promotions", () => {
     await expect(purgeProduct(db, sold!.product_id)).rejects.toThrow(/commandes/);
     await restoreProduct(db, sold!.product_id);
     await db.query("update products set status = 'published' where id = $1", [sold!.product_id]);
+  });
+
+  it("catalogue : duplication, variantes, actions groupées, retrait programmé, aperçu des brouillons", async () => {
+    const owner = await userByRole(db, "owner");
+    const ctx = { userId: owner.id, withCosts: true };
+    const base = (await productForEdit(db, (await publishedProducts(db))[0].id, { withCosts: true }))!;
+    const created = await saveProduct(
+      db,
+      {
+        ...base,
+        id: undefined,
+        slug: undefined,
+        name: "Recette catalogue",
+        status: "published",
+        featured: false,
+        axes: ["Couleur"],
+        variants: [
+          { sku: "REC-NO", options: { Couleur: "Noir" }, price: 10000, initialStock: 2 },
+          { sku: "REC-BL", options: { Couleur: "Blanc" }, price: 11000, initialStock: 0 },
+        ],
+      },
+      ctx,
+    );
+    // Variantes : prix et stock propres à chacune.
+    const live = (await publishedProductById(db, created.id))!;
+    expect(live.variants.map((v) => [v.sku, v.price, v.available])).toEqual([
+      ["REC-NO", 10000, 2],
+      ["REC-BL", 11000, 0],
+    ]);
+    // Duplication : brouillon, références nouvelles, stock à zéro.
+    const copy = await duplicateProduct(db, created.id, owner.id);
+    const dup = (await productForEdit(db, copy.id, { withCosts: true }))!;
+    expect(dup).toMatchObject({ name: "Recette catalogue (copie)", status: "draft" });
+    expect(dup.variants.every((v) => !["REC-NO", "REC-BL"].includes(v.sku))).toBe(true);
+    // Aperçu : un brouillon est visible dans l'aperçu interne, jamais sur le site.
+    expect(await publishedProductById(db, copy.id)).toBeNull();
+    expect((await previewProductById(db, copy.id))?.name).toBe("Recette catalogue (copie)");
+    // Actions groupées : prix (+10 %, arrondi à 50 FCFA), statut.
+    const preview = await previewPriceChange(db, [created.id], 10);
+    expect(preview.map((p) => p.newPrice)).toEqual([11000, 12100]);
+    await applyPriceChange(db, [created.id], 10);
+    expect((await publishedProductById(db, created.id))!.variants.map((v) => v.price)).toEqual([11000, 12100]);
+    await setProductsStatus(db, [created.id, copy.id], "draft");
+    expect(await publishedProductById(db, created.id)).toBeNull();
+    // Retrait programmé : publié, puis repassé en brouillon à l'heure dite.
+    const p1 = (await productForEdit(db, created.id, { withCosts: true }))!;
+    await expect(
+      saveProduct(db, { ...p1, status: "published", unpublishAt: new Date(Date.now() - 60_000).toISOString() }, ctx),
+    ).rejects.toThrow(/retrait/);
+    await saveProduct(
+      db,
+      { ...p1, status: "published", unpublishAt: new Date(Date.now() + 60_000).toISOString() },
+      ctx,
+    );
+    expect(await publishedProductById(db, created.id)).not.toBeNull();
+    await db.query("update products set unpublish_at = now() - interval '1 second' where id = $1", [created.id]);
+    expect(await publishedProductById(db, created.id)).toBeNull();
+    expect((await productForEdit(db, created.id, { withCosts: false }))!.status).toBe("draft");
+    // Nettoyage.
+    for (const id of [created.id, copy.id]) {
+      await trashProduct(db, id);
+      await purgeProduct(db, id);
+    }
   });
 
   it("médiathèque : type vérifié sur le contenu, fichier utilisé protégé, corbeille", async () => {

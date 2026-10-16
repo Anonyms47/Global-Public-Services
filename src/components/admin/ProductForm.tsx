@@ -47,6 +47,8 @@ export interface ProductState {
   hasSales?: boolean;
   /** Publication programmée (ISO), brouillons uniquement. */
   publishAt?: string | null;
+  /** Retrait programmé du site (ISO). */
+  unpublishAt?: string | null;
 }
 
 const AXIS_PRESETS = ["Couleur", "Capacité", "Pointure", "Taille", "Monture", "Contenu"];
@@ -172,6 +174,8 @@ function ProductForm({
       status,
       featured: status === "published" ? state.featured : false,
       publishAt: status === "draft" ? (state.publishAt ?? null) : null,
+      unpublishAt:
+        status === "published" || (status === "draft" && state.publishAt) ? (state.unpublishAt ?? null) : null,
     };
     run(() => saveProductAction(payload), {
       successMessage:
@@ -844,6 +848,22 @@ function ProductForm({
                 </p>
               </div>
             ) : null}
+            <div className="mt-4 border-t border-line pt-4">
+              <label className="label" htmlFor="p-unpublish-at">
+                Retirer du site le (facultatif)
+              </label>
+              <input
+                id="p-unpublish-at"
+                type="datetime-local"
+                className="field"
+                value={state.unpublishAt ? toLocalInput(state.unpublishAt) : ""}
+                onChange={(e) => set({ unpublishAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              />
+              <p className="hint">
+                Fin d&apos;une offre ou d&apos;un arrivage : à cette heure, le produit repasse en brouillon (rien
+                n&apos;est supprimé). S&apos;applique à un produit publié ou à une publication programmée.
+              </p>
+            </div>
           </section>
           {state.id ? <SecondaryActions id={state.id} hasSales={!!state.hasSales} /> : null}
         </div>

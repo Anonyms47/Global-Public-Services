@@ -308,6 +308,7 @@ end $$;
 -- Catalogue : corbeille (restaurable), publication programmée, historique des versions.
 alter table products add column if not exists deleted_at timestamptz;
 alter table products add column if not exists publish_at timestamptz;
+alter table products add column if not exists unpublish_at timestamptz;
 create table if not exists product_versions (
   id text primary key,
   product_id text not null references products (id) on delete cascade,
