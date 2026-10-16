@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/lib/format";
 import Link from "next/link";
 import { useState } from "react";
 import { addTaskAction, queueAction } from "@/app/comptoir/(app)/pilotage-actions";
@@ -44,12 +45,7 @@ function Row({ item, team }: { item: QueueRow; team: { id: string; name: string 
         <p className="flex flex-wrap items-center gap-2">
           <Badge tone={tone(item.priority)}>{item.kindLabel}</Badge>
           {item.assignee_name ? <Badge>→ {item.assignee_name}</Badge> : null}
-          {item.snoozed_until ? (
-            <Badge tone="warn">
-              Reporté au{" "}
-              {new Date(item.snoozed_until).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-            </Badge>
-          ) : null}
+          {item.snoozed_until ? <Badge tone="warn">Reporté au {formatDateTime(item.snoozed_until)}</Badge> : null}
         </p>
         {item.href ? (
           <Link

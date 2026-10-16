@@ -7,6 +7,7 @@ import { Forbidden, PageTitle, Tabs } from "@/components/admin/ui";
 import { CatalogBrowser } from "@/components/admin/CatalogBrowser";
 import { TrashActions } from "@/components/admin/CatalogHistory";
 import { IconPlus, IconSearch } from "@/components/ui/icons";
+import { formatDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Catalogue" };
 
@@ -25,7 +26,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
       category: categorie || undefined,
       status: statut === "actifs" ? undefined : statut === "tous" ? "all" : statut === "corbeille" ? "trash" : statut,
     }),
-    listCategories(db),
+    listCategories(db, { scope: "active" }),
   ]);
   const href = (patch: Record<string, string>) => {
     const p = new URLSearchParams({
@@ -134,9 +135,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
                   </Link>
                   <p className="text-[13px] text-ink-mute">
                     {[r.brand, r.category_name].filter(Boolean).join(" · ")}
-                    {r.deleted_at
-                      ? ` · mis à la corbeille le ${new Date(r.deleted_at).toLocaleDateString("fr-FR")}`
-                      : ""}
+                    {r.deleted_at ? ` · mis à la corbeille le ${formatDate(r.deleted_at)}` : ""}
                   </p>
                 </div>
                 {can(user, "catalog.edit") ? (

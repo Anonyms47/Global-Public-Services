@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Nouveau produit" };
 export default async function NewProductPage() {
   const { db, user, allowed } = await requirePage("catalog.edit");
   if (!allowed) return <Forbidden />;
-  const categories = await listCategories(db);
+  const categories = await listCategories(db, { scope: "active" });
   return (
     <>
       <PageTitle eyebrow="Catalogue" title="Nouveau produit">

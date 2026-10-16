@@ -1511,6 +1511,15 @@ a.kpi-card:hover {
   }
 }
 
+/* Indicateurs secondaires : cartes compactes sous les quatre principaux. */
+.kpi-compact {
+  padding: 0.6rem 0.75rem;
+}
+.kpi-compact .kpi-value {
+  margin-top: 0.15rem;
+  font-size: 19px;
+}
+
 /* Mobile : un enfant de grille ne doit jamais élargir la page (tableaux défilants, champs longs). */
 @layer components {
   .admin-app main .grid > * {

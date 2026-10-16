@@ -2,11 +2,14 @@
 
 import { z } from "zod";
 import { guarded } from "@/server/admin";
+import { audit } from "@/server/domain/audit";
 import { isDemoMode } from "@/server/db";
 import { AppError } from "@/server/domain/errors";
 import {
   applyPriceChange,
+  archiveCategory,
   deleteCategory,
+  restoreCategory,
   deleteOrArchiveProduct,
   duplicateProduct,
   purgeProduct,
@@ -121,24 +124,31 @@ export async function priceApplyAction(productIds: string[], percent: number) {
   );
 }
 
+const categorySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().max(60),
+  description: z.string().max(300),
+  slug: z.string().max(80).optional(),
+  imageUrl: z
+    .string()
+    .max(300)
+    .regex(/^(\/media\/[0-9a-f-]{36}|\/demo\/[\w./-]+)?$/, "Image de la médiathèque attendue.")
+    .nullable()
+    .optional(),
+  visible: z.boolean().optional(),
+  featured: z.boolean().optional(),
+});
+
 export async function saveCategoryAction(input: unknown) {
   return guarded(
     "catalog.edit",
-    ({ db }) =>
-      saveCategory(
-        db,
-        parse(
-          z.object({
-            id: z.string().optional(),
-            name: z.string().max(60),
-            description: z.string().max(300),
-          }),
-          input,
-        ),
-      ),
-    {
-      message: "Catégorie enregistrée.",
+    async ({ db, user }) => {
+      const d = parse(categorySchema, input);
+      const id = await saveCategory(db, d);
+      await audit(db, user.is_demo ? null : user.id, d.id ? "category.update" : "category.create", d.name);
+      return { id };
     },
+    { message: "Catégorie enregistrée." },
   );
 }
 
@@ -146,10 +156,34 @@ export async function moveCategoryAction(id: string, direction: -1 | 1) {
   return guarded("catalog.edit", ({ db }) => moveCategory(db, String(id), direction === -1 ? -1 : 1));
 }
 
-export async function deleteCategoryAction(id: string) {
-  return guarded("catalog.edit", ({ db }) => deleteCategory(db, String(id)), {
-    message: "Catégorie supprimée.",
-  });
+const moveTo = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+
+export async function archiveCategoryAction(id: string, target?: string) {
+  return guarded(
+    "catalog.edit",
+    async ({ db, user }) => {
+      await archiveCategory(db, String(id), { moveTo: moveTo(target) });
+      await audit(db, user.is_demo ? null : user.id, "category.archive", String(id), {
+        moveTo: moveTo(target) ?? null,
+      });
+    },
+    { message: "Catégorie archivée : elle n'apparaît plus sur le site." },
+  );
+}
+
+export async function restoreCategoryAction(id: string) {
+  return guarded("catalog.edit", ({ db }) => restoreCategory(db, String(id)), { message: "Catégorie restaurée." });
+}
+
+export async function deleteCategoryAction(id: string, target?: string) {
+  return guarded(
+    "catalog.bulk",
+    async ({ db, user }) => {
+      await deleteCategory(db, String(id), { moveTo: moveTo(target) });
+      await audit(db, user.is_demo ? null : user.id, "category.delete", String(id));
+    },
+    { message: "Catégorie supprimée définitivement." },
+  );
 }
 
 export async function savePromotionAction(input: unknown) {

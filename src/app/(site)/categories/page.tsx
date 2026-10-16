@@ -32,7 +32,7 @@ export default async function CategoriesPage() {
               <Link href={`/categories/${c.slug}`} className="group block">
                 <div className="overflow-hidden rounded-[6px] bg-paper-deep">
                   <ProductImage
-                    src={items[0]?.images[0]?.url}
+                    src={c.image_url ?? items[0]?.images[0]?.url}
                     alt=""
                     sizes={i < 2 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 33vw"}
                     className={`${i < 2 ? "aspect-[16/10]" : "aspect-[4/5]"} transition-transform duration-300 group-hover:scale-[1.02]`}

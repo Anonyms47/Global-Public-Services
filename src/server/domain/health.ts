@@ -1,6 +1,7 @@
 import type { Db } from "../db/client";
 import { mediaStorage } from "../storage";
 import { mediaStorageStatus } from "./media";
+import { formatDateTime } from "@/lib/format";
 
 export type HealthStatus = "ok" | "warn" | "error" | "info";
 
@@ -97,7 +98,7 @@ export async function healthChecks(
   ]);
   const missing = EXPECTED_TABLES.filter((t) => !tables.some((r) => r.table_name === t));
   const n = (x: { n: number } | null) => x?.n ?? 0;
-  const fmtDate = (d: Date | null) => (d ? new Date(d).toLocaleString("fr-FR", { timeZone: "Africa/Dakar" }) : "—");
+  const fmtDate = (d: Date | null) => (d ? formatDateTime(d) : "—");
 
   const storage = mediaStorage();
   const files = await mediaStorageStatus(db);

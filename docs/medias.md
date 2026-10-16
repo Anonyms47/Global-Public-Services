@@ -37,7 +37,7 @@ variante, photo ou vidéo). La vitrine fait de même via `settings`.
 
 ## Diffusion (`/media/<id>`)
 
-- **Public** : un fichier utilisé par une fiche **publiée** (hors corbeille) ou par la vitrine. Il est mis en cache 1 h : un fichier retiré du site cesse d'être servi au plus tard 1 h après. Les versions optimisées par Next/Image suivent leur propre cache.
+- **Public** : un fichier utilisé par une fiche **publiée** (hors corbeille), la vitrine ou une catégorie visible. Cache court (5 min, versions optimisées comprises) : un fichier dépublié ou mis à la corbeille cesse d’être servi au plus tard 5 min après ; un fichier remplacé change d’adresse. Un fichier non publié n’est jamais mis en cache partagé (`private, no-store`).
 - **Privé** : les brouillons, les fichiers non utilisés et la corbeille sont réservés à l'équipe connectée. Ailleurs, la réponse est « introuvable », sans rien révéler.
 - **Photos** : relayées par le serveur, avec requêtes partielles (Range).
 - **Vidéos** : redirection vers une adresse de lecture signée valable 1 h. Le navigateur les charge par plages (`preload="metadata"`), sans tout télécharger.
@@ -100,4 +100,4 @@ on conflict (id) do nothing;
 
 - **Vidéos** : elles ne sont pas réencodées. Une vidéo MOV d'iPhone en HEVC peut ne pas se lire sur certains navigateurs Android ou Windows. Le format MP4 (H.264) est conseillé.
 - **Optimisation** : les photos sont réduites dans le navigateur. Les variantes de taille pour le site sont produites par Next/Image, à partir des fichiers publics seulement.
-- **Cache** : un fichier dépublié peut rester visible jusqu'à 1 h dans le cache public.
+- **Cache** : un fichier dépublié peut rester visible jusqu’à 5 min.

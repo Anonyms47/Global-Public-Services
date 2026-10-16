@@ -5,8 +5,9 @@ import { mediaStorage } from "@/server/storage";
 
 /**
  * Diffusion des fichiers de la médiathèque.
- * - Public : fichiers d'une fiche publiée ou de la vitrine. Mis en cache 1 h
- *   (un fichier retiré du site cesse d'être servi au plus tard 1 h après).
+ * - Public : fichiers d'une fiche publiée, de la vitrine ou d'une catégorie
+ *   visible. Cache court (5 min) : un fichier dépublié, remplacé (nouvelle
+ *   adresse) ou mis à la corbeille cesse d'être servi au plus tard 5 min après.
  * - Privé : brouillons, fichiers non utilisés, corbeille : équipe connectée
  *   seulement ; ailleurs la réponse est « introuvable » (rien n'est révélé).
  * Vidéos en stockage objet : redirection vers une adresse de lecture signée
@@ -21,7 +22,8 @@ export async function GET(req: Request, ctx: RouteContext<"/media/[id]">) {
   const file = await mediaFile(db, id);
   if (!file) return notFound();
   if (!file.public && !(await currentUser())) return notFound();
-  const cache = file.public ? "public, max-age=3600, stale-while-revalidate=86400" : "private, max-age=3600";
+  // Jamais de cache partagé pour un fichier non publié (brouillon, corbeille, non utilisé).
+  const cache = file.public ? "public, max-age=60, s-maxage=300" : "private, no-store";
 
   const cfg = mediaStorage();
   if (file.mime.startsWith("video/") && file.storage_path && cfg.store?.backend === file.storage_backend) {

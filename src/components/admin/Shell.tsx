@@ -85,10 +85,8 @@ export function Shell({ user, demo, children }: { user: User; demo: boolean; chi
       <div className="min-w-0">
         <header className="no-print sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
           {demo ? (
-            <p className="bg-gps-blue-night px-4 py-1 text-center text-[12px] font-semibold text-white">
-              {user.restricted
-                ? "Démonstration protégée — compte d'exemple sans accès aux paramètres, à l'équipe, aux exports ni à la purge."
-                : "Démonstration — données d'exemple isolées, purge possible avant lancement (Paramètres)."}
+            <p className="truncate bg-gps-blue-night px-4 py-0.5 text-center text-[11px] font-semibold text-white">
+              {user.restricted ? "Démonstration protégée (compte d'exemple)" : "Mode démonstration"}
             </p>
           ) : null}
           <div className="flex h-16 items-center gap-2 px-4 md:px-8">

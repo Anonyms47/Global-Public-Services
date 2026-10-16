@@ -64,6 +64,10 @@ export interface Category {
   description: string;
   position: number;
   is_demo: boolean;
+  image_url: string | null;
+  visible: boolean;
+  featured: boolean;
+  archived_at: Date | null;
 }
 
 // ——— Prix ———
@@ -244,16 +248,30 @@ export async function previewProductById(db: Db, id: string, now = new Date()) {
   return (await hydrate(db, rows, now))[0] ?? null;
 }
 
-export async function listCategories(db: Db) {
+/**
+ * Catégories. Par défaut (site public) : visibles et non archivées ; les pages
+ * publiques n'affichent en plus que celles qui ont au moins un produit publié.
+ * Comptoir : `scope: "active"` (non archivées, masquées comprises) pour les
+ * formulaires et l'import, `scope: "all"` pour la gestion des catégories.
+ */
+export async function listCategories(db: Db, opts: { scope?: "public" | "active" | "all" } = {}) {
   await applySchedules(db);
-  return db.query<Category & { product_count: number }>(
-    `select c.*, (select count(*)::int from products p where p.category_id = c.id and p.status = 'published') as product_count
-       from categories c order by c.position, c.name`,
+  const where =
+    opts.scope === "all"
+      ? "true"
+      : opts.scope === "active"
+        ? "c.archived_at is null"
+        : "c.visible and c.archived_at is null";
+  return db.query<Category & { product_count: number; total_count: number }>(
+    `select c.*, (select count(*)::int from products p where p.category_id = c.id and p.status = 'published' and p.deleted_at is null) as product_count,
+            (select count(*)::int from products p where p.category_id = c.id) as total_count
+       from categories c where ${where} order by c.archived_at is not null, c.position, c.name`,
   );
 }
 
+/** Catégorie publique (visible, non archivée). */
 export async function categoryBySlug(db: Db, slug: string) {
-  return db.one<Category>("select * from categories where slug = $1", [slug]);
+  return db.one<Category>("select * from categories where slug = $1 and visible and archived_at is null", [slug]);
 }
 
 // ——— Recherche et filtres (boutique) ———
@@ -866,38 +884,95 @@ export async function setCategoryForProducts(db: Db, ids: string[], categoryId: 
 
 // ——— Catégories ———
 
-export async function saveCategory(db: Db, input: { id?: string; name: string; description: string; slug?: string }) {
+export interface CategoryInput {
+  id?: string;
+  name: string;
+  description: string;
+  slug?: string;
+  imageUrl?: string | null;
+  visible?: boolean;
+  featured?: boolean;
+}
+
+export async function saveCategory(db: Db, input: CategoryInput) {
   if (!input.name.trim()) fail("validation", "Le nom est obligatoire.", { name: "Obligatoire." });
-  const slug = slugify(input.slug || input.name);
+  const slug = slugify(input.slug?.trim() || input.name);
+  if (!slug) fail("validation", "Adresse invalide.", { slug: "Lettres ou chiffres requis." });
   const clash = await db.one("select 1 from categories where slug = $1 and id <> $2", [slug, input.id ?? ""]);
   if (clash)
-    fail("conflict", "Une catégorie porte déjà ce nom.", {
-      name: "Déjà utilisé.",
-    });
+    fail("conflict", "Une catégorie utilise déjà cette adresse.", { slug: "Déjà utilisée.", name: "Déjà utilisé." });
+  const values = [
+    input.name.trim(),
+    input.description.trim(),
+    slug,
+    input.imageUrl || null,
+    input.visible ?? true,
+    input.featured ?? false,
+  ];
   if (input.id) {
-    await db.query("update categories set name = $2, description = $3, slug = $4 where id = $1", [
-      input.id,
-      input.name.trim(),
-      input.description,
-      slug,
-    ]);
+    const r = await db.one(
+      `update categories set name = $2, description = $3, slug = $4, image_url = $5, visible = $6, featured = $7
+        where id = $1 returning id`,
+      [input.id, ...values],
+    );
+    if (!r) fail("not_found", "Catégorie introuvable.");
     return input.id;
   }
   const id = newId();
   const pos = await db.one<{ n: number }>("select coalesce(max(position), 0)::int + 1 as n from categories");
-  await db.query("insert into categories (id, slug, name, description, position) values ($1,$2,$3,$4,$5)", [
-    id,
-    slug,
-    input.name.trim(),
-    input.description,
-    pos!.n,
-  ]);
+  await db.query(
+    `insert into categories (id, name, description, slug, image_url, visible, featured, position)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [id, ...values, pos!.n],
+  );
   return id;
+}
+
+/** Déplace tous les produits d'une catégorie vers une autre (catégorie de destination non archivée). */
+export async function moveCategoryProducts(db: Db, fromId: string, toId: string) {
+  if (fromId === toId) fail("validation", "Choisissez une autre catégorie.");
+  const to = await db.one("select 1 from categories where id = $1 and archived_at is null", [toId]);
+  if (!to) fail("validation", "Catégorie de destination introuvable ou archivée.");
+  const r = await db.query(
+    "update products set category_id = $2, updated_at = now() where category_id = $1 returning id",
+    [fromId, toId],
+  );
+  return r.length;
+}
+
+const categoryCount = async (db: Db, id: string) =>
+  (await db.one<{ n: number }>("select count(*)::int as n from products where category_id = $1", [id]))?.n ?? 0;
+
+/**
+ * Archivage : la catégorie disparaît du site et des formulaires, sans rien
+ * supprimer. Ses produits doivent d'abord être déplacés (moveTo).
+ */
+export async function archiveCategory(db: Db, id: string, opts: { moveTo?: string } = {}) {
+  return db.tx(async (tx) => {
+    if (opts.moveTo) await moveCategoryProducts(tx, id, opts.moveTo);
+    const n = await categoryCount(tx, id);
+    if (n)
+      fail("conflict", `Cette catégorie contient ${n} produit(s) : choisissez où les déplacer avant de l'archiver.`);
+    const r = await tx.one("update categories set archived_at = now(), featured = false where id = $1 returning id", [
+      id,
+    ]);
+    if (!r) fail("not_found", "Catégorie introuvable.");
+  });
+}
+
+export async function restoreCategory(db: Db, id: string) {
+  const r = await db.one(
+    "update categories set archived_at = null where id = $1 and archived_at is not null returning id",
+    [id],
+  );
+  if (!r) fail("not_found", "Cette catégorie n'est pas archivée.");
 }
 
 export async function moveCategory(db: Db, id: string, direction: -1 | 1) {
   await db.tx(async (tx) => {
-    const cats = await tx.query<{ id: string }>("select id from categories order by position, name");
+    const cats = await tx.query<{ id: string }>(
+      "select id from categories where archived_at is null order by position, name",
+    );
     const i = cats.findIndex((c) => c.id === id);
     const j = i + direction;
     if (i < 0 || j < 0 || j >= cats.length) return;
@@ -907,13 +982,21 @@ export async function moveCategory(db: Db, id: string, direction: -1 | 1) {
   });
 }
 
-export async function deleteCategory(db: Db, id: string) {
-  const used = await db.one<{ n: number }>(
-    "select count(*)::int as n from products where category_id = $1 and status <> 'archived'",
-    [id],
-  );
-  if (used?.n) fail("conflict", `Cette catégorie contient ${used.n} produit(s). Déplacez-les avant de la supprimer.`);
-  await db.query("delete from categories where id = $1", [id]);
+/**
+ * Suppression définitive : seulement une catégorie archivée et vide (produits
+ * archivés et corbeille compris). L'historique des commandes n'en dépend pas
+ * (désignations figées sur chaque ligne).
+ */
+export async function deleteCategory(db: Db, id: string, opts: { moveTo?: string } = {}) {
+  return db.tx(async (tx) => {
+    if (opts.moveTo) await moveCategoryProducts(tx, id, opts.moveTo);
+    const n = await categoryCount(tx, id);
+    if (n) fail("conflict", `Cette catégorie contient ${n} produit(s) : déplacez-les avant de la supprimer.`);
+    const r = await tx.one<{ archived_at: Date | null }>("select archived_at from categories where id = $1", [id]);
+    if (!r) return fail("not_found", "Catégorie introuvable.");
+    if (!r.archived_at) fail("conflict", "Archivez d'abord la catégorie ; la suppression définitive se fait ensuite.");
+    await tx.query("delete from categories where id = $1", [id]);
+  });
 }
 
 // ——— Promotions ———

@@ -720,41 +720,139 @@ export async function seedDemo(db: Db, opts: { onlyIfEmpty?: boolean; now?: Date
   return true;
 }
 
+// ——— Purge des données d'exemple : inventaire, sauvegarde, essai à blanc ———
+
+/** Requêtes de sélection des données d'exemple, dans l'ordre de restauration. */
+const DEMO_SETS: [string, string][] = [
+  ["categories", "select * from categories where is_demo"],
+  ["products", "select * from products where is_demo"],
+  ["variants", "select v.* from variants v join products p on p.id = v.product_id where p.is_demo"],
+  ["product_images", "select i.* from product_images i join products p on p.id = i.product_id where p.is_demo"],
+  ["product_versions", "select x.* from product_versions x join products p on p.id = x.product_id where p.is_demo"],
+  ["promotions", "select * from promotions where is_demo"],
+  ["customers", "select * from customers where is_demo"],
+  ["orders", "select * from orders where is_demo"],
+  ["order_lines", "select l.* from order_lines l join orders o on o.id = l.order_id where o.is_demo"],
+  ["payments", "select x.* from payments x join orders o on o.id = x.order_id where o.is_demo"],
+  ["order_events", "select x.* from order_events x join orders o on o.id = x.order_id where o.is_demo"],
+  ["order_requests", "select * from order_requests where is_demo"],
+  ["stock_batches", "select * from stock_batches where is_demo"],
+  [
+    "stock_movements",
+    "select m.* from stock_movements m join variants v on v.id = m.variant_id join products p on p.id = v.product_id where p.is_demo",
+  ],
+  ["services", "select * from services where is_demo"],
+  ["queue_items", "select * from queue_items where is_demo"],
+  // Comptes d'exemple : sans empreinte de mot de passe (inutile à une restauration).
+  ["users", "select id, name, email, role, active, is_demo, created_at from users where is_demo"],
+  [
+    "media",
+    "select id, mime, name, size, alt, storage_backend, storage_path, status, created_at from media where is_demo",
+  ],
+];
+
+/** Inventaire exact : enregistrements d'exemple par table, et données réelles qui bloqueraient la purge. */
+export async function demoInventory(db: Db) {
+  const counts: Record<string, number> = {};
+  for (const [table, sql] of DEMO_SETS) {
+    counts[table] = (await db.one<{ n: number }>(`select count(*)::int as n from (${sql}) x`))!.n;
+  }
+  const real = (await db.one<Record<string, number>>(
+    `select (select count(*)::int from products where not is_demo) as products,
+            (select count(*)::int from orders where not is_demo) as orders,
+            (select count(*)::int from customers where not is_demo) as customers,
+            (select count(*)::int from order_requests where not is_demo) as requests,
+            (select count(*)::int from media where not is_demo) as media,
+            (select count(*)::int from users where not is_demo) as users,
+            (select count(*)::int from order_lines l join orders o on o.id = l.order_id join products p on p.id = l.product_id
+              where not o.is_demo and p.is_demo) as real_orders_on_demo_products`,
+  ))!;
+  return { demo: counts, real };
+}
+
+/** Sauvegarde datée des données d'exemple, conservée en base (table data_backups). */
+export async function backupDemo(db: Db, userId: string | null = null) {
+  const payload: Record<string, unknown[]> = {};
+  for (const [table, sql] of DEMO_SETS) payload[table] = await db.query(sql);
+  const counts = Object.fromEntries(Object.entries(payload).map(([k, v]) => [k, v.length]));
+  const id = newId();
+  const label = `demo-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}`;
+  await db.query("insert into data_backups (id, label, payload, counts, created_by) values ($1, $2, $3, $4, $5)", [
+    id,
+    label,
+    JSON.stringify(payload),
+    JSON.stringify(counts),
+    userId,
+  ]);
+  return { id, label, counts };
+}
+
+class DryRun extends Error {}
+
 /**
- * Supprime toutes les données d'exemple. La configuration (coordonnées,
- * réception, reçus, équipe réelle) n'est pas touchée ; seules les références
- * de vitrine pointant vers des produits d'exemple sont remises à zéro.
+ * Supprime toutes les données d'exemple, après une sauvegarde datée, dans une
+ * seule transaction (tout ou rien) ; relançable sans erreur. Conservés : comptes
+ * réels, rôles, paramètres, catégories (repassées en données réelles),
+ * migrations, stockage, journaux. Les médias d'exemple non utilisés par une
+ * donnée réelle sont retirés de la base, puis du stockage (chemins renvoyés).
+ * `dryRun` : exécute tout puis annule, pour un compte rendu exact sans rien changer.
  */
-export async function purgeDemo(db: Db) {
-  return db.tx(async (tx) => {
-    const realOnDemo = await tx.one<{ n: number }>(
-      `select count(*)::int as n from order_lines l join orders o on o.id = l.order_id join products p on p.id = l.product_id
-        where not o.is_demo and p.is_demo`,
-    );
-    if (realOnDemo?.n) {
-      throw new Error(
-        "Des commandes réelles contiennent des produits d'exemple : archivez ces produits au lieu de les purger.",
+export async function purgeDemo(db: Db, opts: { dryRun?: boolean; userId?: string | null } = {}) {
+  let report: {
+    before: Awaited<ReturnType<typeof demoInventory>>;
+    after: Awaited<ReturnType<typeof demoInventory>>;
+    backup: { id: string; label: string } | null;
+    mediaPaths: string[];
+  } | null = null;
+  try {
+    await db.tx(async (tx) => {
+      const before = await demoInventory(tx);
+      if (before.real.real_orders_on_demo_products) {
+        throw new Error(
+          "Des commandes réelles contiennent des produits d'exemple : archivez ces produits au lieu de les purger.",
+        );
+      }
+      const backup = await backupDemo(tx, opts.userId ?? null);
+      await tx.query("delete from order_requests where is_demo");
+      await tx.query("delete from orders where is_demo");
+      await tx.query(
+        "delete from customers c where is_demo and not exists (select 1 from orders o where o.customer_id = c.id)",
       );
-    }
-    await tx.query("delete from order_requests where is_demo");
-    await tx.query("delete from orders where is_demo");
-    await tx.query("delete from customers where is_demo");
-    await tx.query("delete from promotions where is_demo");
-    await tx.query("delete from stock_batches where is_demo");
-    await tx.query("delete from products where is_demo");
-    await tx.query(
-      "delete from categories c where is_demo and not exists (select 1 from products p where p.category_id = c.id)",
-    );
-    await tx.query("delete from services where is_demo");
-    await tx.query("delete from queue_items where is_demo");
-    await tx.query("delete from users where is_demo");
-    const s = await getSettings(tx);
-    const exists = async (id: string | null) => !!id && !!(await tx.one("select 1 from products where id = $1", [id]));
-    await saveSettingsSection(tx, "storefront", {
-      ...s.storefront,
-      heroProductId: (await exists(s.storefront.heroProductId)) ? s.storefront.heroProductId : null,
-      focusProductId: (await exists(s.storefront.focusProductId)) ? s.storefront.focusProductId : null,
+      await tx.query("delete from promotions where is_demo");
+      await tx.query("delete from stock_batches where is_demo");
+      await tx.query("delete from products where is_demo");
+      // Catégories utiles : conservées comme données réelles (renommables, masquables, archivables).
+      await tx.query("update categories set is_demo = false where is_demo");
+      await tx.query("delete from services where is_demo");
+      await tx.query("delete from queue_items where is_demo");
+      await tx.query("delete from users where is_demo");
+      const media = await tx.query<{ storage_path: string | null }>(
+        `delete from media m where m.is_demo
+           and not exists (select 1 from product_images i where i.url = '/media/' || m.id)
+           and not exists (select 1 from settings s where strpos(s.value::text, '/media/' || m.id) > 0)
+           and not exists (select 1 from categories c where c.image_url = '/media/' || m.id)
+         returning storage_path`,
+      );
+      const s = await getSettings(tx);
+      const exists = async (id: string | null) =>
+        !!id && !!(await tx.one("select 1 from products where id = $1", [id]));
+      await saveSettingsSection(tx, "storefront", {
+        ...s.storefront,
+        heroProductId: (await exists(s.storefront.heroProductId)) ? s.storefront.heroProductId : null,
+        focusProductId: (await exists(s.storefront.focusProductId)) ? s.storefront.focusProductId : null,
+      });
+      await tx.query("insert into settings (key, value) values ('demo_seeded', 'true') on conflict (key) do nothing");
+      report = {
+        before,
+        after: await demoInventory(tx),
+        backup: { id: backup.id, label: backup.label },
+        mediaPaths: media.map((m) => m.storage_path).filter((p): p is string => !!p),
+      };
+      if (opts.dryRun) throw new DryRun();
     });
-    await tx.query("insert into settings (key, value) values ('demo_seeded', 'true') on conflict (key) do nothing");
-  });
+  } catch (e) {
+    if (!(e instanceof DryRun)) throw e;
+    return { ...report!, backup: null, dryRun: true as const };
+  }
+  return { ...report!, dryRun: false as const };
 }

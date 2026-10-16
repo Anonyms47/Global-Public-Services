@@ -111,7 +111,7 @@ export async function previewImport(db: Db, text: string, manual?: ImportMapping
   if (missing.length) return { ...empty, missing };
   const idx = (k: ImportField) => mapping[k] ?? -1;
 
-  const categories = await listCategories(db);
+  const categories = await listCategories(db, { scope: "active" });
   const catBy = (v: string) => {
     const k = slugify(v);
     return categories.find((c) => c.slug === k || slugify(c.name) === k) ?? null;

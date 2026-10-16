@@ -497,9 +497,19 @@ export function LoginLocks({
   );
 }
 
+type PurgeReport = {
+  before: { demo: Record<string, number>; real: Record<string, number> };
+  after: { demo: Record<string, number> };
+  backup: { label: string } | null;
+  dryRun: boolean;
+};
+
 export function DemoPurge({ demoMode, hasDemo }: { demoMode: boolean; hasDemo: boolean }) {
   const [text, setText] = useState("");
+  const [report, setReport] = useState<PurgeReport | null>(null);
   const { run, pending, failure, success } = useAction();
+  const go = (dryRun: boolean) =>
+    run(() => purgeDemoAction(text, { dryRun }), { onSuccess: (r) => setReport(r as PurgeReport) });
   return (
     <section className="mt-10 rounded-[6px] border-[1.5px] border-gps-red/40 bg-card p-4" aria-labelledby="t-demo">
       <h2 id="t-demo" className="font-bold text-gps-red-ink">
@@ -507,7 +517,7 @@ export function DemoPurge({ demoMode, hasDemo }: { demoMode: boolean; hasDemo: b
       </h2>
       <p className="mt-1 max-w-2xl text-[14px] text-ink-soft">
         {hasDemo
-          ? "Produits, clients, commandes, mouvements et comptes d'exemple peuvent être supprimés avant le lancement. Les paramètres de cette page et les comptes réels sont conservés."
+          ? "Produits, commandes, paiements, clients, mouvements, médias et comptes d'exemple. Une sauvegarde datée est créée avant la suppression ; paramètres, catégories et comptes réels sont conservés."
           : "Aucune donnée d'exemple en base."}{" "}
         Mode démonstration : <Badge tone={demoMode ? "warn" : "green"}>{demoMode ? "activé" : "désactivé"}</Badge>
       </p>
@@ -516,9 +526,12 @@ export function DemoPurge({ demoMode, hasDemo }: { demoMode: boolean; hasDemo: b
           className="mt-3 flex flex-wrap items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            run(() => purgeDemoAction(text));
+            go(false);
           }}
         >
+          <button type="button" className="btn btn-outline" disabled={pending} onClick={() => go(true)}>
+            Essai à blanc
+          </button>
           <div>
             <label className="label" htmlFor="purge">
               Tapez PURGER pour confirmer
@@ -532,16 +545,41 @@ export function DemoPurge({ demoMode, hasDemo }: { demoMode: boolean; hasDemo: b
             />
           </div>
           <button className="btn btn-danger" disabled={pending || text !== "PURGER"}>
-            Supprimer les données d&apos;exemple
+            Sauvegarder puis supprimer
           </button>
         </form>
+      ) : null}
+      {report ? (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full max-w-lg text-[14px]">
+            <caption className="text-left font-semibold">
+              {report.dryRun ? "Essai à blanc (rien n'a été modifié)" : `Sauvegarde ${report.backup?.label ?? ""}`}
+            </caption>
+            <thead>
+              <tr className="text-left text-[12px] text-ink-mute uppercase">
+                <th className="py-1">Données d&apos;exemple</th>
+                <th className="py-1 text-right">Avant</th>
+                <th className="py-1 text-right">Après</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line-soft">
+              {Object.entries(report.before.demo).map(([k, v]) => (
+                <tr key={k}>
+                  <td className="py-1">{k}</td>
+                  <td className="py-1 text-right tabular">{v}</td>
+                  <td className="py-1 text-right tabular">{report.after.demo[k]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
       <div className="mt-3">
         <ActionFeedback failure={failure} success={success} />
       </div>
       <p className="hint mt-2">
-        Pour la mise en service, désactivez aussi le mode démonstration (variable DEMO_MODE=false) : les comptes
-        d&apos;exemple ne pourront plus se connecter.
+        Pour la saisie des vrais produits, le mode démonstration est ensuite désactivé (DEMO_MODE=false) ; le site reste
+        fermé aux moteurs de recherche (SITE_INDEXABLE=false).
       </p>
     </section>
   );

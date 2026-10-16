@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct, PublicVariant } from "@/server/domain/catalog";
-import { optionsLabel } from "@/lib/format";
+import { formatDate, optionsLabel } from "@/lib/format";
 import { productQuestionMessage, whatsappLink } from "@/lib/whatsapp";
 import { cart } from "../cart/cart-store";
 import { Sheet } from "../ui/Sheet";
@@ -334,8 +334,7 @@ export function ProductView({
             />
             {product.promo ? (
               <p className="mt-1 text-[14px] font-semibold text-gps-red-ink">
-                {product.promo.name} — jusqu&apos;au{" "}
-                {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date(product.promo.endsAt))}
+                {product.promo.name} — jusqu&apos;au {formatDate(product.promo.endsAt)}
               </p>
             ) : null}
           </div>
