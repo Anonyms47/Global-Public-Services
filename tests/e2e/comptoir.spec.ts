@@ -8,6 +8,11 @@ test.describe("Le Comptoir", () => {
     const anon = await request.get("/comptoir/clients/export", { maxRedirects: 0 });
     expect([307, 401]).toContain(anon.status());
 
+    // La page d'installation reste accessible sans session (fermée tant qu'aucun code n'est défini).
+    await page.goto("/comptoir/installation");
+    await expect(page).toHaveURL(/\/comptoir\/installation$/);
+    await expect(page.getByText(/installation n.est pas ouverte/)).toBeVisible();
+
     await login(page, "vente@demo.gps");
     await page.goto("/comptoir/rapports");
     await expect(page.getByText("Droits insuffisants")).toBeVisible();
