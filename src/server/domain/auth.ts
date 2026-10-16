@@ -8,6 +8,12 @@ const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) =>
 
 export const SESSION_HOURS = 12;
 
+/** Identifiant de connexion accepté : e-mail ou identifiant simple (ex. « Ndiogou »). */
+export function isLoginId(value: string) {
+  const v = value.trim();
+  return /^\S+@\S+\.\S+$/.test(v) || /^[\p{L}\p{N}][\p{L}\p{N}._-]{2,39}$/u.test(v);
+}
+
 export interface User {
   id: string;
   name: string;
@@ -41,7 +47,7 @@ export async function login(db: Db, email: string, password: string, opts: { all
   ]);
   // Vérification systématique pour ne pas révéler l'existence d'un compte par le temps de réponse.
   const ok = await verifyPassword(password, row?.password_hash ?? "scrypt$00$00");
-  if (!row || !ok || !row.active) fail("validation", "Adresse e-mail ou mot de passe incorrect.");
+  if (!row || !ok || !row.active) fail("validation", "Identifiant ou mot de passe incorrect.");
   if (row!.is_demo && !opts.allowDemo) {
     fail("forbidden", "Les comptes de démonstration sont désactivés sur cette installation.");
   }
@@ -133,7 +139,10 @@ export async function createUser(
 ) {
   const errors: Record<string, string> = {};
   if (!input.name.trim()) errors.name = "Indiquez le nom.";
-  if (!/^\S+@\S+\.\S+$/.test(input.email)) errors.email = "Adresse e-mail invalide.";
+  // Identifiant de connexion : une adresse e-mail ou un identifiant simple (lettres, chiffres, . _ -).
+  if (!isLoginId(input.email)) {
+    errors.email = "Identifiant invalide : une adresse e-mail, ou 3 à 40 lettres, chiffres, points, tirets.";
+  }
   if (input.password.length < 10) errors.password = "10 caractères minimum.";
   if (!["owner", "manager", "seller"].includes(input.role)) errors.role = "Rôle invalide.";
   if (Object.keys(errors).length) fail("validation", "Vérifiez les champs signalés.", errors);
