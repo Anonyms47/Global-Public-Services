@@ -27,13 +27,13 @@ export async function installAction(_prev: State, formData: FormData): Promise<S
   const origin = requestOrigin(await headers());
   try {
     const db = await getDb();
-    // Essais de code limités comme les connexions (par adresse IP).
-    await assertNotThrottled(db, "installation", origin.ip);
+    // Essais de code limités comme les connexions (identifiant « installation », par adresse et au total).
+    await assertNotThrottled(db, "installation", origin.ip, origin);
     try {
       await claimOwner(db, process.env.COMPTOIR_SETUP_CODE, input);
     } catch (error) {
       if (error instanceof AppError && error.fieldErrors?.code)
-        await recordAttempt(db, "installation", origin.ip, false);
+        await recordAttempt(db, "installation", origin.ip, false, origin);
       throw error;
     }
     const { token, expires } = await login(db, input.email, input.password, { allowDemo: false, ...origin });

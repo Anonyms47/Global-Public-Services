@@ -953,27 +953,18 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect((await auth.userFromToken(db, first.token, { allowDemo: false }))?.must_change_password).toBe(false);
     expect(await auth.userFromToken(db, second.token, { allowDemo: false })).toBeNull();
 
-    // Limitation : 5 échecs pour un identifiant bloquent même le bon mot de passe.
+    // Limitation (détaillée dans le test suivant) : 5 échecs du même poste bloquent même le bon mot de passe.
     for (let i = 0; i < 5; i++) {
       await expect(auth.login(db, "fatou.test", "faux", { allowDemo: false, ip: "10.0.0.3" })).rejects.toThrow(
         /incorrect/,
       );
     }
-    await expect(auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.4" })).rejects.toThrow(
+    await expect(auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.3" })).rejects.toThrow(
       /Trop de tentatives/,
     );
-    // … et 20 échecs depuis une même adresse IP bloquent tous les identifiants.
-    for (let i = 0; i < 20; i++) {
-      await expect(auth.login(db, `inconnu${i}`, "faux", { allowDemo: false, ip: "10.9.9.9" })).rejects.toThrow(
-        /incorrect/,
-      );
-    }
-    await expect(auth.login(db, "personne", "faux", { allowDemo: false, ip: "10.9.9.9" })).rejects.toThrow(
-      /Trop de tentatives/,
-    );
-    // La fenêtre passée, la connexion redevient possible et remet le compteur à zéro.
-    await db.query("update login_attempts set created_at = now() - interval '16 minutes'");
-    const third = await auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.4" });
+    // La fenêtre passée, la connexion redevient possible.
+    await db.query("update login_attempts set created_at = now() - interval '2 hours'");
+    const third = await auth.login(db, "fatou.test", "nouveau-mdp-1", { allowDemo: false, ip: "10.0.0.3" });
     expect(third.mustChangePassword).toBe(false);
 
     // Inactivité : une session sans activité depuis plus de 2 h est refusée.
@@ -1005,6 +996,117 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(auth.needsRehash(upgraded!.password_hash)).toBe(false);
 
     await db.query("delete from users where id = $1", [id]);
+    await db.query("delete from login_attempts");
+  });
+
+  it("limite les connexions par identifiant, couple identifiant-adresse et adresse, sans gêner un Wi-Fi partagé", async () => {
+    const auth = await import("@/server/domain/auth");
+    await db.query("delete from login_attempts");
+    const opts = (ip: string) => ({ allowDemo: false, ip, userAgent: "test" });
+    const ids: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      ids.push(
+        await auth.createUser(db, {
+          name: `Collègue ${i}`,
+          email: `collegue${i}`,
+          role: "seller",
+          password: `motdepasse-${i}-ok`,
+          temporary: false,
+        }),
+      );
+    }
+    const wifi = "41.82.10.10";
+
+    // Délai progressif : rien avant le seuil, puis l'attente double à chaque échec, plafonnée.
+    const r = auth.LOGIN_RULES.pair;
+    expect(auth.progressiveDelay(r.threshold - 1, r)).toBe(0);
+    expect(auth.progressiveDelay(r.threshold, r)).toBe(30);
+    expect(auth.progressiveDelay(r.threshold + 1, r)).toBe(60);
+    expect(auth.progressiveDelay(r.threshold + 2, r)).toBe(120);
+    expect(auth.progressiveDelay(r.threshold + 30, r)).toBe(r.capSec);
+
+    // 1. Huit collègues derrière le même Wi-Fi, chacun avec deux fautes de frappe : tous se connectent.
+    for (let i = 0; i < 8; i++) {
+      for (let k = 0; k < 2; k++) {
+        await expect(auth.login(db, `collegue${i}`, "faute", opts(wifi))).rejects.toThrow(/incorrect/);
+      }
+      expect((await auth.login(db, `collegue${i}`, `motdepasse-${i}-ok`, opts(wifi))).token).toBeTruthy();
+    }
+
+    // 2. Attaque répétée sur un identifiant depuis ce Wi-Fi : bloqué au 5e échec…
+    for (let k = 0; k < 5; k++) {
+      await expect(auth.login(db, "collegue0", "devine", opts(wifi))).rejects.toThrow(/incorrect/);
+    }
+    await expect(auth.login(db, "collegue0", "motdepasse-0-ok", opts(wifi))).rejects.toThrow(
+      /Trop de tentatives\. Réessayez dans 30 secondes/,
+    );
+    // … sans bloquer les collègues sur la même adresse, ni le titulaire depuis son téléphone (autre adresse).
+    expect((await auth.login(db, "collegue1", "motdepasse-1-ok", opts(wifi))).token).toBeTruthy();
+    expect((await auth.login(db, "collegue0", "motdepasse-0-ok", opts("41.82.99.1"))).token).toBeTruthy();
+    // Les essais pendant le blocage sont journalisés mais ne prolongent pas le compte des échecs.
+    const logged = await db.query<{ reason: string; n: number }>(
+      "select reason, count(*)::int as n from login_attempts where identifier = 'collegue0' group by reason order by reason",
+    );
+    expect(Object.fromEntries(logged.map((x) => [x.reason, x.n]))).toMatchObject({
+      bad_credentials: 7,
+      locked: 1,
+      success: 2,
+    });
+    // Le seuil franchi laisse une trace dans le journal d'audit.
+    expect(
+      (await db.one<{ n: number }>("select count(*)::int as n from audit_log where action = 'auth.lockout'"))!.n,
+    ).toBeGreaterThan(0);
+    // Délai progressif : un échec de plus pendant que l'attente court la double.
+    await db.query(
+      "update login_attempts set created_at = created_at - interval '31 seconds' where identifier = 'collegue0' and ip = $1",
+      [wifi],
+    );
+    await expect(auth.login(db, "collegue0", "devine", opts(wifi))).rejects.toThrow(/incorrect/);
+    await expect(auth.login(db, "collegue0", "devine", opts(wifi))).rejects.toThrow(/1 minute/);
+
+    // 3. Attaque répartie sur un identifiant (20 adresses différentes) : l'identifiant est bloqué partout.
+    for (let k = 0; k < 20; k++) {
+      await expect(auth.login(db, "collegue2", "devine", opts(`198.51.100.${k}`))).rejects.toThrow(/incorrect/);
+    }
+    await expect(auth.login(db, "collegue2", "motdepasse-2-ok", opts("203.0.113.9"))).rejects.toThrow(
+      /Trop de tentatives/,
+    );
+
+    // 4. Attaque sur de nombreux identifiants depuis une adresse : l'adresse est bloquée, même pour un compte inconnu.
+    const attacker = "203.0.113.66";
+    for (let k = 0; k < auth.LOGIN_RULES.ip.distinct; k++) {
+      await expect(auth.login(db, `cible${k}`, "devine", opts(attacker))).rejects.toThrow(/incorrect/);
+    }
+    await expect(auth.login(db, "collegue3", "motdepasse-3-ok", opts(attacker))).rejects.toThrow(/Trop de tentatives/);
+    // Message identique pour un compte existant et inexistant (pas d'énumération).
+    await expect(auth.login(db, "personne-inconnue", "x", opts(attacker))).rejects.toThrow(/Trop de tentatives/);
+    await expect(auth.login(db, "collegue3", "faux", opts("192.0.2.1"))).rejects.toThrow(
+      "Identifiant ou mot de passe incorrect.",
+    );
+    await expect(auth.login(db, "personne-inconnue", "faux", opts("192.0.2.1"))).rejects.toThrow(
+      "Identifiant ou mot de passe incorrect.",
+    );
+
+    // Écran Équipe : blocages listés, puis levés manuellement (les échecs restent au journal).
+    const locks = await auth.listLoginLocks(db);
+    expect(locks.map((l) => `${l.kind}:${l.value}`)).toEqual(
+      expect.arrayContaining(["identifier:collegue0", "identifier:collegue2", `ip:${attacker}`]),
+    );
+    expect(locks.find((l) => l.value === "collegue1")).toBeUndefined();
+    expect(await auth.clearLoginLock(db, "identifier", "collegue2")).toBe(20);
+    expect((await auth.login(db, "collegue2", "motdepasse-2-ok", opts("203.0.113.9"))).token).toBeTruthy();
+    await auth.clearLoginLock(db, "ip", attacker);
+    expect((await auth.login(db, "collegue3", "motdepasse-3-ok", opts(attacker))).token).toBeTruthy();
+    expect(
+      (await db.one<{ n: number }>("select count(*)::int as n from login_attempts where cleared"))!.n,
+    ).toBeGreaterThan(0);
+
+    // Expiration automatique : passée la fenêtre, plus aucun blocage.
+    await db.query("update login_attempts set created_at = now() - interval '2 hours'");
+    expect(await auth.listLoginLocks(db)).toEqual([]);
+    expect((await auth.login(db, "collegue0", "motdepasse-0-ok", opts(wifi))).token).toBeTruthy();
+
+    for (const id of ids) await db.query("delete from users where id = $1", [id]);
     await db.query("delete from login_attempts");
   });
 

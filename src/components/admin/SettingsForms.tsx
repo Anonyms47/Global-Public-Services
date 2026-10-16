@@ -6,6 +6,7 @@ import {
   createUserAction,
   purgeDemoAction,
   saveSettingsAction,
+  unlockLoginAction,
   updateUserAction,
 } from "@/app/comptoir/(app)/parametres/actions";
 import type { Settings } from "@/server/domain/settings";
@@ -438,6 +439,61 @@ export function SettingsForm({ initial }: { initial: Initial }) {
         <ActionFeedback failure={failure} success={success} />
       </div>
     </form>
+  );
+}
+
+const waitText = (sec: number) => (sec < 60 ? `${sec} s` : `${Math.ceil(sec / 60)} min`);
+
+/** Blocages de connexion en cours, avec déblocage manuel (journalisé). */
+export function LoginLocks({
+  locks,
+}: {
+  locks: { kind: "identifier" | "ip"; value: string; failures: number; wait: number }[];
+}) {
+  const { run, pending, failure, success } = useAction();
+  return (
+    <section className="mt-10" aria-labelledby="t-locks">
+      <h2 id="t-locks" className="font-bold">
+        Connexions bloquées
+      </h2>
+      <p className="hint mt-1 max-w-2xl">
+        Après plusieurs mots de passe faux, un identifiant (ou une adresse Internet qui essaie de nombreux comptes) est
+        bloqué quelques secondes à quelques minutes ; l&apos;attente double à chaque nouvel échec et le blocage se lève
+        tout seul. Un collègue sur le même Wi-Fi n&apos;est pas concerné.
+      </p>
+      {locks.length ? (
+        <ul className="mt-3 grid gap-2">
+          {locks.map((l) => (
+            <li
+              key={`${l.kind}:${l.value}`}
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[6px] border border-line bg-card p-3"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold break-all">
+                  {l.kind === "identifier" ? "Identifiant" : "Adresse"} : {l.value}
+                </p>
+                <p className="hint">
+                  {l.failures} échec{l.failures > 1 ? "s" : ""} récents · encore {waitText(l.wait)}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={pending}
+                onClick={() => run(() => unlockLoginAction(l.kind, l.value))}
+              >
+                Débloquer
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-[14px] text-ink-soft">Aucun blocage en cours.</p>
+      )}
+      <div className="mt-3">
+        <ActionFeedback failure={failure} success={success} />
+      </div>
+    </section>
   );
 }
 

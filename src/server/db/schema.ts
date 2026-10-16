@@ -346,6 +346,10 @@ create table if not exists login_attempts (
 );
 create index if not exists login_attempts_identifier on login_attempts (identifier, created_at);
 create index if not exists login_attempts_ip on login_attempts (ip, created_at);
+-- Journal des connexions : motif (succès, échec, refus pendant un blocage), appareil, déblocage.
+alter table login_attempts add column if not exists reason text not null default 'bad_credentials';
+alter table login_attempts add column if not exists cleared boolean not null default false;
+alter table login_attempts add column if not exists user_agent text not null default '';
 
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire

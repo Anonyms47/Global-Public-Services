@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { requirePage } from "@/server/admin";
-import { listUsers } from "@/server/domain/auth";
+import { listLoginLocks, listUsers } from "@/server/domain/auth";
 import { Forbidden, PageTitle, Tabs } from "@/components/admin/ui";
-import { TeamManager } from "@/components/admin/SettingsForms";
+import { LoginLocks, TeamManager } from "@/components/admin/SettingsForms";
 
 export const metadata: Metadata = { title: "Équipe" };
 
 export default async function TeamPage() {
   const { db, user, allowed } = await requirePage("team.manage");
   if (!allowed) return <Forbidden what="la gestion de l'équipe" />;
-  const users = await listUsers(db);
+  const [users, locks] = await Promise.all([listUsers(db), listLoginLocks(db)]);
   return (
     <>
       <PageTitle eyebrow="Configuration" title="Paramètres & équipe" />
@@ -40,6 +40,7 @@ export default async function TeamPage() {
           temporary: !!u.must_change_password,
         }))}
       />
+      <LoginLocks locks={locks} />
     </>
   );
 }
