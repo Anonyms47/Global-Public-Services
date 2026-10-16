@@ -29,17 +29,24 @@ Le mot de passe local des comptes de démonstration s'affiche sur la page de con
 
 Le message WhatsApp reprend références, noms, variantes, quantités, total des produits, réception, coordonnées et frais. **Ouvrir WhatsApp ne vaut ni envoi, ni confirmation, ni réservation** : le site l'explique au client. Sans numéro WhatsApp configuré, le bouton d'envoi est désactivé (mode démonstration) et le message reste prévisualisable et copiable.
 
-**Le Comptoir GPS** :
+**Le Comptoir GPS** — navigation en trois niveaux (**Piloter / Exploiter / Développer**), palette de commandes **Ctrl/⌘+K** (actions, pages, produits, commandes, demandes, clients, au clavier), bouton d'action rapide sur mobile. Détail et plan : [`docs/comptoir-refonte.md`](docs/comptoir-refonte.md).
 
-- **Aujourd'hui** : commandes à préparer, retraits prêts, livraisons, stocks faibles (chaque indicateur ouvre la liste filtrée), raccourcis, ventes enregistrées / encaissements / soldes restants sur une période, détail des opérations.
-- **Commandes** : vues par étape, recherche, saisie d'une commande confirmée (réserve le stock), fiche avec état, préparation/réception et paiement distincts, action principale = étape suivante, encaissements partiels, corrections par contre-passation, frais de livraison corrigés avec motif, remboursements, retours (remise en stock seulement si l'état est validé), annulation (libère la réservation), notes internes, chronologie, messages WhatsApp préparés pour le client, reçu imprimable ou téléchargeable.
-- **Vente rapide** : catalogue à gauche, vente à droite (onglets sur mobile), variante, quantité, paiement, monnaie rendue, vérification puis confirmation ; vente, paiement et sortie de stock dans une seule transaction ; brouillon conservé en cas d'échec ; reçu et nouvelle vente.
-- **Catalogue** : vues visuelle et liste, statuts, actions groupées (publier, brouillon, archiver, catégorie, variation de prix avec aperçu), formulaire en trois étapes (présenter, configurer, publier) avec vérifications avant publication, brouillon local et avertissement avant de quitter, photos téléversées et réordonnables, variantes avec référence, prix, coût et stock propres, duplication, archivage des articles déjà vendus, catégories ordonnées, promotions programmées.
-- **Stock** : physique / réservé / disponible par variante, seuils d'alerte, réapprovisionnement par lots, inventaire avec aperçu des écarts, ajustements motivés, historique des mouvements (motif, auteur, commande).
-- **Clients** : fiches, historique, notes, alerte de numéro déjà connu avant création, export CSV (propriétaire).
-- **Vitrine & services** : vedette, focus, ordre de la Sélection GPS, présentation et photo de la boutique, services de transfert (affichés « confirmés » seulement après validation).
-- **Rapports** : ventes, encaissements par moyen, remboursements, soldes, meilleurs produits, marge **uniquement** pour le propriétaire et si tous les coûts d'achat sont renseignés (méthode affichée). Les transferts d'argent ne sont jamais mélangés aux ventes.
-- **Paramètres & équipe** : entreprise, WhatsApp, réception et frais par zone, garantie, retours, paiement, seuils, reçus, membres et rôles, purge des données de démonstration.
+- **Piloter**
+  - **Aujourd'hui** : compteurs du jour, raccourcis, aperçu de la File GPS, chiffres du jour.
+  - **File GPS** : tout le travail en attente (demandes, préparation, retraits, livraisons, frais à confirmer, soldes, trop-perçus, stocks faibles) et tâches manuelles ; attribuer, noter, reporter, marquer fait.
+  - **Tableau de bord** : CA, encaissements, reste à encaisser, montant des commandes, commandes, ventes finalisées, panier moyen, remboursements, annulations ; période et comparaison ; chaque chiffre ouvre ses opérations, formule affichée (`src/server/domain/metrics.ts`) ; montants réservés au propriétaire et aux gestionnaires ; marge pour le propriétaire seulement.
+  - **Rapports** : encaissements par moyen, meilleurs produits, soldes, marge conditionnelle.
+  - **Centre de lancement** : 16 contrôles automatiques sur trois niveaux (À faire, Incomplet, À vérifier, Validé, Bloquant) avec lien « Corriger » ; modes Démonstration / Test privé / Ouvert **préparés** par le propriétaire, confirmés et journalisés, sans bascule automatique.
+- **Exploiter**
+  - **Vente rapide** : transactionnelle ; espèces, Wave, Orange Money, autre mobile money, virement, carte, autre ; **paiement mixte** et partiel ; monnaie rendue.
+  - **Demandes WhatsApp** : chaque panier du site crée une demande **GPS-R-…** reprise dans le message ; confirmer (commande + réservation), classer sans suite, répondre.
+  - **Commandes** : états de commande, de préparation et de paiement distincts, chronologie, corrections, retours, remboursements, messages WhatsApp issus des modèles, reçu.
+  - **Stock** : physique / réservé / **non vendable** / disponible ; réapprovisionnement par lots, inventaire, ajustements et sorties motivés, historique.
+  - **Clients** : fiches, historique, doublons signalés, export CSV (propriétaire).
+- **Développer**
+  - **Catalogue** : vues, actions groupées, formulaire en trois étapes, conflits détectés, **historique des versions**, **publication programmée**, masquer / archiver / **corbeille** / suppression définitive encadrée, **import CSV** avec aperçu.
+  - **Médiathèque** : envoi multiple, photos et vidéos courtes, usages, corbeille.
+  - **Vitrine & services**, **Configuration** (entreprise, NINEA, RCCM, fuseau, réception, moyens de paiement, modèles de messages, conditions), **Équipe** (rôles vérifiés côté serveur), **Santé du Comptoir** (contrôles de cohérence, journal des actions sensibles).
 
 ### Règles de stock
 
@@ -91,13 +98,15 @@ Si une base de démonstration a servi de base réelle : **Paramètres → Donné
 
 ## Vérifications effectuées
 
-- **20 tests métier**, sur PGlite et sur PostgreSQL 16 : réservation à la confirmation et sortie à la remise, paiement partiel et solde, double envoi ignoré (clé d'idempotence), annulation et libération, retour avec ou sans remise en stock, remboursement, correction d'encaissement, réservation concurrente du dernier article (une seule réussit), vente en boutique qui ne prend pas un article réservé, réapprovisionnement, inventaire (refus sous les réservations), ajustement motivé, fin programmée d'une promotion, panier (prix changé, quantité réduite, épuisé), message WhatsApp, historique non réécrit, publication incomplète refusée, recherche par référence, permissions, comptes de démo bloqués hors démo, doublon de numéro, rapports et marge conditionnelle, purge qui conserve la configuration.
-- **12 parcours navigateur** sur le build de production (PGlite et PostgreSQL) : message WhatsApp exact (variantes, quantités, total, frais à confirmer), variante épuisée impossible à commander, panier conservé avec prix mis à jour et suppression annulable, recherche et filtres partageables avec retour aux résultats, pages publiques, 404 et `noindex`, accès refusé sans session et droits insuffisants (dont export CSV 403), commande avec réservation, acompte, solde et remise, annulation, vente en boutique puis retour remboursé, réapprovisionnement et inventaire tracés, mobile (deux colonnes, pas de défilement horizontal, menu et filtres fermés par Échap) et ajout au panier au clavier.
-- Lint, typage strict, format et build de production.
+- **33 tests métier** (`npm test`) : commandes, réservations, paiements, retours, stock (dont non vendable), catalogue (versions, conflits, programmation, corbeille), panier, message WhatsApp et demandes GPS-R, paiement mixte, indicateurs (le détail retombe sur le chiffre), File GPS, centre de lancement et modes, santé, médiathèque, import CSV, configuration, démonstration protégée et installation du propriétaire.
+- **19 parcours navigateur** (`npm run test:e2e`, ordinateur et mobile) : boutique et message WhatsApp avec référence, droits, commandes, vente et retour, stock, palette de commandes, tableau de bord détaillé, File GPS, demande convertie en commande, configuration, corbeille, import CSV, médiathèque, bouton mobile et absence de défilement horizontal.
+- Lint, typage strict, format et build de production, à chaque PR (GitHub Actions).
 
 ## Limites connues
 
-- **Photos** : les photos téléversées sont stockées dans la base (simple et sauvegardé avec elle). Pour un gros catalogue, prévoir un stockage objet (Supabase Storage, S3…).
+- **Photos et vidéos** : les fichiers téléversés sont stockés dans la base (3 Mo par fichier). Pour un gros catalogue ou des vidéos, prévoir un stockage objet (Supabase Storage, S3…). Les vidéos de la médiathèque ne sont pas encore affichées sur les fiches publiques.
+- **Enregistrement automatique** : la fiche produit garde un brouillon local sur l'appareil et détecte les conflits ; l'enregistrement sur le serveur reste explicite.
+- **Modes de boutique** : le Centre de lancement prépare et journalise le mode visé ; le basculement réel se fait dans l'hébergeur (`DEMO_MODE`, `SITE_INDEXABLE`).
 - **Connexion Supabase** : certificat vérifié avec l'autorité racine de Supabase ; `DATABASE_SSL=no-verify` en dernier recours.
 - **Démonstration sur Vercel** : sans `DATABASE_URL`, chaque instance aurait sa propre base PGlite éphémère. Pour une démonstration en ligne, utiliser une base PostgreSQL.
 - **Visuels** : les illustrations SVG ne remplacent pas des photos ; le rendu final dépendra des photos fournies.

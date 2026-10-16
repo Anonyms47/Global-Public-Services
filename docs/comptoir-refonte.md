@@ -29,6 +29,8 @@
 
 ## 3. Lots
 
+État au 16 octobre 2026 : tous les lots sont livrés (PR #24 à #29), chacun avec CI verte avant mise en production.
+
 1. **Sécurité** — démonstration protégée, installation du propriétaire réel, retrait du mot de passe du README.
 2. **Navigation** — Piloter / Exploiter / Développer, palette Ctrl/⌘+K (recherche + actions), bouton d'action rapide mobile.
 3. **Indicateurs** — module `metrics.ts` (formules documentées), tableau de bord avec période, comparaison et détail de chaque chiffre.
@@ -43,3 +45,10 @@
 12. **Configuration** — entreprise (NINEA, RCCM, fuseau Africa/Dakar), modèles WhatsApp.
 13. **Équipe et journal d'audit.**
 14. **Finitions, tests, documentation, rapport final.**
+
+## 4. Ce qui reste à décider ou à faire par GPS
+
+- Créer le compte du propriétaire réel (`COMPTOIR_SETUP_CODE` puis `/comptoir/installation`).
+- Renseigner coordonnées, WhatsApp, NINEA, RCCM, conditions et zones de livraison (Configuration), puis suivre le Centre de lancement.
+- Saisir ou importer le vrai catalogue, avec photos ; purger les exemples au moment de l'ouverture seulement.
+- Vérifier les sauvegardes de la base chez l'hébergeur.
