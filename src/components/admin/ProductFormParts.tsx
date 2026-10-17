@@ -987,27 +987,41 @@ export function MediaEditor({
             </li>
           ))}
         </ul>
-      ) : (
-        <label
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            uploads.add(e.dataTransfer.files);
-          }}
-          className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed border-line bg-white p-4 text-center focus-within:border-gps-blue hover:border-gps-blue"
-        >
-          <IconUpload />
-          <span className="font-bold">{uploads.busy ? "Envoi en cours…" : "Déposez ou choisissez vos photos"}</span>
-          <span className="text-[13px] text-ink-mute">La première photo devient la photo principale.</span>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-            multiple
-            className="sr-only"
-            onChange={pick}
-          />
-        </label>
-      )}
+      ) : null}
+      {/* Toujours visible : on ajoute d'autres photos sans enregistrer ni chercher la zone d'envoi. */}
+      <label
+        data-testid="media-dropzone"
+        onDragOver={(e) => {
+          if (dragFrom === null) e.preventDefault();
+        }}
+        onDrop={(e) => {
+          if (dragFrom !== null) return;
+          e.preventDefault();
+          uploads.add(e.dataTransfer.files);
+        }}
+        className={`relative flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-2 border-dashed border-line bg-white text-center focus-within:border-gps-blue hover:border-gps-blue ${images.length ? "min-h-20 p-3" : "min-h-28 p-4"}`}
+      >
+        <IconUpload />
+        <span className="font-bold">
+          {uploads.busy
+            ? "Envoi en cours…"
+            : images.length
+              ? "Déposez ou choisissez d'autres photos"
+              : "Déposez ou choisissez vos photos"}
+        </span>
+        <span className="text-[13px] text-ink-mute">
+          {images.length
+            ? "Elles s'ajoutent à la suite. Glissez une vignette pour changer l'ordre."
+            : "La première photo devient la photo principale."}
+        </span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+          multiple
+          className="sr-only"
+          onChange={pick}
+        />
+      </label>
     </div>
   );
 }

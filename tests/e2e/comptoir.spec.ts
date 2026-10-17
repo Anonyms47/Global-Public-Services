@@ -400,6 +400,18 @@ test.describe("Le Comptoir", () => {
     expect(await thumb(0)).toBe(second);
     expect(await thumb(1)).toBe(first);
     await expect(items.nth(0).getByText("Principale")).toBeVisible();
+
+    // La zone d'envoi reste là quand la fiche a déjà des photos : on en ajoute d'autres à la suite.
+    const zone = page.getByTestId("media-dropzone");
+    await expect(zone).toContainText("Déposez ou choisissez d'autres photos");
+    const n = await items.count();
+    await zone.locator('input[type="file"]').setInputFiles({
+      name: "autre.png",
+      mimeType: "image/png",
+      buffer: fs.readFileSync("public/brand/logo-gps-mark.png"),
+    });
+    await expect(items).toHaveCount(n + 1);
+    await expect(zone).toBeVisible();
   });
 
   test("points de vente : deux boutiques, deux itinéraires distincts, aucune mention « à confirmer »", async ({
