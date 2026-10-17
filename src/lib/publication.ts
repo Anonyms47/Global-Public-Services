@@ -3,7 +3,7 @@ export interface PublishableInput {
   categoryId: string | null;
   description: string;
   axes: string[];
-  images: { kind?: "image" | "video" }[];
+  images: { kind?: "image" | "video"; source?: { rightsConfirmed?: boolean } | null }[];
   variants: { sku: string; price: number; costPrice?: number | null; options: Record<string, string> }[];
 }
 
@@ -19,6 +19,11 @@ export function publicationIssues(input: PublishableInput) {
   const photos = input.images.filter((i) => (i.kind ?? "image") !== "video");
   if (!photos.length) issues.push("Ajoutez au moins une photo.");
   else if (input.images[0].kind === "video") issues.push("La première image (photo principale) doit être une photo.");
+  // Une photo trouvée sur Internet reste privée tant que GPS n'a pas validé son usage.
+  if (input.images.some((i) => i.source && !i.source.rightsConfirmed))
+    issues.push(
+      "Photo trouvée sur Internet : droit de publication à confirmer (ou la remplacer par une photo de la boutique).",
+    );
   if (!input.variants.length) issues.push("Ajoutez au moins une variante avec un prix.");
   const many = input.variants.length > 1;
   input.variants.forEach((v, i) => {

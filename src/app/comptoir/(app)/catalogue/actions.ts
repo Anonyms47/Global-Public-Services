@@ -19,6 +19,7 @@ import {
   moveCategory,
   previewPriceChange,
   saveCategory,
+  saveCategoryProfile,
   savePromotion,
   saveProduct,
   setCategoryForProducts,
@@ -89,6 +90,7 @@ const productSchema = z.object({
             status: z.string().max(80),
             matches: z.string().max(160).optional(),
             license: z.string().max(200).optional(),
+            rightsConfirmed: z.boolean().optional(),
           })
           .nullable()
           .optional(),
@@ -213,6 +215,34 @@ export async function saveCategoryAction(input: unknown) {
       return { id };
     },
     { message: "Catégorie enregistrée." },
+  );
+}
+
+const profileSchema = z
+  .object({
+    fields: z
+      .array(
+        z.object({
+          label: z.string().trim().min(1).max(40),
+          options: z.array(z.string().trim().min(1).max(40)).max(30).optional(),
+        }),
+      )
+      .max(30),
+    variantAxes: z.array(z.string().trim().min(1).max(30)).max(6),
+  })
+  .nullable();
+
+/** Profil de saisie d'une catégorie : réservé au propriétaire. */
+export async function saveCategoryProfileAction(id: string, input: unknown) {
+  return guarded(
+    "settings.edit",
+    async ({ db, user }) => {
+      const profile = parse(profileSchema, input);
+      const name = await saveCategoryProfile(db, String(id), profile);
+      await audit(db, user.is_demo ? null : user.id, "category.profile", name, { profile });
+      return { ok: true };
+    },
+    { message: "Profil de la catégorie enregistré." },
   );
 }
 

@@ -686,4 +686,43 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/parametres");
     await expect(page.getByText("Droits insuffisants")).toBeVisible();
   });
+
+  test("profils de catégories : pas de couleur pour un chargeur, profil modifiable par le propriétaire", async ({
+    page,
+  }) => {
+    await login(page, "proprietaire@demo.gps");
+    await page.goto("/comptoir/catalogue/nouveau");
+    await page.getByRole("radio", { name: "Mode complet" }).click();
+    await page.locator("#p-cat").selectOption({ label: "Chargeurs" });
+    await page.locator("label", { hasText: /^Oui$/ }).click();
+    await expect(page.getByTestId("no-variant-presets")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Couleur", exact: true })).toHaveCount(0);
+    await expect(page.locator("#p-spec-couleur")).toHaveCount(0);
+    await page.locator("#p-spec-types-de-ports").fill("USB-C");
+    await page.locator("#p-spec-puissance-maximale").fill("35 W");
+    await expect(page.getByTestId("name-suggestion")).toHaveText("Chargeur USB-C 35 W");
+
+    // Le propriétaire ajoute une option réellement disponible : elle est proposée dans la fiche.
+    page.on("dialog", (d) => d.accept());
+    await page.goto("/comptoir/catalogue/categories");
+    const profile = page.getByTestId("profil-Chargeurs");
+    await profile.locator("summary").click();
+    await expect(profile).toContainText("aucune (une fiche par version)");
+    await profile.getByLabel("Options de variantes proposées").fill("Prise");
+    await profile.getByRole("button", { name: "Enregistrer le profil" }).click();
+    await expect(profile.getByText("Profil de la catégorie enregistré.")).toBeVisible();
+    await page.goto("/comptoir/catalogue/nouveau");
+    await page.locator("#p-cat").selectOption({ label: "Chargeurs" });
+    await page.locator("label", { hasText: /^Oui$/ }).click();
+    await expect(page.getByRole("button", { name: "Prise", exact: true }).first()).toBeVisible();
+    await page.goto("/comptoir/catalogue/categories");
+    await page.getByTestId("profil-Chargeurs").locator("summary").click();
+    await page.getByTestId("profil-Chargeurs").getByRole("button", { name: "Revenir au profil par défaut" }).click();
+    await expect(page.getByTestId("profil-Chargeurs").getByText("Profil de la catégorie enregistré.")).toBeVisible();
+
+    // Le gestionnaire ne modifie pas les profils.
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue/categories");
+    await expect(page.getByRole("heading", { name: "Champs de la fiche produit" })).toHaveCount(0);
+  });
 });

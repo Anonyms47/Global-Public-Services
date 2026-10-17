@@ -326,6 +326,8 @@ alter table categories add column if not exists image_url text;
 alter table categories add column if not exists visible boolean not null default true;
 alter table categories add column if not exists featured boolean not null default false;
 alter table categories add column if not exists archived_at timestamptz;
+-- Profil de saisie (champs demandés, options de variantes) réglé par le propriétaire.
+alter table categories add column if not exists profile jsonb;
 -- Fiches produits : vidéos courtes à côté des photos (la première image reste la photo principale).
 alter table product_images add column if not exists kind text not null default 'image';
 create table if not exists product_versions (

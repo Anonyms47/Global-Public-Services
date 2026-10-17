@@ -132,12 +132,13 @@ export default async function EditProductPage({ params, searchParams }: PageProp
         <ProductFormClient
           key={p.updatedAt}
           videoMaxMb={videoMaxMb()}
-          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+          categories={categories.map((c) => ({ id: c.id, name: c.name, profile: c.profile ?? null }))}
           canCosts={canCosts}
           userId={user.id}
           quickValues={settings.catalog.quickValues}
           specLabels={specLabels}
           modelHint={imported?.model}
+          photoCandidates={imported?.photoCandidates ?? []}
           completion={completion}
           initial={{
             id: p.id,

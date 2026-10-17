@@ -2,6 +2,7 @@ import type { Db } from "../db/client";
 import { fail, newId } from "./errors";
 import { slugify } from "@/lib/format";
 import { normalizeBarcode, suggestSku } from "@/lib/sku";
+import type { CategoryProfile } from "@/lib/product-kit";
 
 // ——— Types ———
 
@@ -24,6 +25,8 @@ export interface MediaSource {
   status: string;
   matches?: string;
   license?: string;
+  /** GPS a validé le droit de publier cette image (sinon elle reste privée). */
+  rightsConfirmed?: boolean;
 }
 
 /** Caractéristiques publiques : sans les privées, unité accolée. */
@@ -92,6 +95,7 @@ export interface Category {
   visible: boolean;
   featured: boolean;
   archived_at: Date | null;
+  profile: CategoryProfile | null;
 }
 
 // ——— Prix ———
@@ -1012,6 +1016,16 @@ export interface CategoryInput {
   imageUrl?: string | null;
   visible?: boolean;
   featured?: boolean;
+}
+
+/** Profil de saisie d'une catégorie ; `null` revient au profil par défaut. */
+export async function saveCategoryProfile(db: Db, id: string, profile: CategoryProfile | null) {
+  const r = await db.one<{ name: string }>("update categories set profile = $2 where id = $1 returning name", [
+    id,
+    profile ? JSON.stringify(profile) : null,
+  ]);
+  if (!r) fail("not_found", "Catégorie introuvable.");
+  return r!.name;
 }
 
 export async function saveCategory(db: Db, input: CategoryInput) {

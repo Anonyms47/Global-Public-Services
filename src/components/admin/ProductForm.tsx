@@ -16,6 +16,7 @@ import { fcfa, formatDateTime, slugify } from "@/lib/format";
 import { normalizeBarcode, suggestSku } from "@/lib/sku";
 import {
   NAME_ADVICE_LENGTH,
+  nameWarnings,
   completeness,
   composeDescription,
   entryHints,
@@ -23,6 +24,8 @@ import {
   sectionStatusLabels,
   suggestName,
   templateFor,
+  type CategoryProfile,
+  type PhotoCandidate,
   type ProductDetails,
   type QuickValues,
 } from "@/lib/product-kit";
@@ -212,10 +215,11 @@ function ProductForm({
   quickValues,
   specLabels = {},
   modelHint,
+  photoCandidates = [],
   completion,
 }: {
   initial?: ProductState;
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; profile?: CategoryProfile | null }[];
   canCosts: boolean;
   videoMaxMb?: number;
   /** Mode d'affichage mémorisé pour chaque utilisateur. */
@@ -225,6 +229,7 @@ function ProductForm({
   specLabels?: Record<string, string[]>;
   /** Modèle relevé lors de l'import, à confirmer. */
   modelHint?: string;
+  photoCandidates?: PhotoCandidate[];
   /** Parcours « Produits à compléter » : produit suivant. */
   completion?: { nextHref: string | null; position: string; listHref: string } | null;
 }) {
@@ -321,7 +326,7 @@ function ProductForm({
   const single = state.axes.length === 0;
   const v0 = state.variants[0];
   const category = categories.find((c) => c.id === state.categoryId) ?? null;
-  const template = templateFor(category?.name);
+  const template = templateFor(category?.name, category?.profile);
   const description = hasDetails(state.details) ? composeDescription(state.details) : state.description;
   const checkInput = { ...state, description, variants: active };
   const issues = publicationIssues(checkInput);
@@ -420,6 +425,7 @@ function ProductForm({
 
   const suggestion = suggestName({
     categoryName: category?.name ?? null,
+    profile: category?.profile,
     brand: state.brand,
     model: state.model,
     specs: state.specs,
@@ -724,6 +730,7 @@ function ProductForm({
               colorValues={colorValues}
               videoMaxMb={videoMaxMb}
               productLabel={[state.brand, state.model].filter(Boolean).join(" ")}
+              candidates={photoCandidates}
             />
           </Step>
 
@@ -759,6 +766,11 @@ function ProductForm({
                   ? `${state.name.length} caractères : un nom plus court se lit mieux (≈ ${NAME_ADVICE_LENGTH} conseillés).`
                   : "Type + marque + modèle + une caractéristique utile. Pas de slogan, pas de « Original » sans preuve."}
               </p>
+              {nameWarnings(state.name).map((w) => (
+                <p key={w} className="hint !text-warn" data-testid="name-warning">
+                  {w}
+                </p>
+              ))}
               {suggestion && suggestion !== state.name.trim() ? (
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px]">
                   <span className="text-ink-mute">Suggestion :</span>
@@ -1214,6 +1226,7 @@ function ProductForm({
             {multi ? (
               <VariantEditor
                 name={state.name}
+                presets={template.variantAxes}
                 axes={state.axes}
                 axisValues={state.axisValues}
                 variants={state.variants}
