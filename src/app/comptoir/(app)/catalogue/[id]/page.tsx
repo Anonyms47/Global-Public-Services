@@ -9,12 +9,15 @@ import { Badge, Forbidden, PageTitle, Panel } from "@/components/admin/ui";
 import { ProductFormClient } from "@/components/admin/ProductForm";
 import { videoMaxMb } from "@/server/domain/media";
 import { importedInfo } from "@/server/domain/catalog-import-gps";
+import { listToComplete, specLabelsByCategory, type ToCompleteFilter } from "@/server/domain/catalog-entry";
+import { getSettings } from "@/server/domain/settings";
+import { MarkChecksDone } from "@/components/admin/ToComplete";
 import { IconArrowLeft } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Produit" };
 
-export default async function EditProductPage({ params }: PageProps<"/comptoir/catalogue/[id]">) {
+export default async function EditProductPage({ params, searchParams }: PageProps<"/comptoir/catalogue/[id]">) {
   const { db, user, allowed } = await requirePage("catalog.view");
   if (!allowed) return <Forbidden />;
   const canEdit = can(user, "catalog.edit");
@@ -22,11 +25,32 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
     withCosts: can(user, "catalog.costs"),
   });
   if (!p) notFound();
-  const [categories, versions, imported] = await Promise.all([
+  const canCosts = can(user, "catalog.costs");
+  const completer = (await searchParams).completer;
+  const [categories, versions, imported, settings, specLabels, todo] = await Promise.all([
     listCategories(db, { scope: "active" }),
     listVersions(db, p.id),
     importedInfo(db, p.id),
+    getSettings(db),
+    specLabelsByCategory(db),
+    typeof completer === "string" ? listToComplete(db, { canCosts }) : null,
   ]);
+  // Parcours « Produits à compléter » : position et produit suivant dans la même sélection.
+  let completion: { nextHref: string | null; position: string; listHref: string } | null = null;
+  if (todo && typeof completer === "string") {
+    const list = (
+      completer === "tous" ? todo.rows : todo.rows.filter((r) => r.flags.includes(completer as ToCompleteFilter))
+    ).filter((r) => !r.flags.includes("pret") || completer === "pret");
+    const ids = list.map((r) => r.id);
+    const at = ids.indexOf(p.id);
+    const next = ids.find((id, i) => i > at && id !== p.id) ?? ids.find((id) => id !== p.id) ?? null;
+    const q = `completer=${encodeURIComponent(completer)}`;
+    completion = {
+      nextHref: next ? `/comptoir/catalogue/${next}?${q}` : null,
+      position: at >= 0 ? `${at + 1} sur ${ids.length}` : `${ids.length} restant${ids.length > 1 ? "s" : ""}`,
+      listHref: `/comptoir/catalogue/a-completer${completer === "tous" ? "" : `?filtre=${encodeURIComponent(completer)}`}`,
+    };
+  }
   return (
     <>
       <Link
@@ -66,9 +90,18 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
           </summary>
           <ul className="mt-2 grid gap-1 text-[14px]">
             {imported.humanChecks.map((c) => (
-              <li key={c}>☐ {c}</li>
+              <li key={c}>
+                {imported.checksDoneAt ? "☑" : "☐"} {c}
+              </li>
             ))}
           </ul>
+          <div className="mt-2">
+            <MarkChecksDone
+              productId={p.id}
+              doneAt={imported.checksDoneAt ?? null}
+              doneBy={imported.checksDoneBy ?? null}
+            />
+          </div>
           {imported.notes ? <p className="mt-2 text-[14px] text-ink-soft">Note : {imported.notes}</p> : null}
           <p className="mt-2 text-[13px] text-ink-mute">
             Référence : {imported.model} · Sources :{" "}
@@ -100,12 +133,19 @@ export default async function EditProductPage({ params }: PageProps<"/comptoir/c
           key={p.updatedAt}
           videoMaxMb={videoMaxMb()}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-          canCosts={can(user, "catalog.costs")}
+          canCosts={canCosts}
+          userId={user.id}
+          quickValues={settings.catalog.quickValues}
+          specLabels={specLabels}
+          modelHint={imported?.model}
+          completion={completion}
           initial={{
             id: p.id,
             updatedAt: p.updatedAt,
             name: p.name,
             brand: p.brand,
+            model: p.model ?? "",
+            details: p.details ?? {},
             categoryId: p.categoryId,
             description: p.description,
             specs: p.specs,

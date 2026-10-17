@@ -1,6 +1,7 @@
 import type { Db } from "../db/client";
 import { defaultTemplates, type TemplateKey } from "@/lib/templates";
 import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
+import { defaultQuickValues, type QuickValues } from "@/lib/product-kit";
 
 export interface DeliveryZone {
   name: string;
@@ -56,6 +57,8 @@ export interface Settings {
   messages: Record<TemplateKey, string>;
   /** Moyens de paiement proposés à l'encaissement. */
   payments: { methods: PaymentMethodKey[] };
+  /** Saisie des produits : valeurs proposées en un geste (RAM, stockage, puissance…), modifiables par le propriétaire. */
+  catalog: { quickValues: QuickValues };
   /** Mode de boutique visé, préparé par le propriétaire (le basculement réel se fait dans l'hébergeur). */
   launch: {
     targetMode: ShopMode;
@@ -98,6 +101,7 @@ export const defaultSettings: Settings = {
   receipt: { header: "", footer: "Merci pour votre confiance." },
   storefront: { heroProductId: null, focusProductId: null, focusText: "" },
   launch: { targetMode: "demo", updatedAt: null, updatedBy: null },
+  catalog: { quickValues: defaultQuickValues },
   messages: { ...defaultTemplates },
   payments: { methods: paymentMethods.map(([k]) => k) },
 };

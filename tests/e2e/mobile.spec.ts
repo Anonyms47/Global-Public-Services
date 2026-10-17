@@ -120,14 +120,12 @@ test.describe("Parcours mobile et clavier", () => {
     await page.getByRole("button", { name: "Se connecter" }).click();
     await expect(page).toHaveURL(/\/comptoir$/);
     await page.goto("/comptoir/catalogue/nouveau");
-    // Gestionnaire : ni coût ni marge.
-    await expect(page.locator("#p-cost")).toHaveCount(0);
-    await expect(page.locator("#p-price")).toHaveAttribute("inputmode", "numeric");
-    await page.locator("#p-name").fill("Mobile E2E Un");
-    await page.locator("#p-cat").selectOption({ index: 1 });
-    const category = await page.locator("#p-cat").inputValue();
-    await page.locator("#p-price").fill("15000");
-    await page.locator("#p-stock").fill("2");
+    // Téléphone : mode rapide, une seule partie ouverte à la fois, photos en premier.
+    await expect(page.getByRole("radio", { name: "Mode rapide" })).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("progression")).toHaveText("Fiche complétée à 0 %");
+    await expect(page.locator("#etape-photos-t")).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#etape-identity-t")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByText(/Prenez la face avant, l'arrière/)).toBeVisible();
     await page.getByTestId("media-input").setInputFiles([
       { name: "face.png", mimeType: "image/png", buffer: fs.readFileSync("public/brand/logo-gps-mark.png") },
       { name: "dos.png", mimeType: "image/png", buffer: fs.readFileSync("public/brand/logo-gps.png") },
@@ -145,22 +143,41 @@ test.describe("Parcours mobile et clavier", () => {
     await page.getByTestId("media-item").nth(1).getByRole("button", { name: "Définir comme photo principale" }).click();
     await expect(page.getByTestId("media-item").nth(0).getByText("Principale")).toBeVisible();
 
+    await page.getByRole("button", { name: "Suivant : Identité" }).click();
+    await expect(page.locator("#etape-photos-t")).toHaveAttribute("aria-expanded", "false");
+    await page.locator("#p-name").fill("Mobile E2E Un");
+    await page.locator("#p-cat").selectOption({ index: 1 });
+    const category = await page.locator("#p-cat").inputValue();
+    await page.locator("label", { hasText: "Visible dès l'enregistrement" }).click();
+    await page.getByRole("button", { name: "Suivant : Prix et stock" }).click();
+    // Gestionnaire : ni coût ni marge.
+    await expect(page.locator("#p-cost")).toHaveCount(0);
+    await expect(page.getByTestId("marge")).toHaveCount(0);
+    await expect(page.locator("#p-price")).toHaveAttribute("inputmode", "numeric");
+    await page.locator("#p-price").fill("15000");
+    await page.locator("#p-stock").fill("2");
+    await expect(page.getByTestId("progression")).not.toHaveText("Fiche complétée à 0 %");
+
     const width = page.viewportSize()!.width;
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     await expect(page.getByRole("button", { name: "Enregistrer et rester sur la fiche" })).toBeInViewport();
     await expect(page.getByRole("main")).not.toContainText(/démonstration|fictif/i);
 
-    await page.locator("label", { hasText: "Visible dès l'enregistrement" }).click();
     await page.getByRole("button", { name: "Enregistrer et ajouter un autre produit" }).click();
+    await expect(page.getByText("Produit enregistré. La fiche suivante est prête.")).toBeVisible();
     await expect(page.getByText("« Mobile E2E Un » enregistré et publié.")).toBeVisible();
-    // Fiche vierge : catégorie gardée, valeurs uniques remises à zéro.
+    // Fiche vierge : catégorie gardée, valeurs uniques remises à zéro, retour aux photos.
+    await expect(page.locator("#etape-photos-t")).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByTestId("media-item")).toHaveCount(0);
+    await page.locator("#etape-identity-t").click();
     await expect(page.locator("#p-name")).toHaveValue("");
     await expect(page.locator("#p-cat")).toHaveValue(category);
+    await page.locator("#etape-pricing-t").click();
     await expect(page.locator("#p-price")).toHaveValue("");
     await expect(page.locator("#p-stock")).toHaveValue("");
-    await expect(page.getByTestId("media-item")).toHaveCount(0);
 
     // Incomplet : enregistré en brouillon, jamais publié.
+    await page.locator("#etape-identity-t").click();
     await page.locator("#p-name").fill("Mobile E2E Brouillon");
     await page.getByRole("button", { name: "Enregistrer et ajouter un autre produit" }).click();
     await expect(page.getByText("« Mobile E2E Brouillon » enregistré en brouillon.")).toBeVisible();

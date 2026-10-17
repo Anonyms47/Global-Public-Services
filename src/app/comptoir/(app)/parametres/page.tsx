@@ -5,6 +5,7 @@ import { getSettings } from "@/server/domain/settings";
 import { hasDemoData } from "@/server/demo/seed";
 import { Forbidden, PageTitle, Tabs } from "@/components/admin/ui";
 import { DemoPurge, SettingsForm } from "@/components/admin/SettingsForms";
+import { QuickValuesForm } from "@/components/admin/QuickValuesForm";
 
 export const metadata: Metadata = { title: "Paramètres" };
 
@@ -45,6 +46,7 @@ export default async function SettingsPage() {
           payments: s.payments,
         }}
       />
+      <QuickValuesForm initial={s.catalog.quickValues} />
       {demoData || isDemoMode() ? <DemoPurge demoMode={isDemoMode()} hasDemo={demoData} /> : null}
     </>
   );

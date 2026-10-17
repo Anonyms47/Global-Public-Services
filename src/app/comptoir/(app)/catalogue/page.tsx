@@ -46,6 +46,9 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
         actions={
           can(user, "catalog.edit") ? (
             <>
+              <Link href="/comptoir/catalogue/a-completer" className="btn btn-outline">
+                Produits à compléter
+              </Link>
               <Link href="/comptoir/catalogue/categories" className="btn btn-outline">
                 Catégories
               </Link>
@@ -159,6 +162,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
           }}
           canBulk={can(user, "catalog.bulk")}
           canEdit={can(user, "catalog.edit")}
+          canCount={can(user, "stock.inventory")}
           emptyHint={q ? `Aucun produit pour « ${q} ».` : "Aucun produit dans cette vue."}
         />
       )}

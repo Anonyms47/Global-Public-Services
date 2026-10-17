@@ -43,9 +43,14 @@ export default async function StockPage({ searchParams }: PageProps<"/comptoir/s
               Mouvements
             </Link>
             {can(user, "stock.inventory") ? (
-              <Link href="/comptoir/stock/inventaire" className="btn btn-outline">
-                Inventaire
-              </Link>
+              <>
+                <Link href="/comptoir/stock/comptage" className="btn btn-outline">
+                  Comptage rapide
+                </Link>
+                <Link href="/comptoir/stock/inventaire" className="btn btn-outline">
+                  Inventaire
+                </Link>
+              </>
             ) : null}
             {can(user, "stock.restock") ? (
               <Link href="/comptoir/stock/reapprovisionner" className="btn btn-blue">

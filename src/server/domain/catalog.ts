@@ -10,6 +10,27 @@ export type ProductStatus = "draft" | "published" | "archived";
 export interface Spec {
   label: string;
   value: string;
+  /** Unité facultative, accolée à la valeur à l'affichage. */
+  unit?: string;
+  /** Caractéristique interne : jamais affichée sur le site. */
+  private?: boolean;
+}
+
+/** Provenance d'un média (photo trouvée sur Internet, importée depuis une adresse). */
+export interface MediaSource {
+  url: string;
+  domain: string;
+  fetchedAt: string;
+  status: string;
+  matches?: string;
+  license?: string;
+}
+
+/** Caractéristiques publiques : sans les privées, unité accolée. */
+export function publicSpecs(specs: Spec[]) {
+  return (specs ?? [])
+    .filter((s) => !s.private && s.label?.trim() && s.value?.trim())
+    .map((s) => ({ label: s.label, value: s.unit?.trim() ? `${s.value} ${s.unit.trim()}` : s.value }));
 }
 
 export interface Promotion {
@@ -171,7 +192,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         categorySlug: r.category_slug,
         categoryName: r.category_name,
         description: r.description,
-        specs: r.specs ?? [],
+        specs: publicSpecs(r.specs ?? []),
         condition: r.condition,
         warranty: r.warranty ?? "",
         axes: r.axes ?? [],
@@ -434,6 +455,10 @@ export interface ProductInput {
   name: string;
   slug?: string;
   brand: string;
+  /** Modèle exact (fabricant), séparé du nom public simple. */
+  model?: string;
+  /** Description structurée (phrase courte, points forts, contenu de la boîte…). */
+  details?: import("@/lib/product-kit").ProductDetails;
   categoryId: string | null;
   description: string;
   specs: Spec[];
@@ -441,7 +466,13 @@ export interface ProductInput {
   /** Garantie propre au produit (sinon, la garantie générale de GPS s'applique). */
   warranty?: string;
   axes: string[];
-  images: { url: string; alt: string; color?: string | null; kind?: "image" | "video" }[];
+  images: {
+    url: string;
+    alt: string;
+    color?: string | null;
+    kind?: "image" | "video";
+    source?: MediaSource | null;
+  }[];
   variants: VariantInput[];
   status: ProductStatus;
   featured: boolean;
@@ -477,8 +508,8 @@ export async function productForEdit(
   const p = await db.one<Record<string, unknown>>("select * from products where id = $1", [id]);
   if (!p) return null;
   const [images, variants, sales] = await Promise.all([
-    db.query<{ url: string; alt: string; color: string | null; kind: "image" | "video" }>(
-      "select url, alt, color, kind from product_images where product_id = $1 order by position",
+    db.query<{ url: string; alt: string; color: string | null; kind: "image" | "video"; source: MediaSource | null }>(
+      "select url, alt, color, kind, source from product_images where product_id = $1 order by position",
       [id],
     ),
     db.query<Record<string, unknown>>(
@@ -493,6 +524,8 @@ export async function productForEdit(
     slug: p.slug as string,
     name: p.name as string,
     brand: p.brand as string,
+    model: (p.model as string) ?? "",
+    details: (p.details as import("@/lib/product-kit").ProductDetails) ?? {},
     categoryId: (p.category_id as string) ?? null,
     description: p.description as string,
     specs: (p.specs as Spec[]) ?? [],
@@ -641,7 +674,7 @@ export async function saveProduct(
       await tx.query(
         `update products set name=$2, slug=$3, brand=$4, category_id=$5, description=$6, specs=$7, condition=$8,
                 axes=$9, status=$10, featured=$11, published_at=$12, publish_at=$13, unpublish_at=$14, warranty=$15,
-                updated_at=now() where id=$1`,
+                model=$16, details=$17, updated_at=now() where id=$1`,
         [
           id,
           input.name.trim(),
@@ -658,12 +691,14 @@ export async function saveProduct(
           publishAt,
           unpublishAt,
           (input.warranty ?? "").trim(),
+          (input.model ?? "").trim(),
+          JSON.stringify(input.details ?? {}),
         ],
       );
     } else {
       await tx.query(
-        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at, warranty, internal)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+        `insert into products (id, name, slug, brand, category_id, description, specs, condition, axes, status, featured, published_at, is_demo, publish_at, unpublish_at, warranty, internal, model, details)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
         [
           id,
           input.name.trim(),
@@ -682,6 +717,8 @@ export async function saveProduct(
           unpublishAt,
           (input.warranty ?? "").trim(),
           JSON.stringify(input.internal ?? {}),
+          (input.model ?? "").trim(),
+          JSON.stringify(input.details ?? {}),
         ],
       );
     }
@@ -689,8 +726,17 @@ export async function saveProduct(
     await tx.query("delete from product_images where product_id = $1", [id]);
     for (const [i, img] of input.images.entries()) {
       await tx.query(
-        "insert into product_images (id, product_id, url, alt, color, position, kind) values ($1,$2,$3,$4,$5,$6,$7)",
-        [newId(), id, img.url, img.alt || input.name, img.color ?? null, i, img.kind === "video" ? "video" : "image"],
+        "insert into product_images (id, product_id, url, alt, color, position, kind, source) values ($1,$2,$3,$4,$5,$6,$7,$8)",
+        [
+          newId(),
+          id,
+          img.url,
+          img.alt || input.name,
+          img.color ?? null,
+          i,
+          img.kind === "video" ? "video" : "image",
+          img.source ? JSON.stringify(img.source) : null,
+        ],
       );
     }
 

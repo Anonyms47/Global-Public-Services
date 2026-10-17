@@ -125,7 +125,7 @@ export async function stockList(db: Db, opts: { q?: string; low?: boolean; defau
   let where = "v.active and p.status <> 'archived'";
   if (opts.q) {
     params.push(`%${opts.q.trim()}%`);
-    where += ` and (p.name ilike $2 or v.sku ilike $2 or p.brand ilike $2)`;
+    where += ` and (p.name ilike $2 or v.sku ilike $2 or p.brand ilike $2 or v.barcode ilike $2)`;
   }
   const rows = await db.query<StockRow>(
     `select v.id as variant_id, p.id as product_id, p.name as product_name, p.brand, v.sku, v.options,

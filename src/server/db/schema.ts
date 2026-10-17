@@ -315,6 +315,10 @@ alter table variants add column if not exists barcode text;
 create unique index if not exists variants_barcode on variants (barcode) where barcode is not null and barcode <> '';
 -- Données internes d'une fiche (import du catalogue : clé stable, sources, vérifications humaines). Jamais publiques.
 alter table products add column if not exists internal jsonb not null default '{}';
+-- Saisie simplifiée : modèle exact séparé du nom public, description structurée, provenance des médias.
+alter table products add column if not exists model text not null default '';
+alter table products add column if not exists details jsonb not null default '{}';
+alter table product_images add column if not exists source jsonb;
 create unique index if not exists products_external_key on products ((internal->>'externalKey'))
   where internal->>'externalKey' is not null;
 -- Catégories gérées depuis le Comptoir : couverture, visibilité, mise en avant, archivage (structure plate).

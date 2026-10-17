@@ -75,6 +75,13 @@ export const adminNavGroups: NavGroup[] = [
     items: [
       { href: "/comptoir/catalogue", label: "Catalogue", perm: "catalog.view", icon: "catalog", keywords: "produits" },
       {
+        href: "/comptoir/catalogue/a-completer",
+        label: "Produits à compléter",
+        perm: "catalog.edit",
+        icon: "catalog",
+        keywords: "brouillons photos prix saisie",
+      },
+      {
         href: "/comptoir/mediatheque",
         label: "Médiathèque",
         perm: "catalog.view",
