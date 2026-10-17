@@ -275,3 +275,23 @@ export async function saveStoreAction(input: unknown) {
 export async function moveStoreAction(id: string, direction: -1 | 1) {
   return guarded("settings.edit", ({ db }) => moveStore(db, String(id), direction === -1 ? -1 : 1));
 }
+
+/** Valeurs rapides de saisie des produits (RAM, stockage, puissance…) : propriétaire seulement. */
+export async function saveQuickValuesAction(input: unknown) {
+  return guarded(
+    "settings.edit",
+    async ({ db, user }) => {
+      const { quickListLabels } = await import("@/lib/product-kit");
+      const keys = Object.keys(quickListLabels) as (keyof typeof quickListLabels)[];
+      const list = z.array(z.string().trim().min(1).max(40)).max(30);
+      const parsed = z.object(Object.fromEntries(keys.map((k) => [k, list]))).safeParse(input);
+      if (!parsed.success) throw new AppError("validation", "Valeurs invalides (40 caractères au plus par valeur).");
+      const quickValues = Object.fromEntries(
+        keys.map((k) => [k, [...new Set((parsed.data as Record<string, string[]>)[k])]]),
+      ) as Record<keyof typeof quickListLabels, string[]>;
+      await saveSettingsSection(db, "catalog", { quickValues });
+      await audit(db, user.is_demo ? null : user.id, "settings.quick_values", "catalog");
+    },
+    { message: "Valeurs rapides enregistrées." },
+  );
+}

@@ -51,9 +51,27 @@ const productSchema = z.object({
   expectedUpdatedAt: z.string().optional(),
   name: z.string().max(120),
   brand: z.string().max(60),
+  model: z.string().max(80).optional(),
+  details: z
+    .object({
+      short: z.string().max(300).optional(),
+      highlights: z.array(z.string().max(160)).max(8).optional(),
+      box: z.string().max(300).optional(),
+      extra: z.string().max(1000).optional(),
+    })
+    .optional(),
   categoryId: z.string().nullable(),
   description: z.string().max(4000),
-  specs: z.array(z.object({ label: z.string().max(60), value: z.string().max(200) })).max(30),
+  specs: z
+    .array(
+      z.object({
+        label: z.string().max(60),
+        value: z.string().max(200),
+        unit: z.string().max(20).optional(),
+        private: z.boolean().optional(),
+      }),
+    )
+    .max(40),
   condition: z.string().max(80).nullable(),
   axes: z.array(z.string().min(1).max(30)).max(3),
   images: z
@@ -63,6 +81,17 @@ const productSchema = z.object({
         alt: z.string().max(200),
         color: z.string().max(40).nullable().optional(),
         kind: z.enum(["image", "video"]).optional(),
+        source: z
+          .object({
+            url: z.string().max(2000),
+            domain: z.string().max(200),
+            fetchedAt: z.string().max(40),
+            status: z.string().max(80),
+            matches: z.string().max(160).optional(),
+            license: z.string().max(200).optional(),
+          })
+          .nullable()
+          .optional(),
       }),
     )
     .max(12),
@@ -290,4 +319,89 @@ export async function restoreVersionAction(versionId: string) {
     ({ db, user }) => restoreVersion(db, String(versionId), { userId: user.id, withCosts: can(user, "catalog.costs") }),
     { message: "Version restaurée. La version remplacée reste dans l'historique." },
   );
+}
+
+/** Produits peut-être en double pendant la saisie du nom (aucune fusion automatique). */
+export async function similarProductsAction(name: string, excludeId: string | null) {
+  return guarded("catalog.edit", async ({ db }) => {
+    const { similarProducts } = await import("@/server/domain/catalog-entry");
+    return similarProducts(db, String(name ?? "").slice(0, 120), excludeId ? String(excludeId) : null);
+  });
+}
+
+/** Photo téléchargée depuis une adresse https, rangée dans le stockage GPS avec sa provenance. */
+export async function importMediaUrlAction(input: unknown) {
+  return guarded("catalog.edit", async ({ db, user }) => {
+    const d = parse(
+      z.object({
+        url: z.string().max(2000),
+        matches: z.string().max(160).optional(),
+        license: z.string().max(200).optional(),
+      }),
+      input,
+    );
+    const { importMediaFromUrl } = await import("@/server/domain/catalog-entry");
+    const r = await importMediaFromUrl(db, { ...d, userId: user.is_demo ? null : user.id, isDemo: user.is_demo });
+    await audit(db, user.is_demo ? null : user.id, "media.import_url", r.source.domain, {
+      url: r.source.url,
+      media: r.id,
+    });
+    return r;
+  });
+}
+
+/** Vérifications d'une fiche importée marquées comme faites. */
+export async function markChecksDoneAction(productId: string) {
+  return guarded(
+    "catalog.edit",
+    async ({ db, user }) => {
+      const { markChecksDone } = await import("@/server/domain/catalog-entry");
+      await markChecksDone(db, String(productId), { id: user.is_demo ? null : user.id, name: user.name });
+    },
+    { message: "Vérifications notées comme faites." },
+  );
+}
+
+/** Modification rapide d'un prix ou d'un seuil depuis le catalogue. */
+export async function quickVariantAction(input: unknown) {
+  return guarded("catalog.edit", async ({ db, user }) => {
+    const d = parse(
+      z.object({
+        variantId: z.string().min(1),
+        price: z.coerce.number().int().min(0).optional(),
+        lowStockThreshold: z.coerce.number().int().min(0).nullable().optional(),
+      }),
+      input,
+    );
+    const { quickUpdateVariant } = await import("@/server/domain/catalog-entry");
+    await quickUpdateVariant(db, d, user.is_demo ? null : user.id);
+  });
+}
+
+/** Variantes d'un produit pour la modification rapide depuis le catalogue. */
+export async function quickVariantsAction(productId: string) {
+  return guarded("catalog.edit", async ({ db }) => {
+    const rows = await db.query<{
+      id: string;
+      sku: string;
+      options: Record<string, string>;
+      price: number;
+      low_stock_threshold: number | null;
+      on_hand: number;
+      reserved: number;
+    }>(
+      `select id, sku, options, price, low_stock_threshold, on_hand, reserved from variants
+        where product_id = $1 and active order by position`,
+      [String(productId)],
+    );
+    return rows.map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      label: Object.values(v.options ?? {}).join(" · "),
+      price: v.price,
+      threshold: v.low_stock_threshold,
+      onHand: v.on_hand,
+      reserved: v.reserved,
+    }));
+  });
 }

@@ -98,3 +98,19 @@ export async function unsellableAction(input: unknown) {
     { message: "Stock non vendable mis à jour." },
   );
 }
+
+/** Comptage rapide d'une variante : mouvement d'inventaire tracé (ancienne → nouvelle quantité, motif). */
+export async function quickCountAction(input: unknown) {
+  return guarded("stock.inventory", async ({ db, user }) => {
+    const d = parse(
+      z.object({
+        variantId: z.string().min(1),
+        counted: z.coerce.number().int().min(0).max(1_000_000),
+        reason: z.string().max(200),
+      }),
+      input,
+    );
+    const { quickCount } = await import("@/server/domain/catalog-entry");
+    return quickCount(db, { ...d, userId: user.id });
+  });
+}

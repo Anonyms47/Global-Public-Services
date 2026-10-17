@@ -314,7 +314,7 @@ test.describe("Le Comptoir", () => {
     await page.getByText("Ou coller le contenu du fichier").click();
     await page.getByLabel("Contenu CSV").fill("Article;Code;Montant\nImport E2E Assoc;E2E-MAP-1;4000");
     await page.getByRole("button", { name: "Vérifier le fichier" }).click();
-    await expect(page.getByText("À compléter")).toBeVisible();
+    await expect(page.getByText("À compléter", { exact: true })).toBeVisible();
     await page.getByLabel("Prix de vente *").selectOption({ label: "Montant" });
     await page.getByRole("button", { name: "Appliquer et vérifier à nouveau" }).click();
     await expect(page.getByRole("cell", { name: "E2E-MAP-1" })).toBeVisible();
@@ -448,6 +448,10 @@ test.describe("Le Comptoir", () => {
     await page.keyboard.press("Tab");
     await expect(page.locator("#p-cat")).toBeFocused();
     await page.locator("#p-cat").selectOption({ index: 1 });
+    // Ordinateur : toutes les parties ouvertes, aperçu permanent ; coût visible en mode complet.
+    await expect(page.getByRole("complementary", { name: "Aperçu du produit" })).toBeVisible();
+    await expect(page.locator("#p-cost")).toHaveCount(0);
+    await page.getByRole("radio", { name: "Mode complet" }).click();
     await page.locator("#p-price").fill("20000");
     await page.locator("#p-cost").fill("25000");
     await expect(page.getByText(/Prix inférieur au coût : perte de 5\s000/)).toBeVisible();
@@ -463,7 +467,7 @@ test.describe("Le Comptoir", () => {
     await expect(page.locator("#p-price")).toHaveValue("20000");
 
     // Variantes : valeurs en étiquettes, option personnalisée, combinaisons, réglage groupé.
-    await page.locator("summary", { hasText: "Variantes" }).click();
+    await page.locator("label", { hasText: /^Oui$/ }).click();
     await page.getByRole("button", { name: "Couleur", exact: true }).click();
     await page.getByLabel("Ajouter des valeurs pour Couleur").fill("Noir, Blanc");
     await page.getByLabel("Ajouter des valeurs pour Couleur").press("Enter");
@@ -473,7 +477,7 @@ test.describe("Le Comptoir", () => {
       await page.getByLabel("Ajouter des valeurs pour Matière").fill(v);
       await page.getByLabel("Ajouter des valeurs pour Matière").press("Enter");
     }
-    await expect(page.getByText("2 × 2 = 4 combinaisons")).toBeVisible();
+    await expect(page.getByTestId("combos-preview")).toHaveText("2 × 2 = 4 combinaisons · 4 variantes seront créées");
     await page.getByRole("button", { name: /Générer les 4 combinaisons/ }).click();
     await expect(page.getByTestId("variant-count")).toHaveText(/4 variantes · 4 proposées/);
     await page.getByLabel("Proposer Blanc · Tissu").uncheck();
@@ -556,5 +560,118 @@ test.describe("Le Comptoir", () => {
     // Relancer : rien à créer.
     await page.goto("/comptoir/catalogue/import/boutique");
     await expect(page.getByText("Tout le manifeste est déjà importé.")).toBeVisible();
+  });
+
+  test("saisie complète sur ordinateur : nom proposé, modèle intact, caractéristiques, URL refusée, doublon signalé, publication bloquée sans photo", async ({
+    page,
+  }) => {
+    await login(page, "proprietaire@demo.gps");
+    await page.goto("/comptoir/catalogue/nouveau");
+    await page.getByRole("radio", { name: "Mode complet" }).click();
+    await page.locator("#p-cat").selectOption({ label: "Téléphones" });
+    await page.locator("#p-brand").fill("Orbis");
+    await page.locator("#p-model").fill("ORB-N12 Pro");
+    // Caractéristiques propres aux téléphones, avec valeurs rapides.
+    await expect(page.locator("#p-spec-ram")).toBeVisible();
+    await page.locator("#p-spec-stockage").fill("256 Go");
+    // Nom simple proposé à partir des informations sûres, sans slogan.
+    await expect(page.getByTestId("name-suggestion")).toHaveText("Orbis ORB-N12 Pro 256 Go");
+    await page.getByRole("button", { name: "Utiliser", exact: true }).click();
+    await expect(page.locator("#p-name")).toHaveValue("Orbis ORB-N12 Pro 256 Go");
+    await expect(page.locator("#p-model")).toHaveValue("ORB-N12 Pro");
+    // Information incertaine : jamais reprise dans le nom proposé.
+    await page.locator("#p-spec-stockage").fill("256 Go ?");
+    await expect(page.getByTestId("name-suggestion")).toHaveText("Orbis ORB-N12 Pro");
+
+    // Produit déjà au catalogue : avertissement, jamais de fusion automatique.
+    await page.locator("#p-name").fill("Orbis Nova 12");
+    await expect(page.getByText("Un produit similaire existe peut-être.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Modifier l'existant" }).first()).toBeVisible();
+    await page.getByRole("button", { name: "Continuer quand même" }).click();
+    await expect(page.getByText("Un produit similaire existe peut-être.")).toHaveCount(0);
+    await page.locator("#p-name").fill("Orbis ORB-N12 Pro 256 Go");
+
+    // Import par URL : https seulement.
+    await page.getByRole("button", { name: "Importer depuis une URL" }).click();
+    await page.locator("#p-media-url").fill("http://exemple.test/photo.jpg");
+    await page.getByRole("button", { name: "Importer la photo" }).click();
+    await expect(page.getByText("Seules les adresses https:// sont acceptées.")).toBeVisible();
+
+    // Caractéristique personnalisée privée, description composée sans texte inventé.
+    await page.locator("#p-short").fill("Téléphone double SIM.");
+    await expect(page.getByTestId("verification")).toBeVisible();
+    await page.locator("#p-price").fill("150000");
+    // Sans photo : la publication est refusée, le brouillon reste possible.
+    await page.locator("label", { hasText: "Visible dès l'enregistrement" }).click();
+    await expect(page.getByText("Ajoutez au moins une photo.").first()).toBeVisible();
+    await expect(page.getByText("Il manque des informations pour publier.").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Enregistrer et rester sur la fiche" })).toBeDisabled();
+    await page.locator("label", { hasText: "Invisible sur le site" }).click();
+    await page.getByRole("button", { name: "Enregistrer et rester sur la fiche" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+    await expect(page.locator("#p-model")).toHaveValue("ORB-N12 Pro");
+    await expect(page.getByTestId("progression")).toContainText("Fiche complétée à");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
+  test("produits à compléter, comptage rapide et modification rapide depuis le catalogue", async ({ page }) => {
+    await login(page, "gestion@demo.gps");
+    // Un brouillon incomplet, comme ceux relevés en boutique.
+    await page.goto("/comptoir/catalogue/nouveau");
+    await page.locator("#p-name").fill("Brouillon à compléter E2E");
+    await page.locator("#p-cat").selectOption({ index: 1 });
+    await page.getByRole("button", { name: "Enregistrer et rester sur la fiche" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+    await page.goto("/comptoir/catalogue/a-completer");
+    await expect(page.getByTestId("progression-catalogue")).toHaveText(/\d+ produits? complétés? sur \d+/);
+    // Gestionnaire : aucun filtre sur le coût.
+    await expect(page.getByRole("link", { name: "Sans coût" })).toHaveCount(0);
+    await page.getByRole("link", { name: "Sans photo" }).click();
+    await expect(page).toHaveURL(/filtre=sans-photo/);
+    await page.getByRole("link", { name: /Commencer par/ }).click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}\?completer=/);
+    // Suivant, ou retour à la liste sur le dernier produit ; rien n'est publié.
+    const first = page.url();
+    await page.getByRole("button", { name: /Enregistrer et (passer au produit suivant|revenir à la liste)/ }).click();
+    await expect(page).not.toHaveURL(first);
+    await expect(page).toHaveURL(/completer=|\/a-completer/);
+
+    // Comptage rapide : différence affichée, mouvement tracé.
+    await page.goto("/comptoir/stock/comptage?q=Volta%20Chargeur");
+    const card = page.getByRole("region", { name: /Comptage de Volta Chargeur 25W/ });
+    const sku = (await card.locator("p.font-mono").innerText()).trim();
+    const before = Number(await page.getByTestId("stock-actuel").innerText());
+    await expect(page.locator("#qc-reason")).toHaveValue("Comptage rapide");
+    await page.locator("#qc-count").fill(String(before + 3));
+    await expect(page.getByTestId("difference")).toHaveText("+3");
+    await page.getByRole("button", { name: "Enregistrer et suivant" }).click();
+    await expect(page.getByText(`Volta Chargeur 25W : ${before} → ${before + 3}.`)).toBeVisible();
+    expect((await availability(page, sku)).onHand).toBe(before + 3);
+
+    // Modification rapide depuis le catalogue : prix d'une variante.
+    await page.goto("/comptoir/catalogue?q=Lumen%20Rive");
+    await page.getByRole("button", { name: "Modifier rapidement Lumen Rive" }).first().click();
+    const sheet = page.getByRole("dialog");
+    const price = sheet.getByLabel(/^Prix \(FCFA\)/).first();
+    await expect(price).toBeVisible();
+    await price.fill("12345");
+    await sheet.getByRole("button", { name: "Enregistrer", exact: true }).first().click();
+    await expect(sheet.getByText(/enregistré\.$/)).toBeVisible();
+    await expect(sheet.getByText(/Actuel : 12\s345\sFCFA/).first()).toBeVisible();
+  });
+
+  test("droits : le vendeur ne complète ni ne compte, le gestionnaire ne voit pas les coûts", async ({ page }) => {
+    await login(page, "vente@demo.gps");
+    for (const path of ["/comptoir/catalogue/a-completer", "/comptoir/stock/comptage", "/comptoir/catalogue/nouveau"]) {
+      await page.goto(path);
+      await expect(page.getByText("Droits insuffisants")).toBeVisible();
+    }
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue/nouveau");
+    await page.getByRole("radio", { name: "Mode complet" }).click();
+    await expect(page.locator("#p-cost")).toHaveCount(0);
+    await expect(page.getByTestId("valeurs-stock")).toHaveCount(0);
+    await page.goto("/comptoir/parametres");
+    await expect(page.getByText("Droits insuffisants")).toBeVisible();
   });
 });

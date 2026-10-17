@@ -271,5 +271,7 @@ export async function importedInfo(db: Db, productId: string) {
     notes: string | null;
     needsHumanReview: boolean;
     compatibility: string[];
+    checksDoneAt?: string;
+    checksDoneBy?: string;
   };
 }

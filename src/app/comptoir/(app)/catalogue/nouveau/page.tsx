@@ -5,6 +5,8 @@ import { can } from "@/lib/permissions";
 import { Forbidden, PageTitle } from "@/components/admin/ui";
 import { ProductFormClient } from "@/components/admin/ProductForm";
 import { videoMaxMb } from "@/server/domain/media";
+import { getSettings } from "@/server/domain/settings";
+import { specLabelsByCategory } from "@/server/domain/catalog-entry";
 
 export const metadata: Metadata = { title: "Nouveau produit" };
 
@@ -13,21 +15,26 @@ export default async function NewProductPage({ searchParams }: PageProps<"/compt
   if (!allowed) return <Forbidden />;
   const canCosts = can(user, "catalog.costs");
   const modele = (await searchParams).modele;
-  const [categories, source] = await Promise.all([
+  const [categories, source, settings, specLabels] = await Promise.all([
     listCategories(db, { scope: "active" }),
     typeof modele === "string" ? productForEdit(db, modele, { withCosts: canCosts }) : null,
+    getSettings(db),
+    specLabelsByCategory(db),
   ]);
   return (
     <>
       <PageTitle eyebrow="Catalogue" title="Nouveau produit">
         {source
           ? `Copie de « ${source.name} » : mêmes réglages, sans nom, références, code-barres, photos ni stock.`
-          : "Nom, catégorie, prix, photos : le reste est facultatif. Un brouillon s'enregistre à tout moment."}
+          : "Photos, nom, catégorie, prix et stock : le reste est facultatif. Un brouillon s'enregistre à tout moment."}
       </PageTitle>
       <ProductFormClient
         videoMaxMb={videoMaxMb()}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         canCosts={canCosts}
+        userId={user.id}
+        quickValues={settings.catalog.quickValues}
+        specLabels={specLabels}
         initial={
           source
             ? {
@@ -35,6 +42,8 @@ export default async function NewProductPage({ searchParams }: PageProps<"/compt
                 createId: crypto.randomUUID(),
                 name: "",
                 brand: source.brand,
+                model: source.model ?? "",
+                details: source.details ?? {},
                 categoryId: source.categoryId,
                 description: source.description,
                 specs: source.specs,

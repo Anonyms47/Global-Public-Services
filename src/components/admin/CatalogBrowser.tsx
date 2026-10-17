@@ -13,12 +13,14 @@ import {
 import { fcfa } from "@/lib/format";
 import { ActionFeedback, useAction } from "./useAction";
 import { Badge, Empty } from "./ui";
+import { QuickEdit } from "./QuickEdit";
 import { IconGrid, IconList } from "../ui/icons";
 
 interface Row {
   id: string;
   name: string;
   brand: string;
+  category_id?: string | null;
   category_name: string | null;
   status: "draft" | "published" | "archived";
   featured: boolean;
@@ -56,6 +58,7 @@ export function CatalogBrowser({
   viewHref,
   canBulk,
   canEdit,
+  canCount = false,
   emptyHint,
 }: {
   rows: Row[];
@@ -64,6 +67,8 @@ export function CatalogBrowser({
   viewHref: { grille: string; liste: string };
   canBulk: boolean;
   canEdit: boolean;
+  /** Correction de stock depuis la modification rapide (droit d'inventaire). */
+  canCount?: boolean;
   emptyHint: string;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -401,6 +406,15 @@ export function CatalogBrowser({
                   </p>
                 </div>
               </Link>
+              {canEdit && r.status !== "archived" ? (
+                <div className="px-3 pb-3">
+                  <QuickEdit
+                    product={{ id: r.id, name: r.name, status: r.status, categoryId: r.category_id ?? null }}
+                    categories={categories}
+                    canCount={canCount}
+                  />
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -438,6 +452,15 @@ export function CatalogBrowser({
                     <div className="text-[13px] text-ink-mute">
                       {[r.brand, r.category_name].filter(Boolean).join(" · ")} · {r.variant_count} variante(s)
                     </div>
+                    {canEdit && r.status !== "archived" ? (
+                      <div className="mt-1">
+                        <QuickEdit
+                          product={{ id: r.id, name: r.name, status: r.status, categoryId: r.category_id ?? null }}
+                          categories={categories}
+                          canCount={canCount}
+                        />
+                      </div>
+                    ) : null}
                   </td>
                   <td className="py-2">
                     <div className="flex flex-wrap gap-1">

@@ -2220,6 +2220,254 @@ describe("Points de vente (stock commun)", () => {
   });
 });
 
+describe("Saisie simplifiée des produits", () => {
+  it("nom simple suggéré sans donnée incertaine, gabarits par catégorie, description composée, avancement", async () => {
+    const kit = await import("@/lib/product-kit");
+    const specs = (o: Record<string, string>) => Object.entries(o).map(([label, value]) => ({ label, value }));
+    expect(
+      kit.suggestName({
+        categoryName: "Batteries externes",
+        brand: "Oraimo",
+        model: "OPB-P600Q",
+        specs: specs({ Capacité: "60 000 mAh" }),
+      }),
+    ).toBe("Batterie externe Oraimo 60 000 mAh");
+    expect(kit.suggestName({ categoryName: "Téléphones", brand: "Nokia", model: "105 4G", specs: [] })).toBe(
+      "Nokia 105 4G",
+    );
+    expect(
+      kit.suggestName({
+        categoryName: "Montres",
+        brand: "Oraimo",
+        model: "Watch 5 Lite",
+        specs: specs({ Type: "connectée" }),
+      }),
+    ).toBe("Montre connectée Oraimo Watch 5 Lite");
+    expect(
+      kit.suggestName({
+        categoryName: "Chargeurs",
+        brand: "",
+        model: "",
+        specs: specs({ Compatibilités: "MacBook", Puissance: "45 W" }),
+      }),
+    ).toBe("Chargeur MacBook 45 W");
+    // Une donnée incertaine n'entre jamais dans le nom ; le modèle n'est jamais modifié.
+    expect(
+      kit.suggestName({ categoryName: "Téléphones", brand: "Nokia", model: "105 (génération à confirmer)", specs: [] }),
+    ).toBe("Nokia");
+    expect(kit.templateFor("Téléphones").fields.map((f) => f.label)).toEqual(
+      expect.arrayContaining(["RAM", "Stockage", "SIM", "Réseau", "Garantie"]),
+    );
+    expect(kit.templateFor("Parfumerie").fields.map((f) => f.label)).toContain("Contenance");
+    expect(kit.templateFor("Protections & coques").fields.map((f) => f.label)).toContain("Compatibilité MagSafe");
+    expect(
+      kit.composeDescription({ short: "Grande capacité.", highlights: ["Écran LED", ""], box: "Câble USB-C" }),
+    ).toBe("Grande capacité.\n\nPoints forts :\n• Écran LED\n\nContenu de la boîte : Câble USB-C");
+    const empty = {
+      name: "",
+      categoryId: null,
+      brand: "",
+      model: "",
+      description: "",
+      warranty: "",
+      axes: [],
+      images: [],
+      specs: [],
+      variants: [{ price: 0, options: {} }],
+    };
+    const c0 = kit.completeness(empty, { canCosts: true, blocking: 3 });
+    expect(c0.percent).toBe(0);
+    expect(c0.sections.photos).toBe("todo");
+    const c1 = kit.completeness(
+      {
+        ...empty,
+        name: "Nokia 105 4G",
+        categoryId: "c",
+        brand: "Nokia",
+        images: [{ kind: "image" }],
+        variants: [{ price: 15000, costPrice: 12000, initialStock: 3, options: {} }],
+      },
+      { canCosts: true, blocking: 0 },
+    );
+    expect(c1.sections.photos).toBe("done");
+    expect(c1.sections.pricing).toBe("done");
+    expect(c1.percent).toBe(70);
+    expect(
+      kit.entryHints({ ...empty, variants: [{ price: 5000, costPrice: 5000, options: {} }] }, { canCosts: true }),
+    ).toEqual(
+      expect.arrayContaining([
+        "Prix de vente égal au coût : aucune marge.",
+        "Aucun code-barres.",
+        "Aucune garantie indiquée.",
+      ]),
+    );
+    expect(kit.entryHints(empty, { canCosts: false }).some((h) => /Coût/.test(h))).toBe(false);
+  });
+
+  it("modèle, description structurée, caractéristiques privées, photo Internet avec source, doublons, à compléter, comptage", async () => {
+    const entry = await import("@/server/domain/catalog-entry");
+    const { createUser } = await import("@/server/domain/auth");
+    const ownerId = await createUser(db, {
+      name: "Propriétaire saisie",
+      email: "proprio.saisie",
+      role: "owner",
+      password: "motdepasse-saisie",
+      temporary: false,
+    });
+    const owner = { id: ownerId, name: "Propriétaire saisie" };
+    const cat = (await db.one<{ id: string }>("select id from categories where archived_at is null limit 1"))!.id;
+
+    // Photo importée depuis une adresse : contenu vérifié, rangée dans le stockage GPS, provenance conservée.
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, ...new Array(64).fill(1)]);
+    const fake = (body: Uint8Array, url = "https://www.fabricant.example/p/batterie.png") =>
+      (async () => ({
+        ok: true,
+        status: 200,
+        url,
+        headers: new Headers(),
+        arrayBuffer: async () => body.buffer,
+      })) as unknown as typeof fetch;
+    const img = await entry.importMediaFromUrl(
+      db,
+      {
+        url: "https://www.fabricant.example/p/batterie.png",
+        userId: ownerId,
+        isDemo: false,
+        matches: "Oraimo OPB-P600Q",
+      },
+      fake(png),
+    );
+    expect(img.url).toMatch(/^\/media\/[0-9a-f-]{36}$/);
+    expect(img.source).toMatchObject({
+      domain: "fabricant.example",
+      status: "Photo trouvée sur Internet",
+      matches: "Oraimo OPB-P600Q",
+    });
+    await expect(
+      entry.importMediaFromUrl(
+        db,
+        { url: "http://fabricant.example/a.png", userId: ownerId, isDemo: false },
+        fake(png),
+      ),
+    ).rejects.toThrow(/https/);
+    await expect(
+      entry.importMediaFromUrl(db, { url: "https://127.0.0.1/a.png", userId: ownerId, isDemo: false }, fake(png)),
+    ).rejects.toThrow(/refusée/);
+    await expect(
+      entry.importMediaFromUrl(
+        db,
+        { url: "https://fabricant.example/page.html", userId: ownerId, isDemo: false },
+        fake(new TextEncoder().encode("<html>")),
+      ),
+    ).rejects.toThrow(/Format non pris en charge/);
+
+    const saved = await saveProduct(
+      db,
+      {
+        name: "Batterie externe Saisie 60 000 mAh",
+        brand: "Saisie",
+        model: "SAI-P600Q",
+        details: { short: "Grande capacité.", highlights: ["Écran LED"] },
+        categoryId: cat,
+        description: "Grande capacité.\n\nPoints forts :\n• Écran LED",
+        specs: [
+          { label: "Capacité", value: "60 000", unit: "mAh" },
+          { label: "Fournisseur", value: "Grossiste Dakar", private: true },
+        ],
+        condition: null,
+        axes: [],
+        images: [{ url: img.url, alt: "", kind: "image", source: img.source }],
+        variants: [{ sku: "", options: {}, price: 25000, costPrice: 18000, initialStock: 2 }],
+        status: "published",
+        featured: false,
+      },
+      { userId: ownerId, withCosts: true },
+    );
+    const back = (await productForEdit(db, saved.id, { withCosts: true }))!;
+    expect(back.model).toBe("SAI-P600Q");
+    expect(back.details).toEqual({ short: "Grande capacité.", highlights: ["Écran LED"] });
+    expect(back.images[0].source).toMatchObject({ domain: "fabricant.example" });
+    // Site public : caractéristique privée masquée, unité accolée.
+    const pub = (await publishedProducts(db)).find((p) => p.id === saved.id)!;
+    expect(pub.specs).toEqual([{ label: "Capacité", value: "60 000 mAh" }]);
+
+    // Produit peut-être en double : signalé, jamais fusionné.
+    const sim = await entry.similarProducts(db, "Batterie Saisie 60 000 mAh", null);
+    expect(sim.map((x) => x.id)).toContain(saved.id);
+    expect(await entry.similarProducts(db, "Batterie Saisie 60 000 mAh", saved.id)).toEqual([]);
+
+    // Brouillon incomplet : listé avec ce qui manque ; le coût n'est compté que pour le propriétaire.
+    const draft = await saveProduct(
+      db,
+      {
+        name: "Écouteurs Saisie",
+        brand: "",
+        categoryId: cat,
+        description: "",
+        specs: [],
+        condition: null,
+        axes: [],
+        images: [],
+        variants: [{ sku: "", options: {}, price: 0 }],
+        status: "draft",
+        featured: false,
+        internal: { externalKey: "test-saisie-1", needsHumanReview: true, humanChecks: ["Prix"], notes: "Note test" },
+      },
+      { userId: ownerId, withCosts: true },
+    );
+    const forOwner = await entry.listToComplete(db, { canCosts: true });
+    const row = forOwner.rows.find((r) => r.id === draft.id)!;
+    expect(row.flags).toEqual(
+      expect.arrayContaining(["sans-photo", "sans-prix", "sans-cout", "sans-stock", "sans-garantie", "a-verifier"]),
+    );
+    expect(row.flags).not.toContain("pret");
+    expect(forOwner.complete).toBeLessThan(forOwner.total);
+    const forManager = await entry.listToComplete(db, { canCosts: false });
+    expect(forManager.rows.find((r) => r.id === draft.id)!.flags).not.toContain("sans-cout");
+    await entry.markChecksDone(db, draft.id, owner);
+    expect(
+      (await entry.listToComplete(db, { canCosts: true })).rows.find((r) => r.id === draft.id)!.flags,
+    ).not.toContain("a-verifier");
+    // Rien n'est publié automatiquement.
+    expect((await productForEdit(db, draft.id, { withCosts: false }))!.status).toBe("draft");
+
+    // Modification rapide (journalisée) et comptage rapide (mouvement tracé, stock unique).
+    const v = back.variants[0];
+    await entry.quickUpdateVariant(db, { variantId: v.id, price: 26000, lowStockThreshold: 1 }, ownerId);
+    const log = await db.one<{ detail: { price: { from: number; to: number } } }>(
+      "select detail from audit_log where action = 'variant.quick_update' order by created_at desc limit 1",
+    );
+    expect(log!.detail.price).toEqual({ from: 25000, to: 26000 });
+    await expect(entry.quickUpdateVariant(db, { variantId: v.id, price: 0 }, ownerId)).rejects.toThrow(
+      /garder un prix/,
+    );
+    await expect(entry.quickCount(db, { variantId: v.id, counted: 5, reason: " ", userId: ownerId })).rejects.toThrow(
+      /motif/,
+    );
+    const count = await entry.quickCount(db, {
+      variantId: v.id,
+      counted: 5,
+      reason: "Comptage rapide",
+      userId: ownerId,
+    });
+    expect(count).toMatchObject({ before: 2, after: 5, delta: 3 });
+    const mv = await db.one<{
+      kind: string;
+      on_hand_delta: number;
+      on_hand_after: number;
+      reason: string;
+      user_id: string;
+    }>(
+      "select kind, on_hand_delta, on_hand_after, reason, user_id from stock_movements where variant_id = $1 order by created_at desc limit 1",
+      [v.id],
+    );
+    expect(mv).toMatchObject({ kind: "inventory", on_hand_delta: 3, on_hand_after: 5, user_id: ownerId });
+    expect(mv!.reason).toMatch(/2 → 5 · Comptage rapide/);
+
+    await db.query("delete from products where id = any($1)", [[saved.id, draft.id]]);
+  });
+});
+
 describe("Démonstration déjà en ligne", () => {
   it("remplace les anciennes illustrations par les photos, sans toucher aux photos modifiées", async () => {
     const db = await demoDb();
