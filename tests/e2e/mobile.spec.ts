@@ -139,6 +139,21 @@ test.describe("Parcours mobile et clavier", () => {
     await expect(bad.getByText(/Format non pris en charge/)).toBeVisible();
     await bad.getByRole("button", { name: "Retirer" }).click();
     await expect(page.getByTestId("media-item")).toHaveCount(2);
+    // Ajout depuis la galerie au doigt : le cadre d'envoi reste à l'écran.
+    const gallery = page.getByText("Choisir dans la galerie");
+    await gallery.scrollIntoViewIfNeeded();
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), gallery.tap()]);
+    await chooser.setFiles({
+      name: "cote.png",
+      mimeType: "image/png",
+      buffer: fs.readFileSync("public/brand/logo-gps-mark.png"),
+    });
+    await expect(uploads.getByText("Envoyé")).toHaveCount(1);
+    await expect(page.getByTestId("media-item")).toHaveCount(3);
+    await page.waitForTimeout(400);
+    await expect(gallery).toBeInViewport();
+    await page.getByTestId("media-item").nth(2).getByRole("button", { name: "Retirer la photo 3" }).click();
+    await expect(page.getByTestId("media-item")).toHaveCount(2);
     // Photo principale au choix.
     await page.getByTestId("media-item").nth(1).getByRole("button", { name: "Définir comme photo principale" }).click();
     await expect(page.getByTestId("media-item").nth(0).getByText("Principale")).toBeVisible();

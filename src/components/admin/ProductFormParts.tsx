@@ -736,7 +736,7 @@ export function MediaEditor({
     e.target.value = "";
   };
   const tile =
-    "flex min-h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-[1.5px] border-line bg-card px-2 py-2 text-center text-[13px] font-bold focus-within:outline-3 focus-within:outline-gps-blue hover:border-gps-blue";
+    "relative flex min-h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border-[1.5px] border-line bg-card px-2 py-2 text-center text-[13px] font-bold focus-within:outline-3 focus-within:outline-gps-blue hover:border-gps-blue";
 
   return (
     <div className="grid min-w-0 gap-3">

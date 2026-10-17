@@ -616,7 +616,9 @@ function ProductForm({
       onFocusCapture={(e) => {
         // Téléphone : le champ actif reste visible au-dessus du clavier et de la barre d'enregistrement.
         const t = e.target as HTMLElement;
-        if (!desktop && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
+        // Sauf les champs masqués (fichiers, choix) : les recentrer ferait sauter la page hors du cadre d'envoi.
+        const hidden = t instanceof HTMLInputElement && ["file", "radio", "checkbox"].includes(t.type);
+        if (!desktop && !hidden && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
           setTimeout(() => t.scrollIntoView({ block: "center", behavior: "smooth" }), 250);
         }
       }}
