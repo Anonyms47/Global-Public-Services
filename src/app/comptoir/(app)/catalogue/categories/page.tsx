@@ -4,12 +4,14 @@ import { requirePage } from "@/server/admin";
 import { listCategories } from "@/server/domain/catalog";
 import { Forbidden, PageTitle } from "@/components/admin/ui";
 import { CategoryManager } from "@/components/admin/CategoryManager";
+import { CategoryProfiles } from "@/components/admin/CategoryProfiles";
+import { can } from "@/lib/permissions";
 import { IconArrowLeft } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Catégories" };
 
 export default async function CategoriesAdminPage() {
-  const { db, allowed } = await requirePage("catalog.edit");
+  const { db, user, allowed } = await requirePage("catalog.edit");
   if (!allowed) return <Forbidden />;
   const cats = await listCategories(db, { scope: "all" });
   return (
@@ -38,6 +40,13 @@ export default async function CategoriesAdminPage() {
           total: c.total_count,
         }))}
       />
+      {can(user, "settings.edit") ? (
+        <CategoryProfiles
+          categories={cats
+            .filter((c) => !c.archived_at)
+            .map((c) => ({ id: c.id, name: c.name, profile: c.profile ?? null }))}
+        />
+      ) : null}
     </>
   );
 }

@@ -2248,7 +2248,7 @@ describe("Saisie simplifiée des produits", () => {
         categoryName: "Chargeurs",
         brand: "",
         model: "",
-        specs: specs({ Compatibilités: "MacBook", Puissance: "45 W" }),
+        specs: specs({ "Compatible avec": "MacBook", "Puissance maximale": "45 W" }),
       }),
     ).toBe("Chargeur MacBook 45 W");
     // Une donnée incertaine n'entre jamais dans le nom ; le modèle n'est jamais modifié.
@@ -2259,7 +2259,86 @@ describe("Saisie simplifiée des produits", () => {
       expect.arrayContaining(["RAM", "Stockage", "SIM", "Réseau", "Garantie"]),
     );
     expect(kit.templateFor("Parfumerie").fields.map((f) => f.label)).toContain("Contenance");
-    expect(kit.templateFor("Protections & coques").fields.map((f) => f.label)).toContain("Compatibilité MagSafe");
+    expect(
+      kit
+        .templateFor("Protections & coques")
+        .fields.map((f) => f.label)
+        .slice(0, 2),
+    ).toEqual(["Téléphone compatible", "Type de coque"]);
+    // Options et variantes réelles : pas de couleur pour un chargeur ou une batterie externe.
+    expect(kit.templateFor("Chargeurs").variantAxes).toEqual([]);
+    expect(kit.templateFor("Batteries externes").variantAxes).toEqual([]);
+    expect(kit.templateFor("Chargeurs").fields.map((f) => f.label)).not.toContain("Couleur");
+    expect(kit.templateFor("Batteries externes").fields.map((f) => f.label)).not.toContain("Couleur");
+    expect(kit.templateFor("Protections & coques").variantAxes).toEqual(["Couleur"]);
+    expect(kit.templateFor("Câbles").variantAxes).toEqual(["Longueur"]);
+    expect(
+      kit.suggestName({
+        categoryName: "Chargeurs",
+        brand: "TDKC313",
+        model: "",
+        specs: specs({ "Types de ports": "USB-C+USB-A", "Puissance maximale": "35 W" }),
+      }),
+    ).toBe("Chargeur USB-C + USB-A 35 W");
+    expect(
+      kit.suggestName({
+        categoryName: "Chargeurs",
+        brand: "",
+        model: "",
+        specs: specs({ "Type de chargeur": "Sans fil", "Compatible avec": "Apple Watch" }),
+      }),
+    ).toBe("Chargeur sans fil pour Apple Watch");
+    expect(
+      kit.suggestName({
+        categoryName: "Câbles",
+        brand: "TDKC313",
+        model: "",
+        specs: specs({
+          "Connecteur d'entrée": "USB-C",
+          "Connecteur de sortie": "Lightning",
+          "Puissance maximale": "35 W",
+        }),
+      }),
+    ).toBe("Câble USB-C vers Lightning — 35 W");
+    // Puissance non vérifiée : jamais dans le nom.
+    expect(
+      kit.suggestName({
+        categoryName: "Câbles",
+        brand: "",
+        model: "",
+        specs: specs({
+          "Connecteur d'entrée": "USB-A",
+          "Connecteur de sortie": "USB-C",
+          "Puissance maximale": "60 W ?",
+        }),
+      }),
+    ).toBe("Câble USB-A vers USB-C");
+    expect(
+      kit.suggestName({
+        categoryName: "Protections & coques",
+        brand: "",
+        model: "",
+        specs: specs({ "Téléphone compatible": "iPhone 15", "Type de coque": "Cuir" }),
+      }),
+    ).toBe("Coque en cuir iPhone 15");
+    expect(
+      kit.suggestName({
+        categoryName: "Protections & coques",
+        brand: "",
+        model: "",
+        specs: specs({ "Téléphone compatible": "iPhone 15 Pro", "Type de coque": "Avec support" }),
+      }),
+    ).toBe("Coque iPhone 15 Pro avec support");
+    expect(kit.nameWarnings("Coque en cuire iPhone 15")[0]).toMatch(/cuir/);
+    // Profil réglé par le propriétaire : champs et options de variantes remplacés.
+    const custom = kit.templateFor("Chargeurs", {
+      fields: [{ label: "Puissance maximale" }, { label: "Prise", options: ["Européenne", "Anglaise"] }],
+      variantAxes: ["Prise"],
+    });
+    expect(custom.variantAxes).toEqual(["Prise"]);
+    expect(custom.fields.map((f) => f.label)).toEqual(["Marque", "Modèle", "Puissance maximale", "Prise", "Garantie"]);
+    expect(custom.fields.find((f) => f.label === "Puissance maximale")?.quick).toBe("power");
+    expect(kit.defaultProfile("Câbles").variantAxes).toEqual(["Longueur"]);
     expect(
       kit.composeDescription({ short: "Grande capacité.", highlights: ["Écran LED", ""], box: "Câble USB-C" }),
     ).toBe("Grande capacité.\n\nPoints forts :\n• Écran LED\n\nContenu de la boîte : Câble USB-C");
@@ -2361,28 +2440,32 @@ describe("Saisie simplifiée des produits", () => {
       ),
     ).rejects.toThrow(/Format non pris en charge/);
 
-    const saved = await saveProduct(
-      db,
-      {
-        name: "Batterie externe Saisie 60 000 mAh",
-        brand: "Saisie",
-        model: "SAI-P600Q",
-        details: { short: "Grande capacité.", highlights: ["Écran LED"] },
-        categoryId: cat,
-        description: "Grande capacité.\n\nPoints forts :\n• Écran LED",
-        specs: [
-          { label: "Capacité", value: "60 000", unit: "mAh" },
-          { label: "Fournisseur", value: "Grossiste Dakar", private: true },
-        ],
-        condition: null,
-        axes: [],
-        images: [{ url: img.url, alt: "", kind: "image", source: img.source }],
-        variants: [{ sku: "", options: {}, price: 25000, costPrice: 18000, initialStock: 2 }],
-        status: "published",
-        featured: false,
-      },
-      { userId: ownerId, withCosts: true },
+    const saisie = (source: typeof img.source) => ({
+      name: "Batterie externe Saisie 60 000 mAh",
+      brand: "Saisie",
+      model: "SAI-P600Q",
+      details: { short: "Grande capacité.", highlights: ["Écran LED"] },
+      categoryId: cat,
+      description: "Grande capacité.\n\nPoints forts :\n• Écran LED",
+      specs: [
+        { label: "Capacité", value: "60 000", unit: "mAh" },
+        { label: "Fournisseur", value: "Grossiste Dakar", private: true },
+      ],
+      condition: null,
+      axes: [],
+      images: [{ url: img.url, alt: "", kind: "image" as const, source }],
+      variants: [{ sku: "", options: {}, price: 25000, costPrice: 18000, initialStock: 2 }],
+      status: "published" as const,
+      featured: false,
+    });
+    // Photo Internet : privée tant que GPS n'a pas confirmé le droit de la publier.
+    await expect(saveProduct(db, saisie(img.source), { userId: ownerId, withCosts: true })).rejects.toThrow(
+      /droit de publication à confirmer/,
     );
+    const saved = await saveProduct(db, saisie({ ...img.source, rightsConfirmed: true }), {
+      userId: ownerId,
+      withCosts: true,
+    });
     const back = (await productForEdit(db, saved.id, { withCosts: true }))!;
     expect(back.model).toBe("SAI-P600Q");
     expect(back.details).toEqual({ short: "Grande capacité.", highlights: ["Écran LED"] });

@@ -30,7 +30,7 @@ export default async function NewProductPage({ searchParams }: PageProps<"/compt
       </PageTitle>
       <ProductFormClient
         videoMaxMb={videoMaxMb()}
-        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        categories={categories.map((c) => ({ id: c.id, name: c.name, profile: c.profile ?? null }))}
         canCosts={canCosts}
         userId={user.id}
         quickValues={settings.catalog.quickValues}

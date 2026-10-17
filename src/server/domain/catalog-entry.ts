@@ -169,7 +169,7 @@ export async function listToComplete(db: Db, opts: { canCosts: boolean }) {
       "select product_id, sku, price, cost_price, on_hand, options from variants where product_id = any($1) and active",
       [ids],
     ),
-    db.query<{ product_id: string; url: string; kind: string; source: unknown }>(
+    db.query<{ product_id: string; url: string; kind: string; source: { rightsConfirmed?: boolean } | null }>(
       "select product_id, url, kind, source from product_images where product_id = any($1) order by position",
       [ids],
     ),
@@ -194,7 +194,7 @@ export async function listToComplete(db: Db, opts: { canCosts: boolean }) {
       categoryId: p.category_id,
       description: p.description,
       axes: p.axes ?? [],
-      images: photos.map(() => ({ kind: "image" as const })),
+      images: photos.map((i) => ({ kind: "image" as const, source: i.source ?? null })),
       variants: vs.map((v) => ({ sku: v.sku, price: v.price, options: v.options })),
     });
     if (!blocking.length) flags.push("pret");

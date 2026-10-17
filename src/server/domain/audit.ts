@@ -39,6 +39,8 @@ export const auditLabels: Record<string, string> = {
   "auth.unlock": "Connexions débloquées",
   "category.create": "Catégorie créée",
   "category.update": "Catégorie modifiée",
+  "category.profile": "Profil de saisie de catégorie modifié",
+  "catalog.restructure": "Catalogue restructuré",
   "category.archive": "Catégorie archivée",
   "category.delete": "Catégorie supprimée",
   "demo.backup": "Sauvegarde des données d'exemple",

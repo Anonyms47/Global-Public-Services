@@ -6,6 +6,7 @@ import { importMediaUrlAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { fcfa } from "@/lib/format";
 import { suggestSku } from "@/lib/sku";
 import type { MediaSource } from "@/server/domain/catalog";
+import type { PhotoCandidate } from "@/lib/product-kit";
 import { ActionFeedback, useAction } from "./useAction";
 import { MediaPicker } from "./MediaLibrary";
 import { UploadList, type useUploadQueue } from "./UploadQueue";
@@ -36,16 +37,6 @@ export interface ImageState {
   source?: MediaSource | null;
 }
 
-export const AXIS_PRESETS = [
-  "Couleur",
-  "Taille",
-  "Pointure",
-  "Stockage",
-  "RAM",
-  "Contenance",
-  "Puissance",
-  "Modèle compatible",
-];
 export const COLOR_AXES = ["Couleur", "Monture", "Coloris"];
 
 export const num = (s: string) =>
@@ -185,8 +176,11 @@ export function VariantEditor({
   full,
   codeErrors,
   margin,
+  presets,
 }: {
   name: string;
+  /** Options réellement proposées pour cette catégorie (profil de la catégorie). */
+  presets: string[];
   axes: string[];
   axisValues: Record<string, string>;
   variants: VariantState[];
@@ -312,14 +306,22 @@ export function VariantEditor({
     <div className="grid gap-4">
       <div>
         <p className="text-[14px] font-semibold">
-          Choisissez ce qui change d&apos;une version à l&apos;autre (3 au plus) :
+          Choisissez ce que le client peut réellement choisir parmi les articles en stock (3 au plus) :
         </p>
+        {!presets.length ? (
+          <p className="hint" data-testid="no-variant-presets">
+            Pour ce type de produit, chaque version (puissance, ports, capacité…) est une fiche séparée. N&apos;ajoutez
+            une option que si le même article existe vraiment en plusieurs versions en boutique.
+          </p>
+        ) : null}
         <div className="mt-2 flex flex-wrap gap-2">
-          {AXIS_PRESETS.filter((a) => !axes.includes(a)).map((a) => (
-            <button key={a} type="button" className="chip" disabled={axes.length >= 3} onClick={() => addAxis(a)}>
-              <IconPlus size={14} /> {a}
-            </button>
-          ))}
+          {presets
+            .filter((a) => !axes.includes(a))
+            .map((a) => (
+              <button key={a} type="button" className="chip" disabled={axes.length >= 3} onClick={() => addAxis(a)}>
+                <IconPlus size={14} /> {a}
+              </button>
+            ))}
         </div>
         <div className="mt-2 flex max-w-md gap-2">
           <input
@@ -706,7 +708,10 @@ export function MediaEditor({
   colorValues,
   videoMaxMb,
   productLabel,
+  candidates = [],
 }: {
+  /** Photos officielles repérées pour ce produit : à comparer au produit avant import. */
+  candidates?: PhotoCandidate[];
   images: ImageState[];
   setImages: (images: ImageState[]) => void;
   uploads: ReturnType<typeof useUploadQueue>;
@@ -836,6 +841,56 @@ export function MediaEditor({
         </form>
       ) : null}
 
+      {candidates.filter((c) => !images.some((x) => x.source?.url === c.url)).length ? (
+        <div
+          className="grid gap-2 rounded-[6px] border border-gps-blue/30 bg-gps-blue-soft/40 p-3"
+          data-testid="photo-candidates"
+        >
+          <p className="text-[14px] font-bold">Photos officielles repérées pour ce modèle</p>
+          <p className="text-[13px] text-ink-soft">
+            Comparez-les au produit en boutique (forme, logo, référence, ports) avant d&apos;importer. Une photo
+            importée reste privée tant que le droit de publication n&apos;est pas confirmé.
+          </p>
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {candidates
+              .filter((c) => !images.some((x) => x.source?.url === c.url))
+              .map((c) => (
+                <li key={c.url} className="grid gap-1 rounded-[4px] border border-line bg-card p-2 text-[12px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- aperçu d'une image externe avant import */}
+                  <img
+                    src={c.url}
+                    alt={`Photo proposée : ${c.matches}`}
+                    className="aspect-square w-full object-contain"
+                    loading="lazy"
+                  />
+                  <a href={c.page} target="_blank" rel="noreferrer" className="[overflow-wrap:anywhere] underline">
+                    {c.source}
+                  </a>
+                  {c.note ? <span className="text-ink-mute">{c.note}</span> : null}
+                  <button
+                    type="button"
+                    className="btn btn-blue btn-sm"
+                    disabled={urlAction.pending}
+                    onClick={() =>
+                      urlAction.run(() => importMediaUrlAction({ url: c.url, matches: c.matches, license: "" }), {
+                        refresh: false,
+                        onSuccess: (r) =>
+                          setImages([
+                            ...images,
+                            { url: r.url, alt: "", color: null, kind: "image", source: { ...r.source, url: c.url } },
+                          ]),
+                      })
+                    }
+                  >
+                    Importer (reste privée)
+                  </button>
+                </li>
+              ))}
+          </ul>
+          <ActionFeedback failure={urlAction.failure} />
+        </div>
+      ) : null}
+
       <UploadList items={uploads.items} retry={uploads.retry} dismiss={uploads.dismiss} />
 
       {images.length ? (
@@ -925,6 +980,17 @@ export function MediaEditor({
                   <span className="block text-ink-mute">
                     À remplacer par une photo de la boutique dès que possible.
                   </span>
+                  <label className="mt-1 flex items-start gap-1.5 font-semibold text-ink">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={!!img.source.rightsConfirmed}
+                      onChange={(e) => edit(i, { source: { ...img.source!, rightsConfirmed: e.target.checked } })}
+                    />
+                    {img.source.rightsConfirmed
+                      ? "Droit de publication confirmé par GPS"
+                      : "Droit de publication à confirmer (photo privée)"}
+                  </label>
                 </p>
               ) : null}
               <input

@@ -1,3 +1,4 @@
+import type { PhotoCandidate } from "@/lib/product-kit";
 import type { Db } from "../db/client";
 import { newId } from "./errors";
 import { audit } from "./audit";
@@ -273,5 +274,6 @@ export async function importedInfo(db: Db, productId: string) {
     compatibility: string[];
     checksDoneAt?: string;
     checksDoneBy?: string;
+    photoCandidates?: PhotoCandidate[];
   };
 }

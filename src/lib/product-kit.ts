@@ -50,6 +50,19 @@ export interface CategoryTemplate {
   fields: FieldDef[];
   /** Ordre des éléments du nom suggéré. */
   nameParts: ("type" | "brand" | "model" | string)[];
+  /**
+   * Options de variantes proposées : seulement ce qu'un client peut réellement
+   * choisir pour ce type de produit (jamais la couleur d'un chargeur, par exemple).
+   */
+  variantAxes: string[];
+}
+
+/** Profil d'une catégorie, modifiable par le propriétaire (Catalogue → Catégories). */
+export interface CategoryProfile {
+  /** Champs demandés, dans l'ordre ; « options » = choix rapides. */
+  fields?: { label: string; options?: string[] }[];
+  /** Options de variantes proposées. */
+  variantAxes?: string[];
 }
 
 const brand: FieldDef = { label: "Marque", target: "brand" };
@@ -59,12 +72,40 @@ const condition: FieldDef = { label: "État", target: "condition", quick: "condi
 const color: FieldDef = { label: "Couleur" };
 const yesNo = ["Oui", "Non"];
 
+/** Types de coques proposés (seulement ceux réellement présents en boutique sont à choisir). */
+export const COQUE_TYPES = [
+  "Silicone",
+  "Cuir",
+  "Transparente",
+  "Rigide",
+  "Souple",
+  "Antichoc",
+  "MagSafe",
+  "Portefeuille",
+  "Avec protection caméra",
+  "Avec support",
+] as const;
+/** Place du type dans le nom : « Coque en silicone iPhone 15 », « Coque iPhone 15 avec support ». */
+const COQUE_WORDING: Record<string, { before?: string; after?: string }> = {
+  silicone: { before: "en silicone" },
+  cuir: { before: "en cuir" },
+  transparente: { before: "transparente" },
+  rigide: { before: "rigide" },
+  souple: { before: "souple" },
+  antichoc: { before: "antichoc" },
+  magsafe: { before: "MagSafe" },
+  portefeuille: { before: "portefeuille" },
+  "avec protection camera": { after: "avec protection caméra" },
+  "avec support": { after: "avec support" },
+};
+
 export const categoryTemplates: CategoryTemplate[] = [
   {
     key: "telephones",
     match: ["telephone", "smartphone", "mobile"],
     typeName: "",
     nameParts: ["brand", "model", "Stockage"],
+    variantAxes: ["Couleur", "Stockage", "RAM"],
     fields: [
       brand,
       model,
@@ -87,6 +128,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["ecouteur", "airpod"],
     typeName: "Écouteurs",
     nameParts: ["type", "Connexion", "brand", "model"],
+    variantAxes: ["Couleur"],
     fields: [
       brand,
       model,
@@ -107,6 +149,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["casque"],
     typeName: "Casque",
     nameParts: ["type", "Connexion", "brand", "model"],
+    variantAxes: ["Couleur"],
     fields: [
       brand,
       model,
@@ -121,57 +164,61 @@ export const categoryTemplates: CategoryTemplate[] = [
     ],
   },
   {
+    // Un chargeur par puissance et configuration de ports : pas de variante Couleur.
     key: "chargeurs",
     match: ["chargeur"],
     typeName: "Chargeur",
-    nameParts: ["type", "brand", "Compatibilités", "Puissance"],
+    nameParts: ["type", "Type de chargeur", "Compatible avec", "Types de ports", "Puissance maximale"],
+    variantAxes: [],
     fields: [
+      { label: "Type de chargeur", options: ["Secteur", "Voiture", "Sans fil", "Ordinateur"] },
+      { label: "Puissance maximale", quick: "power" },
+      { label: "Nombre de ports", options: ["1", "2", "3", "4"] },
+      { label: "Types de ports", options: ["USB-C", "USB-A", "USB-C + USB-A", "2 × USB-C", "MagSafe 2"] },
+      { label: "Technologies de charge", options: ["PD", "QC", "PD et QC", "GaN"] },
+      { label: "Compatible avec", placeholder: "MacBook, iPhone, Apple Watch…" },
+      { label: "Câble inclus", options: ["Non", "USB-C vers USB-C", "USB-C vers Lightning"] },
       brand,
       model,
-      { label: "Type", options: ["Secteur", "Voiture", "Sans fil", "Ordinateur"] },
-      { label: "Puissance", quick: "power" },
-      { label: "Nombre de ports" },
-      { label: "Types de ports", placeholder: "USB-C + USB-A" },
-      { label: "Charge rapide", options: ["PD", "QC", "PD et QC", "Non"] },
-      { label: "Compatibilités", placeholder: "iPhone, Samsung…" },
-      { label: "Câble inclus", options: yesNo },
-      { label: "Longueur du câble", placeholder: "1 m" },
-      color,
       warranty,
     ],
   },
   {
+    // Un câble par connecteurs et puissance ; la longueur peut être une variante.
     key: "cables",
     match: ["cable"],
     typeName: "Câble",
-    nameParts: ["type", "Connecteurs", "Longueur"],
+    nameParts: ["type", "Connecteur d'entrée", "Connecteur de sortie", "Puissance maximale"],
+    variantAxes: ["Longueur"],
     fields: [
+      { label: "Connecteur d'entrée", options: ["USB-A", "USB-C"] },
+      { label: "Connecteur de sortie", options: ["USB-C", "Lightning", "Micro-USB", "Apple Watch"] },
+      { label: "Puissance maximale", quick: "power", placeholder: "Vérifiée sur l'emballage" },
+      { label: "Longueur", options: ["1 m", "2 m", "3 m"] },
+      { label: "Fonction particulière", options: ["Coudé", "Magnétique", "Tressé", "Données"] },
       brand,
-      { label: "Connecteurs", placeholder: "USB-C vers Lightning" },
-      { label: "Longueur", placeholder: "1 m" },
-      { label: "Puissance maximale", quick: "power" },
-      { label: "Transfert de données", options: yesNo },
-      { label: "Matière", placeholder: "Tressé, silicone…" },
-      color,
+      model,
       warranty,
     ],
   },
   {
+    // Une batterie par capacité, puissance ou modèle : pas de variante Couleur.
     key: "batteries",
     match: ["batterie", "powerbank"],
     typeName: "Batterie externe",
     nameParts: ["type", "brand", "Capacité"],
+    variantAxes: [],
     fields: [
       brand,
       model,
       { label: "Capacité", quick: "capacity" },
       { label: "Puissance maximale", quick: "power" },
-      { label: "Nombre de sorties" },
+      { label: "Nombre de sorties", options: ["1", "2", "3", "4", "5"] },
       { label: "Types de ports", placeholder: "USB-C, USB-A" },
-      { label: "Charge rapide", options: ["PD", "QC", "PD et QC", "Non"] },
-      { label: "Affichage du niveau", options: yesNo },
+      { label: "Affichage numérique", options: yesNo },
       { label: "Lampe intégrée", options: yesNo },
-      color,
+      { label: "Charge rapide", options: ["PD", "QC", "PD et QC", "Non"] },
+      { label: "Câble fourni", options: yesNo },
       warranty,
     ],
   },
@@ -180,6 +227,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["montre"],
     typeName: "Montre",
     nameParts: ["type", "Type", "brand", "model"],
+    variantAxes: ["Taille", "Couleur"],
     fields: [
       brand,
       model,
@@ -202,6 +250,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["enceinte", "audio", "radio"],
     typeName: "Enceinte",
     nameParts: ["type", "Connexion", "brand", "model"],
+    variantAxes: ["Couleur"],
     fields: [
       brand,
       model,
@@ -221,6 +270,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["informatique", "ordinateur"],
     typeName: "",
     nameParts: ["Type", "brand", "model"],
+    variantAxes: ["Couleur", "Capacité"],
     fields: [
       brand,
       model,
@@ -238,6 +288,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["lunette"],
     typeName: "Lunettes",
     nameParts: ["type", "Type", "brand", "model"],
+    variantAxes: ["Monture", "Couleur des verres"],
     fields: [
       brand,
       model,
@@ -256,6 +307,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["chaussure", "basket", "sandale"],
     typeName: "",
     nameParts: ["Type", "brand", "model"],
+    variantAxes: ["Pointure", "Couleur"],
     fields: [
       brand,
       model,
@@ -272,6 +324,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["parfum"],
     typeName: "Parfum",
     nameParts: ["brand", "model", "Contenance"],
+    variantAxes: ["Contenance"],
     fields: [
       brand,
       { label: "Nom du parfum", target: "model" },
@@ -285,20 +338,17 @@ export const categoryTemplates: CategoryTemplate[] = [
     ],
   },
   {
+    // Une fiche par téléphone compatible et type de coque ; la couleur est la variante.
     key: "coques",
     match: ["coque", "protection"],
     typeName: "Coque",
-    nameParts: ["type", "Appareil compatible"],
+    nameParts: ["type", "Type de coque", "Téléphone compatible"],
+    variantAxes: ["Couleur"],
     fields: [
+      { label: "Téléphone compatible", placeholder: "iPhone 15 Pro" },
+      { label: "Type de coque", options: [...COQUE_TYPES] },
       brand,
-      { label: "Appareil compatible", placeholder: "iPhone 15 Pro Max" },
-      { label: "Modèles compatibles" },
-      { label: "Type de protection", options: ["Coque", "Verre trempé", "Film", "Étui"] },
-      { label: "Matière" },
-      color,
-      { label: "Style" },
-      { label: "Protection caméra", options: yesNo },
-      { label: "Compatibilité MagSafe", options: yesNo },
+      warranty,
     ],
   },
   {
@@ -306,6 +356,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["creation", "contenu", "video"],
     typeName: "",
     nameParts: ["Type", "brand", "model"],
+    variantAxes: ["Couleur"],
     fields: [
       brand,
       model,
@@ -324,6 +375,7 @@ export const categoryTemplates: CategoryTemplate[] = [
     match: ["jeu", "gaming", "console"],
     typeName: "",
     nameParts: ["Type", "brand", "model"],
+    variantAxes: ["Couleur"],
     fields: [
       brand,
       model,
@@ -343,16 +395,50 @@ const genericTemplate: CategoryTemplate = {
   match: [],
   typeName: "",
   nameParts: ["brand", "model"],
+  variantAxes: ["Couleur", "Taille", "Modèle compatible"],
   fields: [brand, model, color, condition, warranty],
 };
 
 export const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
-/** Gabarit de la catégorie, reconnu par son nom ; gabarit général sinon. */
-export function templateFor(categoryName: string | null | undefined): CategoryTemplate {
+/**
+ * Gabarit de la catégorie, reconnu par son nom (gabarit général sinon), complété
+ * par le profil que le propriétaire a réglé pour cette catégorie.
+ */
+export function templateFor(
+  categoryName: string | null | undefined,
+  profile?: CategoryProfile | null,
+): CategoryTemplate {
   const n = normalize(categoryName ?? "");
-  if (!n) return genericTemplate;
-  return categoryTemplates.find((t) => t.match.some((m) => n.includes(m))) ?? genericTemplate;
+  const base = (n && categoryTemplates.find((t) => t.match.some((m) => n.includes(m)))) || genericTemplate;
+  if (!profile) return base;
+  const known = new Map(base.fields.map((f) => [normalize(f.label), f]));
+  const fields = profile.fields?.length
+    ? [
+        // Marque, modèle et garantie restent proposés : ce sont des champs de la fiche.
+        ...base.fields.filter((f) => f.target === "brand" || f.target === "model"),
+        ...profile.fields
+          .filter((f) => f.label.trim())
+          .map((f): FieldDef => {
+            const k = known.get(normalize(f.label));
+            return { ...(k ?? {}), label: f.label.trim(), ...(f.options?.length ? { options: f.options } : {}) };
+          })
+          .filter((f) => f.target !== "brand" && f.target !== "model"),
+        ...base.fields.filter((f) => f.target === "warranty" || f.target === "condition"),
+      ].filter((f, i, all) => all.findIndex((x) => normalize(x.label) === normalize(f.label)) === i)
+    : base.fields;
+  return { ...base, fields, variantAxes: profile.variantAxes ?? base.variantAxes };
+}
+
+/** Profil par défaut d'une catégorie (point de départ modifiable dans Catalogue → Catégories). */
+export function defaultProfile(categoryName: string): Required<CategoryProfile> {
+  const t = templateFor(categoryName);
+  return {
+    fields: t.fields
+      .filter((f) => !f.target)
+      .map((f) => ({ label: f.label, ...(f.options ? { options: f.options } : {}) })),
+    variantAxes: t.variantAxes,
+  };
 }
 
 // ——— Nom simple suggéré ———
@@ -365,6 +451,7 @@ export function isUncertain(v: string | null | undefined) {
 
 export interface NameInput {
   categoryName: string | null;
+  profile?: CategoryProfile | null;
   brand: string;
   model: string;
   specs: { label: string; value: string }[];
@@ -372,10 +459,54 @@ export interface NameInput {
 
 export const NAME_ADVICE_LENGTH = 65;
 
+/** Fautes et mentions à éviter dans un nom public (sans rien corriger tout seul). */
+export function nameWarnings(name: string) {
+  const n = normalize(name);
+  const out: string[] = [];
+  if (/\bcuire\b/.test(n)) out.push("« cuire » : écrire « cuir » (coque en cuir).");
+  if (/\b(original|originale|premium|authentique)\b/.test(n))
+    out.push("« Original », « Premium », « Authentique » : seulement avec une preuve.");
+  return out;
+}
+
 /** « Type + Marque + Modèle + caractéristique utile », sans IA ni donnée incertaine. */
 export function suggestName(input: NameInput) {
-  const t = templateFor(input.categoryName);
-  const spec = (label: string) => input.specs.find((s) => normalize(s.label) === normalize(label))?.value ?? "";
+  const t = templateFor(input.categoryName, input.profile);
+  const raw = (label: string) => input.specs.find((s) => normalize(s.label) === normalize(label))?.value ?? "";
+  const spec = (label: string) => (isUncertain(raw(label)) ? "" : raw(label).trim());
+  const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+
+  // Câbles : « Câble USB-C vers Lightning — 35 W » ; la marque générique reste dans son champ.
+  if (t.key === "cables") {
+    const from = spec("Connecteur d'entrée");
+    const to = spec("Connecteur de sortie");
+    if (!from || !to) return "";
+    const extra = [spec("Fonction particulière").toLowerCase(), spec("Puissance maximale")].filter(Boolean);
+    return `Câble ${from} vers ${to}${extra.length ? ` — ${extra.join(", ")}` : ""}`;
+  }
+  // Coques : « Coque en silicone iPhone 15 » ; jamais deux téléphones dans une même fiche.
+  if (t.key === "coques") {
+    const phone = spec("Téléphone compatible");
+    if (!phone) return "";
+    const w = COQUE_WORDING[normalize(spec("Type de coque"))] ?? {};
+    return ["Coque", w.before, phone, w.after].filter(Boolean).join(" ");
+  }
+  // Chargeurs : la puissance et les ports se lisent dans le nom ; pas de marque générique.
+  if (t.key === "chargeurs") {
+    const kind = normalize(spec("Type de chargeur"));
+    const words = [
+      "Chargeur",
+      kind === "voiture" ? "voiture" : kind === "sans fil" ? "sans fil" : "",
+      spec("Compatible avec")
+        ? kind === "sans fil"
+          ? `pour ${spec("Compatible avec")}`
+          : spec("Compatible avec")
+        : "",
+      spec("Types de ports").replace(/\s*\+\s*/g, " + "),
+      spec("Puissance maximale"),
+    ].filter(Boolean);
+    return words.length > 1 ? cap(words.join(" ")) : "";
+  }
   const words: string[] = [];
   for (const part of t.nameParts) {
     const v =
@@ -400,6 +531,18 @@ export function suggestName(input: NameInput) {
   // « Montre connectée », « Lunettes de soleil » : le type précise le nom de base.
   const joined = words.join(" ").replace(/\s+/g, " ").trim();
   return joined.charAt(0).toUpperCase() + joined.slice(1);
+}
+
+// ——— Photos officielles repérées ———
+
+/** Image officielle repérée pour un modèle exact : importée seulement après comparaison. */
+export interface PhotoCandidate {
+  url: string;
+  /** Page officielle où l'image apparaît. */
+  page: string;
+  source: string;
+  matches: string;
+  note?: string;
 }
 
 // ——— Description composée ———
