@@ -1900,21 +1900,106 @@ describe("Droits, clients, rapports, démonstration", () => {
     const txt = renderTemplate(defaultTemplates.readyPickup, {
       prenom: "Awa",
       reference: "GPS-1",
+      boutique: "en boutique",
       horaires: "",
       reste: "",
     });
-    expect(txt).toBe("Bonjour Awa, votre commande GPS-1 est prête. Vous pouvez venir la retirer en boutique.");
-    const conf = renderTemplate(defaultTemplates.confirmation, {
-      prenom: "Awa",
+    expect(txt.split("\n")[0]).toBe(
+      "Bonjour Awa, votre commande GPS-1 est prête. Vous pouvez venir la retirer en boutique.",
+    );
+    expect(txt).not.toMatch(/\{|\n\n/);
+
+    // Un message par situation : le premier proposé est le bon.
+    const { requestMessages, orderMessages } = await import("@/lib/messages");
+    const { templateMeta, withDefaultTemplates, legacyTemplates } = await import("@/lib/templates");
+    const req = {
+      reference: "GPS-R-1",
+      customer_name: "Awa Ndiaye",
+      reception: "delivery" as const,
+      delivery_zone: "Zone 1",
+      delivery_fee: 1000,
+      lines: [
+        { variantId: "a", name: "Écouteurs", optionsLabel: "Noir", quantity: 1, unitPrice: 10000 },
+        { variantId: "b", name: "Câble", optionsLabel: "", quantity: 2, unitPrice: 2500 },
+      ],
+    };
+    const all = requestMessages(
+      req,
+      new Map([
+        ["a", 3],
+        ["b", 5],
+      ]),
+      defaultTemplates,
+      templateMeta,
+    );
+    expect(all[0]).toMatchObject({ key: "requestAvailable", recommended: true });
+    expect(all[0].text).toMatch(/Total à payer : 16\s000\sFCFA/);
+    expect(all[0].text).toMatch(/Livraison \(Zone 1\) : 1\s000\sFCFA/);
+    const part = requestMessages(
+      req,
+      new Map([
+        ["a", 3],
+        ["b", 1],
+      ]),
+      defaultTemplates,
+      templateMeta,
+    );
+    expect(part[0].key).toBe("requestPartial");
+    expect(part[0].text).toMatch(/Disponible :\n• Écouteurs \(Noir\) × 1/);
+    expect(part[0].text).toMatch(/Câble \(seulement 1 en stock sur 2 demandés\)/);
+    expect(
+      requestMessages(
+        req,
+        new Map([
+          ["a", 0],
+          ["b", 0],
+        ]),
+        defaultTemplates,
+        templateMeta,
+      )[0].key,
+    ).toBe("requestUnavailable");
+    expect(requestMessages(req, new Map(), defaultTemplates, templateMeta)[0].key).toBe("requestReceived");
+
+    const base = {
       reference: "GPS-1",
-      articles: "• A × 1",
-      total: "10 FCFA",
-      livraison: "",
-      reception: "retrait en boutique",
-      reste: "Reste à régler : 5 FCFA.",
-    });
-    expect(conf.split("\n")).toContain("Reste à régler : 5 FCFA.");
-    expect(conf).not.toMatch(/\{|\n\n/);
+      customer_name: "Awa",
+      status: "confirmed" as const,
+      fulfillment: "to_prepare" as const,
+      reception: "delivery" as const,
+      subtotal: 10000,
+      delivery_fee: null,
+      delivery_address: "",
+      delivery_zone: "Zone 3",
+      balance: 10000,
+      net: 0,
+      refunded: 0,
+      lines: [{ name: "Écouteurs", options_label: "", quantity: 1 }],
+    };
+    const ctx = { hours: "9 h – 22 h", store: { name: "GPS Petit Mbao 1", address: "Dabakh Malick", landmark: "" } };
+    const keys = (o: typeof base | Record<string, unknown>) =>
+      orderMessages({ ...base, ...o } as typeof base, ctx, defaultTemplates, templateMeta).map((m) => m.key);
+    expect(keys({})[0]).toBe("addressRequest");
+    expect(keys({ delivery_fee: 1000, delivery_address: "Rue 1" })[0]).toBe("confirmation");
+    expect(keys({ reception: "pickup", fulfillment: "ready" })[0]).toBe("readyPickup");
+    expect(keys({ fulfillment: "out_for_delivery", delivery_fee: 1000, delivery_address: "Rue 1" })[0]).toBe(
+      "outForDelivery",
+    );
+    expect(keys({ status: "completed", fulfillment: "handed_over", balance: 0, net: 10000 })[0]).toBe("thanks");
+    expect(keys({ status: "cancelled", balance: -5000, net: 5000 })).toEqual(["cancelled", "refund"]);
+    const ready = orderMessages(
+      { ...base, reception: "pickup", fulfillment: "ready", balance: 4000, net: 6000 },
+      ctx,
+      defaultTemplates,
+      templateMeta,
+    )[0].text;
+    expect(ready).toContain("à GPS Petit Mbao 1, Dabakh Malick (9 h – 22 h)");
+    expect(ready).toMatch(/Reste à régler au retrait/);
+    expect(ready).not.toMatch(/\{/);
+    // Les anciens textes jamais modifiés passent à la nouvelle version ; un texte personnalisé est conservé.
+    const up = withDefaultTemplates({ readyPickup: legacyTemplates.readyPickup![0], balance: "Mon texte {solde}" });
+    expect(up.readyPickup).toBe(defaultTemplates.readyPickup);
+    expect(up.balance).toBe("Mon texte {solde}");
+    expect(up.thanks).toBe(defaultTemplates.thanks);
     const s = await getSettings(db);
     expect(s.company.timezone).toBe("Africa/Dakar");
     expect(s.payments.methods).toContain("wave");

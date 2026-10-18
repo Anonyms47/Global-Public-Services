@@ -1,5 +1,5 @@
 import type { Db } from "../db/client";
-import { defaultTemplates, type TemplateKey } from "@/lib/templates";
+import { defaultTemplates, withDefaultTemplates, type TemplateKey } from "@/lib/templates";
 import { paymentMethods, type PaymentMethodKey } from "@/lib/payment-methods";
 import { defaultQuickValues, type QuickValues } from "@/lib/product-kit";
 
@@ -132,6 +132,8 @@ export async function getSettings(db: Db): Promise<Settings> {
       s[row.key] = { ...(s[row.key] as object), ...(row.value as object) };
     }
   }
+  // Modèles jamais personnalisés : remplacés par la version actuelle ; nouveaux modèles ajoutés.
+  s.messages = withDefaultTemplates(s.messages as Record<string, string>);
   return s as unknown as Settings;
 }
 

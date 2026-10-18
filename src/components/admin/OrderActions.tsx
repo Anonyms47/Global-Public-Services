@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   advanceAction,
   cancelAction,
@@ -495,22 +495,27 @@ export function NoteForm({ orderId }: { orderId: string }) {
 export function WhatsAppMessages({
   phone,
   templates,
+  title = "Préparer un message WhatsApp",
+  open,
 }: {
   phone: string;
-  templates: { label: string; text: string }[];
+  templates: { label: string; text: string; recommended?: boolean }[];
+  title?: string;
+  open?: boolean;
 }) {
+  const uid = useId();
   const [current, setCurrent] = useState(0);
   const [copied, setCopied] = useState(false);
   const t = templates[current];
   const link = whatsappLink(phone, t.text);
   return (
-    <Section title="Préparer un message WhatsApp">
+    <Section title={title} open={open}>
       <div className="grid gap-3">
-        <label className="label" htmlFor="wa-tpl">
+        <label className="label" htmlFor={`wa-tpl${uid}`}>
           Modèle
         </label>
         <select
-          id="wa-tpl"
+          id={`wa-tpl${uid}`}
           className="field"
           value={current}
           onChange={(e) => {
@@ -520,7 +525,7 @@ export function WhatsAppMessages({
         >
           {templates.map((x, i) => (
             <option key={x.label} value={i}>
-              {x.label}
+              {x.recommended ? `★ Conseillé : ${x.label}` : x.label}
             </option>
           ))}
         </select>

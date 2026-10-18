@@ -4,12 +4,12 @@ import { requirePage } from "@/server/admin";
 import { listRequests, requestCounts, requestStatusLabels, type RequestStatus } from "@/server/domain/requests";
 import { can } from "@/lib/permissions";
 import { fcfa, formatDateTime } from "@/lib/format";
-import { whatsappLink } from "@/lib/whatsapp";
-import { renderTemplate } from "@/lib/templates";
+import { templateMeta } from "@/lib/templates";
+import { requestMessages } from "@/lib/messages";
 import { getSettings } from "@/server/domain/settings";
 import { Badge, Empty, PageTitle, Tabs } from "@/components/admin/ui";
 import { RequestActions } from "@/components/admin/RequestActions";
-import { IconWhatsApp } from "@/components/ui/icons";
+import { WhatsAppMessages } from "@/components/admin/OrderActions";
 
 export const metadata: Metadata = { title: "Demandes WhatsApp" };
 
@@ -79,15 +79,11 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
       ) : (
         <ul className="grid gap-3">
           {rows.map((r) => {
-            const wa = r.customer_phone
-              ? whatsappLink(
-                  r.customer_phone,
-                  renderTemplate(settings.messages.requestReceived, {
-                    prenom: r.customer_name.split(" ")[0] ?? "",
-                    reference: r.reference,
-                  }),
-                )
-              : null;
+            // Message conseillé selon le stock réel : tout disponible, en partie, ou rien.
+            const messages =
+              r.status === "new" && r.customer_phone
+                ? requestMessages(r, available, settings.messages, templateMeta)
+                : [];
             return (
               <li key={r.id} id={r.reference} className="rounded-[6px] border border-line bg-card p-4 md:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -143,13 +139,17 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
                       Voir la commande {r.order_reference}
                     </Link>
                   ) : null}
-                  {wa ? (
-                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
-                      <IconWhatsApp size={16} /> Répondre
-                    </a>
-                  ) : null}
                   {canAct ? <RequestActions id={r.id} status={r.status} /> : null}
                 </div>
+                {messages.length ? (
+                  <div className="mt-3">
+                    <WhatsAppMessages
+                      phone={r.customer_phone}
+                      templates={messages}
+                      title={`Répondre sur WhatsApp — conseillé : ${messages[0].label.replace(/^Demande : /, "")}`}
+                    />
+                  </div>
+                ) : null}
               </li>
             );
           })}

@@ -13,7 +13,7 @@ import type { Settings } from "@/server/domain/settings";
 import { roleLabels, type Role } from "@/lib/permissions";
 import { ActionFeedback, useAction } from "./useAction";
 import { proposals } from "@/lib/content-proposals";
-import { defaultTemplates, templateKeys, templateMeta } from "@/lib/templates";
+import { defaultTemplates, templateGroups, templateMeta } from "@/lib/templates";
 import { paymentMethods } from "@/lib/payment-methods";
 import { Badge, Panel } from "./ui";
 import { IconPlus, IconTrash } from "../ui/icons";
@@ -368,29 +368,40 @@ export function SettingsForm({ initial }: { initial: Initial }) {
       </Panel>
 
       <Panel title="Messages WhatsApp aux clients" id="t-messages">
-        <div className="grid gap-4 md:grid-cols-2">
-          {templateKeys.map((k) => (
-            <div key={k}>
-              <Field
-                id={`s-msg-${k}`}
-                label={templateMeta[k].label}
-                textarea
-                rows={5}
-                value={s.messages[k]}
-                onChange={(v) => setS({ ...s, messages: { ...s.messages, [k]: v } })}
-                hint={`Variables : ${templateMeta[k].vars.map((v) => `{${v}}`).join(" ")}`}
-                error={fieldErrors[`messages.${k}`]}
-              />
-              {s.messages[k] !== defaultTemplates[k] ? (
-                <button
-                  type="button"
-                  className="mt-1 inline-flex min-h-10 items-center text-[13px] font-bold text-gps-blue underline underline-offset-2"
-                  onClick={() => setS({ ...s, messages: { ...s.messages, [k]: defaultTemplates[k] } })}
-                >
-                  Revenir au modèle d&apos;origine
-                </button>
-              ) : null}
-            </div>
+        <p className="hint mb-4">
+          Le Comptoir propose le bon message selon la situation (★ Conseillé) ; vous le relisez et l&apos;envoyez
+          vous-même. Les variables vides disparaissent, ainsi que leur ligne.
+        </p>
+        <div className="grid gap-6">
+          {templateGroups.map((g) => (
+            <fieldset key={g.label} className="grid gap-4">
+              <legend className="mb-2 text-[13px] font-extrabold tracking-wide uppercase">{g.label}</legend>
+              <div className="grid gap-4 md:grid-cols-2">
+                {g.keys.map((k) => (
+                  <div key={k}>
+                    <Field
+                      id={`s-msg-${k}`}
+                      label={templateMeta[k].label}
+                      textarea
+                      rows={5}
+                      value={s.messages[k]}
+                      onChange={(v) => setS({ ...s, messages: { ...s.messages, [k]: v } })}
+                      hint={`${templateMeta[k].when} Variables : ${templateMeta[k].vars.map((v) => `{${v}}`).join(" ")}`}
+                      error={fieldErrors[`messages.${k}`]}
+                    />
+                    {s.messages[k] !== defaultTemplates[k] ? (
+                      <button
+                        type="button"
+                        className="mt-1 inline-flex min-h-10 items-center text-[13px] font-bold text-gps-blue underline underline-offset-2"
+                        onClick={() => setS({ ...s, messages: { ...s.messages, [k]: defaultTemplates[k] } })}
+                      >
+                        Revenir au modèle d&apos;origine
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </fieldset>
           ))}
         </div>
       </Panel>
