@@ -5,6 +5,7 @@ import { requirePage } from "@/server/admin";
 import { listToComplete, toCompleteFilters, type ToCompleteFilter } from "@/server/domain/catalog-entry";
 import { can } from "@/lib/permissions";
 import { Badge, Forbidden, PageTitle } from "@/components/admin/ui";
+import { PublishReady } from "@/components/admin/PublishReady";
 import { IconArrowLeft, IconImage } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Produits à compléter" };
@@ -24,6 +25,7 @@ export default async function ToCompletePage({ searchParams }: PageProps<"/compt
   const { db, user, allowed } = await requirePage("catalog.edit");
   if (!allowed) return <Forbidden what="la complétion du catalogue" />;
   const canCosts = can(user, "catalog.costs");
+  const canPublish = can(user, "catalog.bulk");
   const raw = (await searchParams).filtre;
   const filters = toCompleteFilters.filter(([k]) => canCosts || k !== "sans-cout");
   const filtre = filters.some(([k]) => k === raw) ? (raw as ToCompleteFilter) : null;
@@ -57,6 +59,18 @@ export default async function ToCompletePage({ searchParams }: PageProps<"/compt
           « Complété » = prêt à publier (nom, catégorie, prix, photo). La publication reste une décision humaine.
         </span>
       </div>
+
+      <div className="mb-5 flex flex-wrap gap-2">
+        <Link href="/comptoir/catalogue/saisie" className="btn btn-primary" data-testid="lien-saisie-grille">
+          {canCosts ? "Saisir prix, coûts et stock" : "Saisir prix et stock"} sur une seule page
+        </Link>
+      </div>
+
+      {canPublish && filtre === "pret" ? (
+        <PublishReady
+          products={rows.filter((r) => r.flags.includes("pret")).map((r) => ({ id: r.id, name: r.name }))}
+        />
+      ) : null}
 
       <nav aria-label="Filtres" className="mb-4 flex flex-wrap gap-2">
         <Link

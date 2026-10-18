@@ -435,3 +435,39 @@ export async function quickVariantsAction(productId: string) {
     }));
   });
 }
+
+/** Saisie en grille : prix, coût (propriétaire) et stock compté de plusieurs variantes d'un coup. */
+export async function entryGridSaveAction(input: unknown) {
+  return guarded("catalog.edit", async ({ db, user }) => {
+    const n = z.coerce.number().int().min(0).max(100_000_000);
+    const d = parse(
+      z.object({
+        changes: z
+          .array(
+            z.object({
+              variantId: z.string().min(1),
+              price: n.optional(),
+              cost: n.nullable().optional(),
+              counted: n.optional(),
+            }),
+          )
+          .min(1, "Aucune modification à enregistrer.")
+          .max(1000),
+      }),
+      input,
+    );
+    const { saveEntryGrid } = await import("@/server/domain/catalog-entry");
+    const r = await saveEntryGrid(db, {
+      changes: d.changes,
+      canCosts: can(user, "catalog.costs"),
+      canCount: can(user, "stock.inventory"),
+      userId: user.id,
+    });
+    const parts = [
+      r.prices ? `${r.prices} prix` : "",
+      r.costs ? `${r.costs} coût${r.costs > 1 ? "s" : ""}` : "",
+      r.stock ? `${r.stock} stock${r.stock > 1 ? "s" : ""}` : "",
+    ].filter(Boolean);
+    return { ...r, message: parts.length ? `Enregistré : ${parts.join(", ")}.` : "Rien n'a changé." };
+  });
+}

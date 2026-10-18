@@ -306,3 +306,148 @@ export async function quickCount(
   });
   return { before: before.on_hand, after: input.counted, delta: input.counted - before.on_hand, changed: r.changed };
 }
+
+// ——— Saisie en grille : prix, coût et stock de plusieurs variantes d'un coup ———
+
+export interface GridRow {
+  variantId: string;
+  productId: string;
+  product: string;
+  status: string;
+  category: string | null;
+  label: string;
+  sku: string;
+  photo: string | null;
+  price: number;
+  /** Coût d'achat : absent pour qui n'a pas le droit de le voir. */
+  cost?: number | null;
+  onHand: number;
+  /** Quantité en dessous de laquelle un comptage est refusé (réservé + non vendable). */
+  locked: number;
+}
+
+/** Variantes des brouillons (ou de tout le catalogue) dans l'ordre du catalogue. */
+export async function listEntryGrid(db: Db, opts: { canCosts: boolean; includePublished?: boolean }) {
+  const rows = await db.query<{
+    variant_id: string;
+    product_id: string;
+    product: string;
+    status: string;
+    category: string | null;
+    options: Record<string, string>;
+    sku: string;
+    photo: string | null;
+    price: number;
+    cost_price: number | null;
+    on_hand: number;
+    reserved: number;
+    unsellable: number;
+  }>(
+    `select v.id as variant_id, p.id as product_id, p.name as product, p.status, c.name as category, v.options, v.sku,
+            (select i.url from product_images i where i.product_id = p.id and i.kind <> 'video' order by i.position limit 1) as photo,
+            v.price, v.cost_price, v.on_hand, v.reserved, v.unsellable
+       from variants v join products p on p.id = v.product_id left join categories c on c.id = p.category_id
+      where v.active and p.deleted_at is null
+        and (p.status = 'draft' or ($1::boolean and p.status = 'published'))
+      order by c.position nulls last, p.name, v.position`,
+    [!!opts.includePublished],
+  );
+  return rows.map<GridRow>((r) => ({
+    variantId: r.variant_id,
+    productId: r.product_id,
+    product: r.product,
+    status: r.status,
+    category: r.category,
+    label: Object.values(r.options ?? {})
+      .filter(Boolean)
+      .join(" · "),
+    sku: r.sku,
+    photo: r.photo,
+    price: r.price,
+    ...(opts.canCosts ? { cost: r.cost_price } : {}),
+    onHand: r.on_hand,
+    locked: r.reserved + r.unsellable,
+  }));
+}
+
+export interface GridChange {
+  variantId: string;
+  price?: number;
+  cost?: number | null;
+  counted?: number;
+}
+
+/**
+ * Enregistre en une fois les valeurs tapées dans la grille. Chaque valeur vient d'une
+ * saisie humaine ; les prix et coûts sont journalisés avec l'ancienne valeur, le stock
+ * passe par l'inventaire (un mouvement tracé par variante). Rien n'est publié.
+ */
+export async function saveEntryGrid(
+  db: Db,
+  input: { changes: GridChange[]; canCosts: boolean; canCount: boolean; userId: string },
+) {
+  const changes = input.changes.filter(
+    (c) => c.price !== undefined || (input.canCosts && c.cost !== undefined) || c.counted !== undefined,
+  );
+  if (!changes.length) fail("validation", "Aucune modification à enregistrer.");
+  if (!input.canCount && changes.some((c) => c.counted !== undefined))
+    fail("forbidden", "Le comptage du stock n'est pas autorisé pour ce compte.");
+  const ids = changes.map((c) => c.variantId);
+  const current = await db.query<{
+    id: string;
+    price: number;
+    cost_price: number | null;
+    sku: string;
+    name: string;
+    status: string;
+  }>(
+    `select v.id, v.price, v.cost_price, v.sku, p.name, p.status from variants v join products p on p.id = v.product_id
+      where v.id = any($1) and v.active and p.deleted_at is null`,
+    [ids],
+  );
+  const byId = new Map(current.map((v) => [v.id, v]));
+  const int = (n: unknown) => typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 100_000_000;
+  for (const c of changes) {
+    const v = byId.get(c.variantId);
+    if (!v) fail("not_found", "Une des variantes n'existe plus : rechargez la page.");
+    if (c.price !== undefined && !int(c.price)) fail("validation", `Réf. ${v!.sku} : prix invalide.`);
+    if (c.price === 0 && v!.status === "published")
+      fail("validation", `${v!.name} est en ligne : il doit garder un prix.`);
+    if (input.canCosts && c.cost != null && !int(c.cost)) fail("validation", `Réf. ${v!.sku} : coût invalide.`);
+    if (c.counted !== undefined && !int(c.counted)) fail("validation", `Réf. ${v!.sku} : quantité invalide.`);
+  }
+  let prices = 0;
+  let costs = 0;
+  await db.tx(async (tx) => {
+    for (const c of changes) {
+      const v = byId.get(c.variantId)!;
+      const price = c.price !== undefined && c.price !== v.price ? c.price : undefined;
+      const cost = input.canCosts && c.cost !== undefined && c.cost !== v.cost_price ? c.cost : undefined;
+      if (price === undefined && cost === undefined) continue;
+      await tx.query(
+        `update variants set price = coalesce($2, price),
+                cost_price = case when $3::boolean then $4 else cost_price end where id = $1`,
+        [c.variantId, price ?? null, cost !== undefined, cost ?? null],
+      );
+      await tx.query(
+        "update products set updated_at = now() where id = (select product_id from variants where id = $1)",
+        [c.variantId],
+      );
+      if (price !== undefined) prices++;
+      if (cost !== undefined) costs++;
+      await audit(tx, input.userId, "variant.grid_update", `${v.name} (${v.sku})`, {
+        variantId: c.variantId,
+        ...(price !== undefined ? { price: { from: v.price, to: price } } : {}),
+        // Le coût n'est jamais recopié dans le journal : seul le fait qu'il a changé est noté.
+        ...(cost !== undefined ? { cost: "modifié" } : {}),
+      });
+    }
+  });
+  const counts = changes
+    .filter((c) => c.counted !== undefined)
+    .map((c) => ({ variantId: c.variantId, counted: c.counted! }));
+  const stock = counts.length
+    ? (await applyInventory(db, { counts, note: "Saisie en grille", userId: input.userId })).changed
+    : 0;
+  return { prices, costs, stock };
+}

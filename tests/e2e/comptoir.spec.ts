@@ -460,9 +460,9 @@ test.describe("Le Comptoir", () => {
     await page.keyboard.press("Tab");
     await expect(page.locator("#p-cat")).toBeFocused();
     await page.locator("#p-cat").selectOption({ index: 1 });
-    // Ordinateur : toutes les parties ouvertes, aperçu permanent ; coût visible en mode complet.
+    // Ordinateur : toutes les parties ouvertes, aperçu permanent ; coût visible dès le mode rapide.
     await expect(page.getByRole("complementary", { name: "Aperçu du produit" })).toBeVisible();
-    await expect(page.locator("#p-cost")).toHaveCount(0);
+    await expect(page.locator("#p-cost")).toBeVisible();
     await page.getByRole("radio", { name: "Mode complet" }).click();
     await page.locator("#p-price").fill("20000");
     await page.locator("#p-cost").fill("25000");
@@ -670,6 +670,36 @@ test.describe("Le Comptoir", () => {
     await sheet.getByRole("button", { name: "Enregistrer", exact: true }).first().click();
     await expect(sheet.getByText(/enregistré\.$/)).toBeVisible();
     await expect(sheet.getByText(/Actuel : 12\s345\sFCFA/).first()).toBeVisible();
+  });
+
+  test("saisie en grille : prix, coût et stock des brouillons en un seul enregistrement", async ({ page }) => {
+    await login(page, "proprietaire@demo.gps");
+    // Le coût est visible d'emblée pour le propriétaire, sans passer en mode complet.
+    await page.goto("/comptoir/catalogue/nouveau");
+    await expect(page.locator("#p-cost")).toBeVisible();
+    await page.locator("#p-name").fill("Brouillon grille E2E");
+    await page.locator("#p-cat").selectOption({ index: 1 });
+    await page.getByRole("button", { name: "Enregistrer et rester sur la fiche" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
+
+    await page.goto("/comptoir/catalogue/a-completer");
+    await page.getByTestId("lien-saisie-grille").click();
+    await expect(page).toHaveURL(/\/comptoir\/catalogue\/saisie$/);
+    await page.getByPlaceholder("Rechercher un produit…").fill("Brouillon grille E2E");
+    const card = page.getByTestId("grid-product").filter({ hasText: "Brouillon grille E2E" });
+    await card.getByLabel(/^Prix FCFA/).fill("15000");
+    await page.keyboard.press("Enter");
+    await expect(card.getByLabel(/^Coût FCFA/)).toBeFocused();
+    await page.keyboard.type("9000");
+    await card.getByLabel(/^Stock/).fill("3");
+    await expect(page.getByTestId("grid-pending")).toHaveText(/1 ligne modifiée/);
+    await page.getByRole("button", { name: /Tout enregistrer \(1\)/ }).click();
+    await expect(page.getByText("Enregistré : 1 prix, 1 coût, 1 stock.")).toBeVisible();
+    // Le produit reste un brouillon : rien n'est publié.
+    await page.getByPlaceholder("Rechercher un produit…").fill("Brouillon grille E2E");
+    await page.getByRole("button", { name: /^Tout \(/ }).click();
+    await expect(card.getByText(/· brouillon$/)).toBeVisible();
+    await expect(card.getByLabel(/^Prix FCFA/)).toHaveValue("15000");
   });
 
   test("droits : le vendeur ne complète ni ne compte, le gestionnaire ne voit pas les coûts", async ({ page }) => {

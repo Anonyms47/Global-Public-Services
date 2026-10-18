@@ -450,7 +450,7 @@ export function VariantEditor({
             <legend className="px-1 text-[13px] font-bold">
               Modifier {selected.length ? `les ${selected.length} variantes sélectionnées` : "toutes les variantes"}
             </legend>
-            <div className={`grid grid-cols-2 gap-2 ${canCosts && full ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
+            <div className={`grid grid-cols-2 gap-2 ${canCosts ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
               <input
                 aria-label="Prix pour la sélection"
                 className={small}
@@ -459,7 +459,7 @@ export function VariantEditor({
                 value={bulk.price}
                 onChange={(e) => setBulk({ ...bulk, price: e.target.value })}
               />
-              {canCosts && full ? (
+              {canCosts ? (
                 <input
                   aria-label="Coût pour la sélection"
                   className={small}
@@ -565,7 +565,7 @@ export function VariantEditor({
                         </div>
                       ) : null}
                       <div
-                        className={`mt-2 grid grid-cols-2 gap-2 ${full ? (canCosts ? "md:grid-cols-6" : "md:grid-cols-5") : "md:grid-cols-3"}`}
+                        className={`mt-2 grid grid-cols-2 gap-2 ${full ? (canCosts ? "md:grid-cols-6" : "md:grid-cols-5") : canCosts ? "md:grid-cols-4" : "md:grid-cols-3"}`}
                       >
                         <div className="min-w-0">
                           <label className="text-[12px] font-bold text-ink-mute" htmlFor={`p-vprice-${i}`}>
@@ -581,7 +581,7 @@ export function VariantEditor({
                             onChange={(e) => patch(i, { price: num(e.target.value) ?? 0 })}
                           />
                         </div>
-                        {canCosts && full ? (
+                        {canCosts ? (
                           <div className="min-w-0">
                             <label className="text-[12px] font-bold text-ink-mute" htmlFor={`p-vcost-${i}`}>
                               Coût

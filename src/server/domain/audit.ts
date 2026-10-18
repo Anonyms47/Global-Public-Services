@@ -54,6 +54,7 @@ export const auditLabels: Record<string, string> = {
   "catalog.import": "Import du catalogue de la boutique",
   "product.checks_done": "Vérifications d'une fiche importée faites",
   "variant.quick_update": "Prix ou seuil modifié (catalogue)",
+  "variant.grid_update": "Prix ou coût saisi en grille",
   "media.import_url": "Photo importée depuis une adresse",
   "settings.quick_values": "Valeurs rapides de saisie modifiées",
 };
