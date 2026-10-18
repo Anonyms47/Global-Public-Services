@@ -2165,6 +2165,12 @@ describe("Points de vente (stock commun)", () => {
     expect(st.hoursText({ ...list[0].hours, days: { mon: { enabled: true }, sun: { enabled: false } } })).toBe(
       "Lundi : 9 h – 22 h · Dimanche : fermé",
     );
+    // Jours identiques regroupés : plus de liste jour par jour.
+    const all = Object.fromEntries(st.DAYS.map(([k]) => [k, { enabled: true }]));
+    expect(st.hoursText({ ...list[0].hours, days: all })).toBe("Tous les jours : 9 h – 22 h");
+    expect(st.hoursText({ ...list[0].hours, days: { ...all, sun: { enabled: false } } })).toBe(
+      "Lundi – Samedi : 9 h – 22 h · Dimanche : fermé",
+    );
     await expect(
       st.saveStore(db, { ...base, name: "X", maps_url: "javascript:alert(1)", is_main: false }),
     ).rejects.toThrow(/Maps/);
