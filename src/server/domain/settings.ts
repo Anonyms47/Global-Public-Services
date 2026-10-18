@@ -46,7 +46,8 @@ export interface Settings {
     returns: string;
     payment: string;
   };
-  stock: { defaultLowThreshold: number };
+  /** tracking = false : quantités non suivies, tout est vendable sauf ce qui est désactivé. */
+  stock: { defaultLowThreshold: number; tracking: boolean };
   receipt: { header: string; footer: string };
   storefront: {
     heroProductId: string | null;
@@ -97,7 +98,7 @@ export const defaultSettings: Settings = {
     zones: [],
   },
   policies: { warranty: "", returns: "", payment: "" },
-  stock: { defaultLowThreshold: 1 },
+  stock: { defaultLowThreshold: 1, tracking: true },
   receipt: { header: "", footer: "Merci pour votre confiance." },
   storefront: { heroProductId: null, focusProductId: null, focusText: "" },
   launch: { targetMode: "demo", updatedAt: null, updatedBy: null },

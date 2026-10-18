@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
+import { stockTracking } from "@/server/domain/stock";
 import { adminProducts, listCategories } from "@/server/domain/catalog";
 import { can } from "@/lib/permissions";
 import { Forbidden, PageTitle, Tabs } from "@/components/admin/ui";
@@ -162,7 +163,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
           }}
           canBulk={can(user, "catalog.bulk")}
           canEdit={can(user, "catalog.edit")}
-          canCount={can(user, "stock.inventory")}
+          canCount={can(user, "stock.inventory") && (await stockTracking(db))}
           emptyHint={q ? `Aucun produit pour « ${q} ».` : "Aucun produit dans cette vue."}
         />
       )}

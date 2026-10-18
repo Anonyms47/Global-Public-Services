@@ -120,8 +120,10 @@ async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
     axes: string[];
     status: string;
     active: boolean;
+    disabled: boolean;
   }>(
-    `select v.id, v.product_id, v.sku, v.options, v.price, v.cost_price, v.active, p.name, p.axes, p.status
+    `select v.id, v.product_id, v.sku, v.options, v.price, v.cost_price, v.active, p.name, p.axes, p.status,
+            (v.disabled or p.disabled) as disabled
        from variants v join products p on p.id = v.product_id where v.id = any($1)`,
     [ids],
   );
@@ -132,6 +134,11 @@ async function resolveLines(tx: Db, lines: LineInput[], now: Date) {
     const v = variants.find((x) => x.id === id);
     if (!v || !v.active || v.status === "archived")
       return fail("validation", "Un article n'est plus disponible au catalogue.");
+    if (v.disabled)
+      return fail(
+        "stock",
+        `${v.name}${Object.values(v.options ?? {}).length ? ` (${Object.values(v.options).join(" · ")})` : ""} est désactivé : réactivez-le dans le catalogue pour le vendre.`,
+      );
     const l = merged.get(id)!;
     const promo = bestPromo(
       promos.filter((p) => p.product_id === v.product_id),

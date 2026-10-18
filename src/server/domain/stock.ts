@@ -30,6 +30,26 @@ export const movementLabels: Record<MovementKind, string> = {
   writeoff: "Sorti du stock (non vendable)",
 };
 
+/** Suivi des quantités activé (réglage Paramètres → Stock ; activé par défaut). */
+export const TRACKING_SQL = "coalesce((select (value->>'tracking')::boolean from settings where key = 'stock'), true)";
+
+export async function stockTracking(db: Db) {
+  return (await db.one<{ on: boolean }>(`select ${TRACKING_SQL} as on`))?.on ?? true;
+}
+
+/** Disponible à la vente : désactivé = 0 ; quantités non suivies = sans limite pratique (affiché « disponible »). */
+export const UNTRACKED_AVAILABLE = 99;
+export function availableUnits(
+  v: { on_hand: number; reserved: number; unsellable: number; disabled?: boolean },
+  tracking: boolean,
+) {
+  if (v.disabled) return 0;
+  return tracking ? Math.max(0, v.on_hand - v.reserved - v.unsellable) : UNTRACKED_AVAILABLE;
+}
+
+/** Mouvements liés aux ventes : ignorés quand les quantités ne sont pas suivies. */
+const salesKinds: MovementKind[] = ["reservation", "release", "sale", "return_restock", "return_no_restock"];
+
 export interface MovementInput {
   variantId: string;
   kind: MovementKind;
@@ -51,6 +71,8 @@ export interface MovementInput {
  * `reserved_within_stock` le garantit aussi au niveau de la base).
  */
 export async function applyMovement(tx: Db, m: MovementInput) {
+  // Quantités non suivies : les commandes et ventes ne touchent pas au stock.
+  if (salesKinds.includes(m.kind) && !(await stockTracking(tx))) return;
   const dOn = m.onHandDelta ?? 0;
   const dRes = m.reservedDelta ?? 0;
   const dUns = m.unsellableDelta ?? 0;
@@ -145,7 +167,8 @@ export async function stockList(db: Db, opts: { q?: string; low?: boolean; defau
 export async function lowStockCount(db: Db, defaultThreshold: number, opts: { includeDemo?: boolean } = {}) {
   const r = await db.one<{ n: number }>(
     `select count(*)::int as n from variants v join products p on p.id = v.product_id
-      where v.active and p.status = 'published' and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)
+      where v.active and not v.disabled and not p.disabled and p.status = 'published' and ${TRACKING_SQL}
+        and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)
         ${opts.includeDemo ? "" : "and not p.is_demo"}`,
     [defaultThreshold],
   );

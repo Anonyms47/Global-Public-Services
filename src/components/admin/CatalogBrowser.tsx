@@ -33,6 +33,8 @@ interface Row {
   available: number;
   has_sales: boolean;
   updated_at: string;
+  disabled?: boolean;
+  disabled_variants?: number;
 }
 
 const statusBadge = (s: Row["status"]) =>
@@ -395,6 +397,10 @@ export function CatalogBrowser({
                 <div className="p-3">
                   <div className="flex flex-wrap gap-1">
                     {statusBadge(r.status)}
+                    {r.disabled ? <Badge tone="red">Désactivé</Badge> : null}
+                    {!r.disabled && r.disabled_variants ? (
+                      <Badge tone="warn">{r.disabled_variants} version(s) indisponible(s)</Badge>
+                    ) : null}
                     {r.featured ? <Badge tone="blue">Vedette</Badge> : null}
                   </div>
                   <p className="mt-1 leading-snug font-bold">{r.name}</p>
@@ -409,7 +415,13 @@ export function CatalogBrowser({
               {canEdit && r.status !== "archived" ? (
                 <div className="px-3 pb-3">
                   <QuickEdit
-                    product={{ id: r.id, name: r.name, status: r.status, categoryId: r.category_id ?? null }}
+                    product={{
+                      id: r.id,
+                      name: r.name,
+                      status: r.status,
+                      categoryId: r.category_id ?? null,
+                      disabled: !!r.disabled,
+                    }}
                     categories={categories}
                     canCount={canCount}
                   />
@@ -455,7 +467,13 @@ export function CatalogBrowser({
                     {canEdit && r.status !== "archived" ? (
                       <div className="mt-1">
                         <QuickEdit
-                          product={{ id: r.id, name: r.name, status: r.status, categoryId: r.category_id ?? null }}
+                          product={{
+                            id: r.id,
+                            name: r.name,
+                            status: r.status,
+                            categoryId: r.category_id ?? null,
+                            disabled: !!r.disabled,
+                          }}
                           categories={categories}
                           canCount={canCount}
                         />
@@ -465,6 +483,10 @@ export function CatalogBrowser({
                   <td className="py-2">
                     <div className="flex flex-wrap gap-1">
                       {statusBadge(r.status)}
+                      {r.disabled ? <Badge tone="red">Désactivé</Badge> : null}
+                      {!r.disabled && r.disabled_variants ? (
+                        <Badge tone="warn">{r.disabled_variants} version(s) indisponible(s)</Badge>
+                      ) : null}
                       {r.featured ? <Badge tone="blue">Vedette</Badge> : null}
                       {r.is_demo ? <Badge>Exemple</Badge> : null}
                     </div>

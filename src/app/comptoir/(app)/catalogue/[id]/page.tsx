@@ -12,6 +12,7 @@ import { importedInfo } from "@/server/domain/catalog-import-gps";
 import { listToComplete, specLabelsByCategory, type ToCompleteFilter } from "@/server/domain/catalog-entry";
 import { getSettings } from "@/server/domain/settings";
 import { MarkChecksDone } from "@/components/admin/ToComplete";
+import { Availability } from "@/components/admin/Availability";
 import { IconArrowLeft } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
 
@@ -27,13 +28,20 @@ export default async function EditProductPage({ params, searchParams }: PageProp
   if (!p) notFound();
   const canCosts = can(user, "catalog.costs");
   const completer = (await searchParams).completer;
-  const [categories, versions, imported, settings, specLabels, todo] = await Promise.all([
+  const [categories, versions, imported, settings, specLabels, todo, availability] = await Promise.all([
     listCategories(db, { scope: "active" }),
     listVersions(db, p.id),
     importedInfo(db, p.id),
     getSettings(db),
     specLabelsByCategory(db),
     typeof completer === "string" ? listToComplete(db, { canCosts }) : null,
+    db.one<{ disabled: boolean; variants: { id: string; label: string; disabled: boolean }[] }>(
+      `select p.disabled, coalesce((select json_agg(json_build_object('id', v.id, 'disabled', v.disabled,
+                'label', coalesce(nullif((select string_agg(value, ' · ') from jsonb_each_text(v.options)), ''), v.sku))
+                order by v.position) from variants v where v.product_id = p.id and v.active), '[]') as variants
+         from products p where p.id = $1`,
+      [p.id],
+    ),
   ]);
   // Parcours « Produits à compléter » : position et produit suivant dans la même sélection.
   let completion: { nextHref: string | null; position: string; listHref: string } | null = null;
@@ -127,6 +135,16 @@ export default async function EditProductPage({ params, searchParams }: PageProp
           </p>
           {canEdit ? <TrashActions id={p.id} canPurge={can(user, "catalog.bulk")} hasSales={p.hasSales} /> : null}
         </div>
+      ) : null}
+      {canEdit && !p.deletedAt && availability ? (
+        <Panel title="Disponibilité" id="t-dispo" className="mb-6">
+          <Availability
+            productId={p.id}
+            productName={p.name}
+            disabled={availability.disabled}
+            variants={availability.variants}
+          />
+        </Panel>
       ) : null}
       {canEdit && !p.deletedAt ? (
         <ProductFormClient

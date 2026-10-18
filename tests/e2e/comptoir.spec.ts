@@ -704,6 +704,26 @@ test.describe("Le Comptoir", () => {
     await expect(card.getByLabel(/^Prix FCFA/)).toHaveValue("15000");
   });
 
+  test("article manquant : désactiver puis réactiver un produit et une version", async ({ page }) => {
+    await login(page, "gestion@demo.gps");
+    await page.goto("/comptoir/catalogue?q=Lumen%20Rive");
+    await page.getByRole("button", { name: "Modifier rapidement Lumen Rive" }).first().click();
+    const sheet = page.getByRole("dialog");
+    const dispo = sheet.getByTestId("disponibilite");
+    await expect(dispo).toBeVisible();
+    // Une version manquante : décochée, elle devient indisponible.
+    const first = dispo.getByRole("checkbox").first();
+    await first.uncheck();
+    await expect(dispo.getByText("indisponible", { exact: true })).toBeVisible();
+    await first.check();
+    await expect(dispo.getByText("indisponible", { exact: true })).toHaveCount(0);
+    // Le produit entier.
+    await dispo.getByRole("button", { name: "Désactiver le produit (manquant)" }).click();
+    await expect(dispo.getByText("Produit désactivé : masqué du site et de la caisse.")).toBeVisible();
+    await dispo.getByRole("button", { name: "Réactiver le produit" }).click();
+    await expect(dispo.getByText("Produit actif.")).toBeVisible();
+  });
+
   test("droits : le vendeur ne complète ni ne compte, le gestionnaire ne voit pas les coûts", async ({ page }) => {
     await login(page, "vente@demo.gps");
     for (const path of ["/comptoir/catalogue/a-completer", "/comptoir/stock/comptage", "/comptoir/catalogue/nouveau"]) {

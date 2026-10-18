@@ -1,6 +1,7 @@
 import type { Db } from "../db/client";
 import { bestPromo, discounted, type Promotion } from "./catalog";
 import { optionsLabel } from "@/lib/format";
+import { availableUnits, stockTracking } from "./stock";
 
 export interface CartItemInput {
   variantId: string;
@@ -51,11 +52,13 @@ export async function checkCart(db: Db, items: CartItemInput[], now = new Date()
     reserved: number;
     unsellable: number;
     active: boolean;
+    disabled: boolean;
     status: string;
     is_demo: boolean;
     image: string | null;
   }>(
-    `select v.id, v.product_id, p.slug, p.name, v.sku, v.options, p.axes, v.price, v.on_hand, v.reserved, v.unsellable, v.active, p.status, p.is_demo,
+    `select v.id, v.product_id, p.slug, p.name, v.sku, v.options, p.axes, v.price, v.on_hand, v.reserved, v.unsellable, v.active,
+            (v.disabled or p.disabled) as disabled, p.status, p.is_demo,
             (select url from product_images i where i.product_id = p.id order by position limit 1) as image
        from variants v join products p on p.id = v.product_id where v.id = any($1)`,
     [clean.map((i) => i.variantId)],
@@ -63,6 +66,7 @@ export async function checkCart(db: Db, items: CartItemInput[], now = new Date()
   const promos = await db.query<Promotion>("select * from promotions where product_id = any($1) and active", [
     rows.map((r) => r.product_id),
   ]);
+  const tracking = await stockTracking(db);
   return clean.map((item) => {
     const r = rows.find((x) => x.id === item.variantId);
     if (!r || !r.active || r.status !== "published") {
@@ -87,7 +91,7 @@ export async function checkCart(db: Db, items: CartItemInput[], now = new Date()
       now,
     );
     const unitPrice = promo ? discounted(r.price, promo) : r.price;
-    const available = Math.max(0, r.on_hand - r.reserved - r.unsellable);
+    const available = availableUnits(r, tracking);
     const issues: CartIssue[] = [];
     if (unitPrice !== item.seenPrice) issues.push({ kind: "price", from: item.seenPrice, to: unitPrice });
     if (available === 0) issues.push({ kind: "unavailable" });

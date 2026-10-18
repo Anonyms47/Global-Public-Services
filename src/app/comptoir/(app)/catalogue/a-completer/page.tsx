@@ -62,7 +62,7 @@ export default async function ToCompletePage({ searchParams }: PageProps<"/compt
 
       <div className="mb-5 flex flex-wrap gap-2">
         <Link href="/comptoir/catalogue/saisie" className="btn btn-primary" data-testid="lien-saisie-grille">
-          {canCosts ? "Saisir prix, coûts et stock" : "Saisir prix et stock"} sur une seule page
+          {canCosts ? "Saisir prix et coûts" : "Saisir les prix"} sur une seule page
         </Link>
       </div>
 

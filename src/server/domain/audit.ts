@@ -55,6 +55,10 @@ export const auditLabels: Record<string, string> = {
   "product.checks_done": "Vérifications d'une fiche importée faites",
   "variant.quick_update": "Prix ou seuil modifié (catalogue)",
   "variant.grid_update": "Prix ou coût saisi en grille",
+  "product.disable": "Produit désactivé (article manquant)",
+  "product.enable": "Produit réactivé",
+  "variant.disable": "Version désactivée (article manquant)",
+  "variant.enable": "Version réactivée",
   "media.import_url": "Photo importée depuis une adresse",
   "settings.quick_values": "Valeurs rapides de saisie modifiées",
 };

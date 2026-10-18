@@ -1,6 +1,7 @@
 import type { Db } from "../db/client";
 import { fail, newId } from "./errors";
 import { listOrders } from "./orders";
+import { TRACKING_SQL } from "./stock";
 import { fcfa } from "@/lib/format";
 
 /**
@@ -48,7 +49,8 @@ export async function derivedItems(db: Db, lowThreshold: number): Promise<Derive
     db.query<{ id: string; name: string; sku: string; product_id: string; available: number }>(
       `select v.id, p.name, v.sku, p.id as product_id, (v.on_hand - v.reserved - v.unsellable)::int as available
          from variants v join products p on p.id = v.product_id
-        where v.active and p.status = 'published' and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)
+        where v.active and not v.disabled and not p.disabled and p.status = 'published' and ${TRACKING_SQL}
+          and (v.on_hand - v.reserved - v.unsellable) <= coalesce(v.low_stock_threshold, $1)
         order by available, p.name`,
       [lowThreshold],
     ),

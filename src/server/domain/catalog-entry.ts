@@ -2,7 +2,7 @@ import type { Db } from "../db/client";
 import { AppError, fail } from "./errors";
 import { audit } from "./audit";
 import { storeMedia } from "./media";
-import { applyInventory } from "./stock";
+import { applyInventory, stockTracking } from "./stock";
 import { publicationIssues, type MediaSource, type Spec } from "./catalog";
 import { nameSimilarity, nameTokens } from "@/lib/product-kit";
 
@@ -157,6 +157,7 @@ export async function listToComplete(db: Db, opts: { canCosts: boolean }) {
   );
   if (!products.length) return { rows: [] as ToCompleteRow[], total: 0, complete: 0 };
   const ids = products.map((p) => p.id);
+  const tracking = await stockTracking(db);
   const [variants, images] = await Promise.all([
     db.query<{
       product_id: string;
@@ -184,7 +185,7 @@ export async function listToComplete(db: Db, opts: { canCosts: boolean }) {
     if (!photos.length) flags.push("sans-photo");
     if (!vs.length || vs.some((v) => !(v.price > 0))) flags.push("sans-prix");
     if (opts.canCosts && vs.some((v) => v.cost_price == null)) flags.push("sans-cout");
-    if (!vs.some((v) => v.on_hand > 0)) flags.push("sans-stock");
+    if (tracking && !vs.some((v) => v.on_hand > 0)) flags.push("sans-stock");
     if (!p.warranty?.trim()) flags.push("sans-garantie");
     if (p.internal?.needsHumanReview && !checksDone) flags.push("a-verifier");
     if ((p.axes ?? []).length && vs.some((v) => (p.axes ?? []).some((a) => !v.options?.[a]?.trim())))
