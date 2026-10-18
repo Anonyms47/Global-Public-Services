@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
 import { listStores } from "@/server/domain/stores";
-import { listOrders, type OrderView } from "@/server/domain/orders";
+import { listOrders, nextStep, type OrderView } from "@/server/domain/orders";
 import { can } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import { Empty, Forbidden, Money, PageTitle, Tabs } from "@/components/admin/ui";
 import { ChannelLabel, FulfillmentBadge, PaymentBadge, StatusBadge } from "@/components/admin/OrderBadges";
+import { NextStepButton } from "@/components/admin/OrderActions";
 import { IconPlus, IconSearch } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Commandes" };
@@ -34,6 +35,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
   const channel = typeof sp.canal === "string" ? sp.canal : "";
   const store = typeof sp.boutique === "string" ? sp.boutique : "";
   const stores = await listStores(db);
+  const canProgress = can(user, "orders.progress");
   const [orders, ...counts] = await Promise.all([
     listOrders(db, { view, q, channel: channel || undefined, store: store || undefined }),
     ...views.map((v) => listOrders(db, { view: v.key, limit: 1000 }).then((r) => r.length)),
@@ -172,6 +174,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
                       <StatusBadge status={o.status} />
                       <FulfillmentBadge f={o.fulfillment} reception={o.reception} status={o.status} />
                     </div>
+                    {canProgress && nextStep(o) ? (
+                      <NextStepButton orderId={o.id} to={nextStep(o)!.to} label={nextStep(o)!.label} small />
+                    ) : null}
                   </td>
                   <td className="py-3" data-label="Paiement">
                     <PaymentBadge p={o.payment} />

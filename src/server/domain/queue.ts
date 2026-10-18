@@ -143,15 +143,21 @@ export async function derivedItems(db: Db, lowThreshold: number): Promise<Derive
       });
     }
   }
-  for (const v of low) {
+  // Une seule tâche pour tout le stock bas (et non une par variante) : elle mène à la
+  // liste filtrée, d'où l'on réapprovisionne. Elle réapparaît dès que la liste change.
+  if (low.length) {
+    const out0 = low.filter((v) => v.available <= 0);
+    const names = low.slice(0, 3).map((v) => v.name);
     out.push({
-      key: `stock:${v.id}:${v.available}`,
+      key: `stock:faible:${low.map((v) => `${v.id}=${v.available}`).join(",")}`,
       kind: "stock",
-      title: v.available <= 0 ? `Rupture : ${v.name}` : `Stock faible : ${v.name}`,
-      detail: `${v.sku} · ${v.available} disponible${v.available > 1 ? "s" : ""}`,
-      href: `/comptoir/catalogue/${v.product_id}`,
+      title: `Réapprovisionner : ${low.length} article${low.length > 1 ? "s" : ""}${
+        out0.length ? ` dont ${out0.length} en rupture` : " en stock faible"
+      }`,
+      detail: `${names.join(", ")}${low.length > names.length ? "…" : ""}`,
+      href: "/comptoir/stock?faible=1",
       at: new Date(0),
-      priority: v.available <= 0 ? 2 : 3,
+      priority: out0.length ? 2 : 3,
     });
   }
   return out;

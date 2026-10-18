@@ -20,13 +20,24 @@ import { IconCopy, IconWhatsApp } from "../ui/icons";
 
 const methods = paymentMethods;
 
-export function NextStepButton({ orderId, to, label }: { orderId: string; to: Fulfillment; label: string }) {
+export function NextStepButton({
+  orderId,
+  to,
+  label,
+  small,
+}: {
+  orderId: string;
+  to: Fulfillment;
+  label: string;
+  /** Version compacte, dans la liste des commandes (au-dessus du lien de la ligne). */
+  small?: boolean;
+}) {
   const { run, pending, failure, success } = useAction();
   return (
-    <div className="grid gap-2">
+    <div className={`grid gap-2 ${small ? "relative z-10 mt-2 justify-items-start" : ""}`}>
       <button
         type="button"
-        className="btn btn-primary"
+        className={`btn btn-primary ${small ? "btn-sm" : ""}`}
         disabled={pending}
         onClick={() => run(() => advanceAction(orderId, to))}
       >

@@ -80,9 +80,8 @@ test.describe("Le Comptoir", () => {
     await page.getByRole("button", { name: /Monture : Écaille/ }).click();
     await page.getByLabel("Nom", { exact: true }).fill("Client E2E");
     await page.getByLabel("Téléphone", { exact: true }).fill("000 99 88 77");
-    await page.locator("#p-method").selectOption("mobile_money");
+    await page.getByRole("radio", { name: "Autre mobile money" }).click();
     await page.locator("#p-amount").fill("5000");
-    await page.getByRole("button", { name: "Vérifier la commande" }).click();
     await page.getByRole("button", { name: "Confirmer et réserver" }).click();
     await expect(page).toHaveURL(/\/comptoir\/commandes\/[0-9a-f-]{36}$/);
     await expect(page.getByText("Paiement partiel")).toBeVisible();
@@ -116,7 +115,6 @@ test.describe("Le Comptoir", () => {
     await page.getByRole("button", { name: /Sonna Studio 2/ }).click();
     await page.getByRole("button", { name: /Couleur : Noir/ }).click();
     await page.getByLabel("Nom", { exact: true }).fill("Client Annulation");
-    await page.getByRole("button", { name: "Vérifier la commande" }).click();
     await page.getByRole("button", { name: "Confirmer et réserver" }).click();
     await expect(page).toHaveURL(/\/comptoir\/commandes\/[0-9a-f-]{36}$/);
     const url = page.url();
@@ -138,13 +136,12 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/vente");
     await page.locator("#pos-search").fill("batterie");
     await page.getByRole("button", { name: /Volta Batterie/ }).click();
-    await page.getByRole("button", { name: "Vérifier la vente" }).click();
-    await page.getByRole("button", { name: "Confirmer la vente" }).click();
+    await page.getByRole("button", { name: /^Encaisser / }).click();
     await expect(page.getByText("Vente enregistrée")).toBeVisible();
     expect((await availability(page, "VOL-PB20")).onHand).toBe(before.onHand - 1);
 
     await page.goto("/comptoir/vente");
-    await page.getByRole("button", { name: "Vérifier la vente" }).isDisabled();
+    await expect(page.getByRole("button", { name: "Enregistrer la vente" })).toBeDisabled();
     await page.goto("/comptoir/commandes?vue=remises&canal=boutique");
     await page.locator("tbody tr").first().getByRole("link").click();
     await page.locator("summary", { hasText: "Enregistrer un retour" }).click();

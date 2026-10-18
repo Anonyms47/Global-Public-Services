@@ -49,7 +49,18 @@ const icons: Record<string, typeof IconMenu> = {
   media: IconImage,
 };
 
-export function AdminNavLink({ href, icon, children }: { href: string; icon: string; children: ReactNode }) {
+export function AdminNavLink({
+  href,
+  icon,
+  count,
+  children,
+}: {
+  href: string;
+  icon: string;
+  /** Nombre d'éléments en attente : affiché en pastille s'il est positif. */
+  count?: number;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const on = href === "/comptoir" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   const I = icons[icon] ?? IconGrid;
@@ -64,6 +75,14 @@ export function AdminNavLink({ href, icon, children }: { href: string; icon: str
       }`}
     >
       <I size={18} /> {children}
+      {count ? (
+        <span
+          className="ml-auto min-w-6 rounded-full bg-gps-red px-1.5 text-center text-[12px] leading-6 font-bold text-white tabular"
+          aria-label={`${count} en attente`}
+        >
+          {count > 99 ? "99+" : count}
+        </span>
+      ) : null}
     </Link>
   );
 }

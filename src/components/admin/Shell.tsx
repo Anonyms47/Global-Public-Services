@@ -9,7 +9,17 @@ import { AdminNavLink, CommandPalette, MobileAdminNav, QuickActionButton } from 
 import { logoutAction } from "@/app/comptoir/connexion/actions";
 import { IconLogout, IconPlus } from "../ui/icons";
 
-export function Shell({ user, demo, children }: { user: User; demo: boolean; children: ReactNode }) {
+export function Shell({
+  user,
+  demo,
+  badges = {},
+  children,
+}: {
+  user: User;
+  demo: boolean;
+  badges?: Record<string, number>;
+  children: ReactNode;
+}) {
   const groups = adminNavGroups
     .map((g) => ({ ...g, items: g.items.filter((n) => can(user, n.perm)) }))
     .filter((g) => g.items.length);
@@ -37,7 +47,7 @@ export function Shell({ user, demo, children }: { user: User; demo: boolean; chi
             <ul className="grid gap-0.5" aria-labelledby={`nav-${g.key}`}>
               {g.items.map((n) => (
                 <li key={n.href}>
-                  <AdminNavLink href={n.href} icon={n.icon}>
+                  <AdminNavLink href={n.href} icon={n.icon} count={badges[n.href]}>
                     {n.label}
                   </AdminNavLink>
                 </li>

@@ -8,6 +8,7 @@ import { getSettings } from "@/server/domain/settings";
 import { periodFromKey } from "@/server/domain/reports";
 import { computeMetrics } from "@/server/domain/metrics";
 import { listQueue, queueKindLabels } from "@/server/domain/queue";
+import { requestCounts } from "@/server/domain/requests";
 import { can } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { Badge, Money, PageTitle, Panel } from "@/components/admin/ui";
@@ -19,15 +20,22 @@ export default async function TodayPage() {
   const { db, user } = await requirePage();
   const settings = await getSettings(db);
   const finance = can(user, "dashboard.finance");
-  const [counts, low, m, queue] = await Promise.all([
+  const [counts, low, m, queue, requests] = await Promise.all([
     todayCounts(db),
     // Tâche opérationnelle : elle renvoie à la liste du stock, produits d'exemple compris.
     lowStockCount(db, settings.stock.defaultLowThreshold, { includeDemo: true }),
     computeMetrics(db, periodFromKey("jour")),
     listQueue(db, { view: "a-faire", userId: user.id, lowThreshold: settings.stock.defaultLowThreshold }),
+    requestCounts(db),
   ]);
 
   const tasks = [
+    {
+      label: "Demandes WhatsApp à traiter",
+      value: requests.new ?? 0,
+      href: "/comptoir/demandes",
+      tone: "red" as const,
+    },
     {
       label: "Commandes à préparer",
       value: counts.to_prepare,
@@ -35,15 +43,12 @@ export default async function TodayPage() {
       tone: "red" as const,
     },
     {
-      label: "Retraits prêts",
-      value: counts.pickups_ready,
-      href: "/comptoir/commandes?vue=retraits",
-      tone: "blue" as const,
-    },
-    {
-      label: "Livraisons en cours",
-      value: counts.deliveries,
-      href: "/comptoir/commandes?vue=livraisons",
+      label: "Retraits et livraisons",
+      value: counts.pickups_ready + counts.deliveries,
+      href:
+        counts.pickups_ready || !counts.deliveries
+          ? "/comptoir/commandes?vue=retraits"
+          : "/comptoir/commandes?vue=livraisons",
       tone: "blue" as const,
     },
     {
