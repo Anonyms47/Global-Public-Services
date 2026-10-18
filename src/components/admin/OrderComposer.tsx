@@ -150,7 +150,6 @@ function OrderComposer({
   const [picked, setPicked] = useState<Product | null>(null);
   const [pickQty, setPickQty] = useState(1);
   const [tab, setTab] = useState<"articles" | "vente">("articles");
-  const [review, setReview] = useState(false);
   const [done, setDone] = useState<{
     id: string;
     reference: string;
@@ -159,7 +158,7 @@ function OrderComposer({
   const [custQ, setCustQ] = useState("");
   const [custResults, setCustResults] = useState<{ id: string; name: string; phone: string; address: string }[]>([]);
   const [matches, setMatches] = useState<{ id: string; name: string; phone: string }[]>([]);
-  const { run, pending, failure, fieldErrors, setFailure } = useAction();
+  const { run, pending, failure, fieldErrors } = useAction();
   const searchRef = useRef<HTMLInputElement>(null);
 
   const load = () => {
@@ -177,7 +176,6 @@ function OrderComposer({
 
   const update = (patch: Partial<Draft>) => {
     setDraft((d) => ({ ...d, ...patch }));
-    setReview(false);
   };
 
   const filtered = useMemo(() => {
@@ -221,7 +219,6 @@ function OrderComposer({
           ];
       return { ...d, lines };
     });
-    setReview(false);
     setPicked(null);
     setPickQty(1);
     setQ("");
@@ -345,8 +342,8 @@ function OrderComposer({
           return;
         }
         setDone({ id: res.id, reference: res.reference, change });
-        setDraft(newDraft());
-        setReview(false);
+        // Le moyen de paiement de la vente précédente est repris pour la suivante.
+        setDraft({ ...newDraft(), payMethod: draft.payMethod });
         load();
       },
     });
@@ -965,24 +962,27 @@ function OrderComposer({
               {mode === "sale" ? "Paiement" : "Acompte reçu (facultatif)"}
             </legend>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="label" htmlFor="p-method">
+              <div className="sm:col-span-2">
+                <span className="label" id="p-method-label">
                   Moyen
-                </label>
-                <select
-                  id="p-method"
-                  className="field"
-                  value={draft.payMethod}
-                  onChange={(e) => update({ payMethod: e.target.value as Draft["payMethod"] })}
-                >
+                </span>
+                {/* Un geste par moyen de paiement, au lieu d'une liste déroulante. */}
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="p-method-label">
                   {methods
                     .filter(([k]) => !enabledMethods || enabledMethods.includes(k) || k === draft.payMethod)
                     .map(([k, v]) => (
-                      <option key={k} value={k}>
+                      <button
+                        key={k}
+                        type="button"
+                        role="radio"
+                        aria-checked={draft.payMethod === k}
+                        className={`chip !min-h-11 ${draft.payMethod === k ? "!border-ink !bg-ink !text-white" : ""}`}
+                        onClick={() => update({ payMethod: k })}
+                      >
                         {v}
-                      </option>
+                      </button>
                     ))}
-                </select>
+                </div>
               </div>
               <div>
                 <label className="label" htmlFor="p-amount">
@@ -1094,45 +1094,31 @@ function OrderComposer({
 
           <ActionFeedback failure={failure} onRetry={submit} />
 
-          {!review ? (
-            <button
-              type="button"
-              className="btn btn-ink w-full"
-              onClick={() => {
-                setFailure(null);
-                setReview(true);
-              }}
-              disabled={problems.length > 0}
-            >
-              Vérifier {mode === "sale" ? "la vente" : "la commande"}
-            </button>
-          ) : (
-            <div className="rounded-[6px] border-[1.5px] border-gps-blue bg-gps-blue-soft p-3">
-              <p className="font-bold text-gps-blue-deep">Vérification</p>
-              <ul className="mt-1 text-[14px] text-gps-blue-deep">
-                <li>
-                  {draft.lines.reduce((s, l) => s + l.quantity, 0)} article(s) · {fcfa(subtotal)}
-                </li>
-                <li>{mode === "sale" ? "Sortie de stock immédiate" : "Les articles seront réservés"}</li>
-                <li>
-                  Encaissement : {fcfa(paid)} (
-                  {[
-                    methods.find((m) => m[0] === draft.payMethod)?.[1],
-                    ...extras.filter((p) => p.amount > 0).map((p) => methods.find((m) => m[0] === p.method)?.[1]),
-                  ].join(" + ")}
-                  ) · solde {fcfa(total - paid)}
-                </li>
-              </ul>
-              <div className="mt-3 flex gap-2">
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setReview(false)}>
-                  Modifier
-                </button>
-                <button type="button" className="btn btn-primary flex-1" onClick={submit} disabled={pending}>
-                  {pending ? "Enregistrement…" : mode === "sale" ? "Confirmer la vente" : "Confirmer et réserver"}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Récapitulatif toujours visible, puis une seule validation. */}
+          <p className="text-[14px] text-ink-soft" data-testid="recap-vente">
+            {draft.lines.reduce((s, l) => s + l.quantity, 0)} article(s) ·{" "}
+            {mode === "sale" ? "sortie de stock immédiate" : "les articles seront réservés"}
+            {paid > 0
+              ? ` · ${[
+                  methods.find((m) => m[0] === draft.payMethod)?.[1],
+                  ...extras.filter((p) => p.amount > 0).map((p) => methods.find((m) => m[0] === p.method)?.[1]),
+                ].join(" + ")}`
+              : ""}
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary w-full"
+            onClick={submit}
+            disabled={pending || problems.length > 0}
+          >
+            {pending
+              ? "Enregistrement…"
+              : mode === "sale"
+                ? paid > 0
+                  ? `Encaisser ${fcfa(paid)}`
+                  : "Enregistrer la vente"
+                : "Confirmer et réserver"}
+          </button>
           {problems.length && draft.lines.length ? <p className="hint">{problems.join(" ")}</p> : null}
         </div>
       </div>

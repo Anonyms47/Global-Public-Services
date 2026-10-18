@@ -100,8 +100,7 @@ test.describe("Parcours mobile et clavier", () => {
     const total = Number((await page.locator("#p-amount").getAttribute("placeholder")) ?? "0");
     await page.locator("#p-amount").fill(String(total + 5000));
     await expect(page.getByText("Monnaie à rendre")).toBeVisible();
-    await page.getByRole("button", { name: "Vérifier la vente" }).click();
-    await page.getByRole("button", { name: "Confirmer la vente" }).click();
+    await page.getByRole("button", { name: /^Encaisser / }).click();
     await expect(page.getByText("Vente enregistrée")).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: "Vente enregistrée" })).toContainText(
       /rendre :\s*5\s000\sFCFA/,

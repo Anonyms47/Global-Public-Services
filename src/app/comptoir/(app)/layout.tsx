@@ -1,13 +1,32 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@/server/admin";
-import { isDemoMode } from "@/server/db";
+import { getDb, isDemoMode } from "@/server/db";
 import { Shell } from "@/components/admin/Shell";
+
+/** Pastilles du menu : ce qui attend une action, recalculé à chaque page. */
+async function navBadges(): Promise<Record<string, number>> {
+  try {
+    const db = await getDb();
+    const r = await db.one<{ requests: number; prepare: number; drafts: number }>(
+      `select (select count(*)::int from order_requests where status = 'new') as requests,
+              (select count(*)::int from orders where status = 'confirmed' and fulfillment = 'to_prepare') as prepare,
+              (select count(*)::int from products where status = 'draft' and deleted_at is null) as drafts`,
+    );
+    return {
+      "/comptoir/demandes": r?.requests ?? 0,
+      "/comptoir/commandes": r?.prepare ?? 0,
+      "/comptoir/catalogue/a-completer": r?.drafts ?? 0,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export default async function AdminLayout({ children }: LayoutProps<"/comptoir">) {
   const user = await currentUser();
   if (!user) redirect("/comptoir/connexion?expiree=1");
   return (
-    <Shell user={user} demo={isDemoMode()}>
+    <Shell user={user} demo={isDemoMode()} badges={await navBadges()}>
       {children}
     </Shell>
   );

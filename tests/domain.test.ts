@@ -1792,6 +1792,10 @@ describe("Droits, clients, rapports, démonstration", () => {
     const prep = q.items.find((i) => i.key === `order:${o.id}:prepare`);
     expect(prep?.title).toContain(o.reference);
     expect(q.items.some((i) => i.key.startsWith(`order:${o.id}:balance:`))).toBe(true);
+    // Stock bas : une seule tâche regroupée, qui mène à la liste filtrée.
+    const stockItems = q.items.filter((i) => i.kind === "stock");
+    expect(stockItems.length).toBeLessThanOrEqual(1);
+    if (stockItems[0]) expect(stockItems[0].href).toBe("/comptoir/stock?faible=1");
 
     await updateQueueItem(db, owner, prep!.key, { action: "assign", userId: owner.id }, 1);
     expect((await listQueue(db, { ...opts, view: "moi" })).items.map((i) => i.key)).toContain(prep!.key);

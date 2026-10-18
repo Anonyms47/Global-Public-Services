@@ -50,8 +50,24 @@ export function RequestActions({ id, status }: { id: string; status: "new" | "co
               a.run(() => dismissRequestAction(id, reason));
             }}
           >
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Raisons fréquentes">
+              {["Client injoignable", "Doublon", "Article indisponible", "Acheté en boutique"].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className="chip"
+                  disabled={a.pending}
+                  onClick={() => {
+                    setReason(r);
+                    a.run(() => dismissRequestAction(id, r));
+                  }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
             <label className="label text-[13px]" htmlFor={`dismiss-${id}`}>
-              Raison
+              Autre raison
             </label>
             <input
               id={`dismiss-${id}`}

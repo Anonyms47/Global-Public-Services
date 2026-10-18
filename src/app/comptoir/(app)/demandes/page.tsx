@@ -31,6 +31,18 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
     getSettings(db),
   ]);
   const canAct = can(user, "orders.create");
+  // Stock disponible de chaque article, pour décider avant de confirmer.
+  const variantIds = status === "new" ? [...new Set(rows.flatMap((r) => r.lines.map((l) => l.variantId)))] : [];
+  const available = new Map(
+    variantIds.length
+      ? (
+          await db.query<{ id: string; available: number }>(
+            "select id, (on_hand - reserved - unsellable)::int as available from variants where id = any($1)",
+            [variantIds],
+          )
+        ).map((v) => [v.id, v.available])
+      : [],
+  );
   return (
     <>
       <PageTitle eyebrow="Exploiter" title="Demandes WhatsApp">
@@ -106,6 +118,17 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
                         {l.quantity} × {l.name}
                         {l.optionsLabel ? <span className="text-ink-mute"> — {l.optionsLabel}</span> : null}
                         <span className="text-ink-mute"> · {l.sku}</span>
+                        {available.has(l.variantId) ? (
+                          <span className="ml-2">
+                            {available.get(l.variantId)! <= 0 ? (
+                              <Badge tone="red">rupture</Badge>
+                            ) : available.get(l.variantId)! < l.quantity ? (
+                              <Badge tone="warn">seulement {available.get(l.variantId)} dispo.</Badge>
+                            ) : (
+                              <Badge tone="green">{available.get(l.variantId)} dispo.</Badge>
+                            )}
+                          </span>
+                        ) : null}
                       </span>
                       <span className="tabular">{fcfa(l.unitPrice * l.quantity)}</span>
                     </li>
