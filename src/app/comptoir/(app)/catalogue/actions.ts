@@ -419,8 +419,9 @@ export async function quickVariantsAction(productId: string) {
       low_stock_threshold: number | null;
       on_hand: number;
       reserved: number;
+      disabled: boolean;
     }>(
-      `select id, sku, options, price, low_stock_threshold, on_hand, reserved from variants
+      `select id, sku, options, price, low_stock_threshold, on_hand, reserved, disabled from variants
         where product_id = $1 and active order by position`,
       [String(productId)],
     );
@@ -432,6 +433,7 @@ export async function quickVariantsAction(productId: string) {
       threshold: v.low_stock_threshold,
       onHand: v.on_hand,
       reserved: v.reserved,
+      disabled: v.disabled,
     }));
   });
 }
@@ -469,5 +471,25 @@ export async function entryGridSaveAction(input: unknown) {
       r.stock ? `${r.stock} stock${r.stock > 1 ? "s" : ""}` : "",
     ].filter(Boolean);
     return { ...r, message: parts.length ? `Enregistré : ${parts.join(", ")}.` : "Rien n'a changé." };
+  });
+}
+
+/** Produit manquant : désactivé (masqué du site et de la caisse) ou réactivé. Journalisé. */
+export async function setProductDisabledAction(productId: string, disabled: boolean) {
+  return guarded("catalog.edit", async ({ db, user }) => {
+    const { setProductDisabled } = await import("@/server/domain/catalog");
+    const name = await setProductDisabled(db, String(productId), !!disabled);
+    await audit(db, user.is_demo ? null : user.id, disabled ? "product.disable" : "product.enable", name);
+    return { disabled: !!disabled, message: disabled ? `${name} : désactivé.` : `${name} : réactivé.` };
+  });
+}
+
+/** Version manquante : proposée comme indisponible, ou de nouveau disponible. Journalisé. */
+export async function setVariantDisabledAction(variantId: string, disabled: boolean) {
+  return guarded("catalog.edit", async ({ db, user }) => {
+    const { setVariantDisabled } = await import("@/server/domain/catalog");
+    const label = await setVariantDisabled(db, String(variantId), !!disabled);
+    await audit(db, user.is_demo ? null : user.id, disabled ? "variant.disable" : "variant.enable", label);
+    return { disabled: !!disabled };
   });
 }

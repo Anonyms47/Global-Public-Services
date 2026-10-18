@@ -30,6 +30,8 @@ import {
   applyPriceChange,
   previewProductById,
   publishedProductById,
+  setProductDisabled,
+  setVariantDisabled,
 } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
@@ -446,6 +448,60 @@ describe("Stock", () => {
         userId: manager.id,
       }),
     ).rejects.toThrow(/réservé/);
+  });
+});
+
+describe("Article manquant : désactivation et stock non suivi", () => {
+  it("une version désactivée n'est plus vendable ; un produit désactivé disparaît du site", async () => {
+    const v = await variantBySku(db, "VOL-PB20");
+    await setVariantDisabled(db, v.id, true);
+    const cart = await checkCart(db, [{ variantId: v.id, quantity: 1, seenPrice: v.price }]);
+    expect(cart[0].available).toBe(0);
+    await expect(
+      createOrder(db, manager, {
+        idempotencyKey: key(),
+        channel: "boutique",
+        reception: "immediate",
+        lines: [{ variantId: v.id, quantity: 1 }],
+      }),
+    ).rejects.toThrow(/désactivé/);
+    await setVariantDisabled(db, v.id, false);
+    expect((await checkCart(db, [{ variantId: v.id, quantity: 1, seenPrice: v.price }]))[0].available).toBeGreaterThan(
+      0,
+    );
+
+    const p = (await db.one<{ id: string }>("select product_id as id from variants where id = $1", [v.id]))!;
+    await setProductDisabled(db, p.id, true);
+    expect((await publishedProducts(db)).some((x) => x.id === p.id)).toBe(false);
+    expect((await checkCart(db, [{ variantId: v.id, quantity: 1, seenPrice: v.price }]))[0].available).toBe(0);
+    await setProductDisabled(db, p.id, false);
+    expect((await publishedProducts(db)).some((x) => x.id === p.id)).toBe(true);
+  });
+
+  it("stock non suivi : tout est vendable sans toucher aux quantités", async () => {
+    const s = await getSettings(db);
+    await saveSettingsSection(db, "stock", { ...s.stock, tracking: false });
+    try {
+      const v = await variantBySku(db, "SON-ST2-NO");
+      const cart = await checkCart(db, [{ variantId: v.id, quantity: 1, seenPrice: v.price }]);
+      expect(cart[0].available).toBe(99);
+      const o = await createOrder(db, manager, {
+        idempotencyKey: key(),
+        channel: "whatsapp",
+        reception: "pickup",
+        customerName: "Sans stock",
+        lines: [{ variantId: v.id, quantity: v.on_hand + 5 }],
+      });
+      const after = await variantBySku(db, "SON-ST2-NO");
+      expect({ on_hand: after.on_hand, reserved: after.reserved }).toEqual({
+        on_hand: v.on_hand,
+        reserved: v.reserved,
+      });
+      await cancelOrder(db, manager, o.id, "test");
+      expect((await variantBySku(db, "SON-ST2-NO")).reserved).toBe(v.reserved);
+    } finally {
+      await saveSettingsSection(db, "stock", { ...s.stock, tracking: true });
+    }
   });
 });
 

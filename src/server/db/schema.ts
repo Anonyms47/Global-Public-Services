@@ -328,6 +328,9 @@ alter table categories add column if not exists featured boolean not null defaul
 alter table categories add column if not exists archived_at timestamptz;
 -- Profil de saisie (champs demandés, options de variantes) réglé par le propriétaire.
 alter table categories add column if not exists profile jsonb;
+-- Désactivation en un geste : produit masqué du site et de la caisse, version proposée comme indisponible.
+alter table products add column if not exists disabled boolean not null default false;
+alter table variants add column if not exists disabled boolean not null default false;
 -- Fiches produits : vidéos courtes à côté des photos (la première image reste la photo principale).
 alter table product_images add column if not exists kind text not null default 'image';
 create table if not exists product_versions (

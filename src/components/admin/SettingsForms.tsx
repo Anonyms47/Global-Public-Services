@@ -407,22 +407,38 @@ export function SettingsForm({ initial }: { initial: Initial }) {
       </Panel>
 
       <Panel title="Stock & reçus" id="t-stock">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Field
-            id="s-threshold"
-            label="Seuil d'alerte par défaut"
-            type="number"
-            value={String(s.stock.defaultLowThreshold)}
-            onChange={(v) =>
-              setS({
-                ...s,
-                stock: {
-                  defaultLowThreshold: Math.max(0, Math.floor(Number(v) || 0)),
-                },
-              })
-            }
-            hint="Alerte quand le disponible atteint ce nombre (modifiable par variante)."
+        <label className="mb-4 flex items-start gap-3 rounded-[6px] border border-line p-3">
+          <input
+            id="s-tracking"
+            type="checkbox"
+            className="mt-1 h-5 w-5"
+            checked={s.stock.tracking}
+            onChange={(e) => setS({ ...s, stock: { ...s.stock, tracking: e.target.checked } })}
           />
+          <span>
+            <span className="font-bold">Suivre les quantités en stock</span>
+            <span className="hint block">
+              Décoché : pas de quantités à saisir. Tout est vendable sur le site et à la caisse ; quand un article
+              manque, désactivez le produit ou la version d&apos;un geste (Catalogue).
+            </span>
+          </span>
+        </label>
+        <div className="grid gap-4 md:grid-cols-3">
+          {s.stock.tracking ? (
+            <Field
+              id="s-threshold"
+              label="Seuil d'alerte par défaut"
+              type="number"
+              value={String(s.stock.defaultLowThreshold)}
+              onChange={(v) =>
+                setS({
+                  ...s,
+                  stock: { ...s.stock, defaultLowThreshold: Math.max(0, Math.floor(Number(v) || 0)) },
+                })
+              }
+              hint="Alerte quand le disponible atteint ce nombre (modifiable par variante)."
+            />
+          ) : null}
           <Field
             id="s-rh"
             label="En-tête des reçus"

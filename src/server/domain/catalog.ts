@@ -2,6 +2,7 @@ import type { Db } from "../db/client";
 import { fail, newId } from "./errors";
 import { slugify } from "@/lib/format";
 import { normalizeBarcode, suggestSku } from "@/lib/sku";
+import { availableUnits, stockTracking } from "./stock";
 import type { CategoryProfile } from "@/lib/product-kit";
 
 // ——— Types ———
@@ -152,6 +153,7 @@ interface VariantRow {
   on_hand: number;
   reserved: number;
   unsellable: number;
+  disabled: boolean;
 }
 
 async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicProduct[]> {
@@ -159,7 +161,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
   const ids = rows.map((r) => r.id);
   const [variants, images, promos] = await Promise.all([
     db.query<VariantRow>(
-      `select id, product_id, sku, options, price, on_hand, reserved, unsellable from variants
+      `select id, product_id, sku, options, price, on_hand, reserved, unsellable, disabled from variants
         where product_id = any($1) and active order by position, price`,
       [ids],
     ),
@@ -174,6 +176,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
     ]),
     db.query<Promotion>("select * from promotions where product_id = any($1) and active", [ids]),
   ]);
+  const tracking = await stockTracking(db);
   return rows
     .map((r) => {
       const vs = variants.filter((v) => v.product_id === r.id);
@@ -186,7 +189,8 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         options: v.options,
         basePrice: v.price,
         price: promo ? discounted(v.price, promo) : v.price,
-        available: Math.max(0, v.on_hand - v.reserved - v.unsellable),
+        // Version désactivée : affichée comme indisponible ; quantités non suivies : toujours disponible.
+        available: availableUnits(v, tracking),
       }));
       return {
         id: r.id,
@@ -250,25 +254,35 @@ export async function applySchedules(db: Db, now = new Date()) {
 
 export async function publishedProducts(db: Db, now = new Date()) {
   await applySchedules(db, now);
-  const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' order by p.created_at desc`);
+  const rows = await db.query<ProductRow>(
+    `${productSelect} where p.status = 'published' and not p.disabled order by p.created_at desc`,
+  );
   return hydrate(db, rows, now);
 }
 
 /** Articles vendables au comptoir : publiés ou en brouillon (hors archives). */
 export async function sellableProducts(db: Db, now = new Date()) {
-  const rows = await db.query<ProductRow>(`${productSelect} where p.status <> 'archived' order by p.name`);
+  const rows = await db.query<ProductRow>(
+    `${productSelect} where p.status <> 'archived' and not p.disabled order by p.name`,
+  );
   return hydrate(db, rows, now);
 }
 
 export async function publishedProductBySlug(db: Db, slug: string, now = new Date()) {
   await applySchedules(db, now);
-  const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' and p.slug = $1`, [slug]);
+  const rows = await db.query<ProductRow>(
+    `${productSelect} where p.status = 'published' and not p.disabled and p.slug = $1`,
+    [slug],
+  );
   return (await hydrate(db, rows, now))[0] ?? null;
 }
 
 export async function publishedProductById(db: Db, id: string, now = new Date()) {
   await applySchedules(db, now);
-  const rows = await db.query<ProductRow>(`${productSelect} where p.status = 'published' and p.id = $1`, [id]);
+  const rows = await db.query<ProductRow>(
+    `${productSelect} where p.status = 'published' and not p.disabled and p.id = $1`,
+    [id],
+  );
   return (await hydrate(db, rows, now))[0] ?? null;
 }
 
@@ -396,6 +410,8 @@ export interface AdminProductRow {
   on_hand: number;
   available: number;
   has_sales: boolean;
+  disabled: boolean;
+  disabled_variants: number;
 }
 
 export async function adminProducts(db: Db, opts: { q?: string; status?: string; category?: string } = {}) {
@@ -422,7 +438,8 @@ export async function adminProducts(db: Db, opts: { q?: string; status?: string;
   }
   return db.query<AdminProductRow>(
     `select p.id, p.slug, p.name, p.brand, p.category_id, c.name as category_name, p.status, p.featured,
-            p.updated_at, p.is_demo, p.publish_at, p.unpublish_at, p.deleted_at,
+            p.updated_at, p.is_demo, p.publish_at, p.unpublish_at, p.deleted_at, p.disabled,
+            (select count(*)::int from variants v where v.product_id = p.id and v.active and v.disabled) as disabled_variants,
             (select url from product_images i where i.product_id = p.id and i.kind = 'image' order by position limit 1) as image,
             (select count(*)::int from variants v where v.product_id = p.id and v.active) as variant_count,
             (select min(price) from variants v where v.product_id = p.id and v.active) as min_price,
@@ -1191,4 +1208,28 @@ export async function setFeaturedSelection(db: Db, ids: string[]) {
       );
     }
   });
+}
+
+/**
+ * Désactivation en un geste (article manquant) : un produit désactivé disparaît du site et
+ * de la caisse ; une version désactivée reste visible comme indisponible. Rien n'est supprimé.
+ */
+export async function setProductDisabled(db: Db, id: string, disabled: boolean) {
+  const r = await db.one<{ name: string }>(
+    "update products set disabled = $2, updated_at = now() where id = $1 and deleted_at is null returning name",
+    [id, disabled],
+  );
+  if (!r) fail("not_found", "Produit introuvable.");
+  return r!.name;
+}
+
+export async function setVariantDisabled(db: Db, variantId: string, disabled: boolean) {
+  const r = await db.one<{ name: string; sku: string; product_id: string }>(
+    `update variants v set disabled = $2 from products p
+      where v.id = $1 and p.id = v.product_id and v.active returning p.name, v.sku, v.product_id`,
+    [variantId, disabled],
+  );
+  if (!r) fail("not_found", "Version introuvable.");
+  await db.query("update products set updated_at = now() where id = $1", [r!.product_id]);
+  return `${r!.name} (${r!.sku})`;
 }

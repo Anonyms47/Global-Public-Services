@@ -456,7 +456,9 @@ function OrderComposer({
                           ? v.available === 0
                             ? "épuisé"
                             : "tout est déjà dans la vente"
-                          : `${room} disponible${room > 1 ? "s" : ""}`}
+                          : v.available >= 99
+                            ? "disponible"
+                            : `${room} disponible${room > 1 ? "s" : ""}`}
                       </span>
                     </span>
                     <span className="font-bold tabular">{fcfa(v.price)}</span>
@@ -513,7 +515,12 @@ function OrderComposer({
                     <span className="block truncate font-semibold">{p.name}</span>
                     <span className="block text-[13px] text-ink-mute">
                       {fcfa(Math.min(...prices))}
-                      {new Set(prices).size > 1 ? "+" : ""} · {avail === 0 ? "épuisé" : `${avail} dispo.`}
+                      {new Set(prices).size > 1 ? "+" : ""} ·{" "}
+                      {avail === 0
+                        ? "épuisé"
+                        : p.variants.some((v) => v.available >= 99)
+                          ? "disponible"
+                          : `${avail} dispo.`}
                       {p.variants.length > 1 ? ` · ${p.variants.length} variantes` : ""}
                     </span>
                   </span>

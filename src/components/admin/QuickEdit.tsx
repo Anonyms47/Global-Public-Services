@@ -12,6 +12,7 @@ import { quickCountAction } from "@/app/comptoir/(app)/stock/actions";
 import { fcfa } from "@/lib/format";
 import { Sheet } from "../ui/Sheet";
 import { ActionFeedback, useAction } from "./useAction";
+import { Availability } from "./Availability";
 
 type V = {
   id: string;
@@ -21,6 +22,7 @@ type V = {
   threshold: number | null;
   onHand: number;
   reserved: number;
+  disabled?: boolean;
 };
 
 /** Modification rapide depuis le catalogue : prix, stock, seuil, catégorie, statut, corbeille. */
@@ -29,7 +31,13 @@ export function QuickEdit({
   categories,
   canCount,
 }: {
-  product: { id: string; name: string; status: "draft" | "published" | "archived"; categoryId: string | null };
+  product: {
+    id: string;
+    name: string;
+    status: "draft" | "published" | "archived";
+    categoryId: string | null;
+    disabled?: boolean;
+  };
   categories: { id: string; name: string }[];
   canCount: boolean;
 }) {
@@ -116,8 +124,12 @@ export function QuickEdit({
                   {(
                     [
                       ["price", "Prix (FCFA)"],
-                      ...(canCount ? [["stock", "Stock compté"]] : []),
-                      ["threshold", "Seuil"],
+                      ...(canCount
+                        ? [
+                            ["stock", "Stock compté"],
+                            ["threshold", "Seuil"],
+                          ]
+                        : []),
                     ] as [keyof (typeof edits)[string], string][]
                   ).map(([k, l]) => (
                     <label key={k} className="grid gap-1 text-[12px] font-bold text-ink-mute">
@@ -133,9 +145,10 @@ export function QuickEdit({
                   ))}
                 </div>
                 <p className="text-[12px] text-ink-mute">
-                  Actuel : {v.price ? fcfa(v.price) : "prix non saisi"} · {v.onHand} en stock
-                  {v.reserved ? ` (${v.reserved} réservé${v.reserved > 1 ? "s" : ""})` : ""}. Une correction de stock
-                  crée un mouvement d&apos;inventaire tracé.
+                  Actuel : {v.price ? fcfa(v.price) : "prix non saisi"}
+                  {canCount
+                    ? ` · ${v.onHand} en stock${v.reserved ? ` (${v.reserved} réservé${v.reserved > 1 ? "s" : ""})` : ""}. Une correction de stock crée un mouvement d'inventaire tracé.`
+                    : "."}
                 </p>
                 <button
                   type="button"
@@ -148,6 +161,21 @@ export function QuickEdit({
               </li>
             ))}
           </ul>
+          {variants ? (
+            <div className="border-t border-line pt-3">
+              <p className="label">Disponibilité</p>
+              <Availability
+                productId={product.id}
+                productName={product.name}
+                disabled={!!product.disabled}
+                variants={variants.map((v) => ({
+                  id: v.id,
+                  label: v.label || v.sku,
+                  disabled: !!v.disabled,
+                }))}
+              />
+            </div>
+          ) : null}
           <div className="grid gap-2 border-t border-line pt-3">
             <label className="label" htmlFor={`qe-cat-${product.id}`}>
               Catégorie

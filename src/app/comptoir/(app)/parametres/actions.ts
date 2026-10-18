@@ -91,6 +91,7 @@ const settingsSchema = z.object({
   }),
   stock: z.object({
     defaultLowThreshold: z.coerce.number().int().min(0).max(1000),
+    tracking: z.boolean(),
   }),
   receipt: z.object({ header: text(200), footer: text(200) }),
   messages: z.object(

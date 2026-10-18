@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePage } from "@/server/admin";
 import { listEntryGrid } from "@/server/domain/catalog-entry";
+import { stockTracking } from "@/server/domain/stock";
 import { can } from "@/lib/permissions";
 import { Forbidden, PageTitle } from "@/components/admin/ui";
 import { EntryGrid } from "@/components/admin/EntryGrid";
@@ -13,7 +14,8 @@ export default async function EntryGridPage({ searchParams }: PageProps<"/compto
   const { db, user, allowed } = await requirePage("catalog.edit");
   if (!allowed) return <Forbidden what="la saisie rapide" />;
   const canCosts = can(user, "catalog.costs");
-  const canCount = can(user, "stock.inventory");
+  // Quantités non suivies : la grille ne demande que les prix (et les coûts).
+  const canCount = can(user, "stock.inventory") && (await stockTracking(db));
   const tous = (await searchParams).tous === "1";
   const rows = await listEntryGrid(db, { canCosts, includePublished: tous });
   return (
@@ -24,7 +26,12 @@ export default async function EntryGridPage({ searchParams }: PageProps<"/compto
       >
         <IconArrowLeft size={18} /> Produits à compléter
       </Link>
-      <PageTitle eyebrow="Catalogue" title={canCosts ? "Prix, coût et stock" : "Prix et stock"}>
+      <PageTitle
+        eyebrow="Catalogue"
+        title={
+          canCosts && canCount ? "Prix, coût et stock" : canCosts ? "Prix et coût" : canCount ? "Prix et stock" : "Prix"
+        }
+      >
         Toutes les versions {tous ? "du catalogue" : "des brouillons"} sur une seule page : tapez les valeurs, Entrée
         passe au champ suivant, puis « Tout enregistrer ». Chaque changement est noté dans le journal ; rien n&apos;est
         publié.{" "}

@@ -51,12 +51,16 @@ export default async function TodayPage() {
           : "/comptoir/commandes?vue=livraisons",
       tone: "blue" as const,
     },
-    {
-      label: "Stocks faibles",
-      value: low,
-      href: "/comptoir/stock?faible=1",
-      tone: "warn" as const,
-    },
+    ...(settings.stock.tracking
+      ? [
+          {
+            label: "Stocks faibles",
+            value: low,
+            href: "/comptoir/stock?faible=1",
+            tone: "warn" as const,
+          },
+        ]
+      : []),
   ];
   const shortcuts = [
     {

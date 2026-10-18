@@ -6,6 +6,7 @@ import { can } from "@/lib/permissions";
 import { fcfa, formatDateTime } from "@/lib/format";
 import { templateMeta } from "@/lib/templates";
 import { requestMessages } from "@/lib/messages";
+import { TRACKING_SQL, UNTRACKED_AVAILABLE } from "@/server/domain/stock";
 import { getSettings } from "@/server/domain/settings";
 import { Badge, Empty, PageTitle, Tabs } from "@/components/admin/ui";
 import { RequestActions } from "@/components/admin/RequestActions";
@@ -37,7 +38,10 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
     variantIds.length
       ? (
           await db.query<{ id: string; available: number }>(
-            "select id, (on_hand - reserved - unsellable)::int as available from variants where id = any($1)",
+            `select v.id, case when v.disabled or p.disabled then 0
+                               when ${TRACKING_SQL} then (v.on_hand - v.reserved - v.unsellable)::int
+                               else ${UNTRACKED_AVAILABLE} end as available
+               from variants v join products p on p.id = v.product_id where v.id = any($1)`,
             [variantIds],
           )
         ).map((v) => [v.id, v.available])
@@ -117,11 +121,15 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
                         {available.has(l.variantId) ? (
                           <span className="ml-2">
                             {available.get(l.variantId)! <= 0 ? (
-                              <Badge tone="red">rupture</Badge>
+                              <Badge tone="red">indisponible</Badge>
                             ) : available.get(l.variantId)! < l.quantity ? (
                               <Badge tone="warn">seulement {available.get(l.variantId)} dispo.</Badge>
                             ) : (
-                              <Badge tone="green">{available.get(l.variantId)} dispo.</Badge>
+                              <Badge tone="green">
+                                {available.get(l.variantId)! >= UNTRACKED_AVAILABLE
+                                  ? "disponible"
+                                  : `${available.get(l.variantId)} dispo.`}
+                              </Badge>
                             )}
                           </span>
                         ) : null}
