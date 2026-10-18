@@ -2547,6 +2547,55 @@ describe("Saisie simplifiée des produits", () => {
     expect(mv).toMatchObject({ kind: "inventory", on_hand_delta: 3, on_hand_after: 5, user_id: ownerId });
     expect(mv!.reason).toMatch(/2 → 5 · Comptage rapide/);
 
+    // Saisie en grille : prix, coût et stock des brouillons en un seul enregistrement.
+    const grid = await entry.listEntryGrid(db, { canCosts: true });
+    const gv = grid.find((r) => r.productId === draft.id)!;
+    expect(gv).toBeTruthy();
+    expect(grid.every((r) => r.status === "draft")).toBe(true);
+    expect(
+      (await entry.listEntryGrid(db, { canCosts: false })).find((r) => r.productId === draft.id),
+    ).not.toHaveProperty("cost");
+    const saved2 = await entry.saveEntryGrid(db, {
+      changes: [{ variantId: gv.variantId, price: 12000, cost: 8000, counted: 4 }],
+      canCosts: true,
+      canCount: true,
+      userId: ownerId,
+    });
+    expect(saved2).toEqual({ prices: 1, costs: 1, stock: 1 });
+    const after = await db.one<{ price: number; cost_price: number; on_hand: number }>(
+      "select price, cost_price, on_hand from variants where id = $1",
+      [gv.variantId],
+    );
+    expect(after).toEqual({ price: 12000, cost_price: 8000, on_hand: 4 });
+    const gridLog = await db.one<{ detail: Record<string, unknown> }>(
+      "select detail from audit_log where action = 'variant.grid_update' order by created_at desc limit 1",
+    );
+    expect(gridLog!.detail.price).toEqual({ from: gv.price, to: 12000 });
+    expect(JSON.stringify(gridLog!.detail)).not.toContain("8000");
+    // Sans le droit « coûts », le coût envoyé est ignoré ; sans droit d'inventaire, le comptage est refusé.
+    await entry.saveEntryGrid(db, {
+      changes: [
+        { variantId: gv.variantId, cost: 1 },
+        { variantId: gv.variantId, price: 12500 },
+      ],
+      canCosts: false,
+      canCount: false,
+      userId: ownerId,
+    });
+    expect(
+      (await db.one<{ cost_price: number }>("select cost_price from variants where id = $1", [gv.variantId]))!
+        .cost_price,
+    ).toBe(8000);
+    await expect(
+      entry.saveEntryGrid(db, {
+        changes: [{ variantId: gv.variantId, counted: 1 }],
+        canCosts: false,
+        canCount: false,
+        userId: ownerId,
+      }),
+    ).rejects.toThrow(/comptage/);
+    expect((await productForEdit(db, draft.id, { withCosts: false }))!.status).toBe("draft");
+
     await db.query("delete from products where id = any($1)", [[saved.id, draft.id]]);
   });
 });

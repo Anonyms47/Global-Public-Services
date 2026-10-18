@@ -1062,7 +1062,7 @@ function ProductForm({
           >
             {single && v0 ? (
               <>
-                <div className={`grid gap-3 ${canCosts && full ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2"}`}>
+                <div className={`grid gap-3 ${canCosts ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2"}`}>
                   <div>
                     <label className="label" htmlFor="p-price">
                       Prix de vente <span className="font-normal text-ink-mute">FCFA</span>
@@ -1078,7 +1078,7 @@ function ProductForm({
                       onChange={(e) => updateVariant(0, { price: num(e.target.value) ?? 0 })}
                     />
                   </div>
-                  {canCosts && full ? (
+                  {canCosts ? (
                     <div>
                       <label className="label" htmlFor="p-cost">
                         Coût d&apos;achat <span className="font-normal text-ink-mute">FCFA</span>
@@ -1095,7 +1095,7 @@ function ProductForm({
                       />
                     </div>
                   ) : null}
-                  <div className={canCosts && full ? "col-span-2 md:col-span-1" : ""}>
+                  <div className={canCosts ? "col-span-2 md:col-span-1" : ""}>
                     {v0.id ? (
                       <>
                         <span className="label">Stock</span>
