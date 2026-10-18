@@ -501,7 +501,6 @@ test.describe("Le Comptoir", () => {
     await page.getByRole("button", { name: "Appliquer à toutes" }).click();
     await expect(page.getByLabel("Prix Noir · Cuir")).toHaveValue("30000");
     await expect(page.getByLabel("Stock initial Blanc · Cuir")).toHaveValue("2");
-    await page.locator("#p-barcode-0").fill("E2E-CODE-1");
 
     // Photo + vidéo dans le même envoi, progression par fichier.
     await page.getByTestId("media-input").setInputFiles([
@@ -525,7 +524,7 @@ test.describe("Le Comptoir", () => {
     await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
     await expect(page.getByText("Tout est enregistré")).toBeVisible();
 
-    // Duplication : mêmes réglages, sans nom, références, code-barres, photos ni stock.
+    // Duplication : mêmes réglages, sans nom, références, photos ni stock.
     await page.locator("summary", { hasText: "Autres actions" }).click();
     await page.getByRole("link", { name: "Dupliquer" }).click();
     await expect(page).toHaveURL(/\/catalogue\/nouveau\?modele=/);
@@ -533,7 +532,6 @@ test.describe("Le Comptoir", () => {
     await expect(page.getByTestId("variant-count")).toHaveText(/3 variantes/);
     await expect(page.getByLabel("Prix Noir · Cuir")).toHaveValue("30000");
     await expect(page.locator("#p-sku-0")).toHaveValue("");
-    await expect(page.locator("#p-barcode-0")).toHaveValue("");
     await expect(page.getByLabel("Stock initial Noir · Cuir")).toHaveValue("");
     await expect(page.getByTestId("media-item")).toHaveCount(0);
 

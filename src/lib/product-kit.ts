@@ -651,7 +651,6 @@ export function entryHints(p: CompletenessInput, opts: { canCosts: boolean }) {
   if (opts.canCosts && p.variants.some((v) => v.costPrice == null)) hints.push("Coût d'achat non renseigné.");
   if (opts.canCosts && p.variants.some((v) => v.costPrice != null && v.price > 0 && v.price === v.costPrice))
     hints.push("Prix de vente égal au coût : aucune marge.");
-  if (!p.variants.some((v) => v.barcode)) hints.push("Aucun code-barres.");
   if (!p.warranty.trim()) hints.push("Aucune garantie indiquée.");
   if (p.specs.filter((s) => s.value.trim()).length < 3) hints.push("Peu de caractéristiques.");
   if (p.images.some((i) => (i.kind ?? "image") === "image" && !i.alt?.trim())) hints.push("Texte alternatif absent.");

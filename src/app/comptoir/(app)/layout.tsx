@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/server/admin";
 import { getDb, isDemoMode } from "@/server/db";
 import { Shell } from "@/components/admin/Shell";
+import { stockTracking } from "@/server/domain/stock";
 
 /** Pastilles du menu : ce qui attend une action, recalculé à chaque page. */
 async function navBadges(): Promise<Record<string, number>> {
@@ -25,8 +26,9 @@ async function navBadges(): Promise<Record<string, number>> {
 export default async function AdminLayout({ children }: LayoutProps<"/comptoir">) {
   const user = await currentUser();
   if (!user) redirect("/comptoir/connexion?expiree=1");
+  const stock = await stockTracking(await getDb()).catch(() => true);
   return (
-    <Shell user={user} demo={isDemoMode()} badges={await navBadges()}>
+    <Shell user={user} demo={isDemoMode()} badges={await navBadges()} stock={stock}>
       {children}
     </Shell>
   );

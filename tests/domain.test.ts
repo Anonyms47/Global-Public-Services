@@ -2524,13 +2524,7 @@ describe("Saisie simplifiée des produits", () => {
     expect(c1.percent).toBe(70);
     expect(
       kit.entryHints({ ...empty, variants: [{ price: 5000, costPrice: 5000, options: {} }] }, { canCosts: true }),
-    ).toEqual(
-      expect.arrayContaining([
-        "Prix de vente égal au coût : aucune marge.",
-        "Aucun code-barres.",
-        "Aucune garantie indiquée.",
-      ]),
-    );
+    ).toEqual(expect.arrayContaining(["Prix de vente égal au coût : aucune marge.", "Aucune garantie indiquée."]));
     expect(kit.entryHints(empty, { canCosts: false }).some((h) => /Coût/.test(h))).toBe(false);
   });
 

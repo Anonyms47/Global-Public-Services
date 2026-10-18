@@ -85,7 +85,7 @@ export default async function TodayPage() {
       href: "/comptoir/stock/reapprovisionner",
       label: "Réapprovisionner",
       icon: IconList,
-      ok: can(user, "stock.restock"),
+      ok: settings.stock.tracking && can(user, "stock.restock"),
     },
   ].filter((s) => s.ok);
 

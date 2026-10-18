@@ -83,6 +83,8 @@ export interface PublicProduct {
   minPrice: number;
   minBasePrice: number;
   available: number;
+  /** Quantités suivies (Paramètres → Stock) ; sinon le site ne parle pas de stock. */
+  stockTracked: boolean;
 }
 
 export interface Category {
@@ -223,6 +225,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         minPrice: pv.length ? Math.min(...pv.map((v) => v.price)) : 0,
         minBasePrice: ref,
         available: pv.reduce((s, v) => s + v.available, 0),
+        stockTracked: tracking,
       } satisfies PublicProduct;
     })
     .filter((p) => p.variants.length > 0);

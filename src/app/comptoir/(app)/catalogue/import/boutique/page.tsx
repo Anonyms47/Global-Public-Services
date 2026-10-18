@@ -28,8 +28,8 @@ export default async function GpsImportPage() {
       </Link>
       <PageTitle eyebrow="Catalogue" title="Catalogue de la boutique">
         Produits relevés en boutique (manifeste du {plan.version.split("-").reverse().join("/")}). Simulation ci-dessous
-        : rien n&apos;est écrit avant votre confirmation. Tout arrive en brouillon privé, sans prix, coût, stock ni
-        code-barres : à compléter et vérifier en boutique avant toute publication.
+        : rien n&apos;est écrit avant votre confirmation. Tout arrive en brouillon privé, sans prix ni coût : à
+        compléter et vérifier en boutique avant toute publication.
       </PageTitle>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

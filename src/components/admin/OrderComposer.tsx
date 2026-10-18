@@ -451,14 +451,14 @@ function OrderComposer({
                     <span>
                       <span className="block font-semibold">{v.label || "Article unique"}</span>
                       <span className="text-[12px] text-ink-mute">
-                        {v.sku} ·{" "}
+                        {v.sku}
                         {room <= 0
                           ? v.available === 0
-                            ? "épuisé"
-                            : "tout est déjà dans la vente"
+                            ? " · indisponible"
+                            : " · tout est déjà dans la vente"
                           : v.available >= 99
-                            ? "disponible"
-                            : `${room} disponible${room > 1 ? "s" : ""}`}
+                            ? ""
+                            : ` · ${room} disponible${room > 1 ? "s" : ""}`}
                       </span>
                     </span>
                     <span className="font-bold tabular">{fcfa(v.price)}</span>
@@ -515,12 +515,12 @@ function OrderComposer({
                     <span className="block truncate font-semibold">{p.name}</span>
                     <span className="block text-[13px] text-ink-mute">
                       {fcfa(Math.min(...prices))}
-                      {new Set(prices).size > 1 ? "+" : ""} ·{" "}
+                      {new Set(prices).size > 1 ? "+" : ""}
                       {avail === 0
-                        ? "épuisé"
+                        ? " · indisponible"
                         : p.variants.some((v) => v.available >= 99)
-                          ? "disponible"
-                          : `${avail} dispo.`}
+                          ? ""
+                          : ` · ${avail} dispo.`}
                       {p.variants.length > 1 ? ` · ${p.variants.length} variantes` : ""}
                     </span>
                   </span>

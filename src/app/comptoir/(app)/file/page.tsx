@@ -29,8 +29,8 @@ export default async function QueuePage({ searchParams }: PageProps<"/comptoir/f
   return (
     <>
       <PageTitle eyebrow="Piloter" title="File GPS">
-        Tout le travail en attente au même endroit : commandes à préparer, retraits, soldes, remboursements, stocks
-        faibles et tâches de l&apos;équipe. Un élément traité disparaît de lui-même.
+        Tout le travail en attente au même endroit : commandes à préparer, retraits, soldes, remboursements et tâches de
+        l&apos;équipe. Un élément traité disparaît de lui-même.
       </PageTitle>
       <nav aria-label="Vues de la file" className="mb-4 flex flex-wrap gap-1">
         {views.map(([k, label]) => (
