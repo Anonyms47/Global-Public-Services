@@ -3,10 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePage } from "@/server/admin";
 import { getOrder, methodLabels, nextStep, receptionLabels, channelLabels } from "@/server/domain/orders";
-import { renderTemplate, templateMeta } from "@/lib/templates";
+import { templateMeta } from "@/lib/templates";
+import { orderMessages } from "@/lib/messages";
+import { listStores } from "@/server/domain/stores";
 import { getSettings } from "@/server/domain/settings";
 import { can } from "@/lib/permissions";
-import { fcfa, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { Badge, Forbidden, Money, Panel } from "@/components/admin/ui";
 import { FulfillmentBadge, PaymentBadge, StatusBadge } from "@/components/admin/OrderBadges";
 import {
@@ -38,33 +40,18 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
   const showCost = can(user, "catalog.costs");
   const reversed = new Set(o.payments.filter((p) => p.reverses_id).map((p) => p.reverses_id));
 
-  const linesText = o.lines
-    .map((l) => `• ${l.name}${l.options_label ? ` (${l.options_label})` : ""} × ${l.quantity}`)
-    .join("\n");
-  const first = o.customer_name.split(" ")[0] || "";
-  const vars = {
-    prenom: first,
-    reference: o.reference,
-    articles: linesText,
-    total: fcfa(o.subtotal),
-    livraison:
-      o.reception === "delivery"
-        ? `Livraison : ${o.delivery_fee === null ? "frais à confirmer" : fcfa(o.delivery_fee)}`
-        : "",
-    reception: receptionLabels[o.reception].toLowerCase(),
-    reste: o.balance > 0 ? `Reste à régler : ${fcfa(o.balance)}.` : "",
-    solde: fcfa(Math.max(0, o.balance)),
-    horaires: settings.company.hours ? `(${settings.company.hours})` : "",
-    adresse: o.delivery_address ? `à : ${o.delivery_address}` : "",
-  };
-  const m = settings.messages;
-  const templates = [
-    { label: templateMeta.confirmation.label, text: renderTemplate(m.confirmation, vars) },
-    o.reception === "delivery"
-      ? { label: templateMeta.readyDelivery.label, text: renderTemplate(m.readyDelivery, vars) }
-      : { label: templateMeta.readyPickup.label, text: renderTemplate(m.readyPickup, vars) },
-    { label: templateMeta.balance.label, text: renderTemplate(m.balance, vars) },
-  ];
+  // Messages WhatsApp adaptés à la situation de la commande (le premier est conseillé).
+  const stores = o.reception === "pickup" ? await listStores(db, { publishedOnly: true }) : [];
+  const store = stores.find((x) => x.id === o.store_id) ?? (stores.length === 1 ? stores[0] : null);
+  const templates = orderMessages(
+    o,
+    {
+      hours: settings.company.hours,
+      store: store ? { name: store.name, address: store.address, landmark: store.landmark } : null,
+    },
+    settings.messages,
+    templateMeta,
+  );
 
   return (
     <>

@@ -86,6 +86,11 @@ test.describe("Le Comptoir", () => {
     await expect(page).toHaveURL(/\/comptoir\/commandes\/[0-9a-f-]{36}$/);
     await expect(page.getByText("Paiement partiel")).toBeVisible();
     const orderUrl = page.url();
+    // Message WhatsApp adapté à la situation : confirmation conseillée, avec le reste à régler.
+    await page.locator("summary", { hasText: "Préparer un message WhatsApp" }).click();
+    await expect(page.getByRole("combobox", { name: "Modèle" })).toHaveValue("0");
+    await expect(page.getByRole("option", { name: /★ Conseillé : Confirmation de commande/ })).toHaveCount(1);
+    await expect(page.getByLabel("Message préparé")).toHaveValue(/Déjà réglé : 5\s000\sFCFA\. Reste à régler/);
 
     const reserved = await availability(page, "LUM-RIV-EC");
     expect(reserved.reserved).toBe(before.reserved + 1);
