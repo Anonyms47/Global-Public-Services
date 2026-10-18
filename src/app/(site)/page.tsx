@@ -537,7 +537,7 @@ export default async function HomePage() {
                 })}
             </dl>
             {stores.length ? (
-              <div className="sm:col-span-2 lg:col-span-1">
+              <div className="lg:col-span-12">
                 <StoreList stores={stores} />
               </div>
             ) : null}

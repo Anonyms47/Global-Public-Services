@@ -42,17 +42,27 @@ export const defaultHours: StoreHours = { open: "09:00", close: "22:00", days: {
 
 const hm = (t: string) => t.replace(/^0/, "").replace(":00", " h").replace(":", " h ");
 
-/** Horaires à afficher : la plage seule tant que les jours ne sont pas confirmés (jamais « tous les jours » par défaut). */
+/**
+ * Horaires à afficher : la plage seule tant que les jours ne sont pas confirmés (jamais « tous les jours » par défaut).
+ * Les jours consécutifs aux mêmes horaires sont regroupés (« Tous les jours », « Lundi – Samedi »).
+ */
 export function hoursText(h: StoreHours) {
   const range = `${hm(h.open || "09:00")} – ${hm(h.close || "22:00")}`;
   const enabled = DAYS.filter(([k]) => h.days?.[k]?.enabled);
   if (!enabled.length) return range;
-  return DAYS.filter(([k]) => h.days?.[k] !== undefined)
-    .map(([k, label]) => {
-      const d = h.days[k]!;
-      return `${label} : ${d.enabled ? `${hm(d.open || h.open)} – ${hm(d.close || h.close)}` : "fermé"}`;
-    })
-    .join(" · ");
+  const known = DAYS.filter(([k]) => h.days?.[k] !== undefined).map(([k, label]) => {
+    const d = h.days[k]!;
+    return { label, text: d.enabled ? `${hm(d.open || h.open)} – ${hm(d.close || h.close)}` : "fermé" };
+  });
+  if (known.length === DAYS.length && known.every((d) => d.text === known[0].text) && known[0].text !== "fermé")
+    return `Tous les jours : ${known[0].text}`;
+  const runs: { from: string; to: string; text: string }[] = [];
+  for (const d of known) {
+    const last = runs[runs.length - 1];
+    if (last && last.text === d.text) last.to = d.label;
+    else runs.push({ from: d.label, to: d.label, text: d.text });
+  }
+  return runs.map((r) => `${r.from === r.to ? r.from : `${r.from} – ${r.to}`} : ${r.text}`).join(" · ");
 }
 
 /** Fermeture exceptionnelle du jour (date AAAA-MM-JJ, heure de Dakar). */
