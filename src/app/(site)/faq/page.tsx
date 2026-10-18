@@ -25,7 +25,7 @@ export default async function FaqPage() {
         },
         {
           q: "Le panier réserve-t-il les articles ?",
-          a: "Non. Le panier est conservé sur votre appareil, mais le stock n'est réservé qu'après confirmation de la commande par GPS.",
+          a: "Non. Le panier est conservé sur votre appareil, mais rien n'est réservé avant que GPS confirme la commande.",
         },
       ],
     },

@@ -25,7 +25,7 @@ export default async function NewProductPage({ searchParams }: PageProps<"/compt
     <>
       <PageTitle eyebrow="Catalogue" title="Nouveau produit">
         {source
-          ? `Copie de « ${source.name} » : mêmes réglages, sans nom, références, code-barres, photos ni stock.`
+          ? `Copie de « ${source.name} » : mêmes réglages, sans nom, références ni photos.`
           : "Photos, nom, catégorie, prix et stock : le reste est facultatif. Un brouillon s'enregistre à tout moment."}
       </PageTitle>
       <ProductFormClient
@@ -34,11 +34,12 @@ export default async function NewProductPage({ searchParams }: PageProps<"/compt
         canCosts={canCosts}
         userId={user.id}
         quickValues={settings.catalog.quickValues}
+        stock={settings.stock.tracking}
         specLabels={specLabels}
         initial={
           source
             ? {
-                // Duplication : les valeurs uniques (nom, références, code-barres, photos, stock) repartent à zéro.
+                // Duplication : les valeurs uniques (nom, références, photos, stock) repartent à zéro.
                 createId: crypto.randomUUID(),
                 name: "",
                 brand: source.brand,

@@ -154,6 +154,7 @@ export default async function EditProductPage({ params, searchParams }: PageProp
           canCosts={canCosts}
           userId={user.id}
           quickValues={settings.catalog.quickValues}
+          stock={settings.stock.tracking}
           specLabels={specLabels}
           modelHint={imported?.model}
           photoCandidates={imported?.photoCandidates ?? []}

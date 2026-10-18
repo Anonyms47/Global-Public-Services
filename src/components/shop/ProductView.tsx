@@ -136,9 +136,11 @@ export function ProductView({
   else if (variant.available === 0)
     status = {
       tone: "out",
-      text: "Épuisé — cette option ne peut pas être commandée pour le moment.",
+      text: product.stockTracked
+        ? "Épuisé — cette option ne peut pas être commandée pour le moment."
+        : "Indisponible pour le moment — demandez à GPS une option équivalente.",
     };
-  else if (variant.available <= 3)
+  else if (product.stockTracked && variant.available <= 3)
     status = {
       tone: "low",
       text: `Plus que ${variant.available} disponible${variant.available > 1 ? "s" : ""}.`,
@@ -357,7 +359,7 @@ export function ProductView({
                         key={val}
                         type="button"
                         aria-pressed={on}
-                        aria-label={`${axis} ${val}${st === "out" ? ", épuisé" : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
+                        aria-label={`${axis} ${val}${st === "out" ? (product.stockTracked ? ", épuisé" : ", indisponible") : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
                         onClick={() => {
                           setSel((s) => ({
                             ...s,
@@ -441,7 +443,9 @@ export function ProductView({
           </div>
           <p id="aide-ajout" className="hint">
             {variant && variant.available === 0
-              ? "Option épuisée : choisissez une autre option ou demandez à GPS."
+              ? product.stockTracked
+                ? "Option épuisée : choisissez une autre option ou demandez à GPS."
+                : "Option indisponible : choisissez une autre option ou demandez à GPS."
               : missing.length
                 ? `Sélection manquante : ${missing.join(", ").toLowerCase()}.`
                 : "L'ajout au panier ne réserve pas l'article."}
@@ -460,7 +464,7 @@ export function ProductView({
               <p className="mt-1 text-[14px] text-ink-soft">
                 {product.name}
                 {variant ? ` — ${optionsLabel(variant.options, axes)}` : ""} · {added.quantity} au total dans le panier
-                {added.capped ? " (limité au stock disponible)" : ""}.
+                {added.capped ? " (quantité limitée)" : ""}.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/panier" className="btn btn-ink btn-sm">

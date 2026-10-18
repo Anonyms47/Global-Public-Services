@@ -13,17 +13,21 @@ export function Shell({
   user,
   demo,
   badges = {},
+  stock = true,
   children,
 }: {
   user: User;
   demo: boolean;
   badges?: Record<string, number>;
+  /** Suivi des quantités coupé : les écrans de stock disparaissent du menu. */
+  stock?: boolean;
   children: ReactNode;
 }) {
+  const shown = (href: string) => stock || !href.startsWith("/comptoir/stock");
   const groups = adminNavGroups
-    .map((g) => ({ ...g, items: g.items.filter((n) => can(user, n.perm)) }))
+    .map((g) => ({ ...g, items: g.items.filter((n) => can(user, n.perm) && shown(n.href)) }))
     .filter((g) => g.items.length);
-  const actions = quickActions.filter((a) => can(user, a.perm));
+  const actions = quickActions.filter((a) => can(user, a.perm) && shown(a.href));
   const commands = [
     ...actions.map((a) => ({ href: a.href, label: a.label, group: "Actions", keywords: a.keywords ?? "" })),
     ...groups.flatMap((g) =>

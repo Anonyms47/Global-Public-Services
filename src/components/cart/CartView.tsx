@@ -84,7 +84,7 @@ function describeIssues(items: CheckedItem[]): Notice[] {
           variantId: i.variantId,
           name: i.name,
           tone: "info",
-          text: `Quantité ramenée de ${issue.requested} à ${issue.available}, le stock disponible.`,
+          text: `Quantité ramenée de ${issue.requested} à ${issue.available}, la quantité disponible.`,
         });
       } else {
         out.push({

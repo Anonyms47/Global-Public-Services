@@ -143,23 +143,6 @@ export function CodeFields({
         {errors.sku ? <p className="error-text">{errors.sku}</p> : null}
         {!compact ? <p className="hint">Vide : « {suggestion} » sera attribuée à l&apos;enregistrement.</p> : null}
       </div>
-      <div className="min-w-0">
-        <label className={compact ? "text-[12px] font-bold text-ink-mute" : "label"} htmlFor={`p-barcode-${i}`}>
-          Code-barres
-        </label>
-        <input
-          id={`p-barcode-${i}`}
-          className={`field font-mono ${h}`}
-          autoComplete="off"
-          inputMode="numeric"
-          maxLength={40}
-          placeholder={compact ? "—" : "EAN, UPC ou code interne"}
-          value={v.barcode ?? ""}
-          aria-invalid={!!errors.barcode}
-          onChange={(e) => onChange({ barcode: e.target.value })}
-        />
-        {errors.barcode ? <p className="error-text">{errors.barcode}</p> : null}
-      </div>
     </>
   );
 }
@@ -177,8 +160,11 @@ export function VariantEditor({
   codeErrors,
   margin,
   presets,
+  stock = true,
 }: {
   name: string;
+  /** Suivi des quantités coupé : ni stock ni seuil par variante. */
+  stock?: boolean;
   /** Options réellement proposées pour cette catégorie (profil de la catégorie). */
   presets: string[];
   axes: string[];
@@ -306,7 +292,7 @@ export function VariantEditor({
     <div className="grid gap-4">
       <div>
         <p className="text-[14px] font-semibold">
-          Choisissez ce que le client peut réellement choisir parmi les articles en stock (3 au plus) :
+          Choisissez ce que le client peut réellement choisir parmi les articles présents (3 au plus) :
         </p>
         {!presets.length ? (
           <p className="hint" data-testid="no-variant-presets">
@@ -469,22 +455,26 @@ export function VariantEditor({
                   onChange={(e) => setBulk({ ...bulk, cost: e.target.value })}
                 />
               ) : null}
-              <input
-                aria-label="Stock initial pour la sélection"
-                className={small}
-                inputMode="numeric"
-                placeholder="Stock initial"
-                value={bulk.stock}
-                onChange={(e) => setBulk({ ...bulk, stock: e.target.value })}
-              />
-              <input
-                aria-label="Seuil pour la sélection"
-                className={small}
-                inputMode="numeric"
-                placeholder="Seuil d'alerte"
-                value={bulk.threshold}
-                onChange={(e) => setBulk({ ...bulk, threshold: e.target.value })}
-              />
+              {stock ? (
+                <>
+                  <input
+                    aria-label="Stock initial pour la sélection"
+                    className={small}
+                    inputMode="numeric"
+                    placeholder="Stock initial"
+                    value={bulk.stock}
+                    onChange={(e) => setBulk({ ...bulk, stock: e.target.value })}
+                  />
+                  <input
+                    aria-label="Seuil pour la sélection"
+                    className={small}
+                    inputMode="numeric"
+                    placeholder="Seuil d'alerte"
+                    value={bulk.threshold}
+                    onChange={(e) => setBulk({ ...bulk, threshold: e.target.value })}
+                  />
+                </>
+              ) : null}
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <button
@@ -597,42 +587,46 @@ export function VariantEditor({
                             />
                           </div>
                         ) : null}
-                        <div className="min-w-0">
-                          <label className="text-[12px] font-bold text-ink-mute" htmlFor={`p-vstock-${i}`}>
-                            {v.id ? "Stock" : "Stock initial"}
-                          </label>
-                          {v.id ? (
-                            <p className="flex h-10 items-center text-[14px] tabular">
-                              {(v.onHand ?? 0) - (v.reserved ?? 0)} dispo.
-                            </p>
-                          ) : (
-                            <input
-                              id={`p-vstock-${i}`}
-                              aria-label={`Stock initial ${label}`}
-                              className={small}
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              placeholder="0"
-                              value={v.initialStock || ""}
-                              onChange={(e) => patch(i, { initialStock: num(e.target.value) ?? 0 })}
-                            />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <label className="text-[12px] font-bold text-ink-mute" htmlFor={`p-vthr-${i}`}>
-                            Seuil
-                          </label>
-                          <input
-                            id={`p-vthr-${i}`}
-                            aria-label={`Seuil ${label}`}
-                            className={small}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="—"
-                            value={v.lowStockThreshold ?? ""}
-                            onChange={(e) => patch(i, { lowStockThreshold: num(e.target.value) ?? null })}
-                          />
-                        </div>
+                        {stock ? (
+                          <>
+                            <div className="min-w-0">
+                              <label className="text-[12px] font-bold text-ink-mute" htmlFor={`p-vstock-${i}`}>
+                                {v.id ? "Stock" : "Stock initial"}
+                              </label>
+                              {v.id ? (
+                                <p className="flex h-10 items-center text-[14px] tabular">
+                                  {(v.onHand ?? 0) - (v.reserved ?? 0)} dispo.
+                                </p>
+                              ) : (
+                                <input
+                                  id={`p-vstock-${i}`}
+                                  aria-label={`Stock initial ${label}`}
+                                  className={small}
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  placeholder="0"
+                                  value={v.initialStock || ""}
+                                  onChange={(e) => patch(i, { initialStock: num(e.target.value) ?? 0 })}
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <label className="text-[12px] font-bold text-ink-mute" htmlFor={`p-vthr-${i}`}>
+                                Seuil
+                              </label>
+                              <input
+                                id={`p-vthr-${i}`}
+                                aria-label={`Seuil ${label}`}
+                                className={small}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                placeholder="—"
+                                value={v.lowStockThreshold ?? ""}
+                                onChange={(e) => patch(i, { lowStockThreshold: num(e.target.value) ?? null })}
+                              />
+                            </div>
+                          </>
+                        ) : null}
                         {full ? (
                           <CodeFields
                             v={v}
@@ -779,8 +773,8 @@ export function MediaEditor({
         </button>
       </div>
       <p className="hint">
-        Prenez la face avant, l&apos;arrière, les côtés, les caractéristiques et le code-barres. Plusieurs fichiers à la
-        fois ; vidéo jusqu&apos;à {videoMaxMb} Mo.
+        Prenez la face avant, l&apos;arrière, les côtés, l&apos;étiquette et les caractéristiques. Plusieurs fichiers à
+        la fois ; vidéo jusqu&apos;à {videoMaxMb} Mo.
       </p>
 
       {urlOpen ? (

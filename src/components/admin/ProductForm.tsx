@@ -217,10 +217,13 @@ function ProductForm({
   modelHint,
   photoCandidates = [],
   completion,
+  stock = true,
 }: {
   initial?: ProductState;
   categories: { id: string; name: string; profile?: CategoryProfile | null }[];
   canCosts: boolean;
+  /** Suivi des quantités (Paramètres → Stock) : coupé, aucun champ de stock n'est affiché. */
+  stock?: boolean;
   videoMaxMb?: number;
   /** Mode d'affichage mémorisé pour chaque utilisateur. */
   userId: string;
@@ -605,7 +608,7 @@ function ProductForm({
   const nextButton = (i: number) =>
     !desktop && i < STEPS.length - 1 ? (
       <button type="button" className="btn btn-outline justify-self-end" onClick={() => goNext(i)}>
-        Suivant : {STEPS[i + 1][1]}
+        Suivant : {STEPS[i + 1][0] === "pricing" && !stock ? "Prix" : STEPS[i + 1][1]}
       </button>
     ) : null;
   const status = (k: (typeof STEPS)[number][0]) => comp.sections[k];
@@ -1053,7 +1056,7 @@ function ProductForm({
           <Step
             id="etape-pricing"
             n={3}
-            title="Prix et stock"
+            title={stock ? "Prix et stock" : "Prix"}
             status={status("pricing")}
             statusLabel={label("pricing")}
             open={expanded(2)}
@@ -1095,41 +1098,43 @@ function ProductForm({
                       />
                     </div>
                   ) : null}
-                  <div className={canCosts ? "col-span-2 md:col-span-1" : ""}>
-                    {v0.id ? (
-                      <>
-                        <span className="label">Stock</span>
-                        <p className="flex min-h-12 items-center gap-2 tabular">
-                          <strong>{units(v0)}</strong> disponible{units(v0) > 1 ? "s" : ""}
-                          <Link
-                            href={`/comptoir/stock/comptage?q=${encodeURIComponent(v0.sku)}`}
-                            className="text-[13px] font-semibold text-gps-blue underline"
-                          >
-                            Compter
-                          </Link>
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <label className="label" htmlFor="p-stock">
-                          Stock initial
-                        </label>
-                        <input
-                          id="p-stock"
-                          className="field tabular"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          enterKeyHint="done"
-                          autoComplete="off"
-                          placeholder="0"
-                          value={v0.initialStock || ""}
-                          onChange={(e) => updateVariant(0, { initialStock: num(e.target.value) ?? 0 })}
-                        />
-                      </>
-                    )}
-                  </div>
+                  {stock ? (
+                    <div className={canCosts ? "col-span-2 md:col-span-1" : ""}>
+                      {v0.id ? (
+                        <>
+                          <span className="label">Stock</span>
+                          <p className="flex min-h-12 items-center gap-2 tabular">
+                            <strong>{units(v0)}</strong> disponible{units(v0) > 1 ? "s" : ""}
+                            <Link
+                              href={`/comptoir/stock/comptage?q=${encodeURIComponent(v0.sku)}`}
+                              className="text-[13px] font-semibold text-gps-blue underline"
+                            >
+                              Compter
+                            </Link>
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <label className="label" htmlFor="p-stock">
+                            Stock initial
+                          </label>
+                          <input
+                            id="p-stock"
+                            className="field tabular"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            enterKeyHint="done"
+                            autoComplete="off"
+                            placeholder="0"
+                            value={v0.initialStock || ""}
+                            onChange={(e) => updateVariant(0, { initialStock: num(e.target.value) ?? 0 })}
+                          />
+                        </>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
-                {full ? (
+                {full && stock ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <label className="label" htmlFor="p-threshold">
@@ -1154,10 +1159,11 @@ function ProductForm({
                 <strong>
                   {active.length} variante{active.length > 1 ? "s" : ""}
                 </strong>{" "}
-                · {priceText} · prix et stock de chaque version dans « Caractéristiques et variantes ».
+                · {priceText} · {stock ? "prix et stock" : "prix"} de chaque version dans « Caractéristiques et
+                variantes ».
               </p>
             )}
-            {full && canCosts && (stockAtCost || stockAtPrice) ? (
+            {stock && full && canCosts && (stockAtCost || stockAtPrice) ? (
               <dl className="grid grid-cols-2 gap-2 text-[14px]" data-testid="valeurs-stock">
                 <div className="rounded-[6px] bg-paper-deep p-2">
                   <dt className="text-ink-mute">Valeur du stock au coût</dt>
@@ -1169,15 +1175,15 @@ function ProductForm({
                 </div>
               </dl>
             ) : null}
-            {thresholdAlert ? (
+            {stock && thresholdAlert ? (
               <p className="flex items-center gap-1.5 text-[14px] font-semibold text-warn">
                 <IconAlert size={16} /> Seuil d&apos;alerte supérieur au stock : l&apos;alerte de stock faible sera
                 active.
               </p>
             ) : null}
             <p className="hint">
-              Un seul stock pour toute l&apos;entreprise, partagé par les deux points de vente. Aucun prix n&apos;est
-              proposé automatiquement.
+              {stock ? "Un seul stock pour toute l'entreprise, partagé par les deux points de vente. " : ""}
+              Aucun prix n&apos;est proposé automatiquement.
             </p>
           </Step>
 
@@ -1220,7 +1226,9 @@ function ProductForm({
                 ))}
               </div>
               {!multi ? null : state.axes.length === 0 ? (
-                <p className="hint">Couleur, stockage, taille… : chaque combinaison aura son prix et son stock.</p>
+                <p className="hint">
+                  Couleur, stockage, taille… : chaque combinaison aura son prix{stock ? " et son stock" : ""}.
+                </p>
               ) : null}
             </fieldset>
             {multi ? (
@@ -1236,6 +1244,7 @@ function ProductForm({
                 full={full}
                 codeErrors={codeErrors}
                 margin={margin}
+                stock={stock}
               />
             ) : null}
 
@@ -1460,9 +1469,7 @@ function ProductForm({
 
                 {single && v0 ? (
                   <fieldset className="grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
-                    <legend className="text-[14.5px] font-extrabold tracking-wide uppercase">
-                      Référence et code-barres
-                    </legend>
+                    <legend className="text-[14.5px] font-extrabold tracking-wide uppercase">Référence</legend>
                     <CodeFields
                       v={v0}
                       i={0}
@@ -1509,7 +1516,7 @@ function ProductForm({
                     ["Marque", state.brand || "—"],
                     ["Modèle", state.model || "—"],
                     ["Prix", priceText],
-                    ["Stock", `${stockTotal}`],
+                    ...(stock ? [["Stock", `${stockTotal}`]] : []),
                     ["Variantes", `${active.length}`],
                     ["Garantie", state.warranty || "—"],
                     [
@@ -1586,9 +1593,7 @@ function ProductForm({
                     </label>
                   ))}
                 </div>
-                <p className="hint">
-                  Nom, photos, prix, coût, stock, référence, code-barres et variantes repartent à zéro.
-                </p>
+                <p className="hint">Nom, photos, prix, coût, référence et variantes repartent à zéro.</p>
               </fieldset>
             ) : null}
             {state.id ? <SecondaryActions id={state.id} hasSales={!!state.hasSales} /> : null}
@@ -1652,11 +1657,13 @@ function ProductForm({
                 {state.name || "Nouveau produit"}
               </p>
               <p className="font-bold tabular">{priceText}</p>
-              <p className={`text-[14px] ${stockTotal > 0 ? "text-wa-ink" : "text-ink-mute"}`}>
-                {stockTotal > 0
-                  ? `${stockTotal} disponible${stockTotal > 1 ? "s" : ""} à la vente`
-                  : "Sans stock : affiché « Épuisé » sur le site"}
-              </p>
+              {stock ? (
+                <p className={`text-[14px] ${stockTotal > 0 ? "text-wa-ink" : "text-ink-mute"}`}>
+                  {stockTotal > 0
+                    ? `${stockTotal} disponible${stockTotal > 1 ? "s" : ""} à la vente`
+                    : "Sans stock : affiché « Épuisé » sur le site"}
+                </p>
+              ) : null}
               <p className="text-[13px] text-ink-mute">
                 {active.length} variante{active.length > 1 ? "s" : ""} · {state.images.length} média
                 {state.images.length > 1 ? "s" : ""}
@@ -1853,8 +1860,7 @@ function SecondaryActions({ id, hasSales }: { id: string; hasSales: boolean }) {
           </button>
         </div>
         <p className="hint mt-2">
-          Dupliquer ouvre une nouvelle fiche avec les mêmes réglages, sans nom, références, code-barres, photos ni
-          stock.
+          Dupliquer ouvre une nouvelle fiche avec les mêmes réglages, sans nom, références ni photos.
         </p>
         <div className="mt-3">
           <ActionFeedback failure={failure} success={success} />

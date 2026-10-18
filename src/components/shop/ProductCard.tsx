@@ -4,7 +4,9 @@ import { ProductImage } from "./ProductImage";
 import { Price } from "./Price";
 import { IconArrowRight } from "../ui/icons";
 
-export function availabilityText(p: Pick<PublicProduct, "available" | "variants">) {
+export function availabilityText(p: Pick<PublicProduct, "available" | "variants" | "stockTracked">) {
+  // Stock non suivi : seul un article désactivé (manquant) est signalé.
+  if (!p.stockTracked) return p.available === 0 ? { text: "Indisponible", tone: "out" as const } : null;
   if (p.available === 0) return { text: "Épuisé", tone: "out" as const };
   const out = p.variants.filter((v) => v.available === 0).length;
   if (out > 0) return { text: "Certaines options épuisées", tone: "partial" as const };
@@ -94,7 +96,7 @@ export function ProductCard({
           size={layout === "wide" ? "lg" : "md"}
           className="mt-1"
         />
-        <p className={`stock-dot stock-${a.tone} mt-1.5 text-[12.5px] font-semibold`}>{a.text}</p>
+        {a ? <p className={`stock-dot stock-${a.tone} mt-1.5 text-[12.5px] font-semibold`}>{a.text}</p> : null}
       </div>
     </article>
   );

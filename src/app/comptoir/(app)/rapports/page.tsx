@@ -165,7 +165,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
 
         {byStore.length ? (
           <Panel title="Par point de vente" id="t-boutiques" className="lg:col-span-2">
-            <p className="hint mb-3">Ventes réparties par boutique ; le stock reste commun à toutes les boutiques.</p>
+            <p className="hint mb-3">Ventes réparties par boutique.</p>
             <div className="rtable -mx-4 overflow-x-auto md:mx-0">
               <table className="w-full min-w-[640px] text-[14px]">
                 <thead>
@@ -209,43 +209,45 @@ export default async function ReportsPage({ searchParams }: PageProps<"/comptoir
           </Panel>
         ) : null}
 
-        <Panel title="Stock commercial" id="t-stock">
-          <dl className="grid grid-cols-2 gap-3 text-[14px]">
-            <div>
-              <dt className="text-ink-mute">Unités en stock</dt>
-              <dd className="text-xl font-extrabold tabular">{stock.units}</dd>
-            </div>
-            <div>
-              <dt className="text-ink-mute">Disponibles à la vente</dt>
-              <dd className="text-xl font-extrabold tabular">{stock.available}</dd>
-            </div>
-            <div>
-              <dt className="text-ink-mute">Valeur au prix de vente</dt>
-              <dd className="text-xl font-extrabold">
-                <Money value={stock.saleValue} />
-              </dd>
-            </div>
-            {stock.costValue !== null ? (
+        {settings.stock.tracking ? (
+          <Panel title="Stock commercial" id="t-stock">
+            <dl className="grid grid-cols-2 gap-3 text-[14px]">
               <div>
-                <dt className="text-ink-mute">Valeur au coût d&apos;achat</dt>
+                <dt className="text-ink-mute">Unités en stock</dt>
+                <dd className="text-xl font-extrabold tabular">{stock.units}</dd>
+              </div>
+              <div>
+                <dt className="text-ink-mute">Disponibles à la vente</dt>
+                <dd className="text-xl font-extrabold tabular">{stock.available}</dd>
+              </div>
+              <div>
+                <dt className="text-ink-mute">Valeur au prix de vente</dt>
                 <dd className="text-xl font-extrabold">
-                  <Money value={stock.costValue} />
+                  <Money value={stock.saleValue} />
                 </dd>
               </div>
-            ) : null}
-          </dl>
-          <p className="hint mt-3">
-            {stock.variants} variante(s) active(s) · {stock.low} en stock faible
-            {stock.costValue !== null && stock.missingCost
-              ? ` · ${stock.missingCost} sans coût d'achat (non comptée(s) dans la valeur au coût)`
-              : ""}
-            . Hors stock non vendable
-            {isDemoMode() || demoCount
-              ? `, ${scope.includeDemo ? "produits d'exemple inclus" : "produits d'exemple exclus"}`
-              : ""}
-            .
-          </p>
-        </Panel>
+              {stock.costValue !== null ? (
+                <div>
+                  <dt className="text-ink-mute">Valeur au coût d&apos;achat</dt>
+                  <dd className="text-xl font-extrabold">
+                    <Money value={stock.costValue} />
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+            <p className="hint mt-3">
+              {stock.variants} variante(s) active(s) · {stock.low} en stock faible
+              {stock.costValue !== null && stock.missingCost
+                ? ` · ${stock.missingCost} sans coût d'achat (non comptée(s) dans la valeur au coût)`
+                : ""}
+              . Hors stock non vendable
+              {isDemoMode() || demoCount
+                ? `, ${scope.includeDemo ? "produits d'exemple inclus" : "produits d'exemple exclus"}`
+                : ""}
+              .
+            </p>
+          </Panel>
+        ) : null}
 
         <Panel title="Soldes à encaisser" id="t-soldes">
           {r.openBalances.length === 0 ? (
