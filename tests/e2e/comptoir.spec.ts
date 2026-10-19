@@ -647,6 +647,18 @@ test.describe("Le Comptoir", () => {
     await page.getByRole("button", { name: /Enregistrer et (passer au produit suivant|revenir à la liste)/ }).click();
     await expect(page).not.toHaveURL(first);
     await expect(page).toHaveURL(/completer=|\/a-completer/);
+    // Photo prise directement depuis la liste : ajoutée à la fiche.
+    const fs = await import("node:fs");
+    await page.goto("/comptoir/catalogue/a-completer");
+    const item = page.getByRole("listitem").filter({ hasText: "Brouillon à compléter E2E" });
+    await item.getByTestId("quick-photo").setInputFiles({
+      name: "prise.png",
+      mimeType: "image/png",
+      buffer: fs.readFileSync("public/brand/logo-gps-mark.png"),
+    });
+    await expect(page.getByText("Photo ajoutée à « Brouillon à compléter E2E ».")).toBeVisible();
+    await page.goto("/comptoir/catalogue/a-completer?filtre=sans-photo");
+    await expect(page.getByRole("listitem").filter({ hasText: "Brouillon à compléter E2E" })).toHaveCount(0);
 
     // Comptage rapide : différence affichée, mouvement tracé.
     await page.goto("/comptoir/stock/comptage?q=Volta%20Chargeur");
