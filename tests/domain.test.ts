@@ -32,6 +32,7 @@ import {
   publishedProductById,
   setProductDisabled,
   setVariantDisabled,
+  addProductPhoto,
 } from "@/server/domain/catalog";
 import { checkCart } from "@/server/domain/cart";
 import { assertCan, claimOwner, hasRealOwner, login, userFromToken } from "@/server/domain/auth";
@@ -735,6 +736,31 @@ describe("Catalogue, panier et promotions", () => {
       await trashProduct(db, id);
       await purgeProduct(db, id);
     }
+  });
+
+  it("photo prise sur place : ajoutée à la suite, une seule fois, vidéo refusée", async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 1]);
+    const mp4 = new Uint8Array([0, 0, 0, 0x18, ...new TextEncoder().encode("ftypmp42"), 0, 1]);
+    const v = await variantBySku(db, "SON-ST2-NO");
+    const pid = (await db.one<{ id: string }>("select product_id as id from variants where id = $1", [v.id]))!.id;
+    const before = await db.query<{ position: number }>("select position from product_images where product_id = $1", [
+      pid,
+    ]);
+    const photo = await storeMedia(db, { bytes: png, name: "prise.png", userId: null, isDemo: true });
+    await addProductPhoto(db, pid, photo.id);
+    await addProductPhoto(db, pid, photo.id);
+    const rows = await db.query<{ url: string; position: number }>(
+      "select url, position from product_images where product_id = $1 order by position",
+      [pid],
+    );
+    expect(rows.length).toBe(before.length + 1);
+    expect(rows.at(-1)).toEqual({
+      url: `/media/${photo.id}`,
+      position: Math.max(-1, ...before.map((b) => b.position)) + 1,
+    });
+    const video = await storeMedia(db, { bytes: mp4, name: "v.mp4", userId: null, isDemo: true });
+    await expect(addProductPhoto(db, pid, video.id)).rejects.toThrow(/Photo introuvable/);
+    await db.query("delete from product_images where url = $1", [`/media/${photo.id}`]);
   });
 
   it("médiathèque : type vérifié sur le contenu, fichier utilisé protégé, corbeille", async () => {

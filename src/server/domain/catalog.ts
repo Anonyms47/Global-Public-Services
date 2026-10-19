@@ -1236,3 +1236,23 @@ export async function setVariantDisabled(db: Db, variantId: string, disabled: bo
   await db.query("update products set updated_at = now() where id = $1", [r!.product_id]);
   return `${r!.name} (${r!.sku})`;
 }
+
+/** Photo prise sur place, ajoutée à la suite des photos d'une fiche (sans toucher au reste). */
+export async function addProductPhoto(db: Db, productId: string, mediaId: string) {
+  const media = await db.one<{ mime: string }>("select mime from media where id = $1 and status = 'ready'", [mediaId]);
+  if (!media || !media.mime.startsWith("image/")) fail("validation", "Photo introuvable : reprenez-la.");
+  const product = await db.one<{ name: string }>("select name from products where id = $1 and deleted_at is null", [
+    productId,
+  ]);
+  if (!product) fail("not_found", "Produit introuvable.");
+  const url = `/media/${mediaId}`;
+  await db.query(
+    `insert into product_images (id, product_id, url, alt, color, position, kind)
+     select $1, $2, $3, $4, null,
+            (select coalesce(max(position) + 1, 0) from product_images where product_id = $2), 'image'
+      where not exists (select 1 from product_images where product_id = $2 and url = $3)`,
+    [newId(), productId, url, product!.name],
+  );
+  await db.query("update products set updated_at = now() where id = $1", [productId]);
+  return product!.name;
+}

@@ -493,3 +493,14 @@ export async function setVariantDisabledAction(variantId: string, disabled: bool
     return { disabled: !!disabled };
   });
 }
+
+/** Photo prise depuis la liste « à compléter » : ajoutée à la fiche, rien d'autre ne change. Journalisé. */
+export async function addProductPhotoAction(productId: string, mediaId: string) {
+  return guarded("catalog.edit", async ({ db, user }) => {
+    const d = parse(z.object({ productId: z.string().min(1), mediaId: z.string().uuid() }), { productId, mediaId });
+    const { addProductPhoto } = await import("@/server/domain/catalog");
+    const name = await addProductPhoto(db, d.productId, d.mediaId);
+    await audit(db, user.is_demo ? null : user.id, "product.photo_add", name, { media: d.mediaId });
+    return { message: `Photo ajoutée à « ${name} ».` };
+  });
+}

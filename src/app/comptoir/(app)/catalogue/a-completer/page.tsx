@@ -6,6 +6,7 @@ import { listToComplete, toCompleteFilters, type ToCompleteFilter } from "@/serv
 import { can } from "@/lib/permissions";
 import { Badge, Forbidden, PageTitle } from "@/components/admin/ui";
 import { PublishReady } from "@/components/admin/PublishReady";
+import { QuickPhoto } from "@/components/admin/QuickPhoto";
 import { IconArrowLeft, IconImage } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Produits à compléter" };
@@ -139,12 +140,8 @@ export default async function ToCompletePage({ searchParams }: PageProps<"/compt
                     <Link href={`/comptoir/catalogue/${r.id}?${q}`} className="btn btn-blue btn-sm">
                       Compléter
                     </Link>
-                    {!r.photo ? (
-                      <Link href={`/comptoir/catalogue/${r.id}?${q}#etape-photos`} className="btn btn-outline btn-sm">
-                        Prendre les photos
-                      </Link>
-                    ) : null}
                   </div>
+                  <QuickPhoto productId={r.id} />
                 </div>
               </li>
             ))}
