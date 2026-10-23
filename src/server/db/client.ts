@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { schemaSql } from "./schema";
 import { SUPABASE_ROOT_CA } from "./supabase-ca";
 
@@ -67,18 +68,39 @@ function sslOptions(url: string) {
 async function createPostgres(url: string): Promise<Db> {
   const { Pool } = await import("pg");
   const pool = new Pool({ connectionString: url, max: 5, ssl: sslOptions(url) });
-  // Schéma appliqué sous verrou : plusieurs instances peuvent démarrer en même temps.
-  const init = await pool.connect();
-  try {
-    await init.query("begin");
-    await init.query("select pg_advisory_xact_lock(4747000)");
-    await init.query(schemaSql);
-    await init.query("commit");
-  } catch (error) {
-    await init.query("rollback");
-    throw error;
-  } finally {
-    init.release();
+  // Les « alter table » du schéma verrouillent chaque table en exclusif, même
+  // sans rien changer : rejoués à chaque démarrage d'instance, ils bloquaient
+  // les lectures en cours (interblocages). On ne les rejoue que si le schéma
+  // a changé depuis la dernière application, sous verrou car plusieurs
+  // instances peuvent démarrer en même temps.
+  const version = createHash("sha256").update(schemaSql).digest("hex");
+  const applied = (q: { query: typeof pool.query }) =>
+    q
+      .query<{ value: string }>("select value from schema_meta where key = 'version'")
+      .then((r) => r.rows[0]?.value === version)
+      .catch(() => false);
+  if (!(await applied(pool))) {
+    const init = await pool.connect();
+    try {
+      await init.query("begin");
+      await init.query("select pg_advisory_xact_lock(4747000)");
+      // Créée d'abord : une requête en échec annulerait toute la transaction.
+      await init.query("create table if not exists schema_meta (key text primary key, value text not null)");
+      if (!(await applied(init))) {
+        await init.query(schemaSql);
+        await init.query(
+          `insert into schema_meta (key, value) values ('version', $1)
+           on conflict (key) do update set value = excluded.value`,
+          [version],
+        );
+      }
+      await init.query("commit");
+    } catch (error) {
+      await init.query("rollback");
+      throw error;
+    } finally {
+      init.release();
+    }
   }
   const raw: RawQuery = (sql, params) => pool.query(sql, params as unknown[]);
   return wrap(raw, async (fn) => {
