@@ -51,6 +51,9 @@ interface Form {
 }
 
 const FORM_KEY = "gps-commande-v1";
+/** Coordonnées et réception, gardées sur cet appareil pour la commande suivante. */
+const CLIENT_KEY = "gps-client-v1";
+const CLIENT_FIELDS = ["reception", "store", "zone", "address", "name", "phone"] as const;
 const emptyForm: Form = {
   reception: "",
   store: "",
@@ -119,15 +122,30 @@ export function CartView({
   // Saisie conservée le temps de la session, sur cet appareil uniquement.
   // (Le formulaire n'est rendu qu'après lecture du panier côté navigateur.)
   const [form, setForm] = useState<Form>(() => {
-    try {
-      const saved = typeof window !== "undefined" ? sessionStorage.getItem(FORM_KEY) : null;
-      if (saved) return { ...emptyForm, ...JSON.parse(saved) };
-    } catch {}
     const only = [reception.pickupEnabled && "pickup", reception.deliveryEnabled && "delivery"].filter(Boolean);
-    return {
+    let next: Form = {
       ...emptyForm,
       reception: only.length === 1 ? (only[0] as Form["reception"]) : "",
+      store: stores.length === 1 ? stores[0].id : "",
     };
+    try {
+      const client = typeof window !== "undefined" ? localStorage.getItem(CLIENT_KEY) : null;
+      if (client) next = { ...next, ...pickClient(JSON.parse(client)) };
+      const saved = typeof window !== "undefined" ? sessionStorage.getItem(FORM_KEY) : null;
+      if (saved) next = { ...next, ...JSON.parse(saved) };
+    } catch {}
+    // Un choix enregistré qui n'existe plus (point de vente, zone, mode fermé) est ignoré.
+    if (next.reception && !only.includes(next.reception)) next.reception = "";
+    if (next.store && !stores.some((st) => st.id === next.store)) next.store = "";
+    if (next.zone && !reception.zones.some((z) => z.name === next.zone)) next.zone = "";
+    return next;
+  });
+  const [remembered, setRemembered] = useState(() => {
+    try {
+      return typeof window !== "undefined" && !!localStorage.getItem(CLIENT_KEY);
+    } catch {
+      return false;
+    }
   });
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [prepared, setPrepared] = useState<{
@@ -150,6 +168,14 @@ export function CartView({
       sessionStorage.setItem(FORM_KEY, JSON.stringify(form));
     } catch {}
   }, [form]);
+
+  const forget = () => {
+    try {
+      localStorage.removeItem(CLIENT_KEY);
+    } catch {}
+    setRemembered(false);
+    setForm({ ...form, address: "", name: "", phone: "" });
+  };
 
   /** Revérifie le panier côté serveur et applique les changements (en les expliquant). */
   const verify = useCallback(async (current: CartItem[]) => {
@@ -297,6 +323,10 @@ export function CartView({
     });
     setMessage(msg);
     setCopied(false);
+    try {
+      localStorage.setItem(CLIENT_KEY, JSON.stringify(pickClient(form)));
+      setRemembered(true);
+    } catch {}
     requestAnimationFrame(() => recapRef.current?.focus());
   };
 
@@ -324,6 +354,24 @@ export function CartView({
     io.observe(el);
     return () => io.disconnect();
   }, [ready, hasItems]);
+
+  // Arrivée par « Commander » depuis une fiche : directement aux informations de réception.
+  const jumped = useRef(false);
+  useEffect(() => {
+    if (!ready || !hasItems || jumped.current || window.location.hash !== "#commande") return;
+    jumped.current = true;
+    const target = !form.reception
+      ? "input[name='reception']"
+      : form.reception === "pickup" && stores.length > 1 && !form.store
+        ? "input[name='store']"
+        : !form.name.trim()
+          ? "#c-nom"
+          : "button[type='submit']";
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ block: "start" });
+      formRef.current?.querySelector<HTMLElement>(target)?.focus({ preventScroll: true });
+    });
+  }, [ready, hasItems, form, stores.length]);
 
   if (!ready) {
     return (
@@ -700,6 +748,14 @@ export function CartView({
                 <legend className="mb-3 flex items-center gap-2 font-bold">
                   <span className="step-dot">2</span> Vos coordonnées
                 </legend>
+                {remembered ? (
+                  <p className="-mt-2 flex flex-wrap items-center gap-x-2 text-[13px] text-ink-mute">
+                    Retrouvées de votre dernière commande, sur cet appareil uniquement.
+                    <button type="button" className="font-semibold text-gps-blue underline" onClick={forget}>
+                      Effacer
+                    </button>
+                  </p>
+                ) : null}
                 <div>
                   <label className="label" htmlFor="c-nom">
                     Votre nom
@@ -875,6 +931,13 @@ export function CartView({
       </div>
     </div>
   );
+}
+
+function pickClient(src: Partial<Form>): Partial<Form> {
+  const out: Partial<Form> = {};
+  for (const k of CLIENT_FIELDS)
+    if (typeof src?.[k] === "string") (out as Record<string, string>)[k] = src[k] as string;
+  return out;
 }
 
 function CartTitle({ count }: { count: number }) {
