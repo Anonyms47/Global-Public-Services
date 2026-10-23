@@ -8,8 +8,8 @@ Copie-colle tout ce prompt dans Claude Code, ouvert à la racine du dépôt `Ano
 
 Tu interviens sur le projet en production **GPS — Global Public Services**.
 
-- Site public : `https://gps-global-public-services.vercel.app`
-- Comptoir : `https://gps-global-public-services.vercel.app/comptoir`
+- Site public : `https://www.globalpublicservices.com`
+- Comptoir : `https://www.globalpublicservices.com/comptoir`
 - Stack connue : Next.js 16, React 19, TypeScript, Supabase/PostgreSQL, Supabase Storage, Vercel.
 - État : `DEMO_MODE=false`, `SITE_INDEXABLE=false`, catalogue vide, deux points de vente publiés, stock unique commun.
 - Le propriétaire réel est `Ndiogou`. Ne modifie ni son compte, ni ses sessions, ni ses permissions.

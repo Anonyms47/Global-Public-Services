@@ -4,7 +4,15 @@ Déjà fait :
 
 - **Base de données Supabase** `gps-global-public-services` (région Paris, `eu-west-3`) : schéma installé, accès par l'API publique de Supabase fermé sur toutes les tables (RLS activé sans règle ; seule l'application y accède).
 - **Projet Vercel** `gps-global-public-services`, relié au dépôt GitHub : chaque push sur `main` déploie la production, chaque autre branche une préversion.
-- Variables Vercel : `DEMO_MODE=true`, `SITE_INDEXABLE=false`, `NEXT_PUBLIC_SITE_URL=https://gps-global-public-services.vercel.app`.
+- Variables Vercel (état au départ) : `DEMO_MODE=true`, `SITE_INDEXABLE=false`, `NEXT_PUBLIC_SITE_URL=https://gps-global-public-services.vercel.app`.
+
+## État actuel (23/10/2026)
+
+- **Domaine** : `globalpublicservices.com` (acheté chez Spaceship, ajouté au projet Vercel). L'adresse officielle est `https://www.globalpublicservices.com` ; le domaine sans « www » redirige vers elle (308). L'ancienne adresse `gps-global-public-services.vercel.app` répond toujours.
+- **Comptoir** : `https://www.globalpublicservices.com/comptoir`.
+- **Variables Vercel** : `DEMO_MODE=false`, `NEXT_PUBLIC_SITE_URL=https://www.globalpublicservices.com`, `SITE_INDEXABLE=true` en **production uniquement** (les préversions restent fermées aux moteurs de recherche).
+- **Indexation** : `robots.txt` autorise tout sauf `/comptoir` et `/panier` ; le plan du site (`/sitemap.xml`) ne liste que les produits publiés et les catégories non vides. Pour accélérer l'apparition dans Google : Google Search Console → ajouter la propriété `globalpublicservices.com` → envoyer `https://www.globalpublicservices.com/sitemap.xml`.
+- **Retour en arrière** : remettre `SITE_INDEXABLE=false` dans Vercel puis redéployer ferme le site aux moteurs de recherche.
 
 ## Ce qu'il reste à faire (5 minutes)
 
@@ -14,7 +22,7 @@ Le mot de passe de la base n'est jamais transmis à Claude : c'est à vous de le
    Remplacez `[YOUR-PASSWORD]` par le mot de passe de la base. Si vous ne le connaissez pas : **Project Settings → Database → Reset database password**.
 2. **Vercel** → projet `gps-global-public-services` → **Settings → Environment Variables** → ajouter `DATABASE_URL` avec cette adresse, type **Sensitive**, environnements **Production** et **Preview**.
 3. **Fusionner la pull request** vers `main` (ou relancer le dernier déploiement) : Vercel publie le site.
-4. Ouvrir `https://gps-global-public-services.vercel.app` : la démonstration se crée au premier affichage. Le Comptoir est sur `/comptoir`.
+4. Ouvrir l'adresse du site (voir « État actuel ») : le Comptoir est sur `/comptoir`.
 
 Si le journal Vercel affiche une erreur de certificat (`self-signed certificate`), ajoutez la variable `DATABASE_SSL=no-verify` puis redéployez.
 
