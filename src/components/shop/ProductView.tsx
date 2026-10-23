@@ -2,14 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct, PublicVariant } from "@/server/domain/catalog";
-import { formatDate, optionsLabel } from "@/lib/format";
+import { fcfa, formatDate, optionsLabel } from "@/lib/format";
+import { orderHint } from "@/lib/order-hints";
+import { optionPrices, selectOption } from "@/lib/variant-select";
 import { productQuestionMessage, whatsappLink } from "@/lib/whatsapp";
 import { cart } from "../cart/cart-store";
 import { Sheet } from "../ui/Sheet";
 import {
   IconBag,
+  IconArrowRight,
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
@@ -58,8 +62,16 @@ export function ProductView({
           values[a][0];
       }
     }
-    return init;
+    // Un axe qui n'a qu'une valeur possible avec les choix déjà faits est rempli d'office.
+    const first = axes.find((a) => init[a]);
+    return first ? selectOption(product.variants, axes, init, first, init[first], VISUAL_AXES) : init;
   });
+  const router = useRouter();
+  const prices = useMemo(
+    () => Object.fromEntries(axes.map((a) => [a, optionPrices(product.variants, a)])),
+    [axes, product.variants],
+  );
+  const hint = orderHint(product.categorySlug, axes, product.name);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState<{
     quantity: number;
@@ -148,13 +160,14 @@ export function ProductView({
   else status = { tone: "ok", text: "Disponible." };
 
   const canAdd = !!variant && variant.available > 0;
-  const add = () => {
+  /** Ajoute la sélection au panier ; false si une option manque ou est indisponible. */
+  const put = () => {
     if (!variant) {
       setShowMissing(true);
-      return;
+      return false;
     }
-    if (variant.available === 0) return;
-    const quantity = cart.add(
+    if (variant.available === 0) return false;
+    return cart.add(
       {
         variantId: variant.id,
         productId: product.id,
@@ -168,10 +181,21 @@ export function ProductView({
       },
       variant.available,
     );
+  };
+  const add = () => {
+    const quantity = put();
+    if (quantity === false) return;
     setAdded({ quantity, capped: quantity < qty });
     requestAnimationFrame(() => confirmRef.current?.focus());
   };
-
+  /** Commande directe : l'article rejoint le panier et le client passe aux informations de réception. */
+  const orderNow = () => {
+    if (put() === false) {
+      optionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    router.push("/panier#commande");
+  };
   const question = whatsappLink(
     whatsapp,
     productQuestionMessage(product.name, url, variant ? optionsLabel(variant.options, axes) : undefined),
@@ -354,17 +378,24 @@ export function ProductView({
                   {values[axis].map((val) => {
                     const st = optionState(axis, val);
                     const on = sel[axis] === val;
+                    const price = prices[axis]?.[val];
                     return (
                       <button
                         key={val}
                         type="button"
                         aria-pressed={on}
-                        aria-label={`${axis} ${val}${st === "out" ? (product.stockTracked ? ", épuisé" : ", indisponible") : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
+                        aria-label={`${axis} ${val}${price !== undefined ? `, ${fcfa(price)}` : ""}${st === "out" ? (product.stockTracked ? ", épuisé" : ", indisponible") : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
                         onClick={() => {
-                          setSel((s) => ({
-                            ...s,
-                            [axis]: on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
-                          }));
+                          setSel((s) =>
+                            selectOption(
+                              product.variants,
+                              axes,
+                              s,
+                              axis,
+                              on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
+                              VISUAL_AXES,
+                            ),
+                          );
                           setShowMissing(false);
                         }}
                         className={`relative min-h-12 min-w-12 rounded-full border-[1.5px] px-5 text-[15px] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-95 ${
@@ -374,6 +405,13 @@ export function ProductView({
                         } ${st !== "ok" ? "text-ink-mute line-through decoration-gps-red decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
                       >
                         {val}
+                        {price !== undefined ? (
+                          <span
+                            className={`ml-1.5 text-[13px] font-bold tabular ${on ? "text-white/85" : "text-ink-mute"}`}
+                          >
+                            {fcfa(price)}
+                          </span>
+                        ) : null}
                       </button>
                     );
                   })}
@@ -381,6 +419,13 @@ export function ProductView({
               </fieldset>
             ))}
           </div>
+
+          {hint ? (
+            <p className="mt-5 flex items-start gap-2 text-[14px] text-ink-soft">
+              <IconInfo className="mt-0.5 shrink-0 text-gps-blue" size={18} />
+              <span>{hint}</span>
+            </p>
+          ) : null}
 
           <p
             role="status"
@@ -433,9 +478,18 @@ export function ProductView({
             </div>
             <button
               type="button"
-              onClick={add}
+              onClick={orderNow}
               aria-disabled={!canAdd}
               className={`btn btn-primary flex-1 text-base ${!canAdd ? "opacity-55" : ""}`}
+              aria-describedby="aide-ajout"
+            >
+              Commander <IconArrowRight size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={add}
+              aria-disabled={!canAdd}
+              className={`btn btn-outline w-full text-base ${!canAdd ? "opacity-55" : ""}`}
               aria-describedby="aide-ajout"
             >
               <IconBag /> Ajouter au panier
@@ -448,7 +502,7 @@ export function ProductView({
                 : "Option indisponible : choisissez une autre option ou demandez à GPS."
               : missing.length
                 ? `Sélection manquante : ${missing.join(", ").toLowerCase()}.`
-                : "L'ajout au panier ne réserve pas l'article."}
+                : "« Commander » vous mène directement à la réception et à l'envoi sur WhatsApp. Rien n'est réservé ni payé en ligne."}
           </p>
 
           {added ? (
@@ -532,16 +586,16 @@ export function ProductView({
         <button
           type="button"
           className={`btn btn-primary btn-sm shrink-0 ${variant && variant.available === 0 ? "opacity-55" : ""}`}
-          aria-label="Ajout rapide au panier"
+          aria-label="Commander ce produit"
           onClick={() => {
-            if (canAdd) add();
+            if (canAdd) orderNow();
             else {
               setShowMissing(true);
               optionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
             }
           }}
         >
-          <IconBag size={18} /> {missing.length ? "Choisir" : "Ajouter"}
+          {missing.length ? "Choisir" : "Commander"} <IconArrowRight size={18} />
         </button>
       </div>
 
