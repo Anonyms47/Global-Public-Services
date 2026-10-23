@@ -148,3 +148,6 @@ export const quickActions: QuickAction[] = [
   { href: "/comptoir/commandes?vue=a-preparer", label: "Voir les commandes à préparer", perm: "orders.view" },
   { href: "/comptoir/file", label: "Ajouter une tâche à la file", perm: "queue.manage", keywords: "rappel" },
 ];
+
+/** Cookie lu par le layout pour rendre le menu déjà replié, sans saut à l'affichage. */
+export const NAV_COOKIE = "comptoir_menu";

@@ -787,4 +787,24 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/catalogue/categories");
     await expect(page.getByRole("heading", { name: "Champs de la fiche produit" })).toHaveCount(0);
   });
+
+  test("menu latéral : réduit en colonne d'icônes et choix mémorisé", async ({ page }) => {
+    await login(page, "proprietaire@demo.gps");
+    const app = page.locator(".admin-app");
+    await expect(app).toHaveAttribute("data-nav", "ouvert");
+    await page.getByRole("button", { name: "Réduire le menu" }).click();
+    await expect(app).toHaveAttribute("data-nav", "replie");
+    const nav = page.getByRole("navigation", { name: "Comptoir" });
+    await expect(nav.locator(".nav-label").first()).toHaveCSS("position", "absolute");
+
+    // Le choix tient après rechargement, et les liens gardent leur nom accessible.
+    await page.reload();
+    await expect(app).toHaveAttribute("data-nav", "replie");
+    await nav.getByRole("link", { name: "Commandes" }).click();
+    await expect(page).toHaveURL(/\/comptoir\/commandes/);
+
+    await page.getByRole("button", { name: "Agrandir le menu" }).click();
+    await expect(app).toHaveAttribute("data-nav", "ouvert");
+    await expect(nav.getByText("Commandes", { exact: true })).toBeVisible();
+  });
 });

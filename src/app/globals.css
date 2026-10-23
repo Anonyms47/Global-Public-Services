@@ -1495,6 +1495,65 @@
   text-transform: uppercase;
   color: rgb(255 255 255 / 0.5);
 }
+/* Barre latérale du Comptoir : dépliée (256 px) ou repliée en colonne d'icônes (80 px). */
+@media (min-width: 64rem) {
+  .admin-app {
+    grid-template-columns: 256px minmax(0, 1fr);
+    transition: grid-template-columns 0.18s ease;
+  }
+  .admin-app[data-nav="replie"] {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-app {
+    transition: none;
+  }
+}
+.admin-app[data-nav="replie"] .admin-sidebar .nav-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.admin-app[data-nav="replie"] .admin-sidebar .nav-hide,
+.admin-app[data-nav="replie"] .admin-sidebar .admin-nav-group {
+  display: none;
+}
+.admin-app[data-nav="replie"] .admin-sidebar .admin-brand {
+  justify-content: center;
+  padding-inline: 0.5rem;
+}
+.admin-app[data-nav="replie"] .admin-sidebar .admin-brand img {
+  height: 1.25rem;
+}
+.admin-app[data-nav="replie"] .admin-sidebar nav {
+  padding-inline: 0.75rem;
+}
+.admin-app[data-nav="replie"] .admin-sidebar nav a,
+.admin-app[data-nav="replie"] .admin-sidebar .admin-nav-toggle {
+  position: relative;
+  justify-content: center;
+  padding-inline: 0;
+}
+.admin-app[data-nav="replie"] .admin-sidebar .nav-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 1.1rem;
+  padding-inline: 0.25rem;
+  font-size: 10px;
+  line-height: 1.1rem;
+}
+.admin-app[data-nav="replie"] .admin-sidebar .admin-account {
+  padding-inline: 0.75rem;
+}
+.admin-app[data-nav="replie"] .admin-sidebar .account-links {
+  justify-content: center;
+  margin-top: 0;
+}
 .admin-fab {
   position: fixed;
   right: 1rem;
