@@ -31,7 +31,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
         >
           <IconArrowLeft size={18} /> Fiche {o.reference}
         </Link>
-        <ReceiptActions pdfHref={`/comptoir/recus/${o.id}/pdf`} />
+        <ReceiptActions pdfHref={`/comptoir/recus/${o.id}/pdf`} filename={`recu-${o.reference}.pdf`} />
       </div>
       <article className="relative overflow-hidden rounded-[6px] border border-line bg-white p-6 text-[14px] md:p-10 print:border-0 print:p-0">
         {o.is_demo ? (

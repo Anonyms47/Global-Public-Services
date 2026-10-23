@@ -117,6 +117,19 @@ test.describe("Parcours mobile et clavier", () => {
     const file = await download.path();
     const head = (await import("node:fs")).readFileSync(file).subarray(0, 8).toString("latin1");
     expect(head).toBe("%PDF-1.4");
+    // Sur téléphone avec partage disponible : le PDF passe par le menu de partage (Enregistrer, WhatsApp…).
+    await page.evaluate(() => {
+      const w = window as unknown as { shared?: { name: string; type: string; head: string } };
+      navigator.canShare = () => true;
+      navigator.share = async (data?: ShareData) => {
+        const f = data!.files![0];
+        w.shared = { name: f.name, type: f.type, head: await f.slice(0, 8).text() };
+      };
+    });
+    await page.getByRole("link", { name: "Télécharger le PDF" }).click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { shared?: object }).shared))
+      .toEqual({ name: expect.stringMatching(/^recu-GPS-.+\.pdf$/), type: "application/pdf", head: "%PDF-1.4" });
   });
   test("saisie produit sur téléphone : photos, envoi en erreur, enregistrer et ajouter un autre, fiche publiée", async ({
     page,
