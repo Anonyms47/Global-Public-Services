@@ -108,6 +108,15 @@ test.describe("Parcours mobile et clavier", () => {
     await page.getByRole("link", { name: /Reçu/ }).click();
     await expect(page.locator("article")).toContainText(/Monnaie rendue 5\s000\sFCFA/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    // Le reçu se télécharge en vrai PDF.
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("link", { name: "Télécharger le PDF" }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^recu-GPS-.+\.pdf$/);
+    const file = await download.path();
+    const head = (await import("node:fs")).readFileSync(file).subarray(0, 8).toString("latin1");
+    expect(head).toBe("%PDF-1.4");
   });
   test("saisie produit sur téléphone : photos, envoi en erreur, enregistrer et ajouter un autre, fiche publiée", async ({
     page,

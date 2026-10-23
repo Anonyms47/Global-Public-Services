@@ -92,6 +92,8 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
         : "Renseigné pour chaque point de vente.";
   const wa = c.whatsapp.replace(/\D/g, "");
   const r = settings.reception;
+  // Aucun tarif publié : choix assumé, les frais sont donnés au client sur WhatsApp.
+  const feesOnWhatsApp = r.zones.length > 0 && r.zones.every((z) => z.fee === null);
   const checks: LaunchCheck[] = [
     {
       key: "owner",
@@ -159,7 +161,7 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
           ? "blocking"
           : r.deliveryEnabled && r.zones.length === 0
             ? "incomplete"
-            : r.zones.some((z) => z.fee === null)
+            : r.zones.some((z) => z.fee === null) && !feesOnWhatsApp
               ? "verify"
               : "ok",
       detail:
@@ -172,15 +174,23 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
       key: "delivery",
       level: 1,
       label: "Zones et frais de livraison",
-      status: !r.zones.length ? "todo" : r.zones.some((z) => z.fee === null) ? "incomplete" : "ok",
+      status: !r.zones.length
+        ? "todo"
+        : feesOnWhatsApp
+          ? "ok"
+          : r.zones.some((z) => z.fee === null)
+            ? "incomplete"
+            : "ok",
       detail: !r.zones.length
         ? "Aucune zone de livraison saisie."
-        : r.zones.some((z) => z.fee === null)
-          ? `Frais à saisir : ${r.zones
-              .filter((z) => z.fee === null)
-              .map((z) => z.name)
-              .join(", ")}.`
-          : `${r.zones.length} zone${r.zones.length > 1 ? "s" : ""} avec frais.`,
+        : feesOnWhatsApp
+          ? `${r.zones.length} zone${r.zones.length > 1 ? "s" : ""}, frais précisés au client sur WhatsApp.`
+          : r.zones.some((z) => z.fee === null)
+            ? `Frais à saisir : ${r.zones
+                .filter((z) => z.fee === null)
+                .map((z) => z.name)
+                .join(", ")}.`
+            : `${r.zones.length} zone${r.zones.length > 1 ? "s" : ""} avec frais.`,
       fix: "/comptoir/parametres#t-reception",
     },
     ...(
