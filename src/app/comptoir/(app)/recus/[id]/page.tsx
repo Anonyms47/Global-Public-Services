@@ -8,6 +8,7 @@ import { fcfa, formatDateTime } from "@/lib/format";
 import { Forbidden } from "@/components/admin/ui";
 import { Logo } from "@/components/brand/Logo";
 import { IconArrowLeft } from "@/components/ui/icons";
+import { receiptPayments } from "@/server/receipt";
 import { ReceiptActions } from "./ReceiptActions";
 
 export const metadata: Metadata = { title: "Reçu" };
@@ -19,45 +20,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
   if (!o) notFound();
   const s = await getSettings(db);
   const c = s.company;
-  const payments = o.payments.filter((p) => p.kind !== "reversal" && !o.payments.some((r) => r.reverses_id === p.id));
-
-  const text = [
-    "GPS — Global Public Services",
-    "Le service qui rassure",
-    [c.address, c.city].filter(Boolean).join(", "),
-    c.phone && `Tél. ${c.phone}`,
-    c.whatsapp && `WhatsApp +${c.whatsapp}`,
-    c.email,
-    [c.legalName, legalIds(c)].filter(Boolean).join(" · "),
-    s.receipt.header,
-    "",
-    `Reçu ${o.reference} — ${formatDateTime(o.created_at)}`,
-    o.customer_name && `Client : ${o.customer_name}`,
-    `Réception : ${receptionLabels[o.reception]}${o.store_name ? ` — ${o.store_name}` : ""}`,
-    "",
-    ...o.lines.map(
-      (l) =>
-        `${l.name}${l.options_label ? ` (${l.options_label})` : ""} — ${l.sku}\n  ${l.quantity} × ${fcfa(l.unit_price)} = ${fcfa(l.quantity * l.unit_price)}${l.returned_quantity ? ` (retour : ${l.returned_quantity})` : ""}`,
-    ),
-    "",
-    `Total articles : ${fcfa(o.subtotal)}`,
-    o.returned_value ? `Retours : -${fcfa(o.returned_value)}` : "",
-    o.reception === "delivery"
-      ? `Livraison : ${o.delivery_fee === null ? "précisée par GPS" : fcfa(o.delivery_fee)}`
-      : "",
-    `Montant dû : ${fcfa(o.due)}`,
-    ...payments.map(
-      (p) =>
-        `${p.kind === "refund" ? "Remboursement" : "Paiement"} ${methodLabels[p.method]} : ${fcfa(p.amount)}${p.note ? ` (${p.note})` : ""}${p.tendered !== null && p.change_given > 0 ? ` — reçu ${fcfa(p.tendered)}, rendu ${fcfa(p.change_given)}` : ""}`,
-    ),
-    `Solde : ${fcfa(o.balance)}`,
-    "",
-    s.receipt.footer,
-    o.is_demo ? "\n*** EXEMPLE — DÉMONSTRATION, SANS VALEUR ***" : "",
-  ]
-    .filter((x): x is string => typeof x === "string")
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n");
+  const payments = receiptPayments(o);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -68,7 +31,7 @@ export default async function ReceiptPage({ params }: PageProps<"/comptoir/recus
         >
           <IconArrowLeft size={18} /> Fiche {o.reference}
         </Link>
-        <ReceiptActions text={text} filename={`recu-${o.reference}.txt`} />
+        <ReceiptActions pdfHref={`/comptoir/recus/${o.id}/pdf`} />
       </div>
       <article className="relative overflow-hidden rounded-[6px] border border-line bg-white p-6 text-[14px] md:p-10 print:border-0 print:p-0">
         {o.is_demo ? (
