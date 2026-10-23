@@ -1913,6 +1913,19 @@ describe("Droits, clients, rapports, démonstration", () => {
     expect(by("catalog").status).toBe("blocking");
     expect(checks.every((c) => c.fix.startsWith("/comptoir"))).toBe(true);
     expect(summarize(checks).blocking).toBeGreaterThan(0);
+    // Aucun tarif publié : les frais donnés sur WhatsApp sont un choix, pas un oubli.
+    const noFees = {
+      ...settings,
+      reception: { ...settings.reception, deliveryEnabled: true, zones: [{ name: "Zone 1", fee: null }] },
+    };
+    const whatsappFees = await launchChecks(db, noFees, env);
+    expect(whatsappFees.find((c) => c.key === "delivery")?.status).toBe("ok");
+    expect(whatsappFees.find((c) => c.key === "reception")?.status).toBe("ok");
+    const mixed = {
+      ...noFees,
+      reception: { ...noFees.reception, zones: [...noFees.reception.zones, { name: "Zone 2", fee: 1000 }] },
+    };
+    expect((await launchChecks(db, mixed, env)).find((c) => c.key === "delivery")?.status).toBe("incomplete");
     expect(currentMode(env)).toBe("demo");
     expect(currentMode({ ...env, demoMode: false })).toBe("test");
     expect(currentMode({ ...env, demoMode: false, indexable: true })).toBe("open");
