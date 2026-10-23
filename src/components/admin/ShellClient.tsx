@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { searchAction } from "@/app/comptoir/(app)/actions";
+import { NAV_COOKIE } from "@/lib/admin-nav";
 import { Sheet } from "../ui/Sheet";
 import {
   IconBolt,
@@ -27,6 +28,8 @@ import {
   IconEdit,
   IconPrint,
   IconClock,
+  IconChevronLeft,
+  IconChevronRight,
 } from "../ui/icons";
 
 const icons: Record<string, typeof IconMenu> = {
@@ -68,22 +71,56 @@ export function AdminNavLink({
     <Link
       href={href}
       aria-current={on ? "page" : undefined}
+      title={typeof children === "string" ? children : undefined}
       className={`flex min-h-11 items-center gap-3 rounded-[6px] px-3 text-[15px] font-semibold transition-colors ${
         on
           ? "bg-white text-gps-blue-deep shadow-[inset_4px_0_0_#e30713]"
           : "text-white/85 hover:bg-white/10 hover:text-white"
       }`}
     >
-      <I size={18} /> {children}
+      <I size={18} className="shrink-0" /> <span className="nav-label">{children}</span>
       {count ? (
         <span
-          className="ml-auto min-w-6 rounded-full bg-gps-red px-1.5 text-center text-[12px] leading-6 font-bold text-white tabular"
+          className="nav-count ml-auto min-w-6 rounded-full bg-gps-red px-1.5 text-center text-[12px] leading-6 font-bold text-white tabular"
           aria-label={`${count} en attente`}
         >
           {count > 99 ? "99+" : count}
         </span>
       ) : null}
     </Link>
+  );
+}
+
+/**
+ * Replie la barre latérale (ordinateur) en une colonne d'icônes, ou la déplie.
+ * Le choix est mémorisé un an dans un cookie.
+ */
+export function SidebarToggle({ collapsed: initial }: { collapsed: boolean }) {
+  const [collapsed, setCollapsed] = useState(initial);
+  const ref = useRef<HTMLButtonElement>(null);
+  function toggle() {
+    const next = !collapsed;
+    setCollapsed(next);
+    ref.current?.closest(".admin-app")?.setAttribute("data-nav", next ? "replie" : "ouvert");
+    document.cookie = `${NAV_COOKIE}=${next ? "replie" : "ouvert"}; path=/comptoir; max-age=31536000; samesite=lax`;
+  }
+  const label = collapsed ? "Agrandir le menu" : "Réduire le menu";
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={toggle}
+      aria-expanded={!collapsed}
+      title={label}
+      className="admin-nav-toggle flex min-h-10 w-full items-center gap-3 rounded-[6px] px-3 text-[14px] font-semibold text-white/75 hover:bg-white/10 hover:text-white"
+    >
+      {collapsed ? (
+        <IconChevronRight size={18} className="shrink-0" />
+      ) : (
+        <IconChevronLeft size={18} className="shrink-0" />
+      )}
+      <span className="nav-label">{label}</span>
+    </button>
   );
 }
 
