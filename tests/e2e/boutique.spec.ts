@@ -48,7 +48,9 @@ test.describe("Boutique et commande WhatsApp", () => {
     await page.getByLabel("Adresse ou point de repère").fill("Quartier test");
     await page.getByLabel("Votre nom").fill("Cliente Fidèle");
     await page.getByRole("button", { name: "Préparer mon récapitulatif" }).click();
-    expect(await page.locator("#recap-message").inputValue()).toContain("Volta Chargeur 25 W — Contenu : Chargeur seul");
+    expect(await page.locator("#recap-message").inputValue()).toContain(
+      "Volta Chargeur 25 W — Contenu : Chargeur seul",
+    );
 
     // Commande suivante, nouvelle visite : les coordonnées sont retrouvées sur cet appareil.
     await page.evaluate(() => sessionStorage.clear());
