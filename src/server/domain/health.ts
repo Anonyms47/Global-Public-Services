@@ -35,6 +35,7 @@ const EXPECTED_TABLES = [
   "order_requests",
   "product_versions",
   "product_slug_history",
+  "wave_sessions",
   "audit_log",
 ];
 

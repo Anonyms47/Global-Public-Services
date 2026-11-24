@@ -407,6 +407,26 @@ create table if not exists stores (
 alter table orders add column if not exists store_id text references stores (id) on delete set null;
 -- Paiement à distance : lien privé par commande ; une déclaration du client n'est jamais un paiement.
 alter table orders add column if not exists pay_token text;
+-- Paiement Wave automatique : une session de paiement par commande et par montant, événements dédoublonnés.
+create table if not exists wave_sessions (
+  id text primary key,
+  order_id text not null references orders (id) on delete cascade,
+  amount int not null,
+  launch_url text not null,
+  status text not null default 'open' check (status in ('open', 'paid', 'failed', 'to_review')),
+  transaction_id text,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+create index if not exists wave_sessions_order on wave_sessions (order_id);
+create table if not exists wave_events (
+  id text primary key,
+  type text not null,
+  created_at timestamptz not null default now()
+);
+alter table wave_sessions enable row level security;
+alter table wave_events enable row level security;
 alter table orders add column if not exists payment_declared_at timestamptz;
 alter table orders add column if not exists payment_declared_method text;
 create unique index if not exists orders_pay_token on orders (pay_token) where pay_token is not null;
