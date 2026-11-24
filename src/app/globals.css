@@ -60,6 +60,47 @@
   dialog::backdrop {
     background: rgb(18 19 24 / 0.55);
   }
+  /* Typographie responsive : lignes équilibrées, plus de mot seul à la ligne sur téléphone. */
+  h1,
+  h2,
+  h3,
+  h4,
+  summary,
+  button,
+  .btn,
+  .chip,
+  .eyebrow,
+  figcaption,
+  address,
+  th {
+    text-wrap: balance;
+  }
+  p,
+  li,
+  dd,
+  dt,
+  label,
+  blockquote {
+    text-wrap: pretty;
+  }
+  /* Les petites lignes d'information (adresse, horaires, prix) restent équilibrées. */
+  address p,
+  address li,
+  dd,
+  dt {
+    text-wrap: balance;
+  }
+  /* Les mots très longs ne cassent pas la mise en page. */
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  li,
+  a,
+  dd {
+    overflow-wrap: break-word;
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
