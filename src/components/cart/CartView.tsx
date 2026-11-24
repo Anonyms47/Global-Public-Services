@@ -717,6 +717,9 @@ export function CartView({
               {form.reception === "delivery" && reception.zones.length ? (
                 <fieldset className="animate-rise">
                   <legend className="label">Zone de livraison</legend>
+                  {reception.zones.every((z) => z.fee === null) ? (
+                    <p className="hint mb-2">Le tarif de votre zone vous est confirmé par GPS sur WhatsApp.</p>
+                  ) : null}
                   <div className="grid gap-2" aria-invalid={!!errors.zone}>
                     {reception.zones.map((z) => {
                       const on = form.zone === z.name;
@@ -728,12 +731,14 @@ export function CartView({
                             value={z.name}
                             checked={on}
                             onChange={() => setForm({ ...form, zone: z.name })}
-                            className="h-4 w-4 accent-[#31277f]"
+                            className="h-4 w-4 shrink-0 accent-[#31277f]"
                           />
-                          <span className="flex-1 text-[14px] font-semibold">{z.name}</span>
-                          <span className="text-[14px] font-extrabold tabular">
-                            {z.fee === null ? TO_CONFIRM : fcfa(z.fee)}
-                          </span>
+                          <span className="min-w-0 flex-1 text-[15px] leading-snug font-semibold">{z.name}</span>
+                          {z.fee === null ? null : (
+                            <span className="shrink-0 text-[14px] font-extrabold whitespace-nowrap tabular">
+                              {fcfa(z.fee)}
+                            </span>
+                          )}
                         </label>
                       );
                     })}
@@ -898,9 +903,10 @@ export function CartView({
                     <IconCopy size={18} /> Copier le montant
                   </button>
                   <p className="mt-2 text-[13px] text-ink-mute">
-                    Avec Wave le montant est déjà rempli ; avec Orange Money, saisissez-le. Vérifiez que le bénéficiaire
-                    est bien GPS — Global Public Services. GPS ne vous demande jamais votre code secret. Vous pouvez
-                    aussi payer plus tard, au comptoir ou à la livraison.
+                    Wave : le montant est déjà rempli. Orange Money : saisissez-le. Vérifiez que le bénéficiaire est
+                    bien GPS — Global Public Services.
+                    <br />
+                    GPS ne vous demande jamais votre code secret. Vous pouvez aussi payer au comptoir ou à la livraison.
                   </p>
                   {payMethod ? (
                     <p
