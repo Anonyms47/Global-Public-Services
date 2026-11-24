@@ -43,8 +43,9 @@ export function PayLink({
         <p className="mt-2 rounded-lg bg-amber-50 p-3 font-bold text-amber-900" data-testid="paiement-declare">
           Paiement déclaré{label ? ` (${label})` : ""} — à vérifier · {formatDateTime(declaredAt)}
           <span className="mt-1 block font-normal">
-            Vérifiez la réception dans l&apos;application Wave ou Orange Money, puis enregistrez l&apos;encaissement
-            ci-dessous. Une déclaration n&apos;est pas un paiement.
+            Le client doit envoyer une capture d&apos;écran du paiement sur WhatsApp. Vérifiez la réception dans
+            l&apos;application Wave ou Orange Money, puis enregistrez l&apos;encaissement ci-dessous. Une déclaration
+            n&apos;est pas un paiement.
           </span>
         </p>
       ) : null}

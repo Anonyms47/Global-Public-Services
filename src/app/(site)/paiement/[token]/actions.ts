@@ -8,7 +8,11 @@ import { declarePayment } from "@/server/domain/payment-link";
 export async function declarePaymentAction(token: string, method: string): Promise<{ ok: boolean; message: string }> {
   try {
     await declarePayment(await getDb(), String(token), String(method));
-    return { ok: true, message: "Merci. GPS vérifie la réception du paiement et vous confirme sur WhatsApp." };
+    return {
+      ok: true,
+      message:
+        "Merci. Envoyez maintenant la capture d'écran de votre paiement à GPS sur WhatsApp : GPS vérifie puis confirme votre commande.",
+    };
   } catch (e) {
     if (e instanceof AppError) return { ok: false, message: e.message };
     console.error(e);
