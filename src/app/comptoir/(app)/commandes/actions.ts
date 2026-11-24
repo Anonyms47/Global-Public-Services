@@ -19,6 +19,7 @@ import {
   reversePayment,
   type Fulfillment,
 } from "@/server/domain/orders";
+import { ensurePayToken } from "@/server/domain/payment-link";
 import { can } from "@/lib/permissions";
 import { optionsLabel } from "@/lib/format";
 
@@ -261,4 +262,9 @@ export async function returnAction(id: string, input: unknown) {
       ),
     { message: "Retour enregistré." },
   );
+}
+
+/** Crée (ou retrouve) le lien de paiement privé d'une commande. Rien n'est envoyé automatiquement. */
+export async function payLinkAction(id: string) {
+  return guarded("payments.record", async ({ db, user }) => ({ token: await ensurePayToken(db, user, String(id)) }));
 }

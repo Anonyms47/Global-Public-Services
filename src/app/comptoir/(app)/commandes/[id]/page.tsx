@@ -22,6 +22,8 @@ import {
   ReversePaymentButton,
   WhatsAppMessages,
 } from "@/components/admin/OrderActions";
+import { PayLink } from "@/components/admin/PayLink";
+import { payInfo } from "@/server/domain/payment-link";
 import { IconArrowLeft, IconPrint } from "@/components/ui/icons";
 
 export async function generateMetadata({ params }: PageProps<"/comptoir/commandes/[id]">): Promise<Metadata> {
@@ -36,6 +38,7 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
   const o = await getOrder(db, (await params).id);
   if (!o) notFound();
   const settings = await getSettings(db);
+  const pay = await payInfo(db, o.id);
   const step = nextStep(o);
   const showCost = can(user, "catalog.costs");
   const reversed = new Set(o.payments.filter((p) => p.reverses_id).map((p) => p.reverses_id));
@@ -282,6 +285,17 @@ export default async function OrderPage({ params }: PageProps<"/comptoir/command
             </dl>
           </Panel>
 
+          {o.status !== "cancelled" && o.reception !== "immediate" && can(user, "payments.record") ? (
+            <PayLink
+              orderId={o.id}
+              token={pay.token}
+              siteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? ""}
+              declaredAt={pay.declaredAt}
+              declaredMethod={pay.declaredMethod}
+              balance={o.balance}
+              feeUnknown={o.feeUnknown}
+            />
+          ) : null}
           {o.status !== "cancelled" && o.balance > 0 && can(user, "payments.record") ? (
             <PaymentForm orderId={o.id} balance={o.balance} feeUnknown={o.feeUnknown} />
           ) : null}
