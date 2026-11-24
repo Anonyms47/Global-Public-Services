@@ -60,6 +60,47 @@
   dialog::backdrop {
     background: rgb(18 19 24 / 0.55);
   }
+  /* Typographie responsive : lignes équilibrées, plus de mot seul à la ligne sur téléphone. */
+  h1,
+  h2,
+  h3,
+  h4,
+  summary,
+  button,
+  .btn,
+  .chip,
+  .eyebrow,
+  figcaption,
+  address,
+  th {
+    text-wrap: balance;
+  }
+  p,
+  li,
+  dd,
+  dt,
+  label,
+  blockquote {
+    text-wrap: pretty;
+  }
+  /* Les petites lignes d'information (adresse, horaires, prix) restent équilibrées. */
+  address p,
+  address li,
+  dd,
+  dt {
+    text-wrap: balance;
+  }
+  /* Les mots très longs ne cassent pas la mise en page. */
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  li,
+  a,
+  dd {
+    overflow-wrap: break-word;
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -1131,6 +1172,39 @@
   background: var(--color-gps-red);
   color: #fff;
 }
+.card-pill-new {
+  background: var(--color-gps-blue-night);
+  color: #fff;
+}
+.card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-ink-soft);
+}
+.card-facts li {
+  border-radius: 999px;
+  background: var(--color-paper-deep);
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .product-card {
+    transition: transform 350ms var(--ease-out-gps);
+  }
+  .product-card:hover,
+  .product-card:focus-within {
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card:hover .card-go {
+    transform: none;
+  }
+}
 .card-go {
   display: flex;
   width: 38px;
@@ -1314,7 +1388,9 @@
   border-top: 2px dashed color-mix(in oklab, var(--color-ink) 30%, transparent);
 }
 .footer-link {
-  display: inline-block;
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
   padding-block: 2px;
   background: linear-gradient(var(--color-gps-red), var(--color-gps-red)) 0 100% / 0 2px no-repeat;
   transition: background-size 250ms var(--ease-out-gps);

@@ -121,7 +121,7 @@ export function ShopControls({
     });
   };
 
-  const filters = (
+  const renderFilters = (uid: string) => (
     <div className="grid gap-6 lg:flex lg:flex-wrap lg:items-end lg:gap-4">
       {facets.brands.length > 1 ? (
         <fieldset>
@@ -157,11 +157,11 @@ export function ShopControls({
         }}
       >
         <div className="w-32">
-          <label className="label" htmlFor="f-min">
+          <label className="label" htmlFor={`${uid}-f-min`}>
             Prix min.
           </label>
           <input
-            id="f-min"
+            id={`${uid}-f-min`}
             inputMode="numeric"
             className="field"
             value={priceMin}
@@ -170,11 +170,11 @@ export function ShopControls({
           />
         </div>
         <div className="w-32">
-          <label className="label" htmlFor="f-max">
+          <label className="label" htmlFor={`${uid}-f-max`}>
             Prix max.
           </label>
           <input
-            id="f-max"
+            id={`${uid}-f-max`}
             inputMode="numeric"
             className="field"
             value={priceMax}
@@ -188,11 +188,11 @@ export function ShopControls({
       </form>
       {facets.conditions.length > 1 ? (
         <div className="lg:w-44">
-          <label className="label" htmlFor="f-etat">
+          <label className="label" htmlFor={`${uid}-f-etat`}>
             État
           </label>
           <select
-            id="f-etat"
+            id={`${uid}-f-etat`}
             className="field"
             value={query.etat ?? ""}
             onChange={(e) => set({ etat: e.target.value || undefined })}
@@ -230,7 +230,7 @@ export function ShopControls({
   return (
     <div className="contents">
       <div className="hidden rounded-[22px] border border-line bg-card p-5 shadow-[0_12px_32px_-24px_rgb(20_16_57/0.35)] lg:block">
-        {filters}
+        {renderFilters("d")}
       </div>
 
       <div className="shop-toolbar sticky top-16 z-30 -mx-4 mt-3 flex flex-nowrap items-center justify-between gap-2 px-4 py-2.5 md:top-[84px] md:-mx-8 md:px-8">
@@ -298,7 +298,7 @@ export function ShopControls({
           </button>
         }
       >
-        {filters}
+        {renderFilters("s")}
       </Sheet>
     </div>
   );

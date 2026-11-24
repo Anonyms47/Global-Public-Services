@@ -1,5 +1,6 @@
 "use client";
 
+import { cardFacts } from "@/lib/card-facts";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -111,6 +112,10 @@ export function ProductView({
     setActive(0);
   }
   const current = images[Math.min(active, images.length - 1)];
+  // Photos puis vidéos dans la même rangée : on fait glisser de gauche à droite, comme sur un téléphone.
+  const videos = product.videos ?? [];
+  const total = images.length + videos.length;
+  const onVideo = active >= images.length;
   const track = useRef<HTMLDivElement>(null);
   const goTo = (i: number) => {
     const t = track.current;
@@ -122,6 +127,12 @@ export function ProductView({
   useEffect(() => {
     track.current?.scrollTo({ left: 0 });
   }, [imagesKey]);
+  // Une vidéo qui n'est plus à l'écran se met en pause.
+  useEffect(() => {
+    track.current?.querySelectorAll("video").forEach((v, idx) => {
+      if (images.length + idx !== active) v.pause();
+    });
+  }, [active, images.length]);
 
   // Barre d'achat mobile : visible une fois le bouton principal dépassé.
   const buyRow = useRef<HTMLDivElement>(null);
@@ -213,7 +224,7 @@ export function ProductView({
       <div className="lg:col-span-7">
         <div className="grid gap-3 md:grid-cols-[84px_1fr] md:gap-4">
           <div className="pdp-media relative order-1 overflow-hidden rounded-[24px] bg-paper-deep md:order-2">
-            {images.length ? (
+            {total ? (
               <div
                 ref={track}
                 className="pdp-track flex snap-x snap-mandatory overflow-x-auto"
@@ -222,7 +233,7 @@ export function ProductView({
                   const i = Math.round(t.scrollLeft / Math.max(1, t.clientWidth));
                   if (i !== active) setActive(i);
                 }}
-                aria-label="Photos du produit, faire glisser pour changer"
+                aria-label="Photos et vidéos du produit, faire glisser pour changer"
               >
                 {images.map((img, i) => (
                   <button
@@ -247,6 +258,18 @@ export function ProductView({
                     />
                   </button>
                 ))}
+                {videos.map((v, k) => (
+                  <div key={v.url} className="block w-full shrink-0 snap-center bg-ink">
+                    <video
+                      src={v.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      aria-label={`Vidéo ${k + 1} : ${v.alt || product.name}`}
+                      className="aspect-[4/5] w-full object-contain"
+                    />
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="flex aspect-[4/5] items-center justify-center text-ink-mute">Photo à venir</div>
@@ -264,7 +287,7 @@ export function ProductView({
                 </span>
               ) : null}
             </div>
-            {current ? (
+            {current && !onVideo ? (
               <span
                 aria-hidden="true"
                 className="card-go pointer-events-none absolute right-3 bottom-3 !h-11 !w-11 !rotate-0"
@@ -272,21 +295,21 @@ export function ProductView({
                 <IconZoom size={20} />
               </span>
             ) : null}
-            {images.length > 1 ? (
-              <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-ink/45 px-2.5 py-1.5 backdrop-blur-sm md:hidden">
-                {images.map((img, i) => (
+            {total > 1 ? (
+              <div className="pointer-events-none absolute top-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-ink/45 px-2.5 py-1.5 backdrop-blur-sm md:hidden">
+                {Array.from({ length: total }, (_, i) => (
                   <span
-                    key={img.url}
+                    key={i}
                     className={`h-1.5 rounded-full bg-white transition-all duration-300 ${i === active ? "w-5" : "w-1.5 opacity-50"}`}
                   />
                 ))}
                 <span className="sr-only">
-                  Photo {active + 1} sur {images.length}
+                  {onVideo ? "Vidéo" : "Photo"} {active + 1} sur {total}
                 </span>
               </div>
             ) : null}
           </div>
-          {images.length > 1 ? (
+          {total > 1 ? (
             <ul className="order-2 hidden gap-2 md:order-1 md:flex md:flex-col" aria-label="Miniatures">
               {images.map((img, i) => (
                 <li key={img.url} className="shrink-0">
@@ -308,22 +331,29 @@ export function ProductView({
                   </button>
                 </li>
               ))}
-            </ul>
-          ) : null}
-          {product.videos?.length ? (
-            <div className="order-3 grid gap-3 md:col-span-full">
-              {product.videos.map((v) => (
-                <video
-                  key={v.url}
-                  src={v.url}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  aria-label={`Vidéo : ${v.alt || product.name}`}
-                  className="aspect-[4/5] w-full rounded-[14px] bg-ink object-contain md:aspect-video"
-                />
+              {videos.map((v, k) => (
+                <li key={v.url} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => goTo(images.length + k)}
+                    aria-label={`Vidéo ${k + 1}`}
+                    aria-current={images.length + k === active}
+                    className={`flex aspect-[4/5] w-[84px] items-center justify-center overflow-hidden rounded-[14px] border-2 bg-ink text-white transition-[border-color,opacity] ${images.length + k === active ? "border-gps-blue" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  >
+                    <svg
+                      width="26"
+                      height="26"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : null}
         </div>
       </div>
@@ -349,6 +379,13 @@ export function ProductView({
             <p className="mt-3 inline-flex rounded-full bg-gps-blue-soft px-3 py-1 text-[13px] font-bold text-gps-blue">
               État : {product.condition}
             </p>
+          ) : null}
+          {cardFacts(product.specs).length ? (
+            <ul className="card-facts mt-3" aria-label="Points clés">
+              {cardFacts(product.specs).map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
           ) : null}
 
           <div className="mt-5">

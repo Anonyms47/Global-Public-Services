@@ -82,11 +82,16 @@ export default async function HomePage() {
     products.find((p) => p.featured && ready(p)) ??
     products.find(ready) ??
     products[0];
-  const selection = products
+  const featuredSelection = products
     .filter((p) => p.featured && ready(p) && p.id !== hero?.id)
     .sort((a, b) => a.featuredPosition - b.featuredPosition)
     .slice(0, 5);
-  const focus = products.find((p) => p.id === settings.storefront.focusProductId) ?? selection[selection.length - 1];
+  // Rien n'est mis en vedette au Comptoir : on montre les dernières fiches complètes plutôt qu'une page sans produit.
+  const newest = featuredSelection.length === 0;
+  const selection = newest ? products.filter((p) => ready(p) && p.id !== hero?.id).slice(0, 5) : featuredSelection;
+  const focus =
+    products.find((p) => p.id === settings.storefront.focusProductId) ??
+    featuredSelection[featuredSelection.length - 1];
   // Tuiles d'univers : catégories mises en avant si le Comptoir en a choisi, sinon toutes celles qui ont des produits.
   const withProducts = categories.filter((cat) => cat.product_count > 0);
   const univers = withProducts.some((c) => c.featured) ? withProducts.filter((c) => c.featured) : withProducts;
@@ -300,13 +305,17 @@ export default async function HomePage() {
       {selection.length ? (
         <section aria-labelledby="titre-selection" className="bg-card">
           <div className="container-site py-16 md:py-24">
-            <SectionHead index="02" eyebrow="Sélection GPS" title="Choisis au comptoir">
+            <SectionHead
+              index="02"
+              eyebrow={newest ? "Nouveautés" : "Sélection GPS"}
+              title={newest ? "Fraîchement arrivés" : "Choisis au comptoir"}
+            >
               <Link href="/boutique" className="btn btn-outline btn-sm">
                 Toute la boutique <IconArrowRight size={16} />
               </Link>
             </SectionHead>
             <h2 id="titre-selection" className="sr-only">
-              Sélection GPS
+              {newest ? "Nouveautés" : "Sélection GPS"}
             </h2>
             <div data-reveal className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-12">
               <div className="col-span-2 lg:col-span-6 lg:row-span-2">

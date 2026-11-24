@@ -43,7 +43,12 @@ export default async function CategoriesPage() {
                 </h2>
                 <p className="mt-1 text-[14px] text-ink-mute">
                   {c.product_count} article{c.product_count > 1 ? "s" : ""}
-                  {Number.isFinite(min) ? ` · dès ${fcfa(min)}` : ""}
+                  {Number.isFinite(min) ? (
+                    <>
+                      {" · "}
+                      <span className="whitespace-nowrap">dès {fcfa(min)}</span>
+                    </>
+                  ) : null}
                 </p>
               </Link>
             </li>

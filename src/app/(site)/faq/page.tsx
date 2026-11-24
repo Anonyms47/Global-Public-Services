@@ -20,11 +20,11 @@ export default async function FaqPage() {
           a: "Ajoutez vos articles au panier, choisissez retrait ou livraison, puis préparez le récapitulatif. Envoyez-le à GPS sur WhatsApp : GPS confirme la disponibilité, le total et les modalités.",
         },
         {
-          q: "Ma commande est-elle confirmée quand WhatsApp s'ouvre ?",
+          q: "Ma commande est‑elle confirmée quand WhatsApp s'ouvre ?",
           a: "Non. Il faut envoyer le message, puis attendre la confirmation de GPS. Tant que GPS n'a pas confirmé, rien n'est réservé.",
         },
         {
-          q: "Le panier réserve-t-il les articles ?",
+          q: "Le panier réserve‑t‑il les articles ?",
           a: "Non. Le panier est conservé sur votre appareil, mais rien n'est réservé avant que GPS confirme la commande.",
         },
       ],
@@ -47,7 +47,7 @@ export default async function FaqPage() {
     {
       title: "Garantie et retours",
       items: [
-        { q: "Les produits sont-ils garantis ?", a: p.warranty || `${TO_CONFIRM}.` },
+        { q: "Les produits sont‑ils garantis ?", a: p.warranty || `${TO_CONFIRM}.` },
         { q: "Puis-je retourner un article ?", a: p.returns || `${TO_CONFIRM}.` },
       ],
     },
