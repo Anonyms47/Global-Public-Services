@@ -55,10 +55,10 @@ export default async function CgvPage() {
           title: "Paiement",
           body: (
             <p>
-              Aucun paiement n&apos;est effectué sur le site au moment de la commande. Après confirmation de la commande
-              et de la disponibilité par GPS, le paiement se fait au comptoir, à la livraison, ou par Wave ou Orange
-              Money depuis leur application (paiement externe, non intégré au site) ; la commande n&apos;est payée
-              qu&apos;après vérification de la réception.{" "}
+              Le paiement ne se fait pas sur le site lui-même : depuis votre panier, vous pouvez payer par Wave ou
+              Orange Money (applications externes, non intégrées au site), puis envoyer votre message WhatsApp en
+              joignant la capture d&apos;écran du paiement ; ou payer au comptoir ou à la livraison. GPS confirme la
+              disponibilité, et la commande n&apos;est marquée payée qu&apos;après vérification de la réception.{" "}
               {p.payment || "Moyens et moment du paiement précisés par GPS à la confirmation de la commande."}
             </p>
           ),

@@ -126,7 +126,7 @@ export function Footer({
           <div className="receipt-tear mt-12 pt-6 text-center">
             <p className="receipt-mono text-[13px] tracking-[0.2em] uppercase">Merci de votre visite</p>
             <p className="mt-1 text-[13px] text-ink-mute">
-              Commandes confirmées sur WhatsApp — paiement après confirmation.
+              Commandes confirmées sur WhatsApp — paiement Wave, Orange Money ou sur place.
             </p>
           </div>
 

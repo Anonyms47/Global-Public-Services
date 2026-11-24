@@ -49,7 +49,7 @@ export async function registerRequest(input: RequestInput & { replacesId?: strin
       replacesId: input?.replacesId ? String(input.replacesId).slice(0, 64) : undefined,
       storeId: input?.storeId ? String(input.storeId).slice(0, 64) : null,
     });
-    return { ok: true as const, reference: r.reference, id: r.id };
+    return { ok: true as const, reference: r.reference, id: r.id, subtotal: r.subtotal };
   } catch (error) {
     if (!(error instanceof AppError)) console.error(error);
     return { ok: false as const };

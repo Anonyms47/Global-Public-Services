@@ -34,7 +34,7 @@ export default async function FaqPage() {
       items: [
         {
           q: "Puis-je payer par Wave ou Orange Money ?",
-          a: `Pas sur le site lui-même : le paiement ne se fait qu'après la confirmation de votre commande par GPS. Vous pouvez alors régler au comptoir, à la livraison, ou par Wave / Orange Money depuis leur application (lien envoyé par GPS), puis vous envoyez à GPS la capture d'écran du paiement sur WhatsApp et GPS vérifie la réception. ${p.payment || `Modalités de paiement : ${toConfirm}.`}`,
+          a: `Oui, depuis votre panier : après avoir préparé votre commande, payez avec Wave ou Orange Money (applications externes, non intégrées au site), revenez sur la page, puis envoyez votre message sur WhatsApp en joignant la capture d'écran du paiement. Vous pouvez aussi payer au comptoir ou à la livraison. GPS confirme la disponibilité et la commande n'est marquée payée qu'après vérification de la réception. ${p.payment || `Modalités de paiement : ${toConfirm}.`}`,
         },
         {
           q: "Combien coûte la livraison ?",

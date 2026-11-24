@@ -8,6 +8,7 @@ import type { CheckedItem } from "@/server/domain/cart";
 import type { DeliveryZone } from "@/server/domain/settings";
 import { fcfa } from "@/lib/format";
 import { TO_CONFIRM, buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
+import { externalPayments, externalUrl, type ExternalMethod } from "@/lib/payment-links";
 import { cart, cartCount, useCart, useCartReady, type CartItem } from "./cart-store";
 import {
   IconAlert,
@@ -153,6 +154,9 @@ export function CartView({
     key: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  // Paiement fait par le client avant d'envoyer son message ; montant recalculé par le serveur.
+  const [payMethod, setPayMethod] = useState<ExternalMethod | null>(null);
+  const [serverSubtotal, setServerSubtotal] = useState<number | null>(null);
   const recapRef = useRef<HTMLDivElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
 
@@ -253,6 +257,13 @@ export function CartView({
   const subtotal = items.filter((i) => !unavailable.has(i.variantId)).reduce((s, i) => s + i.unitPrice * i.quantity, 0);
   const zone = reception.zones.find((z) => z.name === form.zone);
   const deliveryFee: number | null = form.reception === "delivery" ? (zone ? zone.fee : null) : 0;
+  const payAmount = (serverSubtotal ?? subtotal) + (deliveryFee ?? 0);
+  // Livraison non chiffrée : on paie les produits, la livraison sera confirmée par GPS.
+  const payIsTotal = form.reception !== "delivery" || deliveryFee !== null;
+  const withPayment = (text: string) =>
+    payMethod
+      ? `${text}\n\nPaiement : ${fcfa(payAmount)} payés par ${externalPayments[payMethod].label}${payIsTotal ? "" : " (produits ; livraison à confirmer)"}. Je joins la capture d'écran du paiement dans cette conversation.`
+      : text;
 
   const validate = () => {
     const e: Partial<Record<keyof Form, string>> = {};
@@ -271,6 +282,7 @@ export function CartView({
 
   const prepare = async () => {
     setMessage(null);
+    setPayMethod(null);
     if (!validate()) {
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
@@ -297,7 +309,10 @@ export function CartView({
       replacesId: lastRequest.current ?? undefined,
       storeId: form.reception === "pickup" ? form.store || null : null,
     }).catch(() => ({ ok: false as const }));
-    if (req.ok) lastRequest.current = req.id;
+    if (req.ok) {
+      lastRequest.current = req.id;
+      setServerSubtotal(req.subtotal);
+    } else setServerSubtotal(null);
     const msg = buildOrderMessage({
       reference: req.ok ? req.reference : undefined,
       lines: items.map((i) => ({
@@ -333,7 +348,7 @@ export function CartView({
   const copy = async () => {
     if (!message) return;
     try {
-      await navigator.clipboard.writeText(message);
+      await navigator.clipboard.writeText(withPayment(message));
       setCopied(true);
     } catch {
       const ta = document.getElementById("recap-message") as HTMLTextAreaElement | null;
@@ -405,7 +420,8 @@ export function CartView({
     );
   }
 
-  const waUrl = message ? whatsappLink(whatsapp, message) : null;
+  const finalMessage = message ? withPayment(message) : null;
+  const waUrl = finalMessage ? whatsappLink(whatsapp, finalMessage) : null;
   const errorList = Object.values(errors).filter(Boolean);
   const count = cartCount(items);
   const step = message ? 3 : form.reception ? 2 : 1;
@@ -572,7 +588,7 @@ export function CartView({
 
           <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-[12px] leading-tight font-semibold text-ink-soft sm:text-[13px]">
             <li className="flex flex-col items-center gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
-              <IconCheck size={18} className="text-gps-blue" /> Paiement après confirmation
+              <IconCheck size={18} className="text-gps-blue" /> Paiement Wave, Orange Money ou sur place
             </li>
             <li className="flex flex-col items-center gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
               <IconWhatsApp className="text-wa" /> Confirmé sur WhatsApp
@@ -844,6 +860,60 @@ export function CartView({
                   </span>{" "}
                   Récapitulatif prêt
                 </h3>
+                <div
+                  className="mt-4 rounded-[14px] border-[1.5px] border-line bg-white p-4"
+                  data-testid="payer-maintenant"
+                >
+                  <h4 className="text-[16px] font-extrabold">Payer maintenant (facultatif)</h4>
+                  <p className="mt-1 text-[14px] text-ink-soft">
+                    {payIsTotal ? "Montant à payer" : "Montant des produits (livraison à confirmer par GPS)"} :{" "}
+                    <strong className="tabular" data-testid="montant-a-payer">
+                      {fcfa(payAmount)}
+                    </strong>
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(Object.keys(externalPayments) as ExternalMethod[]).map((key) => (
+                      <a
+                        key={key}
+                        href={externalUrl(key, payAmount)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setPayMethod(key)}
+                        className={`btn min-h-12 justify-center ${payMethod === key ? "btn-primary" : "btn-outline"}`}
+                        data-testid={`payer-${key}`}
+                      >
+                        {externalPayments[key].label}
+                      </a>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-ghost mt-2 min-h-11 w-full"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(String(payAmount));
+                      } catch {}
+                    }}
+                  >
+                    <IconCopy size={18} /> Copier le montant
+                  </button>
+                  <p className="mt-2 text-[13px] text-ink-mute">
+                    Avec Wave le montant est déjà rempli ; avec Orange Money, saisissez-le. Vérifiez que le bénéficiaire
+                    est bien GPS — Global Public Services. GPS ne vous demande jamais votre code secret. Vous pouvez
+                    aussi payer plus tard, au comptoir ou à la livraison.
+                  </p>
+                  {payMethod ? (
+                    <p
+                      className="mt-3 rounded-[12px] bg-wa-soft p-3 text-[14px] font-semibold text-wa-ink"
+                      role="status"
+                      data-testid="apres-paiement"
+                    >
+                      Une fois le paiement fait, revenez sur cette page puis envoyez le message ci-dessous sur WhatsApp
+                      :<strong> joignez-y la capture d&apos;écran du paiement</strong> pour que GPS confirme votre
+                      commande.
+                    </p>
+                  ) : null}
+                </div>
                 <div className="wa-chat mt-4 overflow-hidden rounded-[16px]">
                   <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-display text-sm font-extrabold text-gps-red">
@@ -861,8 +931,8 @@ export function CartView({
                     <textarea
                       id="recap-message"
                       readOnly
-                      value={message}
-                      rows={Math.min(26, message.split("\n").length + 1)}
+                      value={finalMessage ?? ""}
+                      rows={Math.min(30, (finalMessage ?? "").split("\n").length + 1)}
                       className="wa-bubble"
                     />
                   </div>
@@ -875,7 +945,8 @@ export function CartView({
                       rel="noopener noreferrer"
                       className="btn btn-wa h-14 w-full text-base"
                     >
-                      <IconWhatsApp /> Envoyer ma commande sur WhatsApp
+                      <IconWhatsApp />{" "}
+                      {payMethod ? "Envoyer ma commande payée sur WhatsApp" : "Envoyer ma commande sur WhatsApp"}
                     </a>
                   ) : (
                     <div className="rounded-[14px] border-[1.5px] border-dashed border-wa/50 bg-wa-soft p-3 text-[14px]">
