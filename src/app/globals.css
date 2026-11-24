@@ -763,11 +763,11 @@
   min-height: 48px;
   cursor: pointer;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border-radius: 12px;
   border: 1.5px solid var(--color-line);
   background: #fff;
-  padding: 0 14px;
+  padding: 10px 14px;
   transition:
     border-color 160ms,
     background-color 160ms;
