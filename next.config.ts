@@ -5,11 +5,12 @@ const nextConfig: NextConfig = {
   // Photos produits jusqu'à 3 Mo (marge pour l'enveloppe multipart).
   experimental: { serverActions: { bodySizeLimit: "3.2mb" } },
   images: {
-    // Versions optimisées des médias : renouvelées en 5 min (fichier dépublié ou mis à la corbeille).
-    minimumCacheTTL: 300,
-    localPatterns: [{ pathname: "/demo/**" }, { pathname: "/media/**" }, { pathname: "/brand/**" }],
-    // Photos d'exemple de la démonstration (banque d'images Unsplash).
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com", pathname: "/photo-*" }],
+    // Photos réduites par la route /media/[id]?w=… (cache de 5 min : fichier dépublié ou mis à la corbeille),
+    // pas par l'optimisation de l'hébergeur, dont le quota gratuit s'épuisait (photos en erreur 402).
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [128, 256, 384],
   },
   async headers() {
     return [

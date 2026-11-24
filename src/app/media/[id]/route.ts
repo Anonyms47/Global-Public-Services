@@ -2,6 +2,7 @@ import { getDb } from "@/server/db";
 import { currentUser } from "@/server/admin";
 import { mediaFile, readMediaBytes } from "@/server/domain/media";
 import { mediaStorage } from "@/server/storage";
+import { MAX_RESIZE_BYTES, resizeToWebp, snapWidth } from "@/server/image-resize";
 
 /**
  * Diffusion des fichiers de la médiathèque.
@@ -36,8 +37,37 @@ export async function GET(req: Request, ctx: RouteContext<"/media/[id]">) {
     }
   }
 
-  const read = await readMediaBytes(db, file, req.headers.get("range"), cfg);
+  // ?w=<largeur> : photo réduite en WebP (affichage sur le site) ; sans, l'original, avec Range.
+  const width = snapWidth(new URL(req.url).searchParams.get("w"));
+  const resizable = width !== null && /^image\/(jpeg|png|webp)$/.test(file.mime);
+  const read = await readMediaBytes(db, file, resizable ? null : req.headers.get("range"), cfg);
   if (!read) return notFound();
+  if (resizable && read.status === 200 && read.body && read.size <= MAX_RESIZE_BYTES) {
+    const original =
+      read.body instanceof Uint8Array ? read.body : new Uint8Array(await new Response(read.body).arrayBuffer());
+    const small = await resizeToWebp(original, width);
+    if (small) {
+      return new Response(small as BodyInit, {
+        status: 200,
+        headers: {
+          "Content-Type": "image/webp",
+          "Cache-Control": cache,
+          "X-Content-Type-Options": "nosniff",
+          "Content-Length": String(small.byteLength),
+        },
+      });
+    }
+    // Réduction impossible : l'original est servi.
+    return new Response(original as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": file.mime,
+        "Cache-Control": cache,
+        "X-Content-Type-Options": "nosniff",
+        "Content-Length": String(original.byteLength),
+      },
+    });
+  }
   const headers: Record<string, string> = {
     "Content-Type": file.mime,
     "Cache-Control": cache,
