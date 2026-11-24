@@ -3,6 +3,7 @@ import type { PublicProduct } from "@/server/domain/catalog";
 import { ProductImage } from "./ProductImage";
 import { Price } from "./Price";
 import { IconArrowRight } from "../ui/icons";
+import { cardFacts, isNew } from "@/lib/card-facts";
 
 export function availabilityText(p: Pick<PublicProduct, "available" | "variants" | "stockTracked">) {
   // Stock non suivi : seul un article désactivé (manquant) est signalé.
@@ -38,6 +39,9 @@ export function ProductCard({
   const image = product.images[0];
   const second = product.images[1];
   const a = availabilityText(product);
+  const facts = cardFacts(product.specs);
+  const fresh = isNew(product.createdAt) && !product.promo;
+  const options = product.variants.filter((v) => v.available !== 0).length;
   const href = `/produits/${product.slug}${from ? `?depuis=${encodeURIComponent(from)}` : ""}`;
   return (
     <article
@@ -61,6 +65,7 @@ export function ProductCard({
         ) : null}
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
           {product.promo ? <span className="card-pill card-pill-red">{product.promo.label}</span> : null}
+          {fresh ? <span className="card-pill card-pill-new">Nouveau</span> : null}
           {product.condition && product.condition !== "Neuf" ? (
             <span className="card-pill">{product.condition.split(" —")[0]}</span>
           ) : null}
@@ -91,13 +96,22 @@ export function ProductCard({
             {product.name}
           </Link>
         </h3>
-        <Price
-          price={product.minPrice}
-          basePrice={product.promo ? product.minBasePrice : undefined}
-          from={prices.size > 1}
-          size={layout === "wide" ? "lg" : "md"}
-          className="mt-1"
-        />
+        {facts.length ? (
+          <ul className="card-facts mt-1.5" aria-label="Caractéristiques clés">
+            {facts.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <Price
+            price={product.minPrice}
+            basePrice={product.promo ? product.minBasePrice : undefined}
+            from={prices.size > 1}
+            size={layout === "wide" ? "lg" : "md"}
+          />
+          {options > 1 ? <span className="text-[12px] font-semibold text-ink-mute">{options} options</span> : null}
+        </div>
         {a ? <p className={`stock-dot stock-${a.tone} mt-1.5 text-[12.5px] font-semibold`}>{a.text}</p> : null}
       </div>
     </article>
