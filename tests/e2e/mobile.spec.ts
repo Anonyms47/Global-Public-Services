@@ -23,7 +23,7 @@ test.describe("Parcours mobile et clavier", () => {
   });
 
   test("ajout au panier au clavier", async ({ page }) => {
-    await page.goto("/produits/volta-chargeur-25w");
+    await page.goto("/produits/volta-chargeur-25-w");
     const option = page.getByRole("button", { name: "Contenu Avec câble USB-C" });
     await option.focus();
     await page.keyboard.press("Enter");

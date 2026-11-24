@@ -75,10 +75,12 @@ export function ProductCard({
         </span>
       </div>
       <div className={layout === "wide" ? "" : "mt-3 px-0.5"}>
-        <p className="text-[11.5px] font-bold tracking-[0.08em] text-ink-mute uppercase">
-          {product.brand}
-          {product.categoryName ? <span className="sr-only">, {product.categoryName}</span> : null}
-        </p>
+        {product.brand || product.categoryName ? (
+          <p className="text-[11.5px] font-bold tracking-[0.08em] text-ink-mute uppercase">
+            {product.brand || product.categoryName}
+            {product.brand && product.categoryName ? <span className="sr-only">, {product.categoryName}</span> : null}
+          </p>
+        ) : null}
         <h3
           className={`mt-0.5 leading-snug font-bold ${layout === "wide" ? "font-display text-3xl uppercase" : "text-[15px] md:text-base"}`}
         >

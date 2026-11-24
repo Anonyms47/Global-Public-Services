@@ -669,14 +669,14 @@ test.describe("Le Comptoir", () => {
 
     // Comptage rapide : différence affichée, mouvement tracé.
     await page.goto("/comptoir/stock/comptage?q=Volta%20Chargeur");
-    const card = page.getByRole("region", { name: /Comptage de Volta Chargeur 25W/ });
+    const card = page.getByRole("region", { name: /Comptage de Volta Chargeur 25 W/ });
     const sku = (await card.locator("p.font-mono").innerText()).trim();
     const before = Number(await page.getByTestId("stock-actuel").innerText());
     await expect(page.locator("#qc-reason")).toHaveValue("Comptage rapide");
     await page.locator("#qc-count").fill(String(before + 3));
     await expect(page.getByTestId("difference")).toHaveText("+3");
     await page.getByRole("button", { name: "Enregistrer et suivant" }).click();
-    await expect(page.getByText(`Volta Chargeur 25W : ${before} → ${before + 3}.`)).toBeVisible();
+    await expect(page.getByText(`Volta Chargeur 25 W : ${before} → ${before + 3}.`)).toBeVisible();
     expect((await availability(page, sku)).onHand).toBe(before + 3);
 
     // Modification rapide depuis le catalogue : prix d'une variante.

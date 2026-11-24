@@ -198,7 +198,8 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         id: r.id,
         slug: r.slug,
         name: r.name,
-        brand: r.brand,
+        // Un type d'objet ou un nom de catégorie n'est pas une marque : jamais affiché comme tel.
+        brand: isNotABrand(r.brand, [r.category_name ?? ""]) ? "" : r.brand,
         categorySlug: r.category_slug,
         categoryName: r.category_name,
         description: r.description,
@@ -349,7 +350,10 @@ export function filterProducts(all: PublicProduct[], q: ShopQuery) {
     });
   }
   if (q.categorie) list = list.filter((p) => p.categorySlug === q.categorie);
-  if (q.marque?.length) list = list.filter((p) => q.marque!.includes(p.brand));
+  if (q.marque?.length) {
+    const keys = new Set(q.marque.map(brandKey));
+    list = list.filter((p) => keys.has(brandKey(p.brand)));
+  }
   if (q.etat) list = list.filter((p) => p.condition === q.etat);
   if (q.prixMin != null) list = list.filter((p) => p.minPrice >= q.prixMin!);
   if (q.prixMax != null) list = list.filter((p) => p.minPrice <= q.prixMax!);
@@ -364,7 +368,11 @@ export function filterProducts(all: PublicProduct[], q: ShopQuery) {
 
 /** Facettes calculées sur les données disponibles. */
 export function facets(all: PublicProduct[]) {
-  const brands = [...new Set(all.map((p) => p.brand).filter(Boolean))].sort();
+  // Une marque par clé (« TDKC313 » = « Tdkc313 »), jamais un type d'objet ni une catégorie.
+  const categories = [...new Set(all.map((p) => p.categoryName ?? "").filter(Boolean))];
+  const brands = [...brandIndex(all.map((p) => p.brand)).values()]
+    .filter((b) => !isNotABrand(b, categories))
+    .sort((a, b) => a.localeCompare(b, "fr"));
   const conditions = [...new Set(all.map((p) => p.condition).filter(Boolean) as string[])].sort();
   const prices = all.map((p) => p.minPrice);
   return {
@@ -376,18 +384,44 @@ export function facets(all: PublicProduct[]) {
   };
 }
 
+/**
+ * « À voir aussi » : des produits qui vont avec celui-ci. Même catégorie (surtout), nom proche
+ * (même famille de modèle : une coque iPhone 16 Pro appelle les coques iPhone 16 voisines),
+ * même marque, prix du même ordre ; les fiches sans photo ne sont pas proposées.
+ */
 export function relatedProducts(all: PublicProduct[], product: PublicProduct, limit = 4) {
-  const others = all.filter((p) => p.id !== product.id);
-  const score = (p: PublicProduct) =>
-    (p.categorySlug === product.categorySlug ? 2 : 0) +
-    (p.brand && p.brand === product.brand ? 1 : 0) +
-    (p.available > 0 ? 0.5 : 0);
-  return others
+  const bk = brandKey(product.brand);
+  const score = (p: PublicProduct) => {
+    const sameCategory = p.categorySlug === product.categorySlug;
+    const sim = similarity(p.name, product.name);
+    const sameBrand = !!bk && brandKey(p.brand) === bk;
+    const ratio = product.minPrice > 0 ? p.minPrice / product.minPrice : 1;
+    if (!sameCategory && !sameBrand && sim < 0.4) return 0;
+    return (
+      (sameCategory ? 2 : 0) +
+      sim * 3 +
+      (sameBrand ? 1 : 0) +
+      (ratio >= 0.5 && ratio <= 2 ? 0.75 : 0) +
+      (p.available > 0 ? 0.25 : 0)
+    );
+  };
+  return all
+    .filter((p) => p.id !== product.id && p.images.length > 0)
     .map((p) => ({ p, s: score(p) }))
     .filter((x) => x.s >= 1)
-    .sort((a, b) => b.s - a.s)
+    .sort((a, b) => b.s - a.s || b.p.createdAt.getTime() - a.p.createdAt.getTime())
     .slice(0, limit)
     .map((x) => x.p);
+}
+
+/** Ancienne adresse d'une fiche publiée → adresse actuelle (redirection permanente). */
+export async function productSlugRedirect(db: Db, slug: string) {
+  const r = await db.one<{ slug: string }>(
+    `select p.slug from product_slug_history h join products p on p.id = h.product_id
+      where h.slug = $1 and p.status = 'published' and not p.disabled and p.deleted_at is null`,
+    [slug],
+  );
+  return r?.slug ?? null;
 }
 
 // ——— Administration ———
@@ -609,6 +643,14 @@ export async function codeClashes(db: Db, codes: { skus: string[]; barcodes: str
   return { skus: s, barcodes: b };
 }
 import { publicationIssues } from "@/lib/publication";
+import {
+  brandIndex,
+  brandKey,
+  isNotABrand,
+  normalizeProductName,
+  showcaseIssues,
+  similarity,
+} from "@/lib/catalog-rules";
 
 export async function saveProduct(
   db: Db,
@@ -623,6 +665,33 @@ export async function saveProduct(
     fail("validation", "Le nom du produit est obligatoire.", {
       name: "Obligatoire.",
     });
+  // Texte propre : espaces, unités (Go, W…), casse et « Galaxy » ; la marque est nettoyée des espaces.
+  input = { ...input, name: normalizeProductName(input.name), brand: input.brand.trim().replace(/\s+/g, " ") };
+  if (input.brand) {
+    const cat = input.categoryId
+      ? await db.one<{ name: string }>("select name from categories where id = $1", [input.categoryId])
+      : null;
+    if (isNotABrand(input.brand, cat ? [cat.name] : [])) {
+      fail(
+        "validation",
+        `« ${input.brand} » est un type de produit, pas une marque. Laissez la marque vide si elle est inconnue.`,
+        { brand: "Pas une marque." },
+      );
+    }
+  }
+  if (input.featured && input.status === "published") {
+    const issues = showcaseIssues({
+      name: input.name,
+      description: input.description,
+      imageCount: input.images.filter((i) => (i.kind ?? "image") !== "video").length,
+      minPrice: input.variants.length ? Math.min(...input.variants.map((v) => v.price)) : 0,
+    });
+    if (issues.length) {
+      fail("validation", `Une fiche incomplète ne peut pas être mise en vedette : ${issues.join(", ")}.`, {
+        featured: "Fiche incomplète.",
+      });
+    }
+  }
   if (input.status === "published" || (input.status === "draft" && input.publishAt)) {
     const issues = publicationIssues(input);
     if (issues.length) {
@@ -692,6 +761,15 @@ export async function saveProduct(
     const clash = await tx.one("select 1 from products where slug = $1 and id <> $2", [slug, id]);
     if (clash) slug = `${slug}-${id.slice(0, 4)}`;
 
+    if (existing && existing.slug !== slug) {
+      // L'ancienne adresse reste valable : elle redirige vers la nouvelle.
+      await tx.query(
+        `insert into product_slug_history (slug, product_id) values ($1, $2)
+           on conflict (slug) do update set product_id = excluded.product_id`,
+        [existing.slug, id],
+      );
+      await tx.query("delete from product_slug_history where slug = $1 and product_id = $2", [slug, id]);
+    }
     const publishedAt =
       input.status === "published" ? (existing?.published_at ?? new Date()) : (existing?.published_at ?? null);
     if (existing) {

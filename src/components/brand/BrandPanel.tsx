@@ -3,9 +3,10 @@ import { Ribbon } from "./Ribbon";
 
 /**
  * Panneau graphique aux couleurs de GPS, affiché tant que la photo réelle
- * n'est pas fournie (aucune fausse photo de la boutique).
+ * n'est pas fournie (aucune fausse photo de la boutique). La légende, si elle existe,
+ * dit où se trouve la boutique : jamais « photo à venir ».
  */
-export function BrandPanel({ caption, className = "" }: { caption: string; className?: string }) {
+export function BrandPanel({ caption, className = "" }: { caption?: string; className?: string }) {
   return (
     <div
       className={`relative flex flex-col items-center justify-center overflow-hidden rounded-[6px] bg-gps-blue p-6 text-center ${className}`}
@@ -21,7 +22,7 @@ export function BrandPanel({ caption, className = "" }: { caption: string; class
       <p className="relative mt-5 font-display text-3xl font-bold text-white uppercase md:text-4xl">
         Le service qui rassure
       </p>
-      <p className="relative mt-2 text-[13px] text-white/75">{caption}</p>
+      {caption ? <p className="relative mt-2 text-[13px] text-white/75">{caption}</p> : null}
     </div>
   );
 }

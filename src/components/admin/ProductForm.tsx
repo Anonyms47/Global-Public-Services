@@ -325,6 +325,19 @@ function ProductForm({
   }, []);
 
   const set = (patch: Partial<ProductState>) => setState((s) => ({ ...s, ...patch }));
+  // Changer de catégorie ne garde jamais en silence la marque ni les caractéristiques reportées d'une série d'une autre catégorie.
+  const setCategory = (categoryId: string | null) =>
+    setState((s) => {
+      const carried = readJson<Serie>(SERIE_KEY)?.values;
+      const leaving = !!carried && !!s.categoryId && categoryId !== s.categoryId;
+      const sameBrand = !!carried && !!s.brand && s.brand === carried.brand;
+      return {
+        ...s,
+        categoryId,
+        brand: leaving && sameBrand && carried.categoryId !== categoryId ? "" : s.brand,
+        specs: leaving && carried.categoryId !== categoryId && s.specs === carried.specs ? [] : s.specs,
+      };
+    });
   const active = state.variants.filter((v) => !v.off);
   const single = state.axes.length === 0;
   const v0 = state.variants[0];
@@ -856,7 +869,7 @@ function ProductForm({
                 id="p-cat"
                 className="field"
                 value={state.categoryId ?? ""}
-                onChange={(e) => set({ categoryId: e.target.value || null })}
+                onChange={(e) => setCategory(e.target.value || null)}
               >
                 <option value="">Choisir…</option>
                 {visibleCategories.map((c) => (
@@ -879,7 +892,7 @@ function ProductForm({
                     const hits = categories.filter((c) =>
                       c.name.toLowerCase().includes(e.target.value.trim().toLowerCase()),
                     );
-                    if (e.target.value.trim() && hits.length === 1) set({ categoryId: hits[0].id });
+                    if (e.target.value.trim() && hits.length === 1) setCategory(hits[0].id);
                   }}
                 />
               ) : null}
@@ -894,7 +907,7 @@ function ProductForm({
                         key={c.id}
                         type="button"
                         className={`min-h-9 rounded-full border px-3 font-semibold ${state.categoryId === c.id ? "border-gps-blue bg-gps-blue text-white" : "border-line bg-card"}`}
-                        onClick={() => set({ categoryId: c.id })}
+                        onClick={() => setCategory(c.id)}
                       >
                         {c.name}
                       </button>
@@ -937,7 +950,7 @@ function ProductForm({
                         onSuccess: (r) => {
                           const id = (r as { id: string }).id;
                           setCategories((list) => [...list, { id, name: newCat.trim() }]);
-                          set({ categoryId: id });
+                          setCategory(id);
                           setNewCat(null);
                         },
                       })

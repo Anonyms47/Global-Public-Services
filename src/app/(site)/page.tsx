@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/icons";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
 import { whatsappLink } from "@/lib/whatsapp";
+import { showcaseReady } from "@/lib/catalog-rules";
 
 function SectionHead({
   index,
@@ -68,10 +69,21 @@ export default async function HomePage() {
   ]);
   const c = settings.company;
 
+  // Vitrine : jamais une fiche incomplète (sans photo, sans description, nom vague ou prix douteux).
+  const ready = (p: (typeof products)[number]) =>
+    showcaseReady({
+      name: p.name,
+      description: p.description,
+      imageCount: p.images.length,
+      minPrice: p.minPrice,
+    });
   const hero =
-    products.find((p) => p.id === settings.storefront.heroProductId) ?? products.find((p) => p.featured) ?? products[0];
+    products.find((p) => p.id === settings.storefront.heroProductId && ready(p)) ??
+    products.find((p) => p.featured && ready(p)) ??
+    products.find(ready) ??
+    products[0];
   const selection = products
-    .filter((p) => p.featured && p.id !== hero?.id)
+    .filter((p) => p.featured && ready(p) && p.id !== hero?.id)
     .sort((a, b) => a.featuredPosition - b.featuredPosition)
     .slice(0, 5);
   const focus = products.find((p) => p.id === settings.storefront.focusProductId) ?? selection[selection.length - 1];
@@ -450,7 +462,10 @@ export default async function HomePage() {
                 className="aspect-[7/5] w-full rounded-[6px] object-cover"
               />
             ) : (
-              <BrandPanel caption="Photo de la boutique à venir" className="aspect-[16/9] w-full lg:aspect-[7/5]" />
+              <BrandPanel
+                caption={c.city ? `GPS · ${c.city}` : undefined}
+                className="aspect-[16/9] w-full lg:aspect-[7/5]"
+              />
             )}
           </div>
           <div className="lg:col-span-5">

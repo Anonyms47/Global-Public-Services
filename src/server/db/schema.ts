@@ -420,6 +420,14 @@ create table if not exists data_backups (
   created_at timestamptz not null default now()
 );
 
+-- Anciennes adresses d'une fiche (nom ou adresse modifiés) : redirection permanente vers l'adresse actuelle.
+create table if not exists product_slug_history (
+  slug text primary key,
+  product_id text not null references products (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create index if not exists product_slug_history_product on product_slug_history (product_id);
+
 -- Supabase expose le schéma public via son API : on y ferme l'accès en activant
 -- la sécurité au niveau des lignes sans aucune règle. L'application, propriétaire
 -- des tables, n'est pas concernée.
@@ -444,6 +452,7 @@ alter table queue_items enable row level security;
 alter table audit_log enable row level security;
 alter table order_requests enable row level security;
 alter table product_versions enable row level security;
+alter table product_slug_history enable row level security;
 alter table login_attempts enable row level security;
 alter table data_backups enable row level security;
 alter table stores enable row level security;

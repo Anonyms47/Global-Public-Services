@@ -36,19 +36,19 @@ test.describe("Boutique et commande WhatsApp", () => {
   });
 
   test("commande directe : prix par option, conseil adapté, coordonnées retrouvées", async ({ page }) => {
-    await page.goto("/produits/volta-chargeur-25w");
+    await page.goto("/produits/volta-chargeur-25-w");
     await expect(page.getByText("Vérifiez le port de votre appareil")).toBeVisible();
     // Le contenu change le prix : il est affiché sur chaque option.
     await page.getByRole("button", { name: /^Contenu Chargeur seul, 6\s500\sFCFA/ }).click();
     await page.getByRole("button", { name: "Commander", exact: true }).click();
     await expect(page).toHaveURL(/\/panier#commande$/);
-    await expect(page.getByRole("link", { name: "Volta Chargeur 25W" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Volta Chargeur 25 W" })).toBeVisible();
 
     await page.getByLabel("Livraison").check();
     await page.getByLabel("Adresse ou point de repère").fill("Quartier test");
     await page.getByLabel("Votre nom").fill("Cliente Fidèle");
     await page.getByRole("button", { name: "Préparer mon récapitulatif" }).click();
-    expect(await page.locator("#recap-message").inputValue()).toContain("Volta Chargeur 25W — Contenu : Chargeur seul");
+    expect(await page.locator("#recap-message").inputValue()).toContain("Volta Chargeur 25 W — Contenu : Chargeur seul");
 
     // Commande suivante, nouvelle visite : les coordonnées sont retrouvées sur cet appareil.
     await page.evaluate(() => sessionStorage.clear());
