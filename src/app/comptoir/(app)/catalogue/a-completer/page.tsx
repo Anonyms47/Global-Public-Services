@@ -5,6 +5,8 @@ import { requirePage } from "@/server/admin";
 import { listToComplete, toCompleteFilters, type ToCompleteFilter } from "@/server/domain/catalog-entry";
 import { can } from "@/lib/permissions";
 import { Badge, Forbidden, PageTitle } from "@/components/admin/ui";
+import { CatalogAlerts } from "@/components/admin/CatalogAlerts";
+import { catalogAlerts } from "@/server/domain/catalog-checks";
 import { PublishReady } from "@/components/admin/PublishReady";
 import { QuickPhoto } from "@/components/admin/QuickPhoto";
 import { IconArrowLeft, IconImage } from "@/components/ui/icons";
@@ -31,6 +33,7 @@ export default async function ToCompletePage({ searchParams }: PageProps<"/compt
   const filters = toCompleteFilters.filter(([k]) => canCosts || k !== "sans-cout");
   const filtre = filters.some(([k]) => k === raw) ? (raw as ToCompleteFilter) : null;
   const { rows, total, complete } = await listToComplete(db, { canCosts });
+  const alerts = await catalogAlerts(db);
   const shown = filtre ? rows.filter((r) => r.flags.includes(filtre)) : rows.filter((r) => !r.flags.includes("pret"));
   const labels = Object.fromEntries(toCompleteFilters);
   const pct = total ? Math.round((complete / total) * 100) : 0;
@@ -47,6 +50,8 @@ export default async function ToCompletePage({ searchParams }: PageProps<"/compt
         Les brouillons, un par un : seules les informations manquantes sont demandées. Rien n&apos;est publié
         automatiquement.
       </PageTitle>
+
+      <CatalogAlerts alerts={alerts} />
 
       <div className="kpi-card mb-5 max-w-xl">
         <span className="text-[12.5px] font-bold tracking-wide text-ink-mute uppercase">Avancement</span>

@@ -275,7 +275,7 @@ const products: DemoProduct[] = [
     stock: { "SON-ST2-NO": 5, "SON-ST2-CR": 2 },
   },
   {
-    name: "Volta Chargeur 25W",
+    name: "Volta Chargeur 25 W",
     brand: "Volta",
     category: "chargeurs",
     ageDays: 45,
@@ -287,7 +287,7 @@ const products: DemoProduct[] = [
       { label: "Port", value: "USB-C" },
     ],
     axes: ["Contenu"],
-    images: [photo("1583863788434-e58a36330cf0", "Chargeur Volta 25W (photo d'exemple)")],
+    images: [photo("1583863788434-e58a36330cf0", "Chargeur Volta 25 W (photo d'exemple)")],
     variants: [
       {
         sku: "VOL-25-CAB",

@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { siteContext, siteUrl } from "@/server/context";
-import { publishedProductBySlug, publishedProducts, relatedProducts } from "@/server/domain/catalog";
+import {
+  productSlugRedirect,
+  publishedProductBySlug,
+  publishedProducts,
+  relatedProducts,
+} from "@/server/domain/catalog";
 import { ProductView, BackToResults } from "@/components/shop/ProductView";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { ProductDescription } from "@/components/shop/ProductDescription";
 import { IconArrowRight, IconChevronRight, IconStore, IconTruck, IconInfo, IconCheck } from "@/components/ui/icons";
 import { TO_CONFIRM } from "@/lib/whatsapp";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
@@ -37,12 +43,19 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   const { db, settings, indexable } = await siteContext();
   const { slug } = await params;
   const product = await publishedProductBySlug(db, slug);
-  if (!product) notFound();
+  if (!product) {
+    // Adresse ancienne d'une fiche renommée : redirection permanente vers l'adresse actuelle.
+    const moved = await productSlugRedirect(db, slug);
+    if (moved) permanentRedirect(`/produits/${moved}`);
+    notFound();
+  }
   const back = safeBack((await searchParams).depuis);
   const related = relatedProducts(await publishedProducts(db), product);
   const r = settings.reception;
   const pol = settings.policies;
   const toConfirm = TO_CONFIRM.charAt(0).toLowerCase() + TO_CONFIRM.slice(1);
+  const hasDescription = product.description.trim().length > 0;
+  const hasDetail = hasDescription || product.specs.length > 0;
 
   const jsonLd = indexable
     ? {
@@ -107,39 +120,43 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
         />
 
         <div className="mt-14 grid gap-5 md:mt-20 lg:grid-cols-12 lg:gap-6">
-          <section className="pdp-card lg:col-span-7" aria-labelledby="titre-description" data-reveal>
-            <p className="eyebrow text-gps-red-ink">En détail</p>
-            <h2 id="titre-description" className="mt-1 font-display text-4xl font-bold uppercase">
-              Description
-            </h2>
-            <p className="mt-4 max-w-[65ch] text-[17px] leading-relaxed whitespace-pre-line text-ink-soft">
-              {product.description}
-            </p>
-            {product.specs.length ? (
-              <>
-                <h3 className="mt-8 font-display text-2xl font-bold uppercase">Caractéristiques</h3>
-                <dl className="mt-3 overflow-hidden rounded-[16px] border border-line">
-                  {product.specs.map((s, i) => (
-                    <div
-                      key={s.label}
-                      className={`grid grid-cols-[minmax(120px,40%)_1fr] gap-4 px-4 py-3 text-[15px] ${i % 2 ? "bg-card" : "bg-paper"}`}
-                    >
-                      <dt className="text-ink-mute">{s.label}</dt>
-                      <dd className="font-semibold">{s.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </>
-            ) : null}
-            {product.isDemo ? (
-              <p className="mt-6 flex gap-2 rounded-[14px] bg-gps-blue-soft p-3 text-[14px] text-gps-blue">
-                <IconInfo className="shrink-0" size={18} /> Produit d&apos;exemple pour la démonstration : nom, marque,
-                prix, stock et visuels sont fictifs.
-              </p>
-            ) : null}
-          </section>
+          {hasDetail ? (
+            <section className="pdp-card lg:col-span-7" aria-labelledby="titre-description" data-reveal>
+              <p className="eyebrow text-gps-red-ink">En détail</p>
+              <h2 id="titre-description" className="mt-1 font-display text-4xl font-bold uppercase">
+                {hasDescription ? "Description" : "Caractéristiques"}
+              </h2>
+              {hasDescription ? (
+                <ProductDescription text={product.description} dropStockClaims={!product.stockTracked} />
+              ) : null}
+              {product.specs.length ? (
+                <>
+                  {hasDescription ? (
+                    <h3 className="mt-8 font-display text-2xl font-bold uppercase">Caractéristiques</h3>
+                  ) : null}
+                  <dl className="mt-3 overflow-hidden rounded-[16px] border border-line">
+                    {product.specs.map((s, i) => (
+                      <div
+                        key={s.label}
+                        className={`grid grid-cols-[minmax(120px,40%)_1fr] gap-4 px-4 py-3 text-[15px] ${i % 2 ? "bg-card" : "bg-paper"}`}
+                      >
+                        <dt className="text-ink-mute">{s.label}</dt>
+                        <dd className="font-semibold">{s.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </>
+              ) : null}
+              {product.isDemo ? (
+                <p className="mt-6 flex gap-2 rounded-[14px] bg-gps-blue-soft p-3 text-[14px] text-gps-blue">
+                  <IconInfo className="shrink-0" size={18} /> Produit d&apos;exemple pour la démonstration : nom,
+                  marque, prix, stock et visuels sont fictifs.
+                </p>
+              ) : null}
+            </section>
+          ) : null}
           <aside
-            className="pdp-card text-white lg:col-span-5"
+            className={`pdp-card text-white ${hasDetail ? "lg:col-span-5" : "lg:col-span-12"}`}
             style={{ background: "var(--color-gps-blue-night)", borderColor: "transparent" }}
             aria-labelledby="titre-reception"
             data-reveal

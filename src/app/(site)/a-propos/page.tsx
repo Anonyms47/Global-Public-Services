@@ -233,7 +233,7 @@ export default async function AboutPage() {
                 className="object-cover"
               />
             ) : (
-              <BrandPanel caption="Photo de la boutique à venir" className="h-full min-h-[260px] w-full" />
+              <BrandPanel caption={c.city ? `GPS · ${c.city}` : undefined} className="h-full min-h-[260px] w-full" />
             )}
           </div>
           <div className="p-6 md:p-10">

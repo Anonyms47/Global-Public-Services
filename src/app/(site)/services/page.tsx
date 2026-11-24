@@ -176,7 +176,7 @@ export default async function ServicesPage() {
                 className="object-cover"
               />
             ) : (
-              <BrandPanel caption="Photo du point de service à venir" className="h-full min-h-[240px] w-full" />
+              <BrandPanel className="h-full min-h-[240px] w-full" />
             )}
           </div>
           <div className="p-6 md:p-10">

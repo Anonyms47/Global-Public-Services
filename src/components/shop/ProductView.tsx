@@ -331,17 +331,17 @@ export function ProductView({
       {/* Achat */}
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-28">
-          <p className="flex flex-wrap items-center gap-x-2 text-[12.5px] font-bold tracking-[0.08em] text-ink-mute uppercase">
-            {product.brand}
-            {product.categoryName ? (
-              <>
-                {" · "}
+          {product.brand || product.categoryName ? (
+            <p className="flex flex-wrap items-center gap-x-2 text-[12.5px] font-bold tracking-[0.08em] text-ink-mute uppercase">
+              {product.brand}
+              {product.brand && product.categoryName ? <span aria-hidden="true">·</span> : null}
+              {product.categoryName ? (
                 <Link className="underline-offset-2 hover:underline" href={`/categories/${product.categorySlug}`}>
                   {product.categoryName}
                 </Link>
-              </>
-            ) : null}
-          </p>
+              ) : null}
+            </p>
+          ) : null}
           <h1 className="hero-line mt-2 font-display text-[44px] leading-[0.92] font-extrabold uppercase md:text-[60px]">
             {product.name}
           </h1>
