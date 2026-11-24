@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "@/server/db/client";
 import { createOrder, getOrder, recordPayment } from "@/server/domain/orders";
 import { declarePayment, ensurePayToken, payInfo, payViewByToken } from "@/server/domain/payment-link";
-import { externalPayments } from "@/lib/payment-links";
+import { externalPayments, externalUrl } from "@/lib/payment-links";
 import { demoDb, userByRole, variantBySku } from "./helpers";
 
 let db: Db;
@@ -17,6 +17,11 @@ describe("Paiement à distance : déclaré puis vérifié", () => {
   it("les liens Wave et Orange Money sont exactement ceux de GPS, sans montant ajouté", () => {
     expect(externalPayments.wave.url).toBe("https://pay.wave.com/m/M_sn_FYzmkydjF1K-/c/sn/");
     expect(externalPayments.orange_money.url).toBe("https://sugu.orange-sonatel.com/mp/dmeNogywEehFTqIm7Com");
+    // Wave : le montant de la commande est ajouté au lien ; Orange Money reste inchangé.
+    expect(externalUrl("wave", 65000)).toBe("https://pay.wave.com/m/M_sn_FYzmkydjF1K-/c/sn/?amount=65000");
+    expect(externalUrl("wave", 0)).toBe(externalPayments.wave.url);
+    expect(externalUrl("wave", 12.5)).toBe(externalPayments.wave.url);
+    expect(externalUrl("orange_money", 65000)).toBe(externalPayments.orange_money.url);
   });
 
   it("une déclaration du client ne crée jamais de paiement ; seul le Comptoir encaisse", async () => {

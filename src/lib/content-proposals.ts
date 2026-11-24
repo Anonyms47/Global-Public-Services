@@ -19,7 +19,7 @@ export const proposals = {
   returns:
     "Un article ne vous convient pas ? Parlez-en à GPS rapidement, reçu à l'appui. L'article doit être complet et en bon état. Après vérification au comptoir, GPS vous propose un échange ou un remboursement selon la situation.",
   payment:
-    "Aucun paiement n'est demandé sur le site au moment de la commande. Une fois votre commande et sa disponibilité confirmées par GPS, vous réglez au comptoir, à la livraison, ou par Wave ou Orange Money depuis leur application (paiement externe, non intégré au site). Votre commande n'est marquée payée qu'après vérification de la réception de l'argent.",
+    "Aucun paiement n'est demandé sur le site au moment de la commande. Une fois votre commande et sa disponibilité confirmées par GPS, vous réglez au comptoir, à la livraison, ou par Wave ou Orange Money depuis leur application (paiement externe, non intégré au site). Envoyez à GPS la capture d'écran de votre paiement : votre commande n'est marquée payée qu'après vérification de la réception de l'argent.",
   receiptFooter: "Merci pour votre confiance. Conservez ce reçu : il vous sera demandé pour toute réclamation.",
   serviceSummary:
     "Envoyez ou recevez de l'argent au comptoir GPS, accompagné par un conseiller. Munissez-vous d'une pièce d'identité en cours de validité.",

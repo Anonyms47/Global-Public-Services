@@ -10,6 +10,15 @@ export const externalPayments = {
   },
 } as const;
 
+/**
+ * Lien Wave avec le montant de la commande ajouté (demande de GPS) : le client n'a rien à saisir.
+ * Le montant est un entier en FCFA ; sans montant valable, le lien de base est renvoyé.
+ */
+export function externalUrl(method: ExternalMethod, amount?: number) {
+  const base = externalPayments[method].url;
+  return method === "wave" && Number.isInteger(amount) && (amount as number) > 0 ? `${base}?amount=${amount}` : base;
+}
+
 export type ExternalMethod = keyof typeof externalPayments;
 export const isExternalMethod = (m: unknown): m is ExternalMethod =>
   typeof m === "string" && Object.hasOwn(externalPayments, m);

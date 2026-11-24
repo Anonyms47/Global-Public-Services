@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { externalPayments, type ExternalMethod } from "@/lib/payment-links";
+import { externalPayments, externalUrl, type ExternalMethod } from "@/lib/payment-links";
 import { fcfa } from "@/lib/format";
 import type { PayView } from "@/server/domain/payment-link";
 import { declarePaymentAction } from "@/app/(site)/paiement/[token]/actions";
@@ -58,15 +58,15 @@ export function PayPanel({ token, view, whatsapp }: { token: string; view: PayVi
 
           <h2 className="mt-6 text-lg font-bold">1. Ouvrez votre application</h2>
           <p className="text-[14px] text-ink-soft">
-            Saisissez le montant ci-dessus. Avant de valider, vérifiez dans l&apos;application que le bénéficiaire est
-            bien <strong>GPS — Global Public Services</strong>.
+            Avec Wave, le montant est déjà rempli. Avec Orange Money, saisissez le montant ci-dessus. Avant de valider,
+            vérifiez dans l&apos;application que le bénéficiaire est bien <strong>GPS — Global Public Services</strong>.
           </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {(Object.entries(externalPayments) as [ExternalMethod, (typeof externalPayments)[ExternalMethod]][]).map(
               ([key, m]) => (
                 <a
                   key={key}
-                  href={m.url}
+                  href={externalUrl(key, view.balance)}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMethod(key)}
@@ -83,10 +83,31 @@ export function PayPanel({ token, view, whatsapp }: { token: string; view: PayVi
           </p>
 
           <h2 className="mt-6 text-lg font-bold">2. Une fois le paiement fait</h2>
+          <p className="mt-1 text-[14px] text-ink-soft">
+            Faites une <strong>capture d&apos;écran</strong> de la confirmation de paiement et envoyez-la à GPS sur
+            WhatsApp : c&apos;est ce qui permet de confirmer votre commande.
+          </p>
           {declared ? (
-            <p className="mt-2 rounded-lg bg-paper p-3 font-bold" role="status" data-testid="pay-declared">
-              {state?.message ?? "Paiement déclaré. GPS vérifie la réception et vous confirme sur WhatsApp."}
-            </p>
+            <div className="mt-2 rounded-lg bg-paper p-3" role="status" data-testid="pay-declared">
+              <p className="font-bold">
+                {state?.message ?? "Paiement déclaré. GPS vérifie la réception et vous confirme sur WhatsApp."}
+              </p>
+              <p className="mt-1">
+                <strong>Dernière étape :</strong> envoyez à GPS une capture d&apos;écran de votre paiement sur WhatsApp
+                pour confirmation de votre commande.
+              </p>
+              {whatsapp ? (
+                <a
+                  className="btn btn-primary mt-2 min-h-11 justify-center"
+                  data-testid="pay-screenshot"
+                  href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Bonjour GPS, voici la capture de mon paiement pour la commande ${view.reference}.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Envoyer la capture sur WhatsApp
+                </a>
+              ) : null}
+            </div>
           ) : (
             <>
               <label className="mt-2 block text-[14px] font-bold" htmlFor="pay-method">
@@ -120,8 +141,8 @@ export function PayPanel({ token, view, whatsapp }: { token: string; view: PayVi
                 </p>
               ) : null}
               <p className="mt-2 text-[13px] text-ink-mute">
-                Ce bouton prévient GPS. Votre commande n&apos;est marquée « payée » qu&apos;après vérification de la
-                réception de l&apos;argent.
+                Ce bouton prévient GPS. Votre commande n&apos;est marquée « payée » qu&apos;après réception de votre
+                capture d&apos;écran et vérification du paiement.
               </p>
             </>
           )}

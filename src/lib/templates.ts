@@ -134,7 +134,7 @@ export const defaultTemplates: Record<TemplateKey, string> = {
   outForDelivery:
     "Bonjour {prenom}, votre commande {reference} est en route {adresse}. Le livreur vous appelle à l'arrivée.\n{reste}",
   balance:
-    "Bonjour {prenom}, il reste {solde} à régler pour votre commande {reference}.\n{deja_regle}\nVous pouvez régler au comptoir, à la livraison, ou par Wave / Orange Money (GPS vous envoie le lien). Merci — GPS.",
+    "Bonjour {prenom}, il reste {solde} à régler pour votre commande {reference}.\n{deja_regle}\nVous pouvez régler au comptoir, à la livraison, ou par Wave / Orange Money (GPS vous envoie le lien) ; dans ce cas, envoyez-nous la capture du paiement. Merci — GPS.",
   thanks:
     "Bonjour {prenom}, merci pour votre achat chez GPS (commande {reference}). Gardez bien votre reçu : il vous sera demandé pour toute question ou garantie. À bientôt !",
   cancelled:
