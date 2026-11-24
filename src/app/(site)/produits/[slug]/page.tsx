@@ -209,7 +209,8 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 <div>
                   <p className="font-bold">Paiement</p>
                   <p className="text-[15px] text-white/70">
-                    Paiement après confirmation de GPS. {pol.payment || `Modalités : ${toConfirm}.`}
+                    Paiement par Wave, Orange Money, au comptoir ou à la livraison.{" "}
+                    {pol.payment || `Modalités : ${toConfirm}.`}
                   </p>
                 </div>
               </li>

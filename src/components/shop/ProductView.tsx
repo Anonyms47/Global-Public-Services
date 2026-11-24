@@ -534,7 +534,7 @@ export function ProductView({
           <ul className="mt-6 grid grid-cols-3 gap-2 text-center text-[12.5px] leading-tight font-semibold text-ink-soft">
             <li className="pdp-trust">
               <IconCheck size={18} className="text-gps-blue" />
-              Paiement après confirmation
+              Paiement Wave, Orange Money ou sur place
             </li>
             <li className="pdp-trust">
               <IconWhatsApp size={18} className="text-wa-ink" />

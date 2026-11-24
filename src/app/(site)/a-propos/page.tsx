@@ -58,7 +58,7 @@ export default async function AboutPage() {
     {
       Icon: IconCheck,
       title: "Vous recevez",
-      text: "Retrait au comptoir ou livraison. Le paiement n'est demandé qu'après confirmation de votre commande.",
+      text: "Retrait au comptoir ou livraison. Paiement par Wave ou Orange Money, au comptoir ou à la livraison.",
     },
   ];
 
@@ -92,7 +92,7 @@ export default async function AboutPage() {
             transfert d&apos;argent.
           </p>
           <ul className="hero-fade mt-8 flex flex-wrap gap-2" style={{ animationDelay: "350ms" }}>
-            {["Paiement après confirmation", "Confirmé sur WhatsApp", "Retrait ou livraison"].map((t) => (
+            {["Wave, Orange Money ou sur place", "Confirmé sur WhatsApp", "Retrait ou livraison"].map((t) => (
               <li
                 key={t}
                 className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-[14px] font-semibold backdrop-blur-sm"

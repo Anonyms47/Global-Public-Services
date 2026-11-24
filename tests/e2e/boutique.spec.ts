@@ -52,6 +52,25 @@ test.describe("Boutique et commande WhatsApp", () => {
       "Volta Chargeur 25 W — Contenu : Chargeur seul",
     );
 
+    // Paiement depuis le panier : montant des produits (livraison à confirmer), lien Wave avec montant,
+    // puis consigne d'envoyer la capture d'écran avec le message WhatsApp.
+    await page.context().route(/pay\.wave\.com|sugu\.orange-sonatel\.com/, (r) => r.abort());
+    await expect(page.getByTestId("payer-maintenant")).toBeVisible();
+    await expect(page.getByTestId("montant-a-payer")).toContainText("6");
+    await expect(page.getByTestId("payer-wave")).toHaveAttribute(
+      "href",
+      /^https:\/\/pay\.wave\.com\/m\/M_sn_FYzmkydjF1K-\/c\/sn\/\?amount=\d+$/,
+    );
+    await expect(page.getByTestId("payer-orange_money")).toHaveAttribute(
+      "href",
+      "https://sugu.orange-sonatel.com/mp/dmeNogywEehFTqIm7Com",
+    );
+    await expect(page.getByTestId("apres-paiement")).toHaveCount(0);
+    await page.getByTestId("payer-wave").click({ noWaitAfter: true });
+    await expect(page.getByTestId("apres-paiement")).toContainText("capture d'écran");
+    expect(await page.locator("#recap-message").inputValue()).toContain("payés par Wave");
+    expect(await page.locator("#recap-message").inputValue()).toContain("capture d'écran du paiement");
+
     // Commande suivante, nouvelle visite : les coordonnées sont retrouvées sur cet appareil.
     await page.evaluate(() => sessionStorage.clear());
     await page.goto("/panier");

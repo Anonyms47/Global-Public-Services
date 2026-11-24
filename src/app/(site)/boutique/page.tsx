@@ -45,7 +45,7 @@ export default async function BoutiquePage({ searchParams }: PageProps<"/boutiqu
             style={{ animationDelay: "200ms" }}
           >
             <strong className="text-ink tabular">{total}</strong> article{total > 1 ? "s" : ""} à découvrir. Vous
-            commandez ici, GPS confirme avec vous sur WhatsApp : le paiement se fait après confirmation.
+            commandez ici, GPS confirme avec vous sur WhatsApp : paiement par Wave, Orange Money ou sur place.
           </p>
         )}
       </div>
