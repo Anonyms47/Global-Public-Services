@@ -385,6 +385,13 @@ test.describe("Le Comptoir", () => {
     expect((await request.get(`/media/${id}`)).status()).toBe(404);
     const partial = await page.request.get(`/media/${id}`, { headers: { Range: "bytes=0-7" } });
     expect(partial.status()).toBe(206);
+    // Version réduite (?w=) : WebP, et la même protection : introuvable pour le public.
+    const reduced = await page.request.get(`/media/${id}?w=64`);
+    expect(reduced.status()).toBe(200);
+    expect(reduced.headers()["content-type"]).toBe("image/webp");
+    const head = (await reduced.body()).subarray(0, 12).toString("latin1");
+    expect(head.startsWith("RIFF") && head.endsWith("WEBP")).toBe(true);
+    expect((await request.get(`/media/${id}?w=64`)).status()).toBe(404);
 
     // Fiche produit : la 2e vignette glissée sur la 1re devient la photo principale ; les boutons restent là.
     await page.goto("/comptoir/catalogue?q=Sonna%20Studio");
