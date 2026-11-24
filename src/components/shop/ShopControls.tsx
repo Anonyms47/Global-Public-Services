@@ -234,12 +234,15 @@ export function ShopControls({
       </div>
 
       <div className="shop-toolbar sticky top-16 z-30 -mx-4 mt-3 flex flex-nowrap items-center justify-between gap-2 px-4 py-2.5 md:top-[84px] md:-mx-8 md:px-8">
-        <p className="shrink-0 text-[14px] font-semibold whitespace-nowrap md:text-[15px]" aria-live="polite">
+        <p
+          className="shrink-0 text-[13px] font-semibold whitespace-nowrap min-[400px]:text-[14px] md:text-[15px]"
+          aria-live="polite"
+        >
           <span className="tabular">{count}</span> article{count > 1 ? "s" : ""}
           {pending ? <span className="ml-2 text-ink-mute">· mise à jour…</span> : null}
         </p>
-        <div className="flex items-center gap-2">
-          <button type="button" className="btn btn-ink btn-sm lg:hidden" onClick={() => setOpen(true)}>
+        <div className="flex min-w-0 items-center gap-2">
+          <button type="button" className="btn btn-ink btn-sm shrink-0 lg:hidden" onClick={() => setOpen(true)}>
             <IconFilter size={17} /> Filtres
             {active.length ? <span className="filter-count tabular">{active.length}</span> : null}
           </button>
@@ -248,7 +251,7 @@ export function ShopControls({
           </label>
           <select
             id="f-tri"
-            className="field h-10 min-h-10 w-auto rounded-full py-0 pr-10 pl-4 text-[14px] md:text-[15px]"
+            className="field h-10 min-h-10 w-auto max-w-full min-w-0 rounded-full py-0 pr-9 pl-3.5 text-[14px] md:pr-10 md:pl-4 md:text-[15px]"
             value={query.tri ?? "nouveautes"}
             onChange={(e) => set({ tri: e.target.value as ShopQuery["tri"] })}
           >
