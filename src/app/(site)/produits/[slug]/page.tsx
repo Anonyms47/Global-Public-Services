@@ -209,7 +209,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 <div>
                   <p className="font-bold">Paiement</p>
                   <p className="text-[15px] text-white/70">
-                    Aucun paiement en ligne. {pol.payment || `Modalités : ${toConfirm}.`}
+                    Paiement après confirmation de GPS. {pol.payment || `Modalités : ${toConfirm}.`}
                   </p>
                 </div>
               </li>

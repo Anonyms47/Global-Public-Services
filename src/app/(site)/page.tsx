@@ -128,7 +128,7 @@ export default async function HomePage() {
             </div>
             <ul className="hero-fade mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[14px] font-semibold text-ink-soft">
               {[
-                [IconCheck, "Aucun paiement en ligne"],
+                [IconCheck, "Paiement après confirmation"],
                 [IconWhatsApp, "Confirmé sur WhatsApp"],
                 [IconStore, "Retrait ou livraison"],
               ].map(([Icon, label]) => {

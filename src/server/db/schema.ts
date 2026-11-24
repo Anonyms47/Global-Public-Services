@@ -405,6 +405,11 @@ create table if not exists stores (
 );
 -- Commandes, demandes et ventes rattachées à un point de vente (retrait choisi, vente réalisée).
 alter table orders add column if not exists store_id text references stores (id) on delete set null;
+-- Paiement à distance : lien privé par commande ; une déclaration du client n'est jamais un paiement.
+alter table orders add column if not exists pay_token text;
+alter table orders add column if not exists payment_declared_at timestamptz;
+alter table orders add column if not exists payment_declared_method text;
+create unique index if not exists orders_pay_token on orders (pay_token) where pay_token is not null;
 alter table order_requests add column if not exists store_id text references stores (id) on delete set null;
 -- Point de vente habituel du vendeur (prérempli en vente rapide).
 alter table users add column if not exists default_store_id text references stores (id) on delete set null;

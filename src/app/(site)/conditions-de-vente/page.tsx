@@ -55,7 +55,10 @@ export default async function CgvPage() {
           title: "Paiement",
           body: (
             <p>
-              Aucun paiement n&apos;est effectué sur le site.{" "}
+              Aucun paiement n&apos;est effectué sur le site au moment de la commande. Après confirmation de la commande
+              et de la disponibilité par GPS, le paiement se fait au comptoir, à la livraison, ou par Wave ou Orange
+              Money depuis leur application (paiement externe, non intégré au site) ; la commande n&apos;est payée
+              qu&apos;après vérification de la réception.{" "}
               {p.payment || "Moyens et moment du paiement précisés par GPS à la confirmation de la commande."}
             </p>
           ),
