@@ -123,6 +123,8 @@ export function supabaseStore(opts: {
   bucket: string;
   fetch?: typeof fetch;
   maxBytes?: number;
+  /** Pause entre deux essais de lecture (ms) ; réglable pour les tests. */
+  retryDelayMs?: number;
 }): ObjectStore {
   const base = `${opts.url.replace(/\/$/, "")}/storage/v1`;
   const f = opts.fetch ?? fetch;
@@ -132,6 +134,23 @@ export function supabaseStore(opts: {
     const text = await res.text().catch(() => "");
     // Jamais la clé dans les messages : seulement le code et la réponse du stockage.
     return new Error(`Stockage des médias : ${what} impossible (${res.status}) ${text.slice(0, 200)}`);
+  };
+  const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  /** Lecture avec deux nouveaux essais si le stockage est momentanément indisponible (502/503/504, 429, réseau). */
+  const readWithRetry = async (url: string, init: RequestInit) => {
+    const delay = opts.retryDelayMs ?? 200;
+    let last: Response | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt) await pause(delay * attempt);
+      try {
+        last = await f(url, init);
+      } catch (e) {
+        if (attempt === 2) throw e;
+        continue;
+      }
+      if (![429, 502, 503, 504].includes(last.status)) return last;
+    }
+    return last!;
   };
   let ready: Promise<void> | null = null;
   return {
@@ -145,7 +164,7 @@ export function supabaseStore(opts: {
       if (!res.ok) throw await failed("envoi", res);
     },
     async read(path, range) {
-      const res = await f(`${base}/object/authenticated/${obj(path)}`, {
+      const res = await readWithRetry(`${base}/object/authenticated/${obj(path)}`, {
         headers: { ...auth, ...(range ? { Range: range } : {}) },
       });
       if (res.status === 400 || res.status === 404) return null;

@@ -539,7 +539,7 @@ export function ProductView({
                 : "Option indisponible : choisissez une autre option ou demandez à GPS."
               : missing.length
                 ? `Sélection manquante : ${missing.join(", ").toLowerCase()}.`
-                : "« Commander » vous mène directement à la réception et à l'envoi sur WhatsApp. Rien n'est réservé ni payé en ligne."}
+                : "« Commander » vous mène à la réception, puis à l'envoi sur WhatsApp. Rien n'est réservé ni payé à cette étape."}
           </p>
 
           {added ? (
@@ -571,15 +571,15 @@ export function ProductView({
           <ul className="mt-6 grid grid-cols-3 gap-2 text-center text-[12.5px] leading-tight font-semibold text-ink-soft">
             <li className="pdp-trust">
               <IconCheck size={18} className="text-gps-blue" />
-              Paiement Wave, Orange Money ou sur place
+              <span className="trust-text">Wave ou Orange Money</span>
             </li>
             <li className="pdp-trust">
               <IconWhatsApp size={18} className="text-wa-ink" />
-              Confirmé sur WhatsApp
+              <span className="trust-text">Confirmé sur WhatsApp</span>
             </li>
             <li className="pdp-trust">
               <IconStore size={18} className="text-gps-blue" />
-              Retrait ou livraison
+              <span className="trust-text">Retrait ou livraison</span>
             </li>
           </ul>
 
