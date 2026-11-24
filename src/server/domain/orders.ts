@@ -80,7 +80,8 @@ export interface OrderInput {
 }
 
 interface Actor {
-  id: string;
+  /** null : écriture automatique du système (ex. paiement Wave confirmé par webhook). */
+  id: string | null;
   name: string;
 }
 
@@ -549,6 +550,33 @@ export function nextStep(
   if (o.fulfillment === "ready" || o.fulfillment === "out_for_delivery")
     return { to: "handed_over", label: "Confirmer la remise au client" };
   return null;
+}
+
+/**
+ * Paiement confirmé automatiquement par l'opérateur (webhook signé). Ne dépasse jamais le solde :
+ * renvoie false (rien enregistré) si la commande est annulée, déjà soldée ou si le montant dépasse le solde.
+ */
+export async function recordAutomaticPayment(
+  db: Db,
+  orderId: string,
+  input: { method: PaymentMethod; amount: number; note: string },
+): Promise<boolean> {
+  return db.tx(async (tx) => {
+    const o = await lockOrder(tx, orderId);
+    if (o.status === "cancelled") return false;
+    const full = await getOrder(tx, orderId);
+    if (!full || full.feeUnknown || input.amount > full.balance) return false;
+    await insertPayment(
+      tx,
+      { id: null, name: "Paiement automatique" },
+      orderId,
+      "payment",
+      input.method,
+      input.amount,
+      input.note,
+    );
+    return true;
+  });
 }
 
 async function lockOrder(tx: Db, id: string) {

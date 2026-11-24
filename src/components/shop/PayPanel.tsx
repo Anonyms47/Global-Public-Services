@@ -1,12 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { externalPayments, externalUrl, type ExternalMethod } from "@/lib/payment-links";
 import { fcfa } from "@/lib/format";
 import type { PayView } from "@/server/domain/payment-link";
-import { declarePaymentAction } from "@/app/(site)/paiement/[token]/actions";
+import { declarePaymentAction, startWaveAction } from "@/app/(site)/paiement/[token]/actions";
 
-export function PayPanel({ token, view, whatsapp }: { token: string; view: PayView; whatsapp: string }) {
+export function PayPanel({
+  token,
+  view,
+  whatsapp,
+  waveAuto = false,
+  retour = null,
+}: {
+  token: string;
+  view: PayView;
+  whatsapp: string;
+  waveAuto?: boolean;
+  retour?: "succes" | "echec" | null;
+}) {
+  const router = useRouter();
+  const [waveError, setWaveError] = useState<string | null>(null);
+  const [waveBusy, setWaveBusy] = useState(false);
+  // Retour de Wave : la confirmation arrive par notification sécurisée ; on actualise quelques instants.
+  useEffect(() => {
+    if (retour !== "succes" || view.paid) return;
+    let n = 0;
+    const t = setInterval(() => {
+      router.refresh();
+      if (++n >= 15) clearInterval(t);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [retour, view.paid, router]);
+  async function payWithWave() {
+    if (waveBusy) return;
+    setWaveBusy(true);
+    setWaveError(null);
+    const r = await startWaveAction(token);
+    if (r.ok) window.location.href = r.url;
+    else {
+      setWaveError(r.message);
+      setWaveBusy(false);
+    }
+  }
   const [copied, setCopied] = useState(false);
   const [state, setState] = useState<{ ok: boolean; message: string } | null>(null);
   const [method, setMethod] = useState<ExternalMethod | null>(null);
@@ -38,6 +75,16 @@ export function PayPanel({ token, view, whatsapp }: { token: string; view: PayVi
         Paiement de votre commande
       </h1>
 
+      {retour === "echec" && !view.paid ? (
+        <p className="mt-4 rounded-lg bg-paper p-3 font-bold text-gps-red" role="alert" data-testid="pay-failed">
+          Le paiement n&apos;a pas abouti. Vous pouvez réessayer ci-dessous.
+        </p>
+      ) : null}
+      {retour === "succes" && !view.paid ? (
+        <p className="mt-4 rounded-lg bg-paper p-3 font-bold" role="status" data-testid="pay-confirming">
+          Paiement reçu par Wave : confirmation en cours… cette page se met à jour toute seule.
+        </p>
+      ) : null}
       {view.paid ? (
         <p className="mt-4 rounded-lg bg-paper p-3 font-bold" data-testid="pay-done">
           Cette commande est déjà réglée. Merci !
@@ -63,26 +110,51 @@ export function PayPanel({ token, view, whatsapp }: { token: string; view: PayVi
           </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {(Object.entries(externalPayments) as [ExternalMethod, (typeof externalPayments)[ExternalMethod]][]).map(
-              ([key, m]) => (
-                <a
-                  key={key}
-                  href={externalUrl(key, view.balance)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMethod(key)}
-                  className="btn btn-primary min-h-12 justify-center"
-                  data-testid={`pay-${key}`}
-                >
-                  Payer avec {m.label}
-                </a>
-              ),
+              ([key, m]) =>
+                key === "wave" && waveAuto ? (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={payWithWave}
+                    disabled={waveBusy}
+                    className="btn btn-primary min-h-12 justify-center disabled:opacity-60"
+                    data-testid="pay-wave-auto"
+                  >
+                    {waveBusy ? "Ouverture de Wave…" : "Payer avec Wave"}
+                  </button>
+                ) : (
+                  <a
+                    key={key}
+                    href={externalUrl(key, view.balance)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMethod(key)}
+                    className="btn btn-primary min-h-12 justify-center"
+                    data-testid={`pay-${key}`}
+                  >
+                    Payer avec {m.label}
+                  </a>
+                ),
             )}
           </div>
+          {waveError ? (
+            <p className="mt-2 font-bold text-gps-red" role="alert">
+              {waveError}
+            </p>
+          ) : null}
+          {waveAuto ? (
+            <p className="mt-2 text-[13.5px] text-ink-soft">
+              Wave : le paiement est confirmé automatiquement, aucune capture n&apos;est nécessaire. Orange Money :
+              suivez l&apos;étape 2.
+            </p>
+          ) : null}
           <p className="mt-3 rounded-lg bg-paper p-3 text-[13.5px]" role="note">
             GPS ne vous demandera jamais votre code secret, votre code PIN ni un code reçu par SMS.
           </p>
 
-          <h2 className="mt-6 text-lg font-bold">2. Une fois le paiement fait</h2>
+          <h2 className="mt-6 text-lg font-bold">
+            {waveAuto ? "2. Orange Money : une fois le paiement fait" : "2. Une fois le paiement fait"}
+          </h2>
           <p className="mt-1 text-[14px] text-ink-soft">
             Faites une <strong>capture d&apos;écran</strong> de la confirmation de paiement et envoyez-la à GPS sur
             WhatsApp : c&apos;est ce qui permet de confirmer votre commande.
@@ -120,11 +192,13 @@ export function PayPanel({ token, view, whatsapp }: { token: string; view: PayVi
                 onChange={(e) => setMethod((e.target.value || null) as ExternalMethod | null)}
               >
                 <option value="">Choisir…</option>
-                {Object.entries(externalPayments).map(([key, m]) => (
-                  <option key={key} value={key}>
-                    {m.label}
-                  </option>
-                ))}
+                {Object.entries(externalPayments)
+                  .filter(([key]) => !(waveAuto && key === "wave"))
+                  .map(([key, m]) => (
+                    <option key={key} value={key}>
+                      {m.label}
+                    </option>
+                  ))}
               </select>
               <button
                 type="button"
