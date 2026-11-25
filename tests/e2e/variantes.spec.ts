@@ -86,3 +86,26 @@ test.describe("Fiche produit : galerie, photo de la variante, options", () => {
     await expect(page.getByText("Aucun article ne correspond")).toBeVisible();
   });
 });
+
+test.describe("Filtres propres au rayon", () => {
+  test("modèle compatible : filtre, puce retirable, retour au rayon complet", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/categories/accessoires");
+    const chip = page.getByRole("button", { name: /^Zelto 7 \(2\)/ });
+    await expect(chip).toBeVisible();
+    const total = await page.locator(".product-card").count();
+    await chip.click();
+    await expect(page).toHaveURL(/a=compat%3AZelto\+7|a=compat%3AZelto%207/);
+    await expect(page.locator(".product-card")).toHaveCount(2);
+    await expect(page.getByRole("button", { name: /Modèle compatible : Zelto 7/ })).toBeVisible();
+    await page.getByRole("button", { name: /Modèle compatible : Zelto 7/ }).click();
+    await expect(page.locator(".product-card")).toHaveCount(total);
+  });
+
+  test("aucun critère proposé quand les données sont trop pauvres", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/categories/telephones");
+    await expect(page.getByText("Modèle compatible")).toHaveCount(0);
+    await expect(page.getByText("Puissance", { exact: true })).toHaveCount(0);
+  });
+});

@@ -1,4 +1,5 @@
 import type { ShopQuery, SortKey } from "@/server/domain/catalog";
+import { parseAttr, serializeAttr } from "@/lib/attributes";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -29,6 +30,10 @@ export function parseShopQuery(sp: Params): ShopQuery {
     .map((m) => m.trim())
     .filter(Boolean);
   const tri = first(sp.tri);
+  const attrs = (Array.isArray(sp.a) ? sp.a : sp.a ? [sp.a] : [])
+    .slice(0, 12)
+    .map(parseAttr)
+    .filter((a): a is NonNullable<typeof a> => !!a);
   return {
     q: first(sp.q)?.trim().slice(0, 80) || undefined,
     categorie: first(sp.categorie) || undefined,
@@ -38,6 +43,7 @@ export function parseShopQuery(sp: Params): ShopQuery {
     dispo: first(sp.dispo) === "1" || undefined,
     promo: first(sp.promo) === "1" || undefined,
     etat: first(sp.etat) || undefined,
+    attrs: attrs.length ? attrs : undefined,
     n: num(first(sp.n)),
     tri: (["pertinence", "nouveautes", "prix-asc", "prix-desc"] as SortKey[]).includes(tri as SortKey)
       ? (tri as SortKey)
@@ -55,6 +61,7 @@ export function shopQueryToParams(q: ShopQuery, opts: { omitCategory?: boolean }
   if (q.dispo) p.set("dispo", "1");
   if (q.promo) p.set("promo", "1");
   if (q.etat) p.set("etat", q.etat);
+  for (const a of q.attrs ?? []) p.append("a", serializeAttr(a));
   if (q.tri && q.tri !== defaultSort(q.q)) p.set("tri", q.tri);
   return p;
 }

@@ -7,6 +7,7 @@ import { fcfa } from "@/lib/format";
 import { Sheet } from "../ui/Sheet";
 import { IconClose, IconFilter } from "../ui/icons";
 import { defaultSort, shopQueryToParams } from "./query";
+import { attrTitle, type AttrFacet } from "@/lib/attributes";
 
 const sortLabels = {
   pertinence: "Pertinence",
@@ -53,12 +54,14 @@ export function ShopControls({
   basePath,
   query,
   facets,
+  attrFacets = [],
   categories,
   count,
 }: {
   basePath: string;
   query: ShopQuery;
   facets: Facets;
+  attrFacets?: AttrFacet[];
   categories: { slug: string; name: string }[];
   count: number;
 }) {
@@ -96,6 +99,12 @@ export function ShopControls({
     active.push({
       label: m,
       clear: { marque: query.marque!.filter((x) => x !== m) },
+    }),
+  );
+  query.attrs?.forEach((a) =>
+    active.push({
+      label: `${attrTitle(a.key)} : ${a.value}`,
+      clear: { attrs: query.attrs!.filter((x) => !(x.key === a.key && x.value === a.value)) },
     }),
   );
   if (query.prixMin != null)
@@ -149,6 +158,62 @@ export function ShopControls({
           </div>
         </fieldset>
       ) : null}
+      {attrFacets.map((f) => {
+        const chosen = (query.attrs ?? []).filter((a) => a.key === f.key).map((a) => a.value);
+        const others = (query.attrs ?? []).filter((a) => a.key !== f.key);
+        if (f.values.length > 8) {
+          // Beaucoup de valeurs (ex. modèles compatibles) : une liste déroulante, un seul choix à la fois.
+          return (
+            <div key={f.key} className="lg:w-56">
+              <label className="label" htmlFor={`${uid}-a-${f.key}`}>
+                {f.title}
+              </label>
+              <select
+                id={`${uid}-a-${f.key}`}
+                className="field"
+                value={chosen[0] ?? ""}
+                onChange={(e) =>
+                  set({ attrs: e.target.value ? [...others, { key: f.key, value: e.target.value }] : others })
+                }
+              >
+                <option value="">Tous</option>
+                {f.values.map((v) => (
+                  <option key={v.value} value={v.value}>
+                    {v.value} ({v.count})
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        }
+        return (
+          <fieldset key={f.key}>
+            <legend className="label">{f.title}</legend>
+            <div className="flex flex-wrap gap-2">
+              {f.values.map((v) => {
+                const on = chosen.includes(v.value);
+                return (
+                  <button
+                    key={v.value}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      set({
+                        attrs: on
+                          ? (query.attrs ?? []).filter((a) => !(a.key === f.key && a.value === v.value))
+                          : [...(query.attrs ?? []), { key: f.key, value: v.value }],
+                      })
+                    }
+                    className={`chip min-h-12 lg:min-h-11 ${on ? "border-gps-blue bg-gps-blue text-white" : ""}`}
+                  >
+                    {v.value} <span className="tabular opacity-70">({v.count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        );
+      })}
       <form
         className="flex items-end gap-2"
         onSubmit={(e) => {
