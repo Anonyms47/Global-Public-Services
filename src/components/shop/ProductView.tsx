@@ -5,10 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PublicProduct, PublicVariant } from "@/server/domain/catalog";
+import type { PublicProduct } from "@/server/domain/catalog";
 import { fcfa, formatDate, optionsLabel } from "@/lib/format";
 import { orderHint } from "@/lib/order-hints";
-import { optionPrices, selectOption } from "@/lib/variant-select";
+import { adaptations, optionChoices, optionPrices, selectOption } from "@/lib/variant-select";
+import { mediaForSelection } from "@/lib/variant-media";
 import { productQuestionMessage, whatsappLink } from "@/lib/whatsapp";
 import { cart } from "../cart/cart-store";
 import { Sheet } from "../ui/Sheet";
@@ -28,10 +29,6 @@ import {
 import { Price } from "./Price";
 
 const VISUAL_AXES = ["Couleur", "Monture", "Coloris"];
-
-function matches(v: PublicVariant, sel: Record<string, string | undefined>, except?: string) {
-  return Object.entries(sel).every(([k, val]) => k === except || !val || v.options[k] === val);
-}
 
 export function ProductView({
   product,
@@ -79,6 +76,8 @@ export function ProductView({
     capped: boolean;
   } | null>(null);
   const [showMissing, setShowMissing] = useState(false);
+  /** Options modifiées automatiquement par le dernier choix (annoncées au client). */
+  const [adapted, setAdapted] = useState<{ axis: string; from: string; to: string | undefined }[]>([]);
   const confirmRef = useRef<HTMLDivElement>(null);
 
   const missing = axes.filter((a) => !sel[a]);
@@ -96,13 +95,22 @@ export function ProductView({
     setAdded(null);
   }
 
-  // Galerie : visuels de la couleur choisie si disponibles.
+  // Galerie : photos de la variante choisie (type + couleur), sinon photos communes, sinon état explicite.
+  // On ne présente jamais la photo d'une autre variante comme celle de la sélection.
   const visualAxis = axes.find((a) => VISUAL_AXES.includes(a));
-  const images = useMemo(() => {
-    const color = visualAxis ? sel[visualAxis] : undefined;
-    const own = color ? product.images.filter((i) => i.color === color) : [];
-    return own.length ? own : product.images;
-  }, [product.images, sel, visualAxis]);
+  const [showOthers, setShowOthers] = useState(false);
+  const media = useMemo(
+    () => mediaForSelection(product.images, sel, axes, visualAxis),
+    [product.images, sel, axes, visualAxis],
+  );
+  const selKey = axes.map((a) => sel[a] ?? "").join("|");
+  const [seenSel, setSeenSel] = useState(selKey);
+  if (seenSel !== selKey) {
+    setSeenSel(selKey);
+    setShowOthers(false);
+  }
+  const missingPhoto = media.scope === "missing" && !showOthers;
+  const images = media.scope === "missing" && showOthers ? product.images : media.items;
   const [active, setActive] = useState(0);
   const [zoom, setZoom] = useState(false);
   const imagesKey = images.map((i) => i.url).join("|");
@@ -186,7 +194,7 @@ export function ProductView({
         name: product.name,
         sku: variant.sku,
         optionsLabel: optionsLabel(variant.options, axes),
-        image: (images[0] ?? product.images[0])?.url ?? null,
+        image: media.scope === "missing" ? null : (images[0]?.url ?? null),
         unitPrice: variant.price,
         quantity: qty,
       },
@@ -212,18 +220,14 @@ export function ProductView({
     productQuestionMessage(product.name, url, variant ? optionsLabel(variant.options, axes) : undefined),
   );
 
-  const optionState = (axis: string, val: string) => {
-    const pool = product.variants.filter((v) => v.options[axis] === val && matches(v, sel, axis));
-    if (!pool.length) return "none" as const;
-    return pool.some((v) => v.available > 0) ? ("ok" as const) : ("out" as const);
-  };
-
   return (
     <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
       {/* Galerie */}
       <div className="lg:col-span-7">
-        <div className="grid gap-3 md:grid-cols-[84px_1fr] md:gap-4">
-          <div className="pdp-media relative order-1 overflow-hidden rounded-[24px] bg-paper-deep md:order-2">
+        <div className={`grid gap-3 ${total > 1 ? "md:grid-cols-[84px_1fr] md:gap-4" : ""}`}>
+          <div
+            className={`pdp-media relative order-1 min-w-0 overflow-hidden rounded-[24px] bg-paper-deep ${total > 1 ? "md:order-2" : ""}`}
+          >
             {total ? (
               <div
                 ref={track}
@@ -270,6 +274,17 @@ export function ProductView({
                     />
                   </div>
                 ))}
+              </div>
+            ) : missingPhoto ? (
+              <div className="flex aspect-[4/5] flex-col items-center justify-center gap-3 px-6 text-center">
+                <p className="font-semibold text-ink-soft" role="status">
+                  La photo de cette variante n&apos;est pas encore disponible.
+                </p>
+                {product.images.length ? (
+                  <button type="button" className="btn btn-outline btn-sm min-h-11" onClick={() => setShowOthers(true)}>
+                    Voir les photos des autres variantes
+                  </button>
+                ) : null}
               </div>
             ) : (
               <div className="flex aspect-[4/5] items-center justify-center text-ink-mute">Photo à venir</div>
@@ -356,6 +371,16 @@ export function ProductView({
             </ul>
           ) : null}
         </div>
+        {media.scope === "common" ? (
+          <p className="mt-2 text-[13.5px] text-ink-mute">
+            Photo commune au produit : elle ne montre pas forcément la variante choisie.
+          </p>
+        ) : null}
+        {media.scope === "missing" && showOthers ? (
+          <p className="mt-2 text-[13.5px] font-semibold text-warn">
+            Photos d&apos;autres variantes du produit : ce ne sont pas celles de votre sélection.
+          </p>
+        ) : null}
       </div>
 
       {/* Achat */}
@@ -412,8 +437,7 @@ export function ProductView({
                   </span>
                 </legend>
                 <div className="flex flex-wrap gap-2">
-                  {values[axis].map((val) => {
-                    const st = optionState(axis, val);
+                  {optionChoices(product.variants, axes, sel, axis).map(({ value: val, state: st }) => {
                     const on = sel[axis] === val;
                     const price = prices[axis]?.[val];
                     return (
@@ -421,25 +445,25 @@ export function ProductView({
                         key={val}
                         type="button"
                         aria-pressed={on}
-                        aria-label={`${axis} ${val}${price !== undefined ? `, ${fcfa(price)}` : ""}${st === "out" ? (product.stockTracked ? ", épuisé" : ", indisponible") : st === "none" ? ", indisponible avec la sélection actuelle" : ""}`}
+                        aria-label={`${axis} ${val}${price !== undefined ? `, ${fcfa(price)}` : ""}${st === "out" ? (product.stockTracked ? ", épuisé" : ", indisponible") : ""}`}
                         onClick={() => {
-                          setSel((s) =>
-                            selectOption(
-                              product.variants,
-                              axes,
-                              s,
-                              axis,
-                              on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
-                              VISUAL_AXES,
-                            ),
+                          const next = selectOption(
+                            product.variants,
+                            axes,
+                            sel,
+                            axis,
+                            on && values[axis].length > 1 && !VISUAL_AXES.includes(axis) ? undefined : val,
+                            VISUAL_AXES,
                           );
+                          setAdapted(adaptations(sel, next, axis));
+                          setSel(next);
                           setShowMissing(false);
                         }}
                         className={`relative min-h-12 min-w-12 rounded-full border-[1.5px] px-5 text-[15px] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-95 ${
                           on
                             ? "border-gps-blue bg-gps-blue text-white shadow-[0_6px_14px_-8px_rgb(49_39_127/0.8)]"
                             : "border-line bg-white hover:border-gps-blue hover:text-gps-blue"
-                        } ${st !== "ok" ? "text-ink-mute line-through decoration-gps-red decoration-2" : ""} ${on && st !== "ok" ? "text-white/80" : ""}`}
+                        } ${st === "out" ? "text-ink-mute" : ""} ${on && st === "out" ? "text-white/80" : ""}`}
                       >
                         {val}
                         {price !== undefined ? (
@@ -449,12 +473,41 @@ export function ProductView({
                             {fcfa(price)}
                           </span>
                         ) : null}
+                        {st === "out" ? (
+                          <span
+                            className={`ml-1.5 text-[12px] font-bold tracking-wide uppercase ${on ? "text-white" : "text-gps-red-ink"}`}
+                          >
+                            {product.stockTracked ? "Épuisé" : "Indisponible"}
+                          </span>
+                        ) : null}
                       </button>
                     );
                   })}
                 </div>
               </fieldset>
             ))}
+            <p
+              aria-live="polite"
+              className={
+                adapted.length ? "mt-3 flex items-start gap-2 text-[14px] font-semibold text-gps-blue" : "sr-only"
+              }
+            >
+              {adapted.length ? (
+                <>
+                  <IconInfo className="mt-0.5 shrink-0" size={16} />
+                  <span>
+                    {adapted
+                      .map((a) =>
+                        a.to
+                          ? `${a.axis} adapté${a.axis === "Couleur" ? "e" : ""} à ce choix : ${a.to}`
+                          : `${a.axis} à choisir de nouveau`,
+                      )
+                      .join(" · ")}
+                    .
+                  </span>
+                </>
+              ) : null}
+            </p>
           </div>
 
           {hint ? (

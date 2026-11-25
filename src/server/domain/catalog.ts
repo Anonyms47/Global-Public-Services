@@ -2,6 +2,7 @@ import type { Db } from "../db/client";
 import { fail, newId } from "./errors";
 import { slugify } from "@/lib/format";
 import { normalizeBarcode, suggestSku } from "@/lib/sku";
+import { rankBySearch } from "@/lib/search";
 import { availableUnits, stockTracking } from "./stock";
 import type { CategoryProfile } from "@/lib/product-kit";
 
@@ -75,7 +76,7 @@ export interface PublicProduct {
   featuredPosition: number;
   createdAt: Date;
   isDemo: boolean;
-  images: { url: string; alt: string; color: string | null }[];
+  images: { url: string; alt: string; color: string | null; options: Record<string, string> | null }[];
   /** Vidéos courtes de la fiche (MP4/WebM), affichées après les photos. */
   videos: { url: string; alt: string }[];
   variants: PublicVariant[];
@@ -172,10 +173,12 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
       url: string;
       alt: string;
       color: string | null;
+      options: Record<string, string> | null;
       kind: string;
-    }>("select product_id, url, alt, color, kind from product_images where product_id = any($1) order by position", [
-      ids,
-    ]),
+    }>(
+      "select product_id, url, alt, color, options, kind from product_images where product_id = any($1) order by position",
+      [ids],
+    ),
     db.query<Promotion>("select * from promotions where product_id = any($1) and active", [ids]),
   ]);
   const tracking = await stockTracking(db);
@@ -213,7 +216,7 @@ async function hydrate(db: Db, rows: ProductRow[], now: Date): Promise<PublicPro
         isDemo: r.is_demo,
         images: images
           .filter((i) => i.product_id === r.id && i.kind !== "video")
-          .map(({ url, alt, color }) => ({ url, alt, color })),
+          .map(({ url, alt, color, options }) => ({ url, alt, color, options: options ?? null })),
         videos: images.filter((i) => i.product_id === r.id && i.kind === "video").map(({ url, alt }) => ({ url, alt })),
         variants: pv,
         promo: promo
@@ -324,7 +327,7 @@ export async function categoryBySlug(db: Db, slug: string) {
 
 // ——— Recherche et filtres (boutique) ———
 
-export type SortKey = "nouveautes" | "prix-asc" | "prix-desc";
+export type SortKey = "pertinence" | "nouveautes" | "prix-asc" | "prix-desc";
 
 export interface ShopQuery {
   q?: string;
@@ -344,12 +347,11 @@ export const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "
 
 export function filterProducts(all: PublicProduct[], q: ShopQuery) {
   let list = all;
-  if (q.q) {
-    const terms = normalize(q.q).split(/\s+/).filter(Boolean);
-    list = list.filter((p) => {
-      const hay = normalize([p.name, p.brand, p.categoryName ?? "", ...p.variants.map((v) => v.sku)].join(" "));
-      return terms.every((t) => hay.includes(t));
-    });
+  // Recherche : seuls les articles pertinents restent ; l'ordre de pertinence sert tant qu'aucun autre tri n'est choisi.
+  const ranked = q.q ? rankBySearch(q.q, all) : null;
+  if (ranked) {
+    const keep = new Set(ranked);
+    list = all.filter((p) => keep.has(p));
   }
   if (q.categorie) list = list.filter((p) => p.categorySlug === q.categorie);
   if (q.marque?.length) {
@@ -364,7 +366,10 @@ export function filterProducts(all: PublicProduct[], q: ShopQuery) {
   const sorted = [...list];
   if (q.tri === "prix-asc") sorted.sort((a, b) => a.minPrice - b.minPrice);
   else if (q.tri === "prix-desc") sorted.sort((a, b) => b.minPrice - a.minPrice);
-  else sorted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  else if (ranked && q.tri !== "nouveautes") {
+    const rank = new Map(ranked.map((p, i) => [p, i]));
+    sorted.sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
+  } else sorted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   return sorted;
 }
 
@@ -530,6 +535,8 @@ export interface ProductInput {
     url: string;
     alt: string;
     color?: string | null;
+    /** Options auxquelles la photo est liée (type + couleur…) ; vide = photo commune. */
+    options?: Record<string, string> | null;
     kind?: "image" | "video";
     source?: MediaSource | null;
   }[];
@@ -568,10 +575,16 @@ export async function productForEdit(
   const p = await db.one<Record<string, unknown>>("select * from products where id = $1", [id]);
   if (!p) return null;
   const [images, variants, sales] = await Promise.all([
-    db.query<{ url: string; alt: string; color: string | null; kind: "image" | "video"; source: MediaSource | null }>(
-      "select url, alt, color, kind, source from product_images where product_id = $1 order by position",
-      [id],
-    ),
+    db.query<{
+      url: string;
+      alt: string;
+      color: string | null;
+      options: Record<string, string> | null;
+      kind: "image" | "video";
+      source: MediaSource | null;
+    }>("select url, alt, color, options, kind, source from product_images where product_id = $1 order by position", [
+      id,
+    ]),
     db.query<Record<string, unknown>>(
       `select v.*, exists (select 1 from order_lines l where l.variant_id = v.id) as has_sales
          from variants v where product_id = $1 and active order by position`,
@@ -830,7 +843,7 @@ export async function saveProduct(
     await tx.query("delete from product_images where product_id = $1", [id]);
     for (const [i, img] of input.images.entries()) {
       await tx.query(
-        "insert into product_images (id, product_id, url, alt, color, position, kind, source) values ($1,$2,$3,$4,$5,$6,$7,$8)",
+        "insert into product_images (id, product_id, url, alt, color, position, kind, source, options) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
         [
           newId(),
           id,
@@ -840,6 +853,7 @@ export async function saveProduct(
           i,
           img.kind === "video" ? "video" : "image",
           img.source ? JSON.stringify(img.source) : null,
+          img.options && Object.keys(img.options).length ? JSON.stringify(img.options) : null,
         ],
       );
     }

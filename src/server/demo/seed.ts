@@ -35,10 +35,11 @@ export const demoAccounts = [
  * sans attribution obligatoire). Elles illustrent la catégorie, pas le modèle
  * fictif exact : à remplacer par les photos réelles des articles GPS.
  */
-const photo = (id: string, alt: string) => ({
+const photo = (id: string, alt: string, options: Record<string, string> | null = null) => ({
   url: `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&h=1500&q=80`,
   alt,
   color: null,
+  options,
 });
 
 type DemoProduct = Omit<ProductInput, "status" | "featured" | "categoryId" | "isDemo"> & {
@@ -343,6 +344,34 @@ const products: DemoProduct[] = [
       { sku: "ACC-ET-N12-SA", options: { Couleur: "Sable" }, price: 5000 },
     ],
     stock: { "ACC-ET-N12-RG": 10, "ACC-ET-N12-NO": 8, "ACC-ET-N12-SA": 4 },
+  },
+  {
+    // Type puis couleur : une seule photo, liée à une seule variante (démonstration des photos par variante).
+    name: "Coque Aster 9",
+    brand: "Aster",
+    category: "accessoires",
+    ageDays: 6,
+    condition: null,
+    description: "Coque de protection pour l'Aster 9, en quatre finitions.",
+    specs: [{ label: "Téléphone compatible", value: "Aster 9" }],
+    axes: ["Type de coque", "Couleur"],
+    images: [
+      photo("1603313011101-320f26a4f6f6", "Coque givrée gris et orange (photo d'exemple)", {
+        "Type de coque": "Givrée",
+        Couleur: "Gris et orange",
+      }),
+    ],
+    variants: [
+      { sku: "ACC-AST9-GIV-GO", options: { "Type de coque": "Givrée", Couleur: "Gris et orange" }, price: 5000 },
+      {
+        sku: "ACC-AST9-TRA-TR",
+        options: { "Type de coque": "Transparente avec anneau", Couleur: "Transparent" },
+        price: 1500,
+      },
+      { sku: "ACC-AST9-CUI-MA", options: { "Type de coque": "Aspect cuir", Couleur: "Marron" }, price: 2500 },
+      { sku: "ACC-AST9-CUI-NO", options: { "Type de coque": "Aspect cuir", Couleur: "Noir" }, price: 2500 },
+    ],
+    stock: { "ACC-AST9-GIV-GO": 6, "ACC-AST9-TRA-TR": 6, "ACC-AST9-CUI-MA": 6, "ACC-AST9-CUI-NO": 0 },
   },
   {
     name: "Lumen Rive",

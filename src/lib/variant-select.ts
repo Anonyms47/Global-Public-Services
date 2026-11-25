@@ -63,3 +63,43 @@ export function optionPrices(variants: SelectableVariant[], axis: string): Recor
   }
   return new Set(Object.values(byValue)).size > 1 ? byValue : null;
 }
+
+export interface OptionChoice {
+  value: string;
+  /** « ok » : on peut la commander ; « out » : rupture réelle de toutes les versions compatibles. */
+  state: "ok" | "out";
+}
+
+/**
+ * Valeurs proposées pour un axe. Le premier axe (ex. type) montre toutes ses valeurs ; chaque axe suivant
+ * (ex. couleur) ne montre que les valeurs qui existent avec les choix des axes précédents — une combinaison
+ * inexistante n'est donc jamais présentée comme « indisponible ». Seule une vraie rupture est signalée.
+ */
+export function optionChoices(
+  variants: SelectableVariant[],
+  axes: string[],
+  sel: Selection,
+  axis: string,
+): OptionChoice[] {
+  const earlier = axes.slice(0, axes.indexOf(axis));
+  const pool = variants.filter((v) => earlier.every((a) => !sel[a] || v.options[a] === sel[a]));
+  const values = [...new Set(pool.map((v) => v.options[axis]))].filter(Boolean);
+  return values.map((value) => ({
+    value,
+    state: pool.some((v) => v.options[axis] === value && v.available > 0) ? "ok" : "out",
+  }));
+}
+
+export interface Adaptation {
+  axis: string;
+  from: string;
+  /** Nouvelle valeur ; undefined si l'option a dû être retirée. */
+  to: string | undefined;
+}
+
+/** Options modifiées automatiquement après un choix (pour l'annoncer clairement au client). */
+export function adaptations(before: Selection, after: Selection, chosen: string): Adaptation[] {
+  return Object.keys(before)
+    .filter((a) => a !== chosen && before[a] && before[a] !== after[a])
+    .map((a) => ({ axis: a, from: before[a] as string, to: after[a] }));
+}

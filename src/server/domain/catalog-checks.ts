@@ -11,6 +11,7 @@ import {
   similarity,
 } from "@/lib/catalog-rules";
 import { fcfa } from "@/lib/format";
+import { variantsWithoutPhoto } from "@/lib/variant-media";
 
 /**
  * Contrôles éditoriaux du catalogue (espace « À vérifier » du Comptoir).
@@ -265,6 +266,41 @@ export async function catalogAlerts(db: Db): Promise<CatalogAlert[]> {
       detail: "Photographiez l'article en boutique : une photo exacte est nécessaire pour publier.",
       products: noPhoto.map(asProduct),
     });
+
+  // ——— Variantes sans photo représentative : seulement pour les fiches dont des photos sont déjà liées à des variantes. ———
+  const scoped = await db.query<{
+    id: string;
+    axes: string[];
+    variants: { options: Record<string, string> }[] | null;
+    media: { url: string; alt: string; color: string | null; options: Record<string, string> | null }[] | null;
+  }>(
+    `select p.id, p.axes,
+            (select json_agg(json_build_object('options', v.options)) from variants v where v.product_id = p.id and v.active) as variants,
+            (select json_agg(json_build_object('url', i.url, 'alt', i.alt, 'color', i.color, 'options', i.options) order by i.position)
+               from product_images i where i.product_id = p.id and i.kind <> 'video') as media
+       from products p
+      where p.status <> 'archived' and p.deleted_at is null and not p.is_demo
+        and exists (select 1 from product_images i where i.product_id = p.id and (i.options is not null or i.color is not null))`,
+  );
+  const rowById = new Map(rows.map((r) => [r.id, r]));
+  for (const s of scoped) {
+    const row = rowById.get(s.id);
+    if (!row) continue;
+    const visual = (s.axes ?? []).find((a) => ["Couleur", "Monture", "Coloris"].includes(a));
+    const missing = variantsWithoutPhoto(s.variants ?? [], s.media ?? [], s.axes ?? [], visual);
+    if (!missing.length) continue;
+    alerts.push({
+      key: `photo-variante-${s.id}`,
+      kind: "photo",
+      severity: "low",
+      title: `${row.name} : ${missing.length} variante${missing.length > 1 ? "s" : ""} sans photo`,
+      detail:
+        "Le site affiche « photo non disponible » pour : " +
+        missing.map((v) => Object.values(v.options).join(" · ")).join(" ; ") +
+        ". Ajoutez la photo exacte, ou une photo commune à toutes les variantes.",
+      products: [asProduct(row)],
+    });
+  }
 
   // ——— Sources contradictoires et tâches enregistrées pendant l'enrichissement ———
   for (const r of rows) {
