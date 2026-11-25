@@ -107,6 +107,7 @@ export function ShopListing({
       />
       {results.length ? (
         <>
+          <h2 className="sr-only">Articles</h2>
           <ul key={here} className="mt-6 grid grid-cols-2 gap-x-3 gap-y-9 sm:gap-x-5 md:grid-cols-3 xl:grid-cols-4">
             {visible.map((p, i) => (
               <li key={p.id} className="card-in" style={{ "--i": Math.min(i, 11) } as CSSProperties}>

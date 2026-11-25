@@ -5,7 +5,11 @@ import { FaqList, type FaqGroup } from "@/components/site/FaqList";
 import { ContactActions } from "@/components/site/ContactActions";
 import { TO_CONFIRM } from "@/lib/whatsapp";
 
-export const metadata: Metadata = { title: "Questions fréquentes" };
+export const metadata: Metadata = {
+  title: "Questions fréquentes",
+  description: "Réponses de GPS : commande sur WhatsApp, paiement Wave ou Orange Money, retrait et livraison.",
+  alternates: { canonical: "/faq" },
+};
 
 export default async function FaqPage() {
   const { settings } = await siteContext();

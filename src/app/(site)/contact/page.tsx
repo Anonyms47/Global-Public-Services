@@ -8,6 +8,7 @@ import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "Contact",
+  alternates: { canonical: "/contact" },
   description: "Contacter GPS — Global Public Services.",
 };
 

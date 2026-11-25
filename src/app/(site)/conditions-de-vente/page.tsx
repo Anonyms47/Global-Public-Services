@@ -3,7 +3,10 @@ import { siteContext } from "@/server/context";
 import { legalIds } from "@/server/domain/settings";
 import { LegalDoc } from "@/components/site/LegalDoc";
 
-export const metadata: Metadata = { title: "Conditions de vente" };
+export const metadata: Metadata = {
+  title: "Conditions de vente",
+  alternates: { canonical: "/conditions-de-vente" },
+};
 
 export default async function CgvPage() {
   const { settings } = await siteContext();

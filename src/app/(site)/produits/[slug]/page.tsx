@@ -14,6 +14,14 @@ import { ProductDescription } from "@/components/shop/ProductDescription";
 import { IconArrowRight, IconChevronRight, IconStore, IconTruck, IconInfo, IconCheck } from "@/components/ui/icons";
 import { TO_CONFIRM } from "@/lib/whatsapp";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
+import {
+  breadcrumbJsonLd,
+  jsonLdString,
+  plainDescription,
+  productMetaDescription,
+  productTitle,
+  schemaCondition,
+} from "@/lib/seo";
 
 export async function generateMetadata({ params }: PageProps<"/produits/[slug]">): Promise<Metadata> {
   const { db, indexable } = await siteContext();
@@ -21,12 +29,12 @@ export async function generateMetadata({ params }: PageProps<"/produits/[slug]">
   if (!p) return { title: "Produit introuvable", robots: { index: false } };
   const image = p.images[0]?.url;
   return {
-    title: `${p.name}${p.brand ? ` — ${p.brand}` : ""}`,
-    description: p.description.slice(0, 160),
+    title: productTitle(p),
+    description: productMetaDescription(p),
     alternates: { canonical: `/produits/${p.slug}` },
     openGraph: {
       title: p.name,
-      description: p.description.slice(0, 160),
+      description: productMetaDescription(p),
       images: image && !image.endsWith(".svg") ? [image] : undefined,
       type: "website",
     },
@@ -63,10 +71,12 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
         "@type": "Product",
         name: product.name,
         brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
-        description: product.description,
+        description: plainDescription(product.description) || undefined,
         image: product.images.map((i) => siteUrl(i.url)),
         offers: product.variants.map((v) => ({
           "@type": "Offer",
+          url: siteUrl(`/produits/${product.slug}`),
+          itemCondition: schemaCondition(product.condition),
           sku: v.sku,
           price: v.price,
           priceCurrency: "XOF",
@@ -81,7 +91,16 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+            __html: jsonLdString([
+              jsonLd,
+              breadcrumbJsonLd([
+                { name: "Boutique", url: siteUrl("/boutique") },
+                ...(product.categoryName
+                  ? [{ name: product.categoryName, url: siteUrl(`/categories/${product.categorySlug}`) }]
+                  : []),
+                { name: product.name, url: siteUrl(`/produits/${product.slug}`) },
+              ]),
+            ]),
           }}
         />
       ) : null}

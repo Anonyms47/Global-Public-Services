@@ -481,7 +481,7 @@ export function ProductView({
             <IconInfo className="mt-0.5 shrink-0" size={18} />
             <span>
               {status.text}
-              {variant ? <span className="block text-[13px] font-normal opacity-80">Réf. {variant.sku}</span> : null}
+              {variant ? <span className="block text-[13px] font-normal">Réf. {variant.sku}</span> : null}
             </span>
           </p>
 

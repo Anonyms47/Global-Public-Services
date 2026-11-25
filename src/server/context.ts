@@ -38,6 +38,8 @@ export const siteContext = cache(async () => {
     db,
     settings,
     stores,
+    /** Points de vente publiés, tels qu'en base (données structurées). */
+    storeRows,
     /** Catalogue ou données d'exemple visibles : bandeau, pas d'indexation. */
     demo,
     /** Indexation autorisée seulement sans données d'exemple et sur décision explicite. */

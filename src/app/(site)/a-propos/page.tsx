@@ -12,6 +12,7 @@ import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "À propos de GPS",
+  alternates: { canonical: "/a-propos" },
   description:
     "GPS — Global Public Services, le service qui rassure : produits du quotidien et transfert d'argent sous un même toit.",
 };
@@ -121,7 +122,10 @@ export default async function AboutPage() {
                   <span className="pdp-icon h-12! w-12!">
                     <Icon size={22} />
                   </span>
-                  <span className="font-display text-[44px] leading-none font-extrabold text-ink/10 tabular">
+                  <span
+                    aria-hidden="true"
+                    className="font-display text-[44px] leading-none font-extrabold text-ink/10 tabular"
+                  >
                     {String(i + 1).padStart(2, "0")}
                   </span>
                 </span>

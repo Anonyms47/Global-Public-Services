@@ -24,7 +24,9 @@ export async function GET(req: Request, ctx: RouteContext<"/media/[id]">) {
   if (!file) return notFound();
   if (!file.public && !(await currentUser())) return notFound();
   // Jamais de cache partagé pour un fichier non publié (brouillon, corbeille, non utilisé).
-  const cache = file.public ? "public, max-age=60, s-maxage=300" : "private, no-store";
+  const cache = file.public
+    ? "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800"
+    : "private, no-store";
 
   const cfg = mediaStorage();
   if (file.mime.startsWith("video/") && file.storage_path && cfg.store?.backend === file.storage_backend) {

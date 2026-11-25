@@ -24,6 +24,10 @@ import { RevealOnScroll } from "@/components/site/RevealOnScroll";
 import { whatsappLink } from "@/lib/whatsapp";
 import { showcaseReady } from "@/lib/catalog-rules";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
 function SectionHead({
   index,
   eyebrow,
@@ -548,14 +552,12 @@ export default async function HomePage() {
                 .map(([Icon, label, value]) => {
                   const I = Icon as typeof IconPin;
                   return (
-                    <div key={label as string} className="flex gap-3">
-                      <I className="mt-0.5 shrink-0 text-gps-blue" />
-                      <div>
-                        <dt className="text-[13px] font-bold tracking-wide text-ink-mute uppercase">
-                          {label as string}
-                        </dt>
-                        <dd className="mt-0.5 font-semibold">{value as string}</dd>
-                      </div>
+                    <div key={label as string}>
+                      <dt className="flex items-center gap-3 text-[13px] font-bold tracking-wide text-ink-mute uppercase">
+                        <I aria-hidden="true" className="shrink-0 text-gps-blue" />
+                        {label as string}
+                      </dt>
+                      <dd className="mt-0.5 pl-9 font-semibold">{value as string}</dd>
                     </div>
                   );
                 })}
