@@ -242,7 +242,11 @@ export function ShopControls({
           {pending ? <span className="ml-2 text-ink-mute">· mise à jour…</span> : null}
         </p>
         <div className="flex min-w-0 items-center gap-2">
-          <button type="button" className="btn btn-ink btn-sm shrink-0 lg:hidden" onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className="btn btn-ink btn-sm min-h-11 shrink-0 lg:hidden"
+            onClick={() => setOpen(true)}
+          >
             <IconFilter size={17} /> Filtres
             {active.length ? <span className="filter-count tabular">{active.length}</span> : null}
           </button>
