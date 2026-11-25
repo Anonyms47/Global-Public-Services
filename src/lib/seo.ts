@@ -74,6 +74,15 @@ export interface LocalBusinessInput {
   logo: string;
 }
 
+/** Numéro au format international (+221…) attendu par Google ; vide si rien d'exploitable. */
+export function internationalPhone(raw: string): string | undefined {
+  const t = raw.trim();
+  if (!t) return undefined;
+  const digits = t.replace(/\D/g, "");
+  if (digits.length < 8) return undefined;
+  return `+${digits}`;
+}
+
 /** Données « commerce local » pour Google, à partir de la boutique principale ; champs vides omis. */
 export function localBusinessJsonLd({ company, stores, url, logo }: LocalBusinessInput) {
   const main = stores[0];
@@ -96,7 +105,7 @@ export function localBusinessJsonLd({ company, stores, url, logo }: LocalBusines
     url,
     logo,
     image: logo,
-    telephone: phone || undefined,
+    telephone: internationalPhone(phone),
     email: company.email || undefined,
     address,
     hasMap: main?.maps_url || company.mapsUrl || undefined,
