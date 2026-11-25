@@ -390,9 +390,12 @@ export function CartView({
 
   if (!ready) {
     return (
-      <div className="mt-6 grid gap-3" aria-busy="true" aria-label="Chargement du panier">
-        <div className="skeleton h-16 w-2/3" />
-        <div className="skeleton min-h-[24rem] rounded-[20px]" />
+      <div className="mt-6">
+        {/* Le titre est déjà dans le HTML envoyé : il s'affiche sans attendre le JavaScript. */}
+        <CartTitle count={0} />
+        <div className="mt-6 grid gap-3" aria-busy="true" aria-label="Chargement du panier">
+          <div className="skeleton min-h-[24rem] rounded-[20px]" />
+        </div>
       </div>
     );
   }

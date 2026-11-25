@@ -31,7 +31,7 @@ export function Header({
         <MobileMenu nav={mainNav} company={company} />
         <Link href="/" className="flex h-11 shrink-0 items-center" aria-label="GPS — accueil">
           <Logo variant="mark" className="h-8 w-auto md:hidden" priority />
-          <Logo variant="full" className="hidden h-[60px] w-auto md:block" priority />
+          <Logo variant="full" className="hidden h-[60px] w-auto md:block" />
         </Link>
         <nav aria-label="Navigation principale" className="hidden lg:block">
           <ul className="flex items-center gap-1">
