@@ -3,6 +3,7 @@ import { fail, newId } from "./errors";
 import { slugify } from "@/lib/format";
 import { normalizeBarcode, suggestSku } from "@/lib/sku";
 import { rankBySearch } from "@/lib/search";
+import { matchesAttrs, type AttrFilter } from "@/lib/attributes";
 import { availableUnits, stockTracking } from "./stock";
 import type { CategoryProfile } from "@/lib/product-kit";
 
@@ -339,6 +340,8 @@ export interface ShopQuery {
   promo?: boolean;
   etat?: string;
   tri?: SortKey;
+  /** Critères propres au rayon (modèle compatible, puissance, capacité…). */
+  attrs?: AttrFilter[];
   /** Nombre d'articles affichés (« Voir plus »), jamais pris en compte par les filtres. */
   n?: number;
 }
@@ -359,6 +362,7 @@ export function filterProducts(all: PublicProduct[], q: ShopQuery) {
     list = list.filter((p) => keys.has(brandKey(p.brand)));
   }
   if (q.etat) list = list.filter((p) => p.condition === q.etat);
+  if (q.attrs?.length) list = list.filter((p) => matchesAttrs(p, q.attrs));
   if (q.prixMin != null) list = list.filter((p) => p.minPrice >= q.prixMin!);
   if (q.prixMax != null) list = list.filter((p) => p.minPrice <= q.prixMax!);
   if (q.dispo) list = list.filter((p) => p.available > 0);

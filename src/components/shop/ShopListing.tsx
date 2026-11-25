@@ -8,6 +8,7 @@ import { ShopControls, ScrollMemory } from "./ShopControls";
 import { shopQueryToParams, shownCount, PAGE_SIZE } from "./query";
 import { IconSearch } from "../ui/icons";
 import { categoryCover } from "@/lib/home";
+import { attributeFacets } from "@/lib/attributes";
 
 /** Liste de la boutique, partagée par /boutique et /categories/[slug]. */
 export function ShopListing({
@@ -29,6 +30,13 @@ export function ShopListing({
     categorie: fixedCategory ?? query.categorie,
   });
   const f = facets(scope);
+  // Critères propres au rayon : seulement dans un rayon choisi, et seulement s'ils sont fiables.
+  const attrScope = fixedCategory
+    ? scope
+    : query.categorie
+      ? all.filter((p) => p.categorySlug === query.categorie)
+      : [];
+  const attrFacets = attributeFacets(attrScope);
   const params = shopQueryToParams(query, { omitCategory: !!fixedCategory });
   const here = `${basePath}${params.size ? `?${params}` : ""}`;
   const shown = shownCount(query.n);
@@ -40,7 +48,8 @@ export function ShopListing({
 
   const univers = fixedCategory ? [] : categories.filter((c) => c.product_count > 0);
   const linkFor = (categorie?: string) => {
-    const p = shopQueryToParams({ ...query, categorie });
+    // Changer de rayon efface les critères propres à l'ancien rayon.
+    const p = shopQueryToParams({ ...query, categorie, attrs: undefined });
     return `${basePath}${p.size ? `?${p}` : ""}`;
   };
 
@@ -100,6 +109,7 @@ export function ShopListing({
         basePath={basePath}
         query={query}
         facets={f}
+        attrFacets={attrFacets}
         categories={
           fixedCategory
             ? []
