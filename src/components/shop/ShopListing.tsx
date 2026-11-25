@@ -5,7 +5,7 @@ import type { PublicProduct, ShopQuery } from "@/server/domain/catalog";
 import { facets, filterProducts } from "@/server/domain/catalog";
 import { ProductCard } from "./ProductCard";
 import { ShopControls, ScrollMemory } from "./ShopControls";
-import { shopQueryToParams } from "./query";
+import { shopQueryToParams, shownCount, PAGE_SIZE } from "./query";
 import { IconSearch } from "../ui/icons";
 
 /** Liste de la boutique, partagée par /boutique et /categories/[slug]. */
@@ -30,6 +30,12 @@ export function ShopListing({
   const f = facets(scope);
   const params = shopQueryToParams(query, { omitCategory: !!fixedCategory });
   const here = `${basePath}${params.size ? `?${params}` : ""}`;
+  const shown = shownCount(query.n);
+  const visible = results.slice(0, shown);
+  const remaining = results.length - visible.length;
+  const moreParams = new URLSearchParams(params);
+  moreParams.set("n", String(shown + PAGE_SIZE));
+  const moreHref = `${basePath}?${moreParams}`;
 
   const univers = fixedCategory ? [] : categories.filter((c) => c.product_count > 0);
   const linkFor = (categorie?: string) => {
@@ -100,13 +106,25 @@ export function ShopListing({
         count={results.length}
       />
       {results.length ? (
-        <ul key={here} className="mt-6 grid grid-cols-2 gap-x-3 gap-y-9 sm:gap-x-5 md:grid-cols-3 xl:grid-cols-4">
-          {results.map((p, i) => (
-            <li key={p.id} className="card-in" style={{ "--i": Math.min(i, 11) } as CSSProperties}>
-              <ProductCard product={p} priority={i < 4} from={here} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul key={here} className="mt-6 grid grid-cols-2 gap-x-3 gap-y-9 sm:gap-x-5 md:grid-cols-3 xl:grid-cols-4">
+            {visible.map((p, i) => (
+              <li key={p.id} className="card-in" style={{ "--i": Math.min(i, 11) } as CSSProperties}>
+                <ProductCard product={p} priority={i < 4} from={here} />
+              </li>
+            ))}
+          </ul>
+          {remaining > 0 ? (
+            <div className="mt-10 flex flex-col items-center gap-3 text-center">
+              <p className="text-[14px] text-ink-mute">
+                {visible.length} articles affichés sur {results.length}
+              </p>
+              <Link href={moreHref} scroll={false} className="btn btn-outline min-h-11">
+                Voir {Math.min(PAGE_SIZE, remaining)} article{Math.min(PAGE_SIZE, remaining) > 1 ? "s" : ""} de plus
+              </Link>
+            </div>
+          ) : null}
+        </>
       ) : (
         <div className="mt-8 rounded-[24px] border border-line bg-card px-6 py-12 text-center md:py-16">
           <span

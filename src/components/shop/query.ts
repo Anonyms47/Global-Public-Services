@@ -9,6 +9,16 @@ const num = (v: string | undefined) => {
   return Number.isFinite(n) && n >= 0 ? Math.round(n) : undefined;
 };
 
+/** Articles affichés d'un coup ; « Voir plus » en ajoute autant. */
+export const PAGE_SIZE = 24;
+const MAX_SHOWN = 480;
+
+/** Nombre d'articles à montrer d'après `?n=` : multiple de PAGE_SIZE, entre une page et MAX_SHOWN. */
+export function shownCount(n: number | undefined) {
+  if (!n || !Number.isFinite(n)) return PAGE_SIZE;
+  return Math.min(MAX_SHOWN, Math.max(PAGE_SIZE, Math.ceil(n / PAGE_SIZE) * PAGE_SIZE));
+}
+
 /** Lit les paramètres d'URL (partageables) de la boutique. */
 export function parseShopQuery(sp: Params): ShopQuery {
   const marque = sp.marque;
@@ -25,6 +35,7 @@ export function parseShopQuery(sp: Params): ShopQuery {
     dispo: first(sp.dispo) === "1" || undefined,
     promo: first(sp.promo) === "1" || undefined,
     etat: first(sp.etat) || undefined,
+    n: num(first(sp.n)),
     tri: (["nouveautes", "prix-asc", "prix-desc"] as SortKey[]).includes(tri as SortKey)
       ? (tri as SortKey)
       : "nouveautes",
