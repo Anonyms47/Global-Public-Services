@@ -110,7 +110,7 @@ export default async function ContactPage() {
                     <dd>
                       {value ? (
                         label === "E-mail" ? (
-                          <a href={`mailto:${value}`} className="underline-offset-2 hover:underline">
+                          <a href={`mailto:${value}`} className="inline-block py-2 underline-offset-2 hover:underline">
                             {value}
                           </a>
                         ) : (

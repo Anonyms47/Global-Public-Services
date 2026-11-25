@@ -22,7 +22,9 @@ export function Price({
   }[size];
   return (
     <p className={`flex flex-wrap items-baseline gap-x-2 font-extrabold tabular ${cls} ${className}`}>
-      {from ? <span className="text-[0.62em] font-semibold whitespace-nowrap text-ink-mute">à partir de</span> : null}
+      {from ? (
+        <span className="text-[max(0.62em,12px)] font-semibold whitespace-nowrap text-ink-mute">à partir de</span>
+      ) : null}
       <span className={`whitespace-nowrap ${discounted ? "text-gps-red-ink" : ""}`}>{fcfa(price)}</span>
       {discounted ? (
         <span

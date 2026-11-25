@@ -44,7 +44,7 @@ export function StoreList({ stores, dark = false }: { stores: PublicStore[]; dar
                   href={st.mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`btn btn-sm ${dark ? "btn-light" : "btn-outline"}`}
+                  className={`btn btn-sm min-h-11 ${dark ? "btn-light" : "btn-outline"}`}
                 >
                   <IconPin size={16} /> Itinéraire
                 </a>

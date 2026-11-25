@@ -622,7 +622,7 @@ export function ProductView({
         </div>
         <button
           type="button"
-          className={`btn btn-primary btn-sm shrink-0 ${variant && variant.available === 0 ? "opacity-55" : ""}`}
+          className={`btn btn-primary btn-sm min-h-11 shrink-0 ${variant && variant.available === 0 ? "opacity-55" : ""}`}
           aria-label="Commander ce produit"
           onClick={() => {
             if (canAdd) orderNow();
