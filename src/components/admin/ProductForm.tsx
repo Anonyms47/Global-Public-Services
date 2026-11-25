@@ -348,6 +348,9 @@ function ProductForm({
   const issues = publicationIssues(checkInput);
   const colorAxis = state.axes.find((a) => COLOR_AXES.includes(a));
   const colorValues = colorAxis ? [...new Set(active.map((v) => v.options[colorAxis]).filter(Boolean))] : [];
+  const combos = [...new Map(active.map((v) => [JSON.stringify(v.options), v.options])).values()].filter(
+    (o) => Object.keys(o).length > 0,
+  );
 
   // Références et codes-barres déjà pris ailleurs : vérifiés pendant la saisie.
   const codes = JSON.stringify({
@@ -744,6 +747,7 @@ function ProductForm({
               uploads={uploads}
               colorAxis={colorAxis}
               colorValues={colorValues}
+              combos={combos}
               videoMaxMb={videoMaxMb}
               productLabel={[state.brand, state.model].filter(Boolean).join(" ")}
               candidates={photoCandidates}

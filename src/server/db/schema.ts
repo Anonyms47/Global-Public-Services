@@ -319,6 +319,8 @@ alter table products add column if not exists internal jsonb not null default '{
 alter table products add column if not exists model text not null default '';
 alter table products add column if not exists details jsonb not null default '{}';
 alter table product_images add column if not exists source jsonb;
+-- Photo liée à une combinaison d'options (ex. type + couleur) ; vide = photo commune au produit.
+alter table product_images add column if not exists options jsonb;
 create unique index if not exists products_external_key on products ((internal->>'externalKey'))
   where internal->>'externalKey' is not null;
 -- Catégories gérées depuis le Comptoir : couverture, visibilité, mise en avant, archivage (structure plate).

@@ -19,6 +19,9 @@ export function shownCount(n: number | undefined) {
   return Math.min(MAX_SHOWN, Math.max(PAGE_SIZE, Math.ceil(n / PAGE_SIZE) * PAGE_SIZE));
 }
 
+/** Tri par défaut : pertinence pendant une recherche, sinon les plus récents. */
+export const defaultSort = (q?: string): SortKey => (q ? "pertinence" : "nouveautes");
+
 /** Lit les paramètres d'URL (partageables) de la boutique. */
 export function parseShopQuery(sp: Params): ShopQuery {
   const marque = sp.marque;
@@ -36,9 +39,9 @@ export function parseShopQuery(sp: Params): ShopQuery {
     promo: first(sp.promo) === "1" || undefined,
     etat: first(sp.etat) || undefined,
     n: num(first(sp.n)),
-    tri: (["nouveautes", "prix-asc", "prix-desc"] as SortKey[]).includes(tri as SortKey)
+    tri: (["pertinence", "nouveautes", "prix-asc", "prix-desc"] as SortKey[]).includes(tri as SortKey)
       ? (tri as SortKey)
-      : "nouveautes",
+      : defaultSort(first(sp.q)?.trim()),
   };
 }
 
@@ -52,6 +55,6 @@ export function shopQueryToParams(q: ShopQuery, opts: { omitCategory?: boolean }
   if (q.dispo) p.set("dispo", "1");
   if (q.promo) p.set("promo", "1");
   if (q.etat) p.set("etat", q.etat);
-  if (q.tri && q.tri !== "nouveautes") p.set("tri", q.tri);
+  if (q.tri && q.tri !== defaultSort(q.q)) p.set("tri", q.tri);
   return p;
 }

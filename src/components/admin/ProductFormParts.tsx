@@ -33,6 +33,8 @@ export interface ImageState {
   url: string;
   alt: string;
   color?: string | null;
+  /** Variante (type + couleur…) à laquelle la photo est liée ; vide = photo commune. */
+  options?: Record<string, string> | null;
   kind?: "image" | "video";
   source?: MediaSource | null;
 }
@@ -700,6 +702,7 @@ export function MediaEditor({
   uploads,
   colorAxis,
   colorValues,
+  combos = [],
   videoMaxMb,
   productLabel,
   candidates = [],
@@ -711,6 +714,8 @@ export function MediaEditor({
   uploads: ReturnType<typeof useUploadQueue>;
   colorAxis?: string;
   colorValues: string[];
+  /** Combinaisons d'options des variantes actives (type + couleur…) : une photo peut être liée à l'une d'elles. */
+  combos?: Record<string, string>[];
   videoMaxMb: number;
   /** Marque et modèle, rappelés pour l'import d'une photo trouvée sur Internet. */
   productLabel: string;
@@ -994,7 +999,26 @@ export function MediaEditor({
                 value={img.alt}
                 onChange={(e) => edit(i, { alt: e.target.value })}
               />
-              {colorAxis && colorValues.length ? (
+              {combos.length > 1 && Object.keys(combos[0] ?? {}).length > 1 ? (
+                <select
+                  aria-label={`Variante de la photo ${i + 1}`}
+                  className="field h-10 min-h-10 py-0 text-[13px]"
+                  value={img.options && Object.keys(img.options).length ? JSON.stringify(img.options) : ""}
+                  onChange={(e) =>
+                    edit(i, {
+                      options: e.target.value ? (JSON.parse(e.target.value) as Record<string, string>) : null,
+                      color: null,
+                    })
+                  }
+                >
+                  <option value="">Photo commune à toutes les variantes</option>
+                  {combos.map((c) => (
+                    <option key={JSON.stringify(c)} value={JSON.stringify(c)}>
+                      {Object.values(c).join(" · ")}
+                    </option>
+                  ))}
+                </select>
+              ) : colorAxis && colorValues.length ? (
                 <select
                   aria-label={`${colorAxis} de la photo ${i + 1}`}
                   className="field h-10 min-h-10 py-0 text-[13px]"

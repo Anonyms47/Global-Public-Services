@@ -6,9 +6,10 @@ import type { ShopQuery } from "@/server/domain/catalog";
 import { fcfa } from "@/lib/format";
 import { Sheet } from "../ui/Sheet";
 import { IconClose, IconFilter } from "../ui/icons";
-import { shopQueryToParams } from "./query";
+import { defaultSort, shopQueryToParams } from "./query";
 
 const sortLabels = {
+  pertinence: "Pertinence",
   nouveautes: "Nouveautés",
   "prix-asc": "Prix croissant",
   "prix-desc": "Prix décroissant",
@@ -256,14 +257,16 @@ export function ShopControls({
           <select
             id="f-tri"
             className="field h-11 min-h-11 w-auto max-w-full min-w-0 rounded-full py-0 pr-9 pl-3.5 text-[14px] md:pr-10 md:pl-4 md:text-[15px]"
-            value={query.tri ?? "nouveautes"}
+            value={query.tri ?? defaultSort(query.q)}
             onChange={(e) => set({ tri: e.target.value as ShopQuery["tri"] })}
           >
-            {Object.entries(sortLabels).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
+            {Object.entries(sortLabels)
+              .filter(([k]) => k !== "pertinence" || !!query.q)
+              .map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
           </select>
         </div>
       </div>
