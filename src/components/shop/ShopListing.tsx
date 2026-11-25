@@ -114,17 +114,16 @@ export function ShopListing({
               </li>
             ))}
           </ul>
-          <div className="mt-10 flex flex-col items-center gap-3 text-center">
-            <p className="text-[14px] text-ink-mute" aria-live="polite">
-              {visible.length} article{visible.length > 1 ? "s" : ""} affiché{visible.length > 1 ? "s" : ""} sur{" "}
-              {results.length}
-            </p>
-            {remaining > 0 ? (
+          {remaining > 0 ? (
+            <div className="mt-10 flex flex-col items-center gap-3 text-center">
+              <p className="text-[14px] text-ink-mute">
+                {visible.length} articles affichés sur {results.length}
+              </p>
               <Link href={moreHref} scroll={false} className="btn btn-outline min-h-11">
                 Voir {Math.min(PAGE_SIZE, remaining)} article{Math.min(PAGE_SIZE, remaining) > 1 ? "s" : ""} de plus
               </Link>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="mt-8 rounded-[24px] border border-line bg-card px-6 py-12 text-center md:py-16">
