@@ -262,7 +262,7 @@ export async function applySchedules(db: Db, now = new Date()) {
 export async function publishedProducts(db: Db, now = new Date()) {
   await applySchedules(db, now);
   const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status = 'published' and not p.disabled order by p.created_at desc`,
+    `${productSelect} where p.status = 'published' and not p.disabled and p.deleted_at is null order by p.created_at desc`,
   );
   return hydrate(db, rows, now);
 }
@@ -278,7 +278,7 @@ export async function sellableProducts(db: Db, now = new Date()) {
 export async function publishedProductBySlug(db: Db, slug: string, now = new Date()) {
   await applySchedules(db, now);
   const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status = 'published' and not p.disabled and p.slug = $1`,
+    `${productSelect} where p.status = 'published' and not p.disabled and p.deleted_at is null and p.slug = $1`,
     [slug],
   );
   return (await hydrate(db, rows, now))[0] ?? null;
@@ -287,7 +287,7 @@ export async function publishedProductBySlug(db: Db, slug: string, now = new Dat
 export async function publishedProductById(db: Db, id: string, now = new Date()) {
   await applySchedules(db, now);
   const rows = await db.query<ProductRow>(
-    `${productSelect} where p.status = 'published' and not p.disabled and p.id = $1`,
+    `${productSelect} where p.status = 'published' and not p.disabled and p.deleted_at is null and p.id = $1`,
     [id],
   );
   return (await hydrate(db, rows, now))[0] ?? null;
@@ -1349,4 +1349,22 @@ export async function addProductPhoto(db: Db, productId: string, mediaId: string
   );
   await db.query("update products set updated_at = now() where id = $1", [productId]);
   return product!.name;
+}
+
+/**
+ * Une vraie vidéo lisible partout (MP4 ou WebM) d'une fiche publiée, pour la démonstration de l'accueil.
+ * Les vidéos d'un autre format (ex. .mov d'iPhone) ne sont pas proposées : lecture non garantie.
+ */
+export async function demoVideo(db: Db) {
+  return db.one<{ url: string; alt: string; slug: string; name: string; poster: string | null }>(
+    `select i.url, i.alt, p.slug, p.name,
+            (select im.url from product_images im where im.product_id = p.id and im.kind = 'image' order by im.position limit 1) as poster
+       from product_images i
+       join products p on p.id = i.product_id
+       join media m on m.id = split_part(i.url, '/', 3)
+      where i.kind = 'video' and p.status = 'published' and p.deleted_at is null and not p.disabled
+        and m.mime in ('video/mp4', 'video/webm')
+      order by p.featured desc, p.updated_at desc
+      limit 1`,
+  );
 }

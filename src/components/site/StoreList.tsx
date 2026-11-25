@@ -30,7 +30,7 @@ export function StoreList({ stores, dark = false }: { stores: PublicStore[]; dar
               <IconPin size={18} className="mt-0.5 shrink-0" />
               <span>
                 {[st.address, st.place].filter(Boolean).join(" · ")}
-                {st.landmark ? <span className="block opacity-80">Repère : {st.landmark}</span> : null}
+                {st.landmark ? <span className="block font-semibold">{st.landmark}</span> : null}
               </span>
             </p>
             <p className="flex gap-2 text-[15px]">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { legalIds, type Settings } from "@/server/domain/settings";
 import { Logo } from "../brand/Logo";
+import { displayPhone, distinctLegalName } from "@/lib/home";
 
 /** Ligne de ticket : libellé, points de conduite, valeur. */
 function Line({ label, value, href }: { label: string; value: string; href?: string }) {
@@ -49,6 +50,7 @@ export function Footer({
   const c = settings.company;
   const wa = c.whatsapp.replace(/\D/g, "");
   const tel = c.phone.replace(/[^\d+]/g, "");
+  const legalName = distinctLegalName(c.legalName, c.name);
   return (
     <footer className="mt-24 text-ink">
       <div aria-hidden="true" className="receipt-edge" />
@@ -94,7 +96,7 @@ export function Footer({
                   />
                 )}
                 <Line label="Horaires" value={stores[0]?.hours ?? c.hours} />
-                <Line label="Téléphone" value={c.phone} href={tel ? `tel:${tel}` : undefined} />
+                <Line label="Téléphone" value={displayPhone(c.phone)} href={tel ? `tel:${tel}` : undefined} />
                 <Line label="WhatsApp" value={wa ? `+${wa}` : ""} href={wa ? `https://wa.me/${wa}` : undefined} />
                 <Line label="E-mail" value={c.email} href={c.email ? `mailto:${c.email}` : undefined} />
               </dl>
@@ -133,7 +135,7 @@ export function Footer({
           <p className="mt-8 flex flex-wrap justify-between gap-x-6 gap-y-1 text-[12.5px] text-ink-mute">
             <span>
               © {new Date().getFullYear()} GPS — Global Public Services
-              {c.legalName ? ` · ${c.legalName}` : ""}
+              {legalName ? ` · ${legalName}` : ""}
               {legalIds(c) ? ` · ${legalIds(c)}` : ""}
             </span>
             <span>Le service qui rassure</span>

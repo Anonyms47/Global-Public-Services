@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { siteContext } from "@/server/context";
-import { listCategories, publishedProducts, type PublicProduct } from "@/server/domain/catalog";
+import { demoVideo, listCategories, publishedProducts, type PublicProduct } from "@/server/domain/catalog";
 import { listServices } from "@/server/domain/services";
 import { Ribbon } from "@/components/brand/Ribbon";
 import { BrandPanel } from "@/components/brand/BrandPanel";
@@ -23,6 +23,8 @@ import {
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
 import { whatsappLink } from "@/lib/whatsapp";
 import { showcaseReady } from "@/lib/catalog-rules";
+import { availableNeeds, categoryCover, priorityUnivers } from "@/lib/home";
+import { VideoDemo } from "@/components/site/VideoDemo";
 
 import type { Metadata } from "next";
 
@@ -66,11 +68,15 @@ function optionSummary(p: PublicProduct) {
 
 export default async function HomePage() {
   const { db, settings, stores } = await siteContext();
-  const [products, categories, services] = await Promise.all([
+  const [products, categories, services, video] = await Promise.all([
     publishedProducts(db),
     listCategories(db),
     listServices(db, { publicOnly: true }),
+    demoVideo(db),
   ]);
+  // Numérotation des sections : suit l'ordre réel, sans trou quand une section est masquée.
+  let sectionNumber = 0;
+  const nextIndex = () => String(++sectionNumber).padStart(2, "0");
   const c = settings.company;
 
   // Vitrine : jamais une fiche incomplète (sans photo, sans description, nom vague ou prix douteux).
@@ -96,9 +102,15 @@ export default async function HomePage() {
   const focus =
     products.find((p) => p.id === settings.storefront.focusProductId) ??
     featuredSelection[featuredSelection.length - 1];
-  // Tuiles d'univers : catégories mises en avant si le Comptoir en a choisi, sinon toutes celles qui ont des produits.
-  const withProducts = categories.filter((cat) => cat.product_count > 0);
-  const univers = withProducts.some((c) => c.featured) ? withProducts.filter((c) => c.featured) : withProducts;
+  // Univers prioritaires : épinglés au Comptoir, sinon les premiers de la liste qui ont assez d'articles ; les autres restent un clic plus loin.
+  const univers = priorityUnivers(categories);
+  const coverPool = products.map((p) => ({
+    name: p.name,
+    categorySlug: p.categorySlug,
+    images: p.images,
+    ready: ready(p),
+  }));
+  const needs = availableNeeds(categories);
   const waGeneral = whatsappLink(c.whatsapp, "Bonjour GPS, j'ai une question.");
   const heroImage = hero?.images[0];
 
@@ -113,13 +125,13 @@ export default async function HomePage() {
               id="titre-vitrine"
               className="mt-4 font-display text-[56px] leading-[0.88] font-extrabold uppercase sm:text-[72px] xl:text-[96px]"
             >
-              <span className="hero-line block" style={{ animationDelay: "60ms" }}>
+              <span className="hero-line block" style={{ animationDelay: "0ms" }}>
                 La bonne
               </span>
-              <span className="hero-line block" style={{ animationDelay: "160ms" }}>
+              <span className="hero-line block" style={{ animationDelay: "70ms" }}>
                 adresse.
               </span>
-              <span className="hero-line block text-gps-red" style={{ animationDelay: "260ms" }}>
+              <span className="hero-line block text-gps-red" style={{ animationDelay: "140ms" }}>
                 Le bon produit.
               </span>
             </h1>
@@ -209,25 +221,52 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ——— Bandeau défilant ——— */}
+      {/* ——— Bandeau : les univers en un coup d'œil (statique, sans défilement) ——— */}
       {univers.length ? (
-        <div className="marquee border-y border-gps-blue-night bg-gps-blue-night py-4 text-white" aria-hidden="true">
-          <div className="marquee-track">
-            {[0, 1].map((k) => (
-              <span key={k} className="flex shrink-0 items-center">
-                {[...univers.map((u) => u.name), "Transfert d'argent", "Le service qui rassure"].map((t) => (
-                  <span
-                    key={t}
-                    className="flex items-center font-display text-2xl font-extrabold uppercase md:text-3xl"
-                  >
-                    <span className="px-6">{t}</span>
-                    <span className="h-2 w-2 rounded-full bg-gps-red" />
-                  </span>
-                ))}
-              </span>
+        <div className="border-y border-gps-blue-night bg-gps-blue-night py-3 text-white">
+          <ul className="container-site flex flex-wrap items-center gap-x-5 gap-y-1" aria-label="Univers principaux">
+            {[...univers.map((u) => u.name), "Transfert d'argent"].map((t) => (
+              <li key={t} className="flex items-center gap-5 font-display text-lg font-extrabold uppercase md:text-xl">
+                {t}
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-gps-red" />
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
+      ) : null}
+
+      {/* ——— 02 Sélection GPS ——— */}
+      {selection.length ? (
+        <section aria-labelledby="titre-selection" className="bg-card">
+          <div className="container-site py-16 md:py-24">
+            <SectionHead
+              index={nextIndex()}
+              eyebrow={newest ? "Nouveautés" : "Sélection GPS"}
+              title={newest ? "Fraîchement arrivés" : "Choisis au comptoir"}
+            >
+              <Link href="/boutique" className="btn btn-outline btn-sm min-h-11">
+                Toute la boutique <IconArrowRight size={16} />
+              </Link>
+            </SectionHead>
+            <h2 id="titre-selection" className="sr-only">
+              {newest ? "Nouveautés" : "Sélection GPS"}
+            </h2>
+            <div data-reveal className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-12">
+              <div className="col-span-2 lg:col-span-6 lg:row-span-2">
+                <ProductCard
+                  product={selection[0]}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  imageClassName="aspect-[4/3] lg:aspect-[4/4.3]"
+                />
+              </div>
+              {selection.slice(1, 5).map((p) => (
+                <div key={p.id} className="lg:col-span-3">
+                  <ProductCard product={p} sizes="(max-width: 1024px) 50vw, 25vw" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       ) : null}
 
       {/* ——— 01 Univers ——— */}
@@ -235,21 +274,24 @@ export default async function HomePage() {
         <section aria-labelledby="titre-univers" className="border-t border-line">
           <div className="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
             <div className="lg:col-span-4">
-              <SectionHead index="01" eyebrow="Univers" title="Tout sous un même toit" />
+              <SectionHead index={nextIndex()} eyebrow="Univers" title="Tout sous un même toit" />
               <p className="mt-4 max-w-sm text-ink-soft">
                 Du téléphone à la paire de baskets : choisissez un univers pour voir les articles disponibles.
               </p>
+              <Link href="/categories" className="btn btn-outline btn-sm mt-5 min-h-11">
+                Tous les univers <IconArrowRight size={16} />
+              </Link>
             </div>
             <h2 id="titre-univers" className="sr-only">
               Univers produits
             </h2>
             <ul className="univers-grid grid grid-cols-2 gap-3 md:gap-4 lg:col-span-8 lg:grid-cols-3">
               {univers.map((cat, i) => {
-                const sample = products.find((p) => p.categorySlug === cat.slug);
-                const img = cat.image_url ? { url: cat.image_url } : sample?.images[0];
-                const first = i === 0;
-                // Nombre impair de tuiles après la grande : la dernière prend toute la ligne sur mobile.
-                const wide = !first && i === univers.length - 1 && univers.length % 2 === 0;
+                const cover = categoryCover(cat, coverPool);
+                const img = cover ? { url: cover } : undefined;
+                // Nombre impair d'univers : la première tuile est grande, les autres vont par deux. Nombre pair : grille régulière.
+                const first = univers.length % 2 === 1 && univers.length > 1 && i === 0;
+                const wide = false;
                 return (
                   <li
                     key={cat.id}
@@ -305,35 +347,54 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {/* ——— 02 Sélection GPS ——— */}
-      {selection.length ? (
-        <section aria-labelledby="titre-selection" className="bg-card">
-          <div className="container-site py-16 md:py-24">
-            <SectionHead
-              index="02"
-              eyebrow={newest ? "Nouveautés" : "Sélection GPS"}
-              title={newest ? "Fraîchement arrivés" : "Choisis au comptoir"}
-            >
-              <Link href="/boutique" className="btn btn-outline btn-sm min-h-11">
-                Toute la boutique <IconArrowRight size={16} />
-              </Link>
-            </SectionHead>
-            <h2 id="titre-selection" className="sr-only">
-              {newest ? "Nouveautés" : "Sélection GPS"}
+      {/* ——— Par besoin ——— */}
+      {needs.length ? (
+        <section aria-labelledby="titre-besoins" className="border-t border-line bg-card">
+          <div className="container-site py-14 md:py-20">
+            <SectionHead index={nextIndex()} eyebrow="Par besoin" title="Qu'est-ce qu'il vous faut ?" />
+            <h2 id="titre-besoins" className="sr-only">
+              Choisir par besoin
             </h2>
-            <div data-reveal className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-12">
-              <div className="col-span-2 lg:col-span-6 lg:row-span-2">
-                <ProductCard
-                  product={selection[0]}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  imageClassName="aspect-[4/3] lg:aspect-[4/4.3]"
-                />
-              </div>
-              {selection.slice(1, 5).map((p) => (
-                <div key={p.id} className="lg:col-span-3">
-                  <ProductCard product={p} sizes="(max-width: 1024px) 50vw, 25vw" />
-                </div>
+            <ul data-reveal className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {needs.map((n) => (
+                <li key={n.key}>
+                  <Link
+                    href={`/categories/${n.slug}`}
+                    className="need-tile group flex min-h-[112px] flex-col justify-between rounded-[18px] border border-line bg-paper p-5 transition-colors duration-150 hover:border-gps-blue"
+                  >
+                    <span className="font-display text-[28px] leading-none font-extrabold uppercase">{n.label}</span>
+                    <span className="mt-4 flex items-center justify-between gap-3 text-[14px] text-ink-soft">
+                      <span>
+                        {n.hint} · <span className="tabular">{n.count}</span> article{n.count > 1 ? "s" : ""}
+                      </span>
+                      <IconArrowRight
+                        size={18}
+                        className="shrink-0 text-gps-red transition-transform duration-150 group-hover:translate-x-1"
+                      />
+                    </span>
+                  </Link>
+                </li>
               ))}
+            </ul>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ——— Démonstration produit : seulement avec une vraie vidéo lisible ——— */}
+      {video ? (
+        <section aria-labelledby="titre-video" className="border-t border-line">
+          <div className="container-site grid gap-8 py-14 md:py-20 lg:grid-cols-12 lg:items-center lg:gap-14">
+            <div className="lg:col-span-5">
+              <SectionHead index={nextIndex()} eyebrow="En vidéo" title="Voir le produit" />
+              <h2 id="titre-video" className="sr-only">
+                Démonstration vidéo
+              </h2>
+              <p className="mt-4 max-w-sm text-ink-soft">
+                Une courte démonstration, lancée seulement quand vous le décidez.
+              </p>
+            </div>
+            <div className="lg:col-span-7">
+              <VideoDemo url={video.url} poster={video.poster} name={video.name} slug={video.slug} />
             </div>
           </div>
         </section>
@@ -365,7 +426,7 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="lg:order-1 lg:col-span-5">
-              <SectionHead index="03" eyebrow="Focus" title={focus.name} />
+              <SectionHead index={nextIndex()} eyebrow="Focus" title={focus.name} />
               <h2 id="titre-focus" className="sr-only">
                 Focus sur {focus.name}
               </h2>
@@ -412,7 +473,7 @@ export default async function HomePage() {
         <div data-reveal className="relative container-site grid gap-10 py-16 md:py-24 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <p className="eyebrow flex items-center gap-3 text-white/80">
-              <span className="text-white tabular">04</span>
+              <span className="text-white tabular">{nextIndex()}</span>
               <span className="h-px w-8 bg-gps-red" aria-hidden="true" />
               Comptoir services
             </p>
@@ -482,7 +543,7 @@ export default async function HomePage() {
             )}
           </div>
           <div className="lg:col-span-5">
-            <SectionHead index="05" eyebrow="À propos" title="Passez au comptoir" />
+            <SectionHead index={nextIndex()} eyebrow="À propos" title="Passez au comptoir" />
             <h2 id="titre-boutique" className="sr-only">
               La boutique physique
             </h2>
@@ -494,13 +555,21 @@ export default async function HomePage() {
               Découvrir GPS
             </Link>
           </div>
+          {stores.length ? (
+            <div id="points-de-vente" className="scroll-mt-24 lg:col-span-12">
+              <h3 className="mb-3 font-display text-2xl font-bold uppercase">
+                {stores.length > 1 ? `Nos ${stores.length} points de vente` : "Notre point de vente"}
+              </h3>
+              <StoreList stores={stores} />
+            </div>
+          ) : null}
         </div>
       </section>
 
       {/* ——— 06 Infos pratiques ——— */}
       <section aria-labelledby="titre-infos" className="border-t border-line bg-card">
         <div className="container-site py-16 md:py-20">
-          <SectionHead index="06" eyebrow="Pratique" title="Commander chez GPS" />
+          <SectionHead index={nextIndex()} eyebrow="Pratique" title="Commander chez GPS" />
           <h2 id="titre-infos" className="sr-only">
             Informations pratiques
           </h2>
@@ -562,11 +631,6 @@ export default async function HomePage() {
                   );
                 })}
             </dl>
-            {stores.length ? (
-              <div className="lg:col-span-12">
-                <StoreList stores={stores} />
-              </div>
-            ) : null}
           </div>
         </div>
       </section>
