@@ -122,12 +122,12 @@ export default async function AboutPage() {
                   <span className="pdp-icon h-12! w-12!">
                     <Icon size={22} />
                   </span>
+                  {/* Numéro décoratif dessiné en CSS : il n'est ni lu ni compté comme texte à contraster. */}
                   <span
                     aria-hidden="true"
-                    className="font-display text-[44px] leading-none font-extrabold text-ink/10 tabular"
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                    data-n={String(i + 1).padStart(2, "0")}
+                    className="font-display text-[44px] leading-none font-extrabold text-ink/10 tabular before:content-[attr(data-n)]"
+                  />
                 </span>
                 <span className="mt-6 block font-display text-[28px] leading-none font-bold uppercase">{title}</span>
                 <span className="mt-3 block text-[15.5px] leading-relaxed text-ink-soft">{text}</span>

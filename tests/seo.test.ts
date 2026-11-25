@@ -69,3 +69,13 @@ describe("données structurées", () => {
     expect(ld["@type"]).toBe("Store");
   });
 });
+
+describe("téléphone des données structurées", () => {
+  it("format international, jamais un numéro trop court", async () => {
+    const { internationalPhone } = await import("@/lib/seo");
+    expect(internationalPhone("221771760836")).toBe("+221771760836");
+    expect(internationalPhone("+221 77 176 08 36")).toBe("+221771760836");
+    expect(internationalPhone("123")).toBeUndefined();
+    expect(internationalPhone("")).toBeUndefined();
+  });
+});
