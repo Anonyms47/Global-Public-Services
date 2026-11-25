@@ -29,7 +29,7 @@ export function Header({
       </a>
       <div className="container-site flex h-16 items-center gap-3 md:h-[84px] md:gap-6">
         <MobileMenu nav={mainNav} company={company} />
-        <Link href="/" className="shrink-0" aria-label="GPS — accueil">
+        <Link href="/" className="flex h-11 shrink-0 items-center" aria-label="GPS — accueil">
           <Logo variant="mark" className="h-8 w-auto md:hidden" priority />
           <Logo variant="full" className="hidden h-[60px] w-auto md:block" priority />
         </Link>

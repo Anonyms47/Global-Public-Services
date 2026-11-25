@@ -28,7 +28,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
     <>
       <div className="container-site pt-8 pb-6 md:pt-12">
         <nav aria-label="Fil d'Ariane" className="text-[14px] text-ink-mute">
-          <Link href="/categories" className="hover:underline">
+          <Link href="/categories" className="inline-flex min-h-11 items-center hover:underline">
             Univers
           </Link>{" "}
           / <span aria-current="page">{cat.name}</span>

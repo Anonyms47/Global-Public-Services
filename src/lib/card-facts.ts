@@ -53,7 +53,7 @@ export function cardFacts(specs: CardSpec[], max = 3): string[] {
 }
 
 /** Fiche publiée depuis moins de `days` jours : pastille « Nouveau ». */
-export function isNew(createdAt: Date | string, days = 21, now = Date.now()) {
+export function isNew(createdAt: Date | string, days = 14, now = Date.now()) {
   const t = new Date(createdAt).getTime();
   return Number.isFinite(t) && now - t >= 0 && now - t < days * 86_400_000;
 }

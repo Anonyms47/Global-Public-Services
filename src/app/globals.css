@@ -208,7 +208,7 @@
     box-shadow: none;
   }
   .btn-sm {
-    min-height: 40px;
+    min-height: 44px;
     padding: 0 16px;
     font-size: 14px;
   }
@@ -1016,7 +1016,7 @@
 .univers-count {
   border-radius: 999px;
   padding: 5px 10px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 700;
   line-height: 1;
   color: #fff;
@@ -1159,7 +1159,7 @@
 .card-pill {
   border-radius: 999px;
   padding: 4px 10px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--color-ink);
@@ -1403,7 +1403,7 @@
 }
 .footer-link {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 44px;
   align-items: center;
   padding-block: 2px;
   background: linear-gradient(var(--color-gps-red), var(--color-gps-red)) 0 100% / 0 2px no-repeat;
