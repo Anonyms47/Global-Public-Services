@@ -1191,6 +1191,12 @@
   padding: 3px 9px;
   white-space: nowrap;
 }
+/* Sur une carte à deux colonnes, une pastille longue se coupe (…) au lieu d'élargir la grille. */
+.product-card .card-facts li {
+  max-width: min(14rem, calc(50vw - 2.5rem));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 @media (prefers-reduced-motion: no-preference) {
   .product-card {
     transition: transform 350ms var(--ease-out-gps);
