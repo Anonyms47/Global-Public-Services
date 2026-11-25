@@ -1,3 +1,4 @@
+import { isUncertain } from "./product-kit";
 /**
  * Faits clés affichés sur une carte produit : 2 ou 3 caractéristiques courtes tirées de la fiche.
  * Fonction pure, sans invention : on ne reprend que des valeurs déjà saisies ou sourcées.
@@ -35,13 +36,44 @@ function shorten(value: string) {
   return first.length > 24 ? `${first.slice(0, 23).trimEnd()}…` : first;
 }
 
+const SPACE = /[\s\u00a0\u202f]+/g;
+const tidy = (s: string) => s.replace(SPACE, " ").trim();
+
+/**
+ * Valeur courte d'une caractéristique pour une carte : seulement ce qui est écrit dans la valeur saisie
+ * (taille d'écran et fréquence, capacité, puissance), jamais une donnée ajoutée.
+ */
+export function shortFact(label: string, value: string): string {
+  const v = tidy(value);
+  const key = norm(label);
+  if (key === "ecran") {
+    const size = v.match(/(\d+(?:[.,]\d+)?)\s*(?:pouces?|po\b|"|″|inch)/i);
+    const hz = v.match(/(\d{2,3})\s*Hz/i);
+    if (size) return `${size[1].replace(".", ",")} pouces${hz ? ` · ${hz[1]} Hz` : ""}`;
+  }
+  if (key === "batterie" || key === "capacite") {
+    const mah = v.match(/\d[\d .,]*\s*mAh/i);
+    if (mah) return tidy(mah[0]).replace(/\s*mah$/i, " mAh");
+  }
+  if (key === "puissance maximale" || key === "puissance") {
+    const w = v.match(/(\d+(?:[.,]\d+)?)\s*W\b/i);
+    if (w) return `${w[1].replace(".", ",")} W`;
+  }
+  if (key === "stockage" || key === "memoire") {
+    const g = v.match(/\d+\s*(?:Go|To|Mo)\b/i);
+    if (g) return tidy(g[0]);
+  }
+  return shorten(v);
+}
+
 export function cardFacts(specs: CardSpec[], max = 3): string[] {
-  const usable = specs.filter((s) => !s.private && s.value.trim() && s.label.trim());
+  // Une valeur « à relever », « à confirmer »… n'est jamais montrée sur une carte.
+  const usable = specs.filter((s) => !s.private && s.value.trim() && s.label.trim() && !isUncertain(s.value));
   const out: string[] = [];
   for (const key of PRIORITY) {
     const hit = usable.find((s) => norm(s.label) === norm(key));
     if (!hit) continue;
-    const v = shorten(`${hit.value}${hit.unit ? ` ${hit.unit}` : ""}`);
+    const v = shortFact(hit.label, `${hit.value}${hit.unit ? ` ${hit.unit}` : ""}`);
     if (v && !out.includes(v)) out.push(v);
     if (out.length >= max) break;
   }

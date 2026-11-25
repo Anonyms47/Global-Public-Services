@@ -79,3 +79,73 @@ describe("téléphone des données structurées", () => {
     expect(internationalPhone("")).toBeUndefined();
   });
 });
+
+describe("données structurées : adresse et variantes", () => {
+  it("« Dakar » seul n'est pas une adresse de rue", async () => {
+    const { isStreetAddress, localBusinessJsonLd } = await import("@/lib/seo");
+    expect(isStreetAddress("Dakar")).toBe(false);
+    expect(isStreetAddress("")).toBe(false);
+    expect(isStreetAddress("12 rue Carnot")).toBe(true);
+    expect(isStreetAddress("Avenue Cheikh Anta Diop")).toBe(true);
+    expect(isStreetAddress("Cité Keur Gorgui")).toBe(true);
+    const ld = localBusinessJsonLd({
+      company: { name: "GPS", phone: "", email: "", address: "Dakar", city: "Petit Mbao", mapsUrl: "" },
+      stores: [],
+      url: "https://x.test",
+      logo: "https://x.test/l.png",
+    });
+    const a = ld.address as { streetAddress?: string; addressLocality?: string; addressRegion?: string };
+    expect(a.streetAddress).toBeUndefined();
+    expect(a.addressLocality).toBe("Petit Mbao");
+    expect(a.addressRegion).toBe("Dakar");
+  });
+
+  const abs = (p: string) => `https://x.test${p}`;
+  const base = {
+    name: "Coque Aster 9",
+    slug: "coque-aster-9",
+    brand: "",
+    description: "Coque de protection.",
+    condition: "Neuf",
+    axes: ["Type de coque", "Couleur"],
+  };
+  it("une seule variante : Product simple", async () => {
+    const { productJsonLd } = await import("@/lib/seo");
+    const ld = productJsonLd(
+      {
+        ...base,
+        axes: [],
+        images: [{ url: "/m/1", alt: "" }],
+        variants: [{ sku: "A", options: {}, price: 1000, available: 2 }],
+      },
+      abs,
+    );
+    expect(ld["@type"]).toBe("Product");
+  });
+  it("plusieurs variantes : ProductGroup, chaque variante avec sa photo, jamais celle d'une autre", async () => {
+    const { productJsonLd } = await import("@/lib/seo");
+    const givree = { url: "/m/givree", alt: "", options: { "Type de coque": "Givrée", Couleur: "Gris" } };
+    const ld = productJsonLd(
+      {
+        ...base,
+        images: [givree],
+        variants: [
+          { sku: "G", options: { "Type de coque": "Givrée", Couleur: "Gris" }, price: 5000, available: 3 },
+          { sku: "T", options: { "Type de coque": "Transparente", Couleur: "Transparent" }, price: 1500, available: 0 },
+        ],
+      },
+      abs,
+    ) as unknown as {
+      "@type": string;
+      variesBy: string[];
+      hasVariant: { sku: string; image?: string[]; color?: string; offers: { availability: string; price: number } }[];
+    };
+    expect(ld["@type"]).toBe("ProductGroup");
+    expect(ld.variesBy).toEqual(["https://schema.org/color"]);
+    expect(ld.hasVariant[0].image).toEqual(["https://x.test/m/givree"]);
+    expect(ld.hasVariant[1].image).toBeUndefined();
+    expect(ld.hasVariant[1].color).toBe("Transparent");
+    expect(ld.hasVariant[1].offers.availability).toBe("https://schema.org/OutOfStock");
+    expect(ld.hasVariant[0].offers.price).toBe(5000);
+  });
+});

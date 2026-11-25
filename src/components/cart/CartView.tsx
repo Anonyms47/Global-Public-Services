@@ -914,8 +914,8 @@ export function CartView({
                       data-testid="apres-paiement"
                     >
                       Une fois le paiement fait, revenez sur cette page puis envoyez le message ci-dessous sur WhatsApp
-                      :<strong> joignez-y la capture d&apos;écran du paiement</strong> pour que GPS confirme votre
-                      commande.
+                      :<strong> joignez-y la capture d&apos;écran du paiement</strong>. GPS vérifie la réception du
+                      paiement avant de confirmer votre commande.
                     </p>
                   ) : null}
                 </div>
