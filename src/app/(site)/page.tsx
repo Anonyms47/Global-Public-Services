@@ -310,7 +310,7 @@ export default async function HomePage() {
               eyebrow={newest ? "Nouveautés" : "Sélection GPS"}
               title={newest ? "Fraîchement arrivés" : "Choisis au comptoir"}
             >
-              <Link href="/boutique" className="btn btn-outline btn-sm">
+              <Link href="/boutique" className="btn btn-outline btn-sm min-h-11">
                 Toute la boutique <IconArrowRight size={16} />
               </Link>
             </SectionHead>
