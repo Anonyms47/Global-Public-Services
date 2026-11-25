@@ -11,6 +11,7 @@ import { IconInfo, IconStore, IconSwap, IconWhatsApp, IconCheck } from "@/compon
 
 export const metadata: Metadata = {
   title: "Transfert d'argent",
+  alternates: { canonical: "/services" },
   description: "Les services de transfert d'argent au comptoir GPS.",
 };
 

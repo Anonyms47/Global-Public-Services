@@ -7,6 +7,7 @@ import { fcfa } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Univers",
+  alternates: { canonical: "/categories" },
   description: "Les univers produits de GPS.",
 };
 

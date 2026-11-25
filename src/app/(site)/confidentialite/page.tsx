@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { LegalDoc } from "@/components/site/LegalDoc";
 import { siteContext } from "@/server/context";
 
-export const metadata: Metadata = { title: "Confidentialité" };
+export const metadata: Metadata = {
+  title: "Confidentialité",
+  alternates: { canonical: "/confidentialite" },
+};
 
 export default async function PrivacyPage() {
   const c = (await siteContext()).settings.company;

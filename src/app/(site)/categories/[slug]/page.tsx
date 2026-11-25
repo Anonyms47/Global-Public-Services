@@ -11,8 +11,11 @@ export async function generateMetadata({ params }: PageProps<"/categories/[slug]
   const cat = await categoryBySlug(db, (await params).slug);
   if (!cat) return { title: "Univers introuvable" };
   return {
-    title: cat.name,
-    description: cat.description || `${cat.name} chez GPS.`,
+    title: `${cat.name} : tous les articles`,
+    description:
+      cat.description && cat.description.length >= 70
+        ? cat.description
+        : `${cat.name} chez GPS : photos, caractéristiques et prix en FCFA. Choisissez en ligne, GPS confirme sur WhatsApp.`,
     alternates: { canonical: `/categories/${cat.slug}` },
   };
 }
