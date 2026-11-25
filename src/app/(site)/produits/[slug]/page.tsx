@@ -91,14 +91,17 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           <nav aria-label="Fil d'Ariane" className="min-w-0 text-[14px] text-ink-mute">
             <ol className="flex min-w-0 items-center gap-1">
               <li className="shrink-0">
-                <Link href="/boutique" className="hover:text-ink hover:underline">
+                <Link href="/boutique" className="inline-flex min-h-11 items-center hover:text-ink hover:underline">
                   Boutique
                 </Link>
               </li>
               {product.categoryName ? (
                 <li className="flex shrink-0 items-center gap-1">
                   <IconChevronRight size={14} aria-hidden="true" />
-                  <Link href={`/categories/${product.categorySlug}`} className="hover:text-ink hover:underline">
+                  <Link
+                    href={`/categories/${product.categorySlug}`}
+                    className="inline-flex min-h-11 items-center hover:text-ink hover:underline"
+                  >
                     {product.categoryName}
                   </Link>
                 </li>

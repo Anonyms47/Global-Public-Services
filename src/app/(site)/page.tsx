@@ -153,7 +153,7 @@ export default async function HomePage() {
           {hero ? (
             <div className="hero-visual relative order-2 lg:col-span-7">
               <Ribbon
-                className="pointer-events-none absolute bottom-16 -left-[12%] z-10 h-[40%] w-[124%] md:-bottom-6"
+                className="pointer-events-none absolute bottom-16 -left-[12%] h-[40%] w-[124%] md:-bottom-6 md:z-10"
                 width={7}
               />
               <Link

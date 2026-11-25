@@ -192,12 +192,17 @@ export default async function ContactPage() {
               return (
                 <li key={q}>
                   {link ? (
-                    <a href={link} target="_blank" rel="noopener noreferrer" className="rail-pill pl-4!">
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rail-pill max-w-full pl-4! text-left whitespace-normal!"
+                    >
                       <IconWhatsApp size={18} className="text-wa-ink" />
                       {label.charAt(0).toUpperCase() + label.slice(1)}
                     </a>
                   ) : (
-                    <span className="rail-pill pl-4! text-ink-mute">
+                    <span className="rail-pill max-w-full pl-4! text-left whitespace-normal! text-ink-mute">
                       <IconWhatsApp size={18} />
                       {label.charAt(0).toUpperCase() + label.slice(1)}
                     </span>
@@ -214,7 +219,10 @@ export default async function ContactPage() {
           ) : null}
           <p className="text-[14px] text-ink-mute lg:col-span-8 lg:col-start-5">
             Vous cherchez une réponse rapide ?{" "}
-            <Link href="/faq" className="font-semibold text-gps-blue underline-offset-2 hover:underline">
+            <Link
+              href="/faq"
+              className="inline-block py-3 font-semibold text-gps-blue underline-offset-2 hover:underline"
+            >
               Consultez les questions fréquentes
             </Link>
             .

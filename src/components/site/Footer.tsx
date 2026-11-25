@@ -68,7 +68,7 @@ export function Footer({
                       {i ? ", " : ""}
                       <Link
                         href={`/categories/${cat.slug}`}
-                        className="inline-block py-1.5 underline decoration-ink/25 underline-offset-4 hover:decoration-gps-red"
+                        className="inline-block py-2 underline decoration-ink/25 underline-offset-4 hover:decoration-gps-red"
                       >
                         {cat.name}
                       </Link>

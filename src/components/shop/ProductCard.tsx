@@ -39,13 +39,13 @@ export function ProductCard({
   const image = product.images[0];
   const second = product.images[1];
   const a = availabilityText(product);
-  const facts = cardFacts(product.specs);
+  const facts = cardFacts(product.specs, 2);
   const fresh = isNew(product.createdAt) && !product.promo;
   const options = product.variants.filter((v) => v.available !== 0).length;
   const href = `/produits/${product.slug}${from ? `?depuis=${encodeURIComponent(from)}` : ""}`;
   return (
     <article
-      className={`product-card group relative ${layout === "wide" ? "grid gap-4 sm:grid-cols-2 sm:items-end" : ""}`}
+      className={`product-card group relative ${layout === "wide" ? "grid gap-4 sm:grid-cols-2 sm:items-end" : "flex flex-col"}`}
     >
       <div className="product-card-media relative overflow-hidden rounded-[18px] bg-paper-deep">
         <ProductImage
@@ -79,9 +79,9 @@ export function ProductCard({
           <IconArrowRight size={17} />
         </span>
       </div>
-      <div className={layout === "wide" ? "" : "mt-3 px-0.5"}>
+      <div className={layout === "wide" ? "" : "mt-3 flex flex-1 flex-col px-0.5"}>
         {product.brand || product.categoryName ? (
-          <p className="text-[11.5px] font-bold tracking-[0.08em] text-ink-mute uppercase">
+          <p className="text-[12px] font-bold tracking-[0.08em] text-ink-mute uppercase">
             {product.brand || product.categoryName}
             {product.brand && product.categoryName ? <span className="sr-only">, {product.categoryName}</span> : null}
           </p>
@@ -103,7 +103,7 @@ export function ProductCard({
             ))}
           </ul>
         ) : null}
-        <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+        <div className="mt-auto flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 pt-1.5">
           <Price
             price={product.minPrice}
             basePrice={product.promo ? product.minBasePrice : undefined}
