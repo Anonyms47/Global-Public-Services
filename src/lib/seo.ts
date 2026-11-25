@@ -1,5 +1,6 @@
 import { parseDescription } from "./description";
 import { DAYS, type StoreHours } from "./stores";
+import { mediaForSelection, type VariantMedia } from "./variant-media";
 
 /** Texte brut d'une fiche pour les moteurs de recherche : sans puces, sans titres de listes, sans promesse de stock. */
 export function plainDescription(description: string): string {
@@ -67,6 +68,18 @@ export function openingHoursSpec(h: StoreHours) {
   return specs.length ? specs : undefined;
 }
 
+/** Adresse précise : un numéro ou un mot de voirie (rue, avenue, cité…). Un nom de ville ou de région seul, non. */
+export function isStreetAddress(address: string): boolean {
+  const a = address.trim();
+  if (!a) return false;
+  return (
+    /\d/.test(a) ||
+    /\b(rue|avenue|av\.?|route|boulevard|bd|cite|villa|lot|immeuble|bp|allee|impasse|corniche|marche|quartier|zone|parcelle|place)\b/i.test(
+      a.normalize("NFD").replace(/[̀-ͯ]/g, ""),
+    )
+  );
+}
+
 export interface LocalBusinessInput {
   company: { name: string; phone: string; email: string; address: string; city: string; mapsUrl: string };
   stores: { address: string; district: string; city: string; phone: string; hours: StoreHours; maps_url: string }[];
@@ -86,15 +99,19 @@ export function internationalPhone(raw: string): string | undefined {
 /** Données « commerce local » pour Google, à partir de la boutique principale ; champs vides omis. */
 export function localBusinessJsonLd({ company, stores, url, logo }: LocalBusinessInput) {
   const main = stores[0];
-  const street = main?.address || company.address;
+  const rawStreet = main?.address || company.address;
+  // « Dakar » seul est une région, pas une rue : on ne le publie pas comme adresse postale précise.
+  const street = isStreetAddress(rawStreet) ? rawStreet : "";
+  const region = !street && rawStreet ? rawStreet : "";
   const city = main?.city || company.city;
   const phone = main?.phone || company.phone;
   const address =
-    street || city
+    street || city || region
       ? {
           "@type": "PostalAddress",
           streetAddress: street || undefined,
-          addressLocality: city || undefined,
+          addressLocality: city || region || undefined,
+          addressRegion: city && region ? region : undefined,
           addressCountry: "SN",
         }
       : undefined;
@@ -140,4 +157,81 @@ export function breadcrumbJsonLd(items: { name: string; url: string }[]) {
 /** JSON-LD sûr à insérer dans une balise script. */
 export function jsonLdString(data: unknown) {
   return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+const SCHEMA_VARIES: Record<string, string> = {
+  Couleur: "https://schema.org/color",
+  Coloris: "https://schema.org/color",
+  Pointure: "https://schema.org/size",
+  Taille: "https://schema.org/size",
+};
+
+export interface ProductLdInput {
+  name: string;
+  slug: string;
+  brand: string;
+  description: string;
+  condition: string | null;
+  axes: string[];
+  images: VariantMedia[];
+  variants: { sku: string; options: Record<string, string>; price: number; available: number }[];
+}
+
+/**
+ * Données Product, ou ProductGroup quand la fiche a plusieurs variantes. Chaque variante n'a que sa propre photo
+ * (ou une photo commune) : jamais celle d'une autre variante.
+ */
+export function productJsonLd(p: ProductLdInput, abs: (path: string) => string) {
+  const url = abs(`/produits/${p.slug}`);
+  const desc = plainDescription(p.description) || undefined;
+  const brand = p.brand ? { "@type": "Brand", name: p.brand } : undefined;
+  const condition = schemaCondition(p.condition);
+  const offer = (v: ProductLdInput["variants"][number]) => ({
+    "@type": "Offer",
+    url,
+    itemCondition: condition,
+    sku: v.sku,
+    price: v.price,
+    priceCurrency: "XOF",
+    availability: v.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+  });
+  const visual = p.axes.find((a) => SCHEMA_VARIES[a] === "https://schema.org/color");
+  if (p.variants.length <= 1) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: p.name,
+      brand,
+      description: desc,
+      image: p.images.map((i) => abs(i.url)),
+      offers: p.variants.map(offer),
+    };
+  }
+  const varies = p.axes.map((a) => SCHEMA_VARIES[a]).filter((x): x is string => !!x);
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProductGroup",
+    name: p.name,
+    brand,
+    description: desc,
+    url,
+    productGroupID: p.slug,
+    variesBy: varies.length ? [...new Set(varies)] : undefined,
+    hasVariant: p.variants.map((v) => {
+      const shown = mediaForSelection(p.images, v.options, p.axes, visual);
+      const own = shown.scope === "missing" || shown.scope === "partial" ? [] : shown.items;
+      const label = p.axes
+        .map((a) => v.options[a])
+        .filter(Boolean)
+        .join(", ");
+      return {
+        "@type": "Product",
+        name: label ? `${p.name} — ${label}` : p.name,
+        sku: v.sku,
+        color: visual ? v.options[visual] : undefined,
+        image: own.length ? own.map((i) => abs(i.url)) : undefined,
+        offers: offer(v),
+      };
+    }),
+  };
 }

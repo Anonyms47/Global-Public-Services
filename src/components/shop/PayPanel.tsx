@@ -157,7 +157,7 @@ export function PayPanel({
           </h2>
           <p className="mt-1 text-[14px] text-ink-soft">
             Faites une <strong>capture d&apos;écran</strong> de la confirmation de paiement et envoyez-la à GPS sur
-            WhatsApp : c&apos;est ce qui permet de confirmer votre commande.
+            WhatsApp. GPS vérifie la réception du paiement avant de confirmer votre commande.
           </p>
           {declared ? (
             <div className="mt-2 rounded-lg bg-paper p-3" role="status" data-testid="pay-declared">
@@ -165,8 +165,8 @@ export function PayPanel({
                 {state?.message ?? "Paiement déclaré. GPS vérifie la réception et vous confirme sur WhatsApp."}
               </p>
               <p className="mt-1">
-                <strong>Dernière étape :</strong> envoyez à GPS une capture d&apos;écran de votre paiement sur WhatsApp
-                pour confirmation de votre commande.
+                <strong>Dernière étape :</strong> envoyez à GPS une capture d&apos;écran de votre paiement sur WhatsApp.
+                GPS vérifie ensuite la réception avant de confirmer votre commande.
               </p>
               {whatsapp ? (
                 <a

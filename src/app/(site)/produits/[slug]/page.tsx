@@ -14,14 +14,7 @@ import { ProductDescription } from "@/components/shop/ProductDescription";
 import { IconArrowRight, IconChevronRight, IconStore, IconTruck, IconInfo, IconCheck } from "@/components/ui/icons";
 import { TO_CONFIRM } from "@/lib/whatsapp";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
-import {
-  breadcrumbJsonLd,
-  jsonLdString,
-  plainDescription,
-  productMetaDescription,
-  productTitle,
-  schemaCondition,
-} from "@/lib/seo";
+import { breadcrumbJsonLd, jsonLdString, productJsonLd, productMetaDescription, productTitle } from "@/lib/seo";
 
 export async function generateMetadata({ params }: PageProps<"/produits/[slug]">): Promise<Metadata> {
   const { db, indexable } = await siteContext();
@@ -66,23 +59,19 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   const hasDetail = hasDescription || product.specs.length > 0;
 
   const jsonLd = indexable
-    ? {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        name: product.name,
-        brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
-        description: plainDescription(product.description) || undefined,
-        image: product.images.map((i) => siteUrl(i.url)),
-        offers: product.variants.map((v) => ({
-          "@type": "Offer",
-          url: siteUrl(`/produits/${product.slug}`),
-          itemCondition: schemaCondition(product.condition),
-          sku: v.sku,
-          price: v.price,
-          priceCurrency: "XOF",
-          availability: v.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-        })),
-      }
+    ? productJsonLd(
+        {
+          name: product.name,
+          slug: product.slug,
+          brand: product.brand,
+          description: product.description,
+          condition: product.condition,
+          axes: product.axes,
+          images: product.images,
+          variants: product.variants,
+        },
+        siteUrl,
+      )
     : null;
 
   return (
