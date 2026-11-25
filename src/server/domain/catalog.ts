@@ -336,6 +336,8 @@ export interface ShopQuery {
   promo?: boolean;
   etat?: string;
   tri?: SortKey;
+  /** Nombre d'articles affichés (« Voir plus »), jamais pris en compte par les filtres. */
+  n?: number;
 }
 
 export const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
