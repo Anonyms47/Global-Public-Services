@@ -68,7 +68,7 @@ function stem(t: string) {
 
 const isNumber = (t: string) => /^\d+$/.test(t);
 
-function sameWord(q: string, f: string) {
+export function sameWord(q: string, f: string) {
   if (q === f) return true;
   if (isNumber(q) || isNumber(f)) return false;
   const qs = stem(q);

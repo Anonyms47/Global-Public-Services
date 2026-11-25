@@ -927,12 +927,12 @@
 
 /* ——— Accueil ——— */
 .hero-line {
-  animation: hero-line 800ms var(--ease-out-gps) both;
+  animation: hero-line 420ms var(--ease-out-gps) both;
 }
 @keyframes hero-line {
   from {
     opacity: 0;
-    transform: translateY(40%);
+    transform: translateY(24%);
     clip-path: inset(0 0 100% 0);
   }
   to {
@@ -942,15 +942,15 @@
   }
 }
 .hero-fade {
-  animation: rise 700ms 420ms var(--ease-out-gps) both;
+  animation: rise 320ms 160ms var(--ease-out-gps) both;
 }
 .hero-visual {
-  animation: hero-visual 1000ms 150ms var(--ease-out-gps) both;
+  animation: hero-visual 450ms 60ms var(--ease-out-gps) both;
 }
 @keyframes hero-visual {
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.98);
+    transform: translateY(14px) scale(0.99);
   }
   to {
     opacity: 1;
@@ -958,29 +958,12 @@
   }
 }
 
-.marquee {
-  overflow: hidden;
-}
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 32s linear infinite;
-}
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
-}
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 .reveal-ready [data-reveal] {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(14px);
   transition:
-    opacity 700ms var(--ease-out-gps),
-    transform 700ms var(--ease-out-gps);
+    opacity 260ms var(--ease-out-gps),
+    transform 260ms var(--ease-out-gps);
 }
 .reveal-ready [data-reveal].is-in {
   opacity: 1;
@@ -988,21 +971,15 @@
 }
 .reveal-ready .steps-flow[data-reveal] > li {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(12px);
   transition:
-    opacity 600ms var(--ease-out-gps),
-    transform 600ms var(--ease-out-gps);
+    opacity 240ms var(--ease-out-gps),
+    transform 240ms var(--ease-out-gps);
 }
 .reveal-ready .steps-flow[data-reveal].is-in > li {
   opacity: 1;
   transform: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-  }
-}
-
 /* ——— Accueil : tuiles univers ——— */
 .univers-shade {
   background: linear-gradient(
@@ -1258,13 +1235,13 @@
   color: var(--color-gps-red-ink);
 }
 .card-in {
-  animation: card-in 600ms var(--ease-out-gps) both;
-  animation-delay: calc(var(--i, 0) * 45ms);
+  animation: card-in 220ms var(--ease-out-gps) both;
+  animation-delay: calc(var(--i, 0) * 25ms);
 }
 @keyframes card-in {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(10px);
   }
 }
 .stock-dot {

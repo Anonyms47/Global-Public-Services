@@ -4,6 +4,7 @@ import { siteContext } from "@/server/context";
 import { listCategories, publishedProducts } from "@/server/domain/catalog";
 import { ProductImage } from "@/components/shop/ProductImage";
 import { fcfa } from "@/lib/format";
+import { categoryCover } from "@/lib/home";
 
 export const metadata: Metadata = {
   title: "Univers",
@@ -33,7 +34,7 @@ export default async function CategoriesPage() {
               <Link href={`/categories/${c.slug}`} className="group block">
                 <div className="overflow-hidden rounded-[6px] bg-paper-deep">
                   <ProductImage
-                    src={c.image_url ?? items[0]?.images[0]?.url}
+                    src={categoryCover(c, products)}
                     alt=""
                     sizes={i < 2 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 33vw"}
                     className={`${i < 2 ? "aspect-[16/10]" : "aspect-[4/5]"} transition-transform duration-300 group-hover:scale-[1.02]`}

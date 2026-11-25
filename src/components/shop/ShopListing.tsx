@@ -7,6 +7,7 @@ import { ProductCard } from "./ProductCard";
 import { ShopControls, ScrollMemory } from "./ShopControls";
 import { shopQueryToParams, shownCount, PAGE_SIZE } from "./query";
 import { IconSearch } from "../ui/icons";
+import { categoryCover } from "@/lib/home";
 
 /** Liste de la boutique, partagée par /boutique et /categories/[slug]. */
 export function ShopListing({
@@ -64,7 +65,8 @@ export function ShopListing({
               </Link>
             </li>
             {univers.map((c) => {
-              const img = all.find((p) => p.categorySlug === c.slug)?.images[0];
+              const cover = categoryCover(c, all);
+              const img = cover ? { url: cover } : undefined;
               return (
                 <li key={c.slug}>
                   <Link
