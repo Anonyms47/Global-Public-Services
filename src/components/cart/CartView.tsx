@@ -588,7 +588,7 @@ export function CartView({
 
           <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-[12px] leading-tight font-semibold text-ink-soft sm:text-[13px]">
             <li className="flex flex-col items-center justify-start gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
-              <IconCheck size={18} className="text-gps-blue" /> <span className="trust-text">Wave ou Orange Money</span>
+              <IconCheck size={18} className="text-gps-blue" /> <span className="trust-text">Paiement mobile</span>
             </li>
             <li className="flex flex-col items-center justify-start gap-1.5 rounded-[12px] bg-gps-blue-soft/60 px-2 py-3">
               <IconWhatsApp className="text-wa" /> <span className="trust-text">Confirmé sur WhatsApp</span>
