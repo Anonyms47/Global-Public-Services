@@ -37,7 +37,8 @@ export default async function PrivacyPage() {
                 téléphone, adresse de livraison et précision. GPS en garde une trace sous une référence, pour retrouver
                 votre demande quand vous le contactez.{" "}
                 <strong>
-                  Si elle ne devient pas une commande, elle est supprimée automatiquement au bout de 48 heures.
+                  Si elle ne devient pas une commande, elle est supprimée lors du nettoyage quotidien qui suit ses 48
+                  heures.
                 </strong>
               </p>
               <p>
@@ -63,9 +64,10 @@ export default async function PrivacyPage() {
           title: "Chez GPS",
           body: (
             <p>
-              Une demande qui ne devient pas une commande est supprimée au bout de 48 heures. Lorsqu&apos;une commande
-              est confirmée, GPS enregistre les informations nécessaires à son suivi (articles, prix, coordonnées,
-              réception, paiements). Pour exercer vos droits, écrivez à GPS sur WhatsApp
+              Une demande qui ne devient pas une commande est supprimée lors du nettoyage quotidien qui suit ses 48
+              heures (un nettoyage a lieu chaque jour : la suppression peut donc intervenir un peu après la 48e heure).
+              Lorsqu&apos;une commande est confirmée, GPS enregistre les informations nécessaires à son suivi (articles,
+              prix, coordonnées, réception, paiements). Pour exercer vos droits, écrivez à GPS sur WhatsApp
               {c.email ? ` ou à ${c.email}` : ""}.
             </p>
           ),

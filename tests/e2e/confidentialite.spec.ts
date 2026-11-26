@@ -37,7 +37,7 @@ test.describe("Demande transmise à GPS : textes et enregistrement", () => {
     await expect(page.getByText(/transmise à GPS/)).toBeVisible();
     await expect(page.getByText(/n.est pas une commande confirmée/)).toBeVisible();
     await expect(page.getByText(/uniquement dans votre navigateur/)).toBeVisible();
-    await expect(page.getByText(/supprimée automatiquement au bout de 48 heures/)).toBeVisible();
+    await expect(page.getByText(/nettoyage quotidien qui suit ses 48 heures/).first()).toBeVisible();
     await expect(page.getByText(/ne sont pas\s+envoyés à GPS tant que/)).toHaveCount(0);
   });
 });
