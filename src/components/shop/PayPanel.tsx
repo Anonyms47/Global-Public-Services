@@ -6,6 +6,7 @@ import { externalPayments, externalUrl, type ExternalMethod } from "@/lib/paymen
 import { fcfa } from "@/lib/format";
 import type { PayView } from "@/server/domain/payment-link";
 import { declarePaymentAction, startWaveAction } from "@/app/(site)/paiement/[token]/actions";
+import { Select } from "@/components/ui/SmartSelect";
 
 export function PayPanel({
   token,
@@ -185,7 +186,7 @@ export function PayPanel({
               <label className="mt-2 block text-[14px] font-bold" htmlFor="pay-method">
                 Moyen utilisé
               </label>
-              <select
+              <Select
                 id="pay-method"
                 className="field mt-1 min-h-11 w-full"
                 value={method ?? ""}
@@ -199,7 +200,7 @@ export function PayPanel({
                       {m.label}
                     </option>
                   ))}
-              </select>
+              </Select>
               <button
                 type="button"
                 onClick={declare}

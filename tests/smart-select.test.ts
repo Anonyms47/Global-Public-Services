@@ -15,3 +15,25 @@ describe("filtre des listes déroulantes", () => {
     expect(filterOptions(list, "xyz")).toEqual([]);
   });
 });
+
+import { createElement as h, Fragment } from "react";
+import { optionsFromChildren } from "@/components/ui/SmartSelect";
+
+describe("lecture des <option> d'un <select>", () => {
+  it("gère fragments, tableaux, groupes, libellés composés et choix désactivés", () => {
+    const children = [
+      h("option", { key: "v", value: "" }, "Choisir…"),
+      h(Fragment, { key: "f" }, h("option", { value: "a" }, "Alpha"), null, false),
+      [h("option", { key: "n", value: 3 }, "Modèle ", 3, " (", 2, ")")],
+      h("optgroup", { key: "g", label: "Groupe" }, h("option", { value: "z", disabled: true }, "Zeta")),
+      h("option", { key: "s" }, "Sans valeur"),
+    ];
+    expect(optionsFromChildren(children)).toEqual([
+      { value: "", label: "Choisir…", disabled: undefined, group: undefined },
+      { value: "a", label: "Alpha", disabled: undefined, group: undefined },
+      { value: "3", label: "Modèle 3 (2)", disabled: undefined, group: undefined },
+      { value: "z", label: "Zeta", disabled: true, group: "Groupe" },
+      { value: "Sans valeur", label: "Sans valeur", disabled: undefined, group: undefined },
+    ]);
+  });
+});

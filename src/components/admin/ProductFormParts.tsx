@@ -12,6 +12,7 @@ import { MediaPicker } from "./MediaLibrary";
 import { UploadList, type useUploadQueue } from "./UploadQueue";
 import { Badge } from "./ui";
 import { IconAlert, IconDown, IconImage, IconPlus, IconTrash, IconUp, IconUpload } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 export interface VariantState {
   id?: string;
@@ -643,7 +644,7 @@ export function VariantEditor({
                       {colorAxis && color && photos.length ? (
                         <label className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
                           <span className="font-bold text-ink-mute">Photo de la couleur {color}</span>
-                          <select
+                          <Select
                             aria-label={`Photo de ${label}`}
                             className="field h-9 min-h-9 w-auto py-0 text-[13px]"
                             value={linked >= 0 ? String(linked) : ""}
@@ -665,7 +666,7 @@ export function VariantEditor({
                                 Photo {j + 1}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                         </label>
                       ) : null}
                       {full ? <MarginLine m={margin(v)} /> : null}
@@ -1000,7 +1001,7 @@ export function MediaEditor({
                 onChange={(e) => edit(i, { alt: e.target.value })}
               />
               {combos.length > 1 && Object.keys(combos[0] ?? {}).length > 1 ? (
-                <select
+                <Select
                   aria-label={`Variante de la photo ${i + 1}`}
                   className="field h-10 min-h-10 py-0 text-[13px]"
                   value={img.options && Object.keys(img.options).length ? JSON.stringify(img.options) : ""}
@@ -1017,9 +1018,9 @@ export function MediaEditor({
                       {Object.values(c).join(" · ")}
                     </option>
                   ))}
-                </select>
+                </Select>
               ) : colorAxis && colorValues.length ? (
-                <select
+                <Select
                   aria-label={`${colorAxis} de la photo ${i + 1}`}
                   className="field h-10 min-h-10 py-0 text-[13px]"
                   value={img.color ?? ""}
@@ -1029,7 +1030,7 @@ export function MediaEditor({
                   {colorValues.map((c) => (
                     <option key={c}>{c}</option>
                   ))}
-                </select>
+                </Select>
               ) : null}
               {i > 0 && img.kind !== "video" ? (
                 <button

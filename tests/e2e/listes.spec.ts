@@ -2,36 +2,52 @@ import { devices, expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
 test.describe("Listes déroulantes", () => {
-  test("liste avec recherche : clavier, filtre sans accent, aucun résultat, Échap", async ({ page }) => {
+  test("ordinateur : liste personnalisée avec recherche, clavier, filtre sans accent, Échap", async ({ page }) => {
     await login(page, "proprietaire@demo.gps");
     await page.goto("/comptoir/vitrine");
-    const box = page.getByRole("combobox", { name: "Ajouter à la sélection" });
-    await expect(box).toBeVisible();
-    await box.click();
+    const trigger = page.getByRole("combobox", { name: "Ajouter à la sélection" });
+    await expect(trigger).toBeVisible();
+    await trigger.click();
     const list = page.getByRole("listbox");
     await expect(list).toBeVisible();
     const total = await list.getByRole("option").count();
     expect(total).toBeGreaterThan(8);
 
-    // Recherche : la liste se réduit, ↓ puis Entrée choisit.
-    await box.fill("zzzz-introuvable");
+    // Le champ de recherche a le focus ; aucun résultat, puis filtre.
+    const search = page.getByRole("searchbox", { name: "Rechercher dans la liste" });
+    await expect(search).toBeFocused();
+    await search.fill("zzzz-introuvable");
     await expect(list.getByText(/Aucun résultat/)).toBeVisible();
-    await box.fill("");
+    await search.fill("");
     const first = (await list.getByRole("option").nth(1).textContent())!.trim();
-    await box.fill(first.slice(0, 4).toUpperCase());
+    await search.fill(first.slice(0, 4).toUpperCase());
     expect(await list.getByRole("option").count()).toBeLessThan(total);
-    await box.press("ArrowDown");
-    await box.press("Enter");
+    await search.press("ArrowDown");
+    await search.press("Enter");
     await expect(list).toBeHidden();
-    await expect(box).not.toHaveValue("");
+    await expect(trigger).not.toHaveText(/Ajouter un produit/);
+    await expect(trigger).toBeFocused();
 
-    // Échap ferme sans changer le choix.
-    const chosen = await box.inputValue();
-    await box.press("ArrowDown");
+    // Échap ferme sans changer le choix et rend le focus au champ.
+    const chosen = await trigger.textContent();
+    await trigger.press("ArrowDown");
     await expect(list).toBeVisible();
-    await box.press("Escape");
+    await page.keyboard.press("Escape");
     await expect(list).toBeHidden();
-    await expect(box).toHaveValue(chosen);
+    await expect(trigger).toHaveText(chosen!);
+    await expect(trigger).toBeFocused();
+  });
+
+  test("ordinateur : liste courte (tri) personnalisée, frappe rapide et choix à la souris", async ({ page }) => {
+    await page.goto("/boutique");
+    const sort = page.getByRole("combobox", { name: "Trier par" });
+    await sort.click();
+    const list = page.getByRole("listbox");
+    await expect(list).toBeVisible();
+    await expect(page.getByRole("searchbox")).toHaveCount(0); // peu de choix : pas de recherche
+    await list.getByRole("option", { name: /Prix décroissant/ }).click();
+    await expect(page).toHaveURL(/tri=prix-desc/);
+    await expect(list).toBeHidden();
   });
 
   test("téléphone : la liste reste dans l'écran, textes à 16 px, aucun débordement", async ({ browser }) => {

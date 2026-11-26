@@ -7,6 +7,7 @@ import { addTaskAction, queueAction } from "@/app/comptoir/(app)/pilotage-action
 import { ActionFeedback, useAction } from "./useAction";
 import { Badge } from "./ui";
 import { IconArrowRight, IconCheck, IconClock, IconPlus } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 export interface QueueRow {
   key: string;
@@ -90,7 +91,7 @@ function Row({ item, team }: { item: QueueRow; team: { id: string; name: string 
               <div className="z-20 mt-2 grid gap-3 rounded-[6px] border border-line bg-card p-3 shadow-lg md:absolute md:right-0 md:w-72">
                 <label className="grid gap-1 text-[13px] font-bold">
                   Assigner à
-                  <select
+                  <Select
                     className="field h-10 min-h-10 py-0"
                     defaultValue={item.assignee_id ?? ""}
                     onChange={(e) =>
@@ -103,11 +104,11 @@ function Row({ item, team }: { item: QueueRow; team: { id: string; name: string 
                         {u.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
                 <label className="grid gap-1 text-[13px] font-bold">
                   Reporter
-                  <select
+                  <Select
                     className="field h-10 min-h-10 py-0"
                     defaultValue=""
                     onChange={(e) => {
@@ -119,7 +120,7 @@ function Row({ item, team }: { item: QueueRow; team: { id: string; name: string 
                     <option value="2h">Dans 2 heures</option>
                     <option value="demain">Demain 8 h</option>
                     <option value="3j">Dans 3 jours</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="grid gap-1 text-[13px] font-bold">
                   Note
@@ -201,14 +202,14 @@ export function AddTask({ team }: { team: { id: string; name: string }[] }) {
         <label htmlFor="task-assignee" className="label text-[13px]">
           Pour
         </label>
-        <select id="task-assignee" className="field" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+        <Select id="task-assignee" className="field" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
           <option value="">Personne</option>
           {team.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <button className="btn btn-primary" disabled={a.pending || !title.trim()}>
         <IconPlus size={18} /> Ajouter

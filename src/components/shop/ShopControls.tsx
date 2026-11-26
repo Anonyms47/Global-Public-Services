@@ -8,7 +8,7 @@ import { Sheet } from "../ui/Sheet";
 import { IconClose, IconFilter } from "../ui/icons";
 import { defaultSort, shopQueryToParams } from "./query";
 import { attrTitle, type AttrFacet } from "@/lib/attributes";
-import { SmartSelect } from "@/components/ui/SmartSelect";
+import { Select, SmartSelect } from "@/components/ui/SmartSelect";
 
 const sortLabels = {
   pertinence: "Pertinence",
@@ -250,7 +250,7 @@ export function ShopControls({
           <label className="label" htmlFor={`${uid}-f-etat`}>
             État
           </label>
-          <select
+          <Select
             id={`${uid}-f-etat`}
             className="field"
             value={query.etat ?? ""}
@@ -260,7 +260,7 @@ export function ShopControls({
             {facets.conditions.map((c) => (
               <option key={c}>{c}</option>
             ))}
-          </select>
+          </Select>
         </div>
       ) : null}
       <div className="flex flex-wrap gap-2">
@@ -312,7 +312,7 @@ export function ShopControls({
           <label htmlFor="f-tri" className="sr-only">
             Trier par
           </label>
-          <select
+          <Select
             id="f-tri"
             className="field h-11 min-h-11 w-auto max-w-full min-w-0 rounded-full py-0 pr-9 pl-3.5 text-[14px] md:pr-10 md:pl-4 md:text-[15px]"
             value={query.tri ?? defaultSort(query.q)}
@@ -325,7 +325,7 @@ export function ShopControls({
                   {v}
                 </option>
               ))}
-          </select>
+          </Select>
         </div>
       </div>
 

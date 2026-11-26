@@ -9,6 +9,7 @@ import { toCsv } from "@/lib/csv";
 import { ActionFeedback, useAction } from "./useAction";
 import { Badge } from "./ui";
 import { IconDownload, IconUpload } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 const FIELDS: [ImportField, string, boolean][] = [
   ["nom", "Nom du produit", true],
@@ -159,7 +160,7 @@ export function ImportForm() {
                   {label}
                   {required ? " *" : ""}
                 </label>
-                <select
+                <Select
                   id={`map-${k}`}
                   className="field"
                   aria-invalid={required && mapping[k] == null}
@@ -174,7 +175,7 @@ export function ImportForm() {
                       {h || `Colonne ${i + 1}`}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             ))}
           </div>

@@ -17,6 +17,7 @@ import { defaultTemplates, templateGroups, templateMeta } from "@/lib/templates"
 import { paymentMethods } from "@/lib/payment-methods";
 import { Badge, Panel } from "./ui";
 import { IconPlus, IconTrash } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 type Initial = Pick<Settings, "company" | "reception" | "policies" | "stock" | "receipt" | "messages" | "payments">;
 
@@ -688,7 +689,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                   <label className="label" htmlFor={`role-${u.id}`}>
                     Rôle
                   </label>
-                  <select
+                  <Select
                     id={`role-${u.id}`}
                     className="field lg:max-w-md"
                     value={u.role}
@@ -701,7 +702,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                         {roleLabels[r]}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   <p id={`role-${u.id}-aide`} className="hint mt-1">
                     {self ? "Votre propre rôle ne peut pas être modifié ici." : roleSummary[u.role]}
                   </p>
@@ -830,7 +831,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
           <label className="label" htmlFor="u-role">
             Rôle
           </label>
-          <select
+          <Select
             id="u-role"
             className="field"
             value={f.role}
@@ -841,7 +842,7 @@ export function TeamManager({ users, me }: { users: U[]; me: string }) {
                 {roleLabels[r]}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <Field
           id="u-pw"

@@ -17,6 +17,7 @@ import { paymentMethods } from "@/lib/payment-methods";
 import { whatsappLink } from "@/lib/whatsapp";
 import { ActionFeedback, useAction } from "./useAction";
 import { IconCopy, IconWhatsApp } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 const methods = paymentMethods;
 
@@ -91,7 +92,7 @@ export function PaymentForm({
             <label className="label" htmlFor="pay-m">
               Moyen
             </label>
-            <select
+            <Select
               id="pay-m"
               className="field"
               value={method}
@@ -102,7 +103,7 @@ export function PaymentForm({
                   {v}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className="label" htmlFor="pay-a">
@@ -203,7 +204,7 @@ export function RefundForm({ orderId, net, suggested }: { orderId: string; net: 
           Encaissé net : {fcfa(net)}. Le remboursement est conservé dans l&apos;historique.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <select
+          <Select
             aria-label="Moyen de remboursement"
             className="field"
             value={method}
@@ -214,7 +215,7 @@ export function RefundForm({ orderId, net, suggested }: { orderId: string; net: 
                 {v}
               </option>
             ))}
-          </select>
+          </Select>
           <input
             aria-label="Montant remboursé"
             inputMode="numeric"
@@ -387,7 +388,7 @@ export function ReturnForm({
         </label>
         {withRefund ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            <select
+            <Select
               aria-label="Moyen de remboursement"
               className="field"
               value={method}
@@ -398,7 +399,7 @@ export function ReturnForm({
                   {v}
                 </option>
               ))}
-            </select>
+            </Select>
             <input
               aria-label="Montant remboursé"
               inputMode="numeric"
@@ -514,7 +515,7 @@ export function WhatsAppMessages({
         <label className="label" htmlFor={`wa-tpl${uid}`}>
           Modèle
         </label>
-        <select
+        <Select
           id={`wa-tpl${uid}`}
           className="field"
           value={current}
@@ -528,7 +529,7 @@ export function WhatsAppMessages({
               {x.recommended ? `★ Conseillé : ${x.label}` : x.label}
             </option>
           ))}
-        </select>
+        </Select>
         <textarea
           readOnly
           aria-label="Message préparé"
