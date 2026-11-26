@@ -221,17 +221,29 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ——— Bandeau : les univers en un coup d'œil (statique, sans défilement) ——— */}
+      {/* ——— Bandeau : les univers en défilement continu (statique si le mouvement réduit est demandé) ——— */}
       {univers.length ? (
-        <div className="border-y border-gps-blue-night bg-gps-blue-night py-3 text-white">
-          <ul className="container-site flex flex-wrap items-center gap-x-5 gap-y-1" aria-label="Univers principaux">
-            {[...univers.map((u) => u.name), "Transfert d'argent"].map((t) => (
-              <li key={t} className="flex items-center gap-5 font-display text-lg font-extrabold uppercase md:text-xl">
-                {t}
-                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-gps-red" />
-              </li>
+        <div className="univers-band border-y border-gps-blue-night bg-gps-blue-night py-3 text-white">
+          <div className="univers-band-track">
+            {[0, 1].map((copy) => (
+              <ul
+                key={copy}
+                className="univers-band-list"
+                aria-label={copy === 0 ? "Univers principaux" : undefined}
+                aria-hidden={copy === 1 ? true : undefined}
+              >
+                {[...univers.map((u) => u.name), "Transfert d'argent"].map((t) => (
+                  <li
+                    key={t}
+                    className="flex shrink-0 items-center gap-5 font-display text-lg font-extrabold uppercase md:text-xl"
+                  >
+                    {t}
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-gps-red" />
+                  </li>
+                ))}
+              </ul>
             ))}
-          </ul>
+          </div>
         </div>
       ) : null}
 
