@@ -1779,3 +1779,49 @@ dialog.sheet-fallback {
     font-size: clamp(32px, 11vw, 48px);
   }
 }
+
+/* Bandeau des univers de l'accueil : défilement continu, deux copies identiques (la seconde est masquée aux lecteurs d'écran). */
+.univers-band {
+  overflow: hidden;
+}
+.univers-band-track {
+  display: flex;
+  width: max-content;
+}
+.univers-band-list {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 1.25rem;
+  padding-right: 1.25rem;
+}
+.univers-band-list:nth-child(2) {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .univers-band-list:nth-child(2) {
+    display: flex;
+  }
+  .univers-band-track {
+    animation: univers-band 45s linear infinite;
+  }
+  .univers-band:hover .univers-band-track {
+    animation-play-state: paused;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .univers-band-track {
+    width: auto;
+    flex-wrap: wrap;
+    padding-inline: 16px;
+  }
+  .univers-band-list {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+}
+@keyframes univers-band {
+  to {
+    transform: translateX(-50%);
+  }
+}
