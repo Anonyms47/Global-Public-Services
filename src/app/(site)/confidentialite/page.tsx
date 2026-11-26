@@ -34,8 +34,11 @@ export default async function PrivacyPage() {
               <p>
                 En touchant <strong>« Préparer mon récapitulatif »</strong>, votre demande est{" "}
                 <strong>transmise à GPS</strong> : articles, quantités, mode de réception, nom et, si vous les indiquez,
-                téléphone, adresse de livraison et précision. GPS en garde une trace sous une référence, pour pouvoir
-                retrouver votre demande quand vous le contactez.
+                téléphone, adresse de livraison et précision. GPS en garde une trace sous une référence, pour retrouver
+                votre demande quand vous le contactez.{" "}
+                <strong>
+                  Si elle ne devient pas une commande, elle est supprimée automatiquement au bout de 48 heures.
+                </strong>
               </p>
               <p>
                 Cette demande <strong>n&apos;est pas une commande confirmée</strong> : rien n&apos;est réservé ni payé à
@@ -60,9 +63,9 @@ export default async function PrivacyPage() {
           title: "Chez GPS",
           body: (
             <p>
-              GPS enregistre les demandes reçues et, lorsqu&apos;une commande est confirmée, les informations
-              nécessaires à son suivi (articles, prix, coordonnées, réception, paiements). La durée de conservation est
-              précisée par GPS sur demande. Pour exercer vos droits, écrivez à GPS sur WhatsApp
+              Une demande qui ne devient pas une commande est supprimée au bout de 48 heures. Lorsqu&apos;une commande
+              est confirmée, GPS enregistre les informations nécessaires à son suivi (articles, prix, coordonnées,
+              réception, paiements). Pour exercer vos droits, écrivez à GPS sur WhatsApp
               {c.email ? ` ou à ${c.email}` : ""}.
             </p>
           ),

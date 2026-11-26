@@ -43,10 +43,38 @@ export interface RequestInput {
   storeId?: string | null;
 }
 
+/** Durée maximale de conservation d'une demande qui n'est pas devenue une commande. */
+export const REQUEST_RETENTION_HOURS = 48;
+
+/**
+ * Supprime les demandes non transformées en commande (nouvelles ou écartées) après 48 h.
+ * Les demandes converties, les commandes, clients et paiements ne sont jamais touchés.
+ * Le journal garde seulement le nombre de demandes supprimées, sans donnée personnelle.
+ */
+export async function purgeExpiredRequests(db: Db) {
+  const rows = await db.query<{ id: string }>(
+    `delete from order_requests
+      where status in ('new', 'dismissed') and order_id is null and not is_demo
+        and created_at < now() - ($1 || ' hours')::interval
+      returning id`,
+    [String(REQUEST_RETENTION_HOURS)],
+  );
+  if (rows.length)
+    await db.query("insert into audit_log (id, action, target, detail) values ($1, $2, $3, $4)", [
+      newId(),
+      "requests_purged",
+      "order_requests",
+      JSON.stringify({ count: rows.length, afterHours: REQUEST_RETENTION_HOURS }),
+    ]);
+  return rows.length;
+}
+
 /** Garde-fou contre les envois en rafale depuis le site public. */
 const MAX_PER_MINUTE = 20;
 
 export async function createRequest(db: Db, input: RequestInput) {
+  // Nettoyage opportuniste : ne bloque jamais la demande en cours.
+  void purgeExpiredRequests(db).catch(() => {});
   const name = String(input.name ?? "")
     .trim()
     .slice(0, 120);
