@@ -1,3 +1,4 @@
+import { DriftyCredit } from "@/components/site/DriftyCredit";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb } from "@/server/db";
@@ -92,6 +93,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/comptoir/c
               </Link>
             </p>
           ) : null}
+          <DriftyCredit className="mt-10" />
         </div>
       </main>
     </div>

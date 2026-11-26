@@ -1,3 +1,4 @@
+import { DriftyCredit } from "@/components/site/DriftyCredit";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/server/admin";
@@ -33,6 +34,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/comptoir">
   return (
     <Shell user={user} demo={isDemoMode()} badges={await navBadges()} stock={stock} collapsed={collapsed}>
       {children}
+      <DriftyCredit className="mt-10 pb-4 text-center" />
     </Shell>
   );
 }

@@ -1,3 +1,4 @@
+import { DriftyCredit } from "./DriftyCredit";
 import Link from "next/link";
 import { legalIds, type Settings } from "@/server/domain/settings";
 import { Logo } from "../brand/Logo";
@@ -140,6 +141,7 @@ export function Footer({
             </span>
             <span>Le service qui rassure</span>
           </p>
+          <DriftyCredit className="mt-2" />
         </div>
       </div>
     </footer>
