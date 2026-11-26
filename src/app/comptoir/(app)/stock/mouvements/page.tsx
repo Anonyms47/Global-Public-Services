@@ -5,6 +5,7 @@ import { movementLabels, movements, type MovementKind } from "@/server/domain/st
 import { formatDateTime } from "@/lib/format";
 import { Badge, Empty, Forbidden, PageTitle } from "@/components/admin/ui";
 import { IconArrowLeft } from "@/components/ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 export const metadata: Metadata = { title: "Mouvements de stock" };
 
@@ -38,14 +39,14 @@ export default async function MovementsPage({ searchParams }: PageProps<"/compto
         <label htmlFor="mv-type" className="sr-only">
           Type
         </label>
-        <select id="mv-type" name="type" defaultValue={kind ?? ""} className="field w-auto">
+        <Select id="mv-type" name="type" defaultValue={kind ?? ""} className="field w-auto">
           <option value="">Tous les types</option>
           {Object.entries(movementLabels).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
             </option>
           ))}
-        </select>
+        </Select>
         <button className="btn btn-ink">Filtrer</button>
         {variantId || kind ? (
           <Link href="/comptoir/stock/mouvements" className="btn btn-ghost">

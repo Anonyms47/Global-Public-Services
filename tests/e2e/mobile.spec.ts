@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { DEMO_PASSWORD } from "./helpers";
+import { DEMO_PASSWORD, choose } from "./helpers";
 
 test.describe("Parcours mobile et clavier", () => {
   test("boutique sur deux colonnes, menu et filtres au clavier", async ({ page }) => {
@@ -182,7 +182,7 @@ test.describe("Parcours mobile et clavier", () => {
     await page.getByRole("button", { name: "Suivant : Identité" }).click();
     await expect(page.locator("#etape-photos-t")).toHaveAttribute("aria-expanded", "false");
     await page.locator("#p-name").fill("Mobile E2E Un");
-    await page.locator("#p-cat").selectOption({ index: 1 });
+    await choose(page.locator("#p-cat"), { index: 1 });
     const category = await page.locator("#p-cat").inputValue();
     await page.locator("label", { hasText: "Visible dès l'enregistrement" }).click();
     await page.getByRole("button", { name: "Suivant : Prix et stock" }).click();

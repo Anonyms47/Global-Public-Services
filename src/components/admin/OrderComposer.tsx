@@ -25,6 +25,7 @@ import {
   IconAlert,
   IconArrowLeft,
 } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 type Catalog = Extract<Awaited<ReturnType<typeof sellableAction>>, { ok: true }>["data"];
 type Product = Catalog[number];
@@ -542,7 +543,7 @@ function OrderComposer({
             <label className="label text-[13px]" htmlFor="o-store">
               {mode === "sale" ? "Point de vente" : "Point de retrait"}
             </label>
-            <select
+            <Select
               id="o-store"
               className="field h-10 min-h-10"
               value={storeId}
@@ -555,7 +556,7 @@ function OrderComposer({
                   {st.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         ) : null}
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -842,7 +843,7 @@ function OrderComposer({
                   <label className="label" htmlFor="o-canal">
                     Canal
                   </label>
-                  <select
+                  <Select
                     id="o-canal"
                     className="field"
                     value={draft.channel}
@@ -851,13 +852,13 @@ function OrderComposer({
                     <option value="whatsapp">WhatsApp</option>
                     <option value="telephone">Téléphone</option>
                     <option value="autre">Autre</option>
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="label" htmlFor="o-reception">
                     Réception
                   </label>
-                  <select
+                  <Select
                     id="o-reception"
                     className="field"
                     value={draft.reception}
@@ -869,7 +870,7 @@ function OrderComposer({
                   >
                     <option value="pickup">Retrait en boutique</option>
                     <option value="delivery">Livraison</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
               {draft.reception === "delivery" ? (
@@ -893,7 +894,7 @@ function OrderComposer({
                         Zone
                       </label>
                       {zones.length ? (
-                        <select
+                        <Select
                           id="o-zone"
                           className="field"
                           value={draft.zone}
@@ -914,7 +915,7 @@ function OrderComposer({
                           {zones.map((z) => (
                             <option key={z.name}>{z.name}</option>
                           ))}
-                        </select>
+                        </Select>
                       ) : (
                         <input
                           id="o-zone"
@@ -1011,7 +1012,7 @@ function OrderComposer({
                   <label className="label" htmlFor={`p-method-${i}`}>
                     Autre moyen
                   </label>
-                  <select
+                  <Select
                     id={`p-method-${i}`}
                     className="field"
                     value={p.method}
@@ -1030,7 +1031,7 @@ function OrderComposer({
                           {v}
                         </option>
                       ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="label" htmlFor={`p-amount-${i}`}>

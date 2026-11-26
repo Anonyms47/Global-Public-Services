@@ -9,6 +9,7 @@ import { CatalogBrowser } from "@/components/admin/CatalogBrowser";
 import { TrashActions } from "@/components/admin/CatalogHistory";
 import { IconPlus, IconSearch } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
+import { Select } from "@/components/ui/SmartSelect";
 
 export const metadata: Metadata = { title: "Catalogue" };
 
@@ -111,14 +112,14 @@ export default async function CatalogPage({ searchParams }: PageProps<"/comptoir
         <label className="sr-only" htmlFor="cat-c">
           Catégorie
         </label>
-        <select id="cat-c" name="categorie" defaultValue={categorie} className="field w-auto">
+        <Select id="cat-c" name="categorie" defaultValue={categorie} className="field w-auto">
           <option value="">Toutes catégories</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
-        </select>
+        </Select>
         <button className="btn btn-ink">
           <IconSearch size={18} /> Filtrer
         </button>

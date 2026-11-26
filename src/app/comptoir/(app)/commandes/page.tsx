@@ -9,6 +9,7 @@ import { Empty, Forbidden, Money, PageTitle, Tabs } from "@/components/admin/ui"
 import { ChannelLabel, FulfillmentBadge, PaymentBadge, StatusBadge } from "@/components/admin/OrderBadges";
 import { NextStepButton } from "@/components/admin/OrderActions";
 import { IconPlus, IconSearch } from "@/components/ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 export const metadata: Metadata = { title: "Commandes" };
 
@@ -99,26 +100,26 @@ export default async function OrdersPage({ searchParams }: PageProps<"/comptoir/
         <label htmlFor="canal" className="sr-only">
           Canal
         </label>
-        <select id="canal" name="canal" defaultValue={channel} className="field w-auto">
+        <Select id="canal" name="canal" defaultValue={channel} className="field w-auto">
           <option value="">Tous les canaux</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="boutique">Boutique</option>
           <option value="telephone">Téléphone</option>
           <option value="autre">Autre</option>
-        </select>
+        </Select>
         {stores.length ? (
           <>
             <label htmlFor="boutique" className="sr-only">
               Point de vente
             </label>
-            <select id="boutique" name="boutique" defaultValue={store} className="field w-auto">
+            <Select id="boutique" name="boutique" defaultValue={store} className="field w-auto">
               <option value="">Tous les points de vente</option>
               {stores.map((st) => (
                 <option key={st.id} value={st.id}>
                   {st.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </>
         ) : null}
         <button className="btn btn-ink" type="submit">

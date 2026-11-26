@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { availability, login } from "./helpers";
+import { availability, login, choose } from "./helpers";
 
 test.describe("Le Comptoir", () => {
   test("accès protégé et droits vérifiés côté serveur", async ({ page, request }) => {
@@ -88,8 +88,12 @@ test.describe("Le Comptoir", () => {
     const orderUrl = page.url();
     // Message WhatsApp adapté à la situation : confirmation conseillée, avec le reste à régler.
     await page.locator("summary", { hasText: "Préparer un message WhatsApp" }).click();
-    await expect(page.getByRole("combobox", { name: "Modèle" })).toHaveValue("0");
+    const model = page.getByRole("combobox", { name: "Modèle" });
+    await expect(model).not.toHaveText("");
+    // Les choix d'une liste personnalisée n'existent qu'ouverte : on l'ouvre pour les lire.
+    if ((await model.evaluate((el) => el.tagName)) !== "SELECT") await model.click();
     await expect(page.getByRole("option", { name: /★ Conseillé : Confirmation de commande/ })).toHaveCount(1);
+    if ((await model.evaluate((el) => el.tagName)) !== "SELECT") await page.keyboard.press("Escape");
     await expect(page.getByLabel("Message préparé")).toHaveValue(/Déjà réglé : 5\s000\sFCFA\. Reste à régler/);
 
     const reserved = await availability(page, "LUM-RIV-EC");
@@ -317,7 +321,7 @@ test.describe("Le Comptoir", () => {
     await page.getByLabel("Contenu CSV").fill("Article;Code;Montant\nImport E2E Assoc;E2E-MAP-1;4000");
     await page.getByRole("button", { name: "Vérifier le fichier" }).click();
     await expect(page.getByText("À compléter", { exact: true })).toBeVisible();
-    await page.getByLabel("Prix de vente *").selectOption({ label: "Montant" });
+    await choose(page.getByLabel("Prix de vente *"), { label: "Montant" });
     await page.getByRole("button", { name: "Appliquer et vérifier à nouveau" }).click();
     await expect(page.getByRole("cell", { name: "E2E-MAP-1" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Importer 1 produit/ })).toBeEnabled();
@@ -468,7 +472,7 @@ test.describe("Le Comptoir", () => {
     await page.keyboard.type("Clavier E2E Série");
     await page.keyboard.press("Tab");
     await expect(page.locator("#p-cat")).toBeFocused();
-    await page.locator("#p-cat").selectOption({ index: 1 });
+    await choose(page.locator("#p-cat"), { index: 1 });
     // Ordinateur : toutes les parties ouvertes, aperçu permanent ; coût visible dès le mode rapide.
     await expect(page.getByRole("complementary", { name: "Aperçu du produit" })).toBeVisible();
     await expect(page.locator("#p-cost")).toBeVisible();
@@ -587,7 +591,7 @@ test.describe("Le Comptoir", () => {
     await login(page, "proprietaire@demo.gps");
     await page.goto("/comptoir/catalogue/nouveau");
     await page.getByRole("radio", { name: "Mode complet" }).click();
-    await page.locator("#p-cat").selectOption({ label: "Téléphones" });
+    await choose(page.locator("#p-cat"), { label: "Téléphones" });
     await page.locator("#p-brand").fill("Orbis");
     await page.locator("#p-model").fill("ORB-N12 Pro");
     // Caractéristiques propres aux téléphones, avec valeurs rapides.
@@ -638,7 +642,7 @@ test.describe("Le Comptoir", () => {
     // Un brouillon incomplet, comme ceux relevés en boutique.
     await page.goto("/comptoir/catalogue/nouveau");
     await page.locator("#p-name").fill("Brouillon à compléter E2E");
-    await page.locator("#p-cat").selectOption({ index: 1 });
+    await choose(page.locator("#p-cat"), { index: 1 });
     await page.getByRole("button", { name: "Enregistrer et rester sur la fiche" }).click();
     await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
     await page.goto("/comptoir/catalogue/a-completer");
@@ -697,7 +701,7 @@ test.describe("Le Comptoir", () => {
     await page.goto("/comptoir/catalogue/nouveau");
     await expect(page.locator("#p-cost")).toBeVisible();
     await page.locator("#p-name").fill("Brouillon grille E2E");
-    await page.locator("#p-cat").selectOption({ index: 1 });
+    await choose(page.locator("#p-cat"), { index: 1 });
     await page.getByRole("button", { name: "Enregistrer et rester sur la fiche" }).click();
     await expect(page).toHaveURL(/\/comptoir\/catalogue\/[0-9a-f-]{36}$/);
 
@@ -762,7 +766,7 @@ test.describe("Le Comptoir", () => {
     await login(page, "proprietaire@demo.gps");
     await page.goto("/comptoir/catalogue/nouveau");
     await page.getByRole("radio", { name: "Mode complet" }).click();
-    await page.locator("#p-cat").selectOption({ label: "Chargeurs" });
+    await choose(page.locator("#p-cat"), { label: "Chargeurs" });
     await page.locator("label", { hasText: /^Oui$/ }).click();
     await expect(page.getByTestId("no-variant-presets")).toBeVisible();
     await expect(page.getByRole("button", { name: "Couleur", exact: true })).toHaveCount(0);
@@ -781,7 +785,7 @@ test.describe("Le Comptoir", () => {
     await profile.getByRole("button", { name: "Enregistrer le profil" }).click();
     await expect(profile.getByText("Profil de la catégorie enregistré.")).toBeVisible();
     await page.goto("/comptoir/catalogue/nouveau");
-    await page.locator("#p-cat").selectOption({ label: "Chargeurs" });
+    await choose(page.locator("#p-cat"), { label: "Chargeurs" });
     await page.locator("label", { hasText: /^Oui$/ }).click();
     await expect(page.getByRole("button", { name: "Prise", exact: true }).first()).toBeVisible();
     await page.goto("/comptoir/catalogue/categories");

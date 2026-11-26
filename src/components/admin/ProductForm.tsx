@@ -47,6 +47,7 @@ import {
 } from "./ProductFormParts";
 import { Badge } from "./ui";
 import { IconAlert, IconCheck, IconImage, IconList, IconPlus, IconTrash } from "../ui/icons";
+import { Select } from "@/components/ui/SmartSelect";
 
 export interface SpecState {
   label: string;
@@ -869,7 +870,7 @@ function ProductForm({
               <label className="label" htmlFor="p-cat">
                 Catégorie
               </label>
-              <select
+              <Select
                 id="p-cat"
                 className="field"
                 value={state.categoryId ?? ""}
@@ -884,7 +885,7 @@ function ProductForm({
                 {state.categoryId && !visibleCategories.some((c) => c.id === state.categoryId) && category ? (
                   <option value={category.id}>{category.name}</option>
                 ) : null}
-              </select>
+              </Select>
               {categories.length > 6 ? (
                 <input
                   aria-label="Rechercher une catégorie"

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { savePromotionAction, stopPromotionAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { ActionFeedback, useAction } from "./useAction";
-import { SmartSelect } from "@/components/ui/SmartSelect";
+import { Select, SmartSelect } from "@/components/ui/SmartSelect";
 
 const local = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
@@ -74,7 +74,7 @@ export function PromotionForm({
           <label className="label" htmlFor="pr-kind">
             Type
           </label>
-          <select
+          <Select
             id="pr-kind"
             className="field"
             value={f.kind}
@@ -82,7 +82,7 @@ export function PromotionForm({
           >
             <option value="percent">Pourcentage</option>
             <option value="amount">Montant (FCFA)</option>
-          </select>
+          </Select>
         </div>
         <div>
           <label className="label" htmlFor="pr-val">
