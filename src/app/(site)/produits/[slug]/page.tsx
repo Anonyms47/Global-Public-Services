@@ -14,7 +14,7 @@ import { ProductDescription } from "@/components/shop/ProductDescription";
 import { IconArrowRight, IconChevronRight, IconStore, IconTruck, IconInfo, IconCheck } from "@/components/ui/icons";
 import { TO_CONFIRM } from "@/lib/whatsapp";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
-import { PAYMENT_SHORT } from "@/lib/payment-copy";
+import { customPaymentNote, paymentShort } from "@/lib/payment-copy";
 import { safeBackUrl } from "@/lib/safe-back";
 import { breadcrumbJsonLd, jsonLdString, productJsonLd, productMetaDescription, productTitle } from "@/lib/seo";
 
@@ -217,7 +217,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 <div>
                   <p className="font-bold">Paiement</p>
                   <p className="text-[15px] text-white/70">
-                    {PAYMENT_SHORT} {pol.payment || `Modalités : ${toConfirm}.`}
+                    {paymentShort(r)} {customPaymentNote(pol.payment)}
                   </p>
                 </div>
               </li>

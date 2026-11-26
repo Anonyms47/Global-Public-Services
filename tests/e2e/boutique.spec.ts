@@ -68,7 +68,7 @@ test.describe("Boutique et commande WhatsApp", () => {
     await expect(page.getByTestId("apres-paiement")).toHaveCount(0);
     await page.getByTestId("payer-wave").click({ noWaitAfter: true });
     await expect(page.getByTestId("apres-paiement")).toContainText("capture d'écran");
-    expect(await page.locator("#recap-message").inputValue()).toContain("payés par Wave");
+    expect(await page.locator("#recap-message").inputValue()).toContain("Paiement déclaré");
     expect(await page.locator("#recap-message").inputValue()).toContain("capture d'écran du paiement");
 
     // Commande suivante, nouvelle visite : les coordonnées sont retrouvées sur cet appareil.

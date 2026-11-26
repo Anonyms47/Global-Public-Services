@@ -1,4 +1,4 @@
-import { PAYMENT_STEPS } from "@/lib/payment-copy";
+import { customPaymentNote, paymentSteps } from "@/lib/payment-copy";
 import type { Metadata } from "next";
 import { siteContext } from "@/server/context";
 import { legalIds } from "@/server/domain/settings";
@@ -59,8 +59,7 @@ export default async function CgvPage() {
           title: "Paiement",
           body: (
             <p>
-              Le paiement ne se fait pas sur le site lui-même. {PAYMENT_STEPS}{" "}
-              {p.payment || "Moyens et moment du paiement précisés par GPS à la confirmation de la commande."}
+              {paymentSteps(settings.reception)} {customPaymentNote(p.payment)}
             </p>
           ),
         },

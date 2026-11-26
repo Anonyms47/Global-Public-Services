@@ -1,4 +1,4 @@
-import { PAYMENT_STEPS } from "@/lib/payment-copy";
+import { customPaymentNote, paymentSteps } from "@/lib/payment-copy";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { siteContext } from "@/server/context";
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default async function FaqPage() {
   const { settings } = await siteContext();
   const p = settings.policies;
-  const toConfirm = TO_CONFIRM.charAt(0).toLowerCase() + TO_CONFIRM.slice(1);
   const groups: FaqGroup[] = [
     {
       title: "Commander",
@@ -39,7 +38,7 @@ export default async function FaqPage() {
       items: [
         {
           q: "Puis-je payer par Wave ou Orange Money ?",
-          a: `Oui. ${PAYMENT_STEPS} ${p.payment || `Modalités de paiement : ${toConfirm}.`}`,
+          a: `Oui. ${paymentSteps(settings.reception)} ${customPaymentNote(p.payment)}`.trim(),
         },
         {
           q: "Combien coûte la livraison ?",

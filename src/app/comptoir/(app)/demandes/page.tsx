@@ -51,7 +51,8 @@ export default async function RequestsPage({ searchParams }: PageProps<"/comptoi
     <>
       <PageTitle eyebrow="Exploiter" title="Demandes WhatsApp">
         Chaque panier envoyé depuis le site arrive ici avec sa référence (GPS-R-…), reprise dans le message du client.
-        Une demande ne réserve rien : confirmez-la pour créer la commande et réserver les articles.
+        Une demande ne réserve rien : confirmez-la pour créer la commande et réserver les articles. Une demande non
+        confirmée est supprimée automatiquement lors du nettoyage quotidien qui suit ses 48 heures : traitez-les avant.
       </PageTitle>
       <Tabs
         current={status}

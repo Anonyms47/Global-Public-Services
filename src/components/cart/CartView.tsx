@@ -262,7 +262,7 @@ export function CartView({
   const payIsTotal = form.reception !== "delivery" || deliveryFee !== null;
   const withPayment = (text: string) =>
     payMethod
-      ? `${text}\n\nPaiement : ${fcfa(payAmount)} payés par ${externalPayments[payMethod].label}${payIsTotal ? "" : " (produits ; livraison à confirmer)"}. Je joins la capture d'écran du paiement dans cette conversation.`
+      ? `${text}\n\nPaiement déclaré : ${fcfa(payAmount)} par ${externalPayments[payMethod].label}${payIsTotal ? "" : " (produits ; livraison à confirmer)"}. Je joins la capture d'écran du paiement dans cette conversation ; GPS vérifie la réception avant de confirmer.`
       : text;
 
   const validate = () => {
@@ -868,7 +868,7 @@ export function CartView({
               <p className="hint -mt-3 text-center">
                 Ce bouton transmet votre demande à GPS (référence à citer). Ce n&apos;est ni une commande confirmée ni
                 un paiement : vous envoyez ensuite le message WhatsApp vous-même. Sans suite, la demande est supprimée
-                au bout de 48 h.{" "}
+                lors du nettoyage quotidien qui suit ses 48 h.{" "}
                 <Link href="/confidentialite" className="underline">
                   Confidentialité
                 </Link>

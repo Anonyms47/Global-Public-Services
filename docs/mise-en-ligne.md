@@ -33,3 +33,10 @@ Si le journal Vercel affiche une erreur de certificat (`self-signed certificate`
 3. Comptoir → Paramètres → **PURGER** les données d'exemple, puis dans Vercel `DEMO_MODE=false`.
 4. Saisir le vrai catalogue avec les vraies photos, puis `SITE_INDEXABLE=true` et, si besoin, un nom de domaine (Vercel → Settings → Domains) en mettant à jour `NEXT_PUBLIC_SITE_URL`.
 5. Supabase → **Database → Backups** : vérifier les sauvegardes (quotidiennes sur les offres payantes ; exporter régulièrement sur l'offre gratuite).
+
+## Conservation des demandes et tâche de nettoyage
+
+- Une demande (« Préparer mon récapitulatif ») non transformée en commande est supprimée lors du **nettoyage quotidien qui suit ses 48 h** (`REQUEST_RETENTION_HOURS`). La suppression n'est pas garantie à la 48e heure exacte : le plan Vercel gratuit n'exécute une tâche planifiée qu'une fois par jour.
+- Sont concernées uniquement les demandes nouvelles ou écartées, sans commande liée, hors démonstration. Commandes, clients, paiements et demandes converties ne sont jamais supprimés. Le journal ne garde que le nombre de demandes supprimées.
+- La route `/api/cron/purge-demandes` (planifiée dans `vercel.json`, 03 h 17 UTC) exige l'en-tête `Authorization: Bearer <CRON_SECRET>` que Vercel ajoute lui-même quand la variable d'environnement serveur **`CRON_SECRET`** existe. Sans cette variable (16 caractères minimum, valeur aléatoire), la route refuse tout appel (401) et **aucune purge n'a lieu**.
+- Réglage : Vercel → projet → Settings → Environment Variables → `CRON_SECRET` (Production, non exposée au navigateur), puis redéployer. Vérifier ensuite dans Settings → Cron Jobs ou les journaux que la tâche s'exécute.
