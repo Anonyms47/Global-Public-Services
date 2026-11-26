@@ -106,7 +106,8 @@ export default async function ServicesPage() {
         </h2>
         {services.length === 0 ? (
           <p className="mt-6 max-w-xl text-[17px] text-ink-soft">
-            Les services seront présentés ici dès leur confirmation par GPS.
+            Les opérateurs, opérations et horaires ne sont pas détaillés en ligne : demandez directement à GPS, sur
+            WhatsApp ou au comptoir, avant de vous déplacer.
           </p>
         ) : (
           <ul className={`mt-10 grid gap-4 ${services.length > 1 ? "md:grid-cols-2" : "max-w-3xl"}`} data-reveal>

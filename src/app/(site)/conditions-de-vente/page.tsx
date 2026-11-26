@@ -1,3 +1,4 @@
+import { PAYMENT_STEPS } from "@/lib/payment-copy";
 import type { Metadata } from "next";
 import { siteContext } from "@/server/context";
 import { legalIds } from "@/server/domain/settings";
@@ -58,10 +59,7 @@ export default async function CgvPage() {
           title: "Paiement",
           body: (
             <p>
-              Le paiement ne se fait pas sur le site lui-même : depuis votre panier, vous pouvez payer par Wave ou
-              Orange Money (applications externes, non intégrées au site), puis envoyer votre message WhatsApp en
-              joignant la capture d&apos;écran du paiement ; ou payer au comptoir ou à la livraison. GPS confirme la
-              disponibilité, et la commande n&apos;est marquée payée qu&apos;après vérification de la réception.{" "}
+              Le paiement ne se fait pas sur le site lui-même. {PAYMENT_STEPS}{" "}
               {p.payment || "Moyens et moment du paiement précisés par GPS à la confirmation de la commande."}
             </p>
           ),

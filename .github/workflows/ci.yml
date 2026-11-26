@@ -38,4 +38,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+        env:
+          # Petite page : la démo n'a que dix articles, il en faut plus d'une page pour tester « Voir plus » et le retour.
+          NEXT_PUBLIC_SHOP_PAGE_SIZE: "6"
+
       - run: npm run test:e2e

@@ -62,7 +62,7 @@ const filled = (values: string[]) => {
 
 export async function launchChecks(db: Db, settings: Settings, env: Env): Promise<LaunchCheck[]> {
   const c = settings.company;
-  const [realOwner, catalog, demo, team, stores] = await Promise.all([
+  const [realOwner, catalog, demo, team, stores, services] = await Promise.all([
     hasRealOwner(db),
     db.one<{ published: number; no_image: number; no_cost: number }>(
       `select
@@ -75,6 +75,7 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
     db.one<{ n: number }>("select count(*)::int as n from products where is_demo"),
     db.one<{ n: number }>("select count(*)::int as n from users where active and not is_demo"),
     listStores(db, { publishedOnly: true }),
+    db.one<{ n: number }>("select count(*)::int as n from services where confirmed and not is_demo"),
   ]);
   // Points de vente : ce qui manque à chacun (rien n'est deviné à la place de GPS).
   const storesMissing = (test: (s: (typeof stores)[number]) => boolean) =>
@@ -268,6 +269,17 @@ export async function launchChecks(db: Db, settings: Settings, env: Env): Promis
       status: storeCheck(noPhoto),
       detail: missingIn(noPhoto, "Sans photo"),
       fix: "/comptoir/parametres/points-de-vente",
+    },
+    {
+      key: "services",
+      level: 2,
+      label: "Services de transfert d'argent confirmés",
+      status: (services?.n ?? 0) > 0 ? "ok" : "todo",
+      detail:
+        (services?.n ?? 0) > 0
+          ? `${services?.n} service${(services?.n ?? 0) > 1 ? "s" : ""} confirmé${(services?.n ?? 0) > 1 ? "s" : ""}, affiché${(services?.n ?? 0) > 1 ? "s" : ""} sur la page publique.`
+          : "Aucun service confirmé : la page publique invite à poser la question à GPS. Saisissez les opérateurs, opérations et horaires que GPS confirme, puis cochez « confirmé ». Rien n'est affiché tant que ce n'est pas confirmé.",
+      fix: "/comptoir/vitrine",
     },
     {
       key: "team",

@@ -96,6 +96,23 @@ function qualifiedElsewhere(field: string[], qTokens: string[]): boolean {
   return false;
 }
 
+/** Mots qui désignent un accessoire : une recherche qui en contient un vise un accessoire, pas le téléphone. */
+const ACCESSORY_WORDS = ["coque", "etui", "housse", "pochette", "film", "verre", "bumper", "protege"];
+
+/** Libellés de caractéristique qui déclarent le modèle pour lequel un accessoire est fait. */
+const COMPAT_LABELS = ["telephone compatible", "appareil compatible", "modele compatible", "compatible avec"];
+
+/** Un article est un accessoire fait pour un modèle précis quand sa fiche déclare ce modèle compatible. */
+function compatibleModels(p: SearchableProduct): string[][] {
+  const accessoryName = ACCESSORY_WORDS.some((w) => sameWord(w, tokens(p.name)[0] ?? ""));
+  return p.specs
+    .filter((s) => {
+      const label = normalizeText(s.label);
+      return COMPAT_LABELS.includes(label) || (accessoryName && label === "compatibilite");
+    })
+    .map((s) => tokens(s.value));
+}
+
 export interface SearchScore {
   /** 0 = pas de résultat. */
   score: number;
@@ -122,7 +139,9 @@ export function searchScore(rawQuery: string, p: SearchableProduct): number {
   const brand = tokens(p.brand);
   const category = tokens(p.categoryName ?? "");
   const specs = p.specs.flatMap((s) => tokens(`${s.label} ${s.value}`));
-  const compat = p.specs.filter((s) => /compatib/i.test(s.label)).map((s) => tokens(s.value));
+  const compat = compatibleModels(p);
+  const isAccessory = compat.length > 0;
+  const wantsAccessory = q.some((t) => ACCESSORY_WORDS.some((w) => sameWord(t, w)));
   const options = p.variants.flatMap((v) => Object.values(v.options).flatMap((o) => tokens(o)));
 
   let total = 0;
@@ -139,18 +158,28 @@ export function searchScore(rawQuery: string, p: SearchableProduct): number {
 
   // Modèle exact : les mots de la recherche se suivent dans le nom (ou la compatibilité déclarée).
   const fields = [name, ...compat];
-  // La suite ne doit pas continuer par un qualificatif absent de la recherche (13 → 13 Pro : autre modèle).
-  const exactModel = fields.some((f) => {
+  // Modèle exact : la suite recherchée se retrouve telle quelle, sans qualificatif en plus (13 → 13 Pro : autre modèle).
+  let exactModel = false;
+  let otherModel = false;
+  for (const f of fields) {
     for (let i = 0; i + q.length <= f.length; i++) {
       if (!q.every((t, k) => sameWord(t, f[i + k]))) continue;
       const next = f[i + q.length];
-      if (!next || !MODEL_QUALIFIERS.has(next) || q.includes(next)) return true;
+      if (!next || !MODEL_QUALIFIERS.has(next) || q.includes(next)) exactModel = true;
+      else otherModel = true;
     }
-    return false;
-  });
+    if (qualifiedElsewhere(f, q)) otherModel = true;
+  }
   if (exactModel) total += 15;
-  // Autre modèle de la même famille (13 Pro pour « iphone 13 ») : pas équivalent, écarté.
-  else if (fields.some((f) => qualifiedElsewhere(f, q))) return 0;
+  else if (otherModel) {
+    // Autre modèle de la même famille (13 Pro pour « iphone 13 »), jamais présenté comme identique :
+    // - un accessoire fait pour ce modèle précis ne convient pas à l'autre : écarté ;
+    // - un téléphone ou une tablette de la famille reste proposé, après le modèle exact.
+    if (isAccessory) return 0;
+    total -= 6;
+  }
+  // Une recherche de téléphone ne place pas les accessoires avant les téléphones.
+  if (isAccessory && !wantsAccessory) total -= 30;
   return Math.max(1, total);
 }
 

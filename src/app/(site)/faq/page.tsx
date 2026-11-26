@@ -1,3 +1,4 @@
+import { PAYMENT_STEPS } from "@/lib/payment-copy";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { siteContext } from "@/server/context";
@@ -38,7 +39,7 @@ export default async function FaqPage() {
       items: [
         {
           q: "Puis-je payer par Wave ou Orange Money ?",
-          a: `Oui, depuis votre panier : après avoir préparé votre commande, payez avec Wave ou Orange Money (applications externes, non intégrées au site), revenez sur la page, puis envoyez votre message sur WhatsApp en joignant la capture d'écran du paiement. Vous pouvez aussi payer au comptoir ou à la livraison. GPS confirme la disponibilité et la commande n'est marquée payée qu'après vérification de la réception. ${p.payment || `Modalités de paiement : ${toConfirm}.`}`,
+          a: `Oui. ${PAYMENT_STEPS} ${p.payment || `Modalités de paiement : ${toConfirm}.`}`,
         },
         {
           q: "Combien coûte la livraison ?",

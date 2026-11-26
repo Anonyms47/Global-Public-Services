@@ -38,8 +38,13 @@ export function ShopListing({
       : [];
   const attrFacets = attributeFacets(attrScope);
   const params = shopQueryToParams(query, { omitCategory: !!fixedCategory });
-  const here = `${basePath}${params.size ? `?${params}` : ""}`;
   const shown = shownCount(query.n);
+  // Clé de la liste : les filtres seuls (« Voir plus » ajoute des cartes sans tout réafficher).
+  const filtersKey = `${basePath}${params.size ? `?${params}` : ""}`;
+  // Lieu exact d'où l'on ouvre une fiche : inclut le nombre d'articles chargés, pour y revenir tel quel.
+  const hereParams = new URLSearchParams(params);
+  if (shown > PAGE_SIZE) hereParams.set("n", String(shown));
+  const here = `${basePath}${hereParams.size ? `?${hereParams}` : ""}`;
   const visible = results.slice(0, shown);
   const remaining = results.length - visible.length;
   const moreParams = new URLSearchParams(params);
@@ -57,7 +62,7 @@ export function ShopListing({
     <div className="container-site pb-8">
       <ScrollMemory listingKey={here} />
       {univers.length ? (
-        <nav aria-label="Univers" className="univers-rail -mx-4 mb-5 px-4 sm:mx-0 sm:px-0">
+        <nav aria-label="Univers" className="univers-rail -mx-[16px] mb-5 px-[16px] sm:mx-0 sm:px-0">
           <ul className="flex gap-2 overflow-x-auto pb-1">
             <li>
               <Link
@@ -120,7 +125,10 @@ export function ShopListing({
       {results.length ? (
         <>
           <h2 className="sr-only">Articles</h2>
-          <ul key={here} className="mt-6 grid grid-cols-2 gap-x-3 gap-y-9 sm:gap-x-5 md:grid-cols-3 xl:grid-cols-4">
+          <ul
+            key={filtersKey}
+            className="mt-6 grid grid-cols-2 gap-x-3 gap-y-9 sm:gap-x-5 md:grid-cols-3 xl:grid-cols-4"
+          >
             {visible.map((p, i) => (
               <li key={p.id} className="card-in" style={{ "--i": Math.min(i, 11) } as CSSProperties}>
                 <ProductCard product={p} priority={i < 2} from={here} />

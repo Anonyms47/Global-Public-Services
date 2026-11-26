@@ -215,14 +215,14 @@ export function ShopControls({
         );
       })}
       <form
-        className="flex items-end gap-2"
+        className="flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           applyPrice();
           setOpen(false);
         }}
       >
-        <div className="w-32">
+        <div className="min-w-0 flex-1 basis-28 lg:w-32 lg:flex-none lg:basis-auto">
           <label className="label" htmlFor={`${uid}-f-min`}>
             Prix min.
           </label>
@@ -235,7 +235,7 @@ export function ShopControls({
             placeholder={String(facets.priceMin)}
           />
         </div>
-        <div className="w-32">
+        <div className="min-w-0 flex-1 basis-28 lg:w-32 lg:flex-none lg:basis-auto">
           <label className="label" htmlFor={`${uid}-f-max`}>
             Prix max.
           </label>
@@ -248,7 +248,7 @@ export function ShopControls({
             placeholder={String(facets.priceMax)}
           />
         </div>
-        <button type="submit" className="btn btn-outline btn-sm min-h-12">
+        <button type="submit" className="btn btn-outline btn-sm min-h-12 shrink-0">
           OK
         </button>
       </form>
@@ -299,7 +299,7 @@ export function ShopControls({
         {renderFilters("d")}
       </div>
 
-      <div className="shop-toolbar sticky top-16 z-30 -mx-4 mt-3 flex flex-nowrap items-center justify-between gap-2 px-4 py-2.5 md:top-[84px] md:-mx-8 md:px-8">
+      <div className="shop-toolbar sticky top-16 z-30 -mx-[16px] mt-3 flex flex-nowrap items-center justify-between gap-2 px-[16px] py-2.5 md:top-[84px] md:-mx-[32px] md:px-[32px]">
         <p
           className="shrink-0 text-[13px] font-semibold whitespace-nowrap min-[400px]:text-[14px] md:text-[15px]"
           aria-live="polite"

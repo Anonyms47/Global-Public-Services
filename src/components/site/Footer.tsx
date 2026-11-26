@@ -56,8 +56,8 @@ export function Footer({
       <div aria-hidden="true" className="receipt-edge" />
       <div className="bg-paper-deep">
         <div className="container-site pt-12 pb-8 md:pt-16">
-          <div className="grid gap-12 md:grid-cols-12">
-            <div className="md:col-span-5">
+          <div className="grid gap-12 md:grid-cols-12 md:gap-x-6 lg:gap-x-12">
+            <div className="min-w-0 md:col-span-5">
               <Logo className="h-16 w-auto" />
               <p className="mt-5 max-w-sm text-[16px] leading-relaxed text-ink-soft">
                 Téléphones, accessoires, chaussures, lunettes… et le transfert d&apos;argent, au même comptoir.
@@ -81,7 +81,7 @@ export function Footer({
               ) : null}
             </div>
 
-            <div className="md:col-span-4">
+            <div className="min-w-0 md:col-span-4">
               <p className="receipt-title">Au comptoir</p>
               <dl className="mt-3 grid gap-2.5">
                 {stores.length ? (
@@ -102,7 +102,7 @@ export function Footer({
               </dl>
             </div>
 
-            <nav aria-label="Pied de page" className="md:col-span-3">
+            <nav aria-label="Pied de page" className="min-w-0 md:col-span-3">
               <p className="receipt-title">Plan du site</p>
               <ul className="mt-3 grid gap-1.5 text-[15px]">
                 {pages.map(([href, label]) => (
