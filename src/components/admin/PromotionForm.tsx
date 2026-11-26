@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { savePromotionAction, stopPromotionAction } from "@/app/comptoir/(app)/catalogue/actions";
 import { ActionFeedback, useAction } from "./useAction";
+import { SmartSelect } from "@/components/ui/SmartSelect";
 
 const local = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
@@ -59,20 +60,14 @@ export function PromotionForm({
         <label className="label" htmlFor="pr-prod">
           Produit
         </label>
-        <select
+        <SmartSelect
           id="pr-prod"
-          className="field"
           value={f.productId}
-          onChange={(e) => setF({ ...f, productId: e.target.value })}
+          emptyLabel="Choisir…"
+          options={products.map((p) => ({ value: p.id, label: p.name }))}
+          onChange={(v) => setF({ ...f, productId: v })}
           aria-invalid={!!fieldErrors.productId}
-        >
-          <option value="">Choisir…</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

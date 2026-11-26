@@ -9,6 +9,7 @@ import { ActionFeedback, useAction } from "./useAction";
 import { proposals } from "@/lib/content-proposals";
 import { Badge } from "./ui";
 import { IconDown, IconPlus, IconTrash, IconUp, IconUpload } from "../ui/icons";
+import { SmartSelect } from "@/components/ui/SmartSelect";
 
 interface P {
   id: string;
@@ -43,14 +44,13 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
       <label className="label" htmlFor={id}>
         {label}
       </label>
-      <select id={id} className="field" value={value ?? ""} onChange={(e) => on(e.target.value || null)}>
-        <option value="">Automatique</option>
-        {products.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      <SmartSelect
+        id={id}
+        value={value ?? ""}
+        emptyLabel="Automatique"
+        options={products.map((p) => ({ value: p.id, label: p.name }))}
+        onChange={(v) => on(v || null)}
+      />
     </div>
   );
 
@@ -146,16 +146,15 @@ export function StorefrontEditor({ products, initial }: { products: P[]; initial
           <label htmlFor="sf-add" className="sr-only">
             Ajouter à la sélection
           </label>
-          <select id="sf-add" className="field" value={add} onChange={(e) => setAdd(e.target.value)}>
-            <option value="">Ajouter un produit publié…</option>
-            {products
-              .filter((p) => !s.selection.includes(p.id))
-              .map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-          </select>
+          <div className="min-w-0 flex-1">
+            <SmartSelect
+              id="sf-add"
+              value={add}
+              emptyLabel="Ajouter un produit publié…"
+              options={products.filter((p) => !s.selection.includes(p.id)).map((p) => ({ value: p.id, label: p.name }))}
+              onChange={setAdd}
+            />
+          </div>
           <button
             type="button"
             className="btn btn-outline"

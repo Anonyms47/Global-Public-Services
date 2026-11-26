@@ -13,6 +13,7 @@ import { fcfa } from "@/lib/format";
 import { Sheet } from "../ui/Sheet";
 import { ActionFeedback, useAction } from "./useAction";
 import { Availability } from "./Availability";
+import { SmartSelect } from "@/components/ui/SmartSelect";
 
 type V = {
   id: string;
@@ -181,19 +182,15 @@ export function QuickEdit({
               Catégorie
             </label>
             <div className="flex gap-2">
-              <select
-                id={`qe-cat-${product.id}`}
-                className="field min-w-0 flex-1"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">Choisir…</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="min-w-0 flex-1">
+                <SmartSelect
+                  id={`qe-cat-${product.id}`}
+                  value={category}
+                  emptyLabel="Choisir…"
+                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                  onChange={setCategory}
+                />
+              </div>
               <button
                 type="button"
                 className="btn btn-outline btn-sm"

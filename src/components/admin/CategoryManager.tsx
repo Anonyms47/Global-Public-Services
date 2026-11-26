@@ -13,6 +13,7 @@ import { ActionFeedback, useAction } from "./useAction";
 import { MediaPicker } from "./MediaLibrary";
 import { Badge } from "./ui";
 import { IconDown, IconUp } from "../ui/icons";
+import { SmartSelect } from "@/components/ui/SmartSelect";
 
 export interface Cat {
   id: string;
@@ -142,16 +143,13 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
             <label className="label" htmlFor="cat-target">
               Déplacer les produits vers
             </label>
-            <select id="cat-target" className="field" value={target} onChange={(e) => setTarget(e.target.value)}>
-              <option value="">Choisir…</option>
-              {active
-                .filter((c) => c.id !== closing.cat.id)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </select>
+            <SmartSelect
+              id="cat-target"
+              value={target}
+              emptyLabel="Choisir…"
+              options={active.filter((c) => c.id !== closing.cat.id).map((c) => ({ value: c.id, label: c.name }))}
+              onChange={setTarget}
+            />
             <div className="flex gap-2">
               <button className="btn btn-ghost btn-sm" onClick={() => setClosing(null)}>
                 Annuler

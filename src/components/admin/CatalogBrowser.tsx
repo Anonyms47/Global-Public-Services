@@ -15,6 +15,7 @@ import { ActionFeedback, useAction } from "./useAction";
 import { Badge, Empty } from "./ui";
 import { QuickEdit } from "./QuickEdit";
 import { IconGrid, IconList } from "../ui/icons";
+import { SmartSelect } from "@/components/ui/SmartSelect";
 
 interface Row {
   id: string;
@@ -177,19 +178,16 @@ export function CatalogBrowser({
               <label className="sr-only" htmlFor="bulk-cat">
                 Nouvelle catégorie
               </label>
-              <select
-                id="bulk-cat"
-                className="field h-10 min-h-10 w-44 py-0 text-[14px]"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">Catégorie…</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <span className="w-44">
+                <SmartSelect
+                  id="bulk-cat"
+                  className="field h-10 min-h-10 py-0 text-[14px]"
+                  value={category}
+                  emptyLabel="Catégorie…"
+                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                  onChange={setCategory}
+                />
+              </span>
               <button
                 className="btn btn-sm btn-outline"
                 disabled={!category || pending}

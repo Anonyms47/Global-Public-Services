@@ -8,6 +8,7 @@ import { Sheet } from "../ui/Sheet";
 import { IconClose, IconFilter } from "../ui/icons";
 import { defaultSort, shopQueryToParams } from "./query";
 import { attrTitle, type AttrFacet } from "@/lib/attributes";
+import { SmartSelect } from "@/components/ui/SmartSelect";
 
 const sortLabels = {
   pertinence: "Pertinence",
@@ -168,21 +169,13 @@ export function ShopControls({
               <label className="label" htmlFor={`${uid}-a-${f.key}`}>
                 {f.title}
               </label>
-              <select
+              <SmartSelect
                 id={`${uid}-a-${f.key}`}
-                className="field"
                 value={chosen[0] ?? ""}
-                onChange={(e) =>
-                  set({ attrs: e.target.value ? [...others, { key: f.key, value: e.target.value }] : others })
-                }
-              >
-                <option value="">Tous</option>
-                {f.values.map((v) => (
-                  <option key={v.value} value={v.value}>
-                    {v.value} ({v.count})
-                  </option>
-                ))}
-              </select>
+                emptyLabel="Tous"
+                options={f.values.map((v) => ({ value: v.value, label: v.value, hint: String(v.count) }))}
+                onChange={(v) => set({ attrs: v ? [...others, { key: f.key, value: v }] : others })}
+              />
             </div>
           );
         }
