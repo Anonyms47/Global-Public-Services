@@ -867,7 +867,8 @@ export function CartView({
               </button>
               <p className="hint -mt-3 text-center">
                 Ce bouton transmet votre demande à GPS (référence à citer). Ce n&apos;est ni une commande confirmée ni
-                un paiement : vous envoyez ensuite le message WhatsApp vous-même.{" "}
+                un paiement : vous envoyez ensuite le message WhatsApp vous-même. Sans suite, la demande est supprimée
+                au bout de 48 h.{" "}
                 <Link href="/confidentialite" className="underline">
                   Confidentialité
                 </Link>
