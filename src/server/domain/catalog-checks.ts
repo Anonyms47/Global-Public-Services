@@ -1,3 +1,4 @@
+import { isAmbiguousOption } from "@/lib/ambiguous-options";
 import type { Db } from "../db/client";
 import {
   brandIndex,
@@ -298,6 +299,33 @@ export async function catalogAlerts(db: Db): Promise<CatalogAlert[]> {
         "Le site affiche « photo non disponible » pour : " +
         missing.map((v) => Object.values(v.options).join(" · ")).join(" ; ") +
         ". Ajoutez la photo exacte, ou une photo commune à toutes les variantes.",
+      products: [asProduct(row)],
+    });
+  }
+
+  // ——— Variantes au libellé ambigu (« Version de base »…) : à préciser avec GPS, jamais corrigées automatiquement. ———
+  const withVariants = await db.query<{ id: string; options: Record<string, string>[] | null }>(
+    `select p.id, (select json_agg(v.options) from variants v where v.product_id = p.id and v.active) as options
+       from products p
+      where p.status <> 'archived' and p.deleted_at is null and not p.is_demo`,
+  );
+  for (const s of withVariants) {
+    const row = rowById.get(s.id);
+    if (!row) continue;
+    const labels = [
+      ...new Set(
+        (s.options ?? []).flatMap((o) => Object.entries(o ?? {}).filter(([, v]) => isAmbiguousOption(String(v)))),
+      ),
+    ].map(([k, v]) => `${k} : « ${v} »`);
+    if (!labels.length) continue;
+    alerts.push({
+      key: `variante-ambigue-${s.id}`,
+      kind: "fiche",
+      severity: "medium",
+      title: `${row.name} : option à préciser`,
+      detail:
+        `Libellé peu clair (${[...new Set(labels)].join(" ; ")}). Le site écrit « à préciser avec GPS » à côté de l'option. ` +
+        "Renseignez la vraie valeur (capacité, version…) quand GPS la confirme : prix, stock et coût ne sont pas modifiés.",
       products: [asProduct(row)],
     });
   }

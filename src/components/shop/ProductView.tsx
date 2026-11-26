@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct } from "@/server/domain/catalog";
 import { fcfa, formatDate, optionsLabel } from "@/lib/format";
 import { orderHint } from "@/lib/order-hints";
+import { isAmbiguousOption } from "@/lib/ambiguous-options";
 import { adaptations, optionChoices, optionPrices, selectOption } from "@/lib/variant-select";
 import { mediaForSelection } from "@/lib/variant-media";
 import { productQuestionMessage, whatsappLink } from "@/lib/whatsapp";
@@ -484,6 +485,13 @@ export function ProductView({
                     );
                   })}
                 </div>
+                {values[axis].some(isAmbiguousOption) ? (
+                  <p className="mt-2 text-[14px] text-ink-soft" data-testid="option-a-preciser">
+                    {sel[axis] && isAmbiguousOption(sel[axis]) ? `« ${sel[axis]} »` : "Cette option"} ne précise pas{" "}
+                    {/^(capacit|m[ée]moire|stockage)/i.test(axis) ? "la capacité" : "la version exacte"} :{" "}
+                    <strong>à préciser avec GPS</strong> avant de commander.
+                  </p>
+                ) : null}
               </fieldset>
             ))}
             <p

@@ -280,7 +280,18 @@ export function CartView({
     return Object.keys(e).length === 0;
   };
 
+  const preparing = useRef(false);
   const prepare = async () => {
+    // Un seul enregistrement à la fois : un double toucher ne crée pas deux demandes.
+    if (preparing.current) return;
+    preparing.current = true;
+    try {
+      await prepareOnce();
+    } finally {
+      preparing.current = false;
+    }
+  };
+  const prepareOnce = async () => {
     setMessage(null);
     setPayMethod(null);
     if (!validate()) {
@@ -611,7 +622,9 @@ export function CartView({
               <h2 id="titre-preparer" className="font-display text-3xl font-extrabold uppercase">
                 Préparer la commande
               </h2>
-              <p className="text-[14px] text-white/70">Deux minutes, puis vous envoyez tout sur WhatsApp.</p>
+              <p className="text-[14px] text-white/70">
+                Deux minutes, puis vous envoyez vous-même le message sur WhatsApp.
+              </p>
             </div>
 
             <form
@@ -852,6 +865,13 @@ export function CartView({
               <button type="submit" className="btn btn-ink h-14 w-full text-base" disabled={checking}>
                 {checking ? "Vérification des prix et du stock…" : "Préparer mon récapitulatif"}
               </button>
+              <p className="hint -mt-3 text-center">
+                Ce bouton transmet votre demande à GPS (référence à citer). Ce n&apos;est ni une commande confirmée ni
+                un paiement : vous envoyez ensuite le message WhatsApp vous-même.{" "}
+                <Link href="/confidentialite" className="underline">
+                  Confidentialité
+                </Link>
+              </p>
             </form>
 
             {message ? (

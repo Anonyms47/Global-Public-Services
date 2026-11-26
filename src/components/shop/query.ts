@@ -11,7 +11,8 @@ const num = (v: string | undefined) => {
 };
 
 /** Articles affichés d'un coup ; « Voir plus » en ajoute autant. */
-export const PAGE_SIZE = 24;
+export const PAGE_SIZE =
+  Number(process.env.NEXT_PUBLIC_SHOP_PAGE_SIZE) > 0 ? Number(process.env.NEXT_PUBLIC_SHOP_PAGE_SIZE) : 24;
 const MAX_SHOWN = 480;
 
 /** Nombre d'articles à montrer d'après `?n=` : multiple de PAGE_SIZE, entre une page et MAX_SHOWN. */

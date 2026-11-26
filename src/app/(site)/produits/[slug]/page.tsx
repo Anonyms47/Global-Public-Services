@@ -14,6 +14,8 @@ import { ProductDescription } from "@/components/shop/ProductDescription";
 import { IconArrowRight, IconChevronRight, IconStore, IconTruck, IconInfo, IconCheck } from "@/components/ui/icons";
 import { TO_CONFIRM } from "@/lib/whatsapp";
 import { RevealOnScroll } from "@/components/site/RevealOnScroll";
+import { PAYMENT_SHORT } from "@/lib/payment-copy";
+import { safeBackUrl } from "@/lib/safe-back";
 import { breadcrumbJsonLd, jsonLdString, productJsonLd, productMetaDescription, productTitle } from "@/lib/seo";
 
 export async function generateMetadata({ params }: PageProps<"/produits/[slug]">): Promise<Metadata> {
@@ -35,11 +37,6 @@ export async function generateMetadata({ params }: PageProps<"/produits/[slug]">
   };
 }
 
-function safeBack(depuis: string | string[] | undefined) {
-  const v = Array.isArray(depuis) ? depuis[0] : depuis;
-  return v && /^\/(boutique|categories)(\/|\?|$)/.test(v) ? v : null;
-}
-
 export default async function ProductPage({ params, searchParams }: PageProps<"/produits/[slug]">) {
   const { db, settings, indexable } = await siteContext();
   const { slug } = await params;
@@ -50,7 +47,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
     if (moved) permanentRedirect(`/produits/${moved}`);
     notFound();
   }
-  const back = safeBack((await searchParams).depuis);
+  const back = safeBackUrl((await searchParams).depuis);
   const related = relatedProducts(await publishedProducts(db), product);
   const r = settings.reception;
   const pol = settings.policies;
@@ -220,8 +217,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 <div>
                   <p className="font-bold">Paiement</p>
                   <p className="text-[15px] text-white/70">
-                    Paiement par Wave, Orange Money, au comptoir ou à la livraison.{" "}
-                    {pol.payment || `Modalités : ${toConfirm}.`}
+                    {PAYMENT_SHORT} {pol.payment || `Modalités : ${toConfirm}.`}
                   </p>
                 </div>
               </li>
